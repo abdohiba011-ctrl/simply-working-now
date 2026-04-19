@@ -584,12 +584,34 @@ const Auth = () => {
                     <h1 className="text-3xl font-bold text-foreground mb-2">
                       {isSignup ? "Create Account" : "Welcome Back"}
                     </h1>
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-muted border border-border">
-                      <span className="text-lg">{accountType === "client" ? "🏍️" : "💼"}</span>
-                      <span className="text-sm font-medium text-foreground">
-                        {accountType === "client" ? "Client Account" : "Business Account"}
-                      </span>
-                    </div>
+                  </div>
+
+                  {/* Account type segmented switcher */}
+                  <div className="grid grid-cols-2 gap-1 p-1 mb-6 bg-muted rounded-lg">
+                    <button
+                      type="button"
+                      onClick={() => setAccountType("client")}
+                      className={`flex items-center justify-center gap-2 py-2.5 rounded-md text-sm font-medium transition-all ${
+                        accountType === "client"
+                          ? "bg-background text-foreground shadow-sm"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      <span className="text-base">🏍️</span>
+                      <span>I'm a Client</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAccountType("business")}
+                      className={`flex items-center justify-center gap-2 py-2.5 rounded-md text-sm font-medium transition-all ${
+                        accountType === "business"
+                          ? "bg-background text-foreground shadow-sm"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      <span className="text-base">💼</span>
+                      <span>I'm a Business</span>
+                    </button>
                   </div>
                   
                   {/* Google Sign-In */}
