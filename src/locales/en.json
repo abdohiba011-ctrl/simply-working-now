@@ -928,6 +928,8 @@
     "privacyPolicy": "Privacy Policy",
     "submit": "Submit Verification",
     "submitting": "Submitting...",
+    "verifyTitle": "Verify Your Account",
+    "verifyDesc": "Complete verification to rent motorbikes. This helps keep our community safe.",
     "verificationPending": "Verification Pending",
     "pendingDesc": "Your documents are being reviewed. We'll notify you within 24-48 hours.",
     "returnHome": "Return to Home"

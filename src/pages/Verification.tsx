@@ -550,9 +550,9 @@ const Verification = () => {
             <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
               <Shield className="h-8 w-8 text-primary" />
             </div>
-            <CardTitle>Verify Your Account</CardTitle>
+            <CardTitle>{t('verificationPage.verifyTitle')}</CardTitle>
             <CardDescription>
-              Complete verification to rent motorbikes. This helps keep our community safe.
+              {t('verificationPage.verifyDesc')}
             </CardDescription>
           </CardHeader>
           <CardContent>

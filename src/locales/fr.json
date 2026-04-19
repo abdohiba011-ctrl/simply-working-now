@@ -928,6 +928,8 @@
     "privacyPolicy": "Politique de Confidentialité",
     "submit": "Soumettre la Vérification",
     "submitting": "Envoi en cours...",
+    "verifyTitle": "Vérifiez votre compte",
+    "verifyDesc": "Complétez la vérification pour louer des motos. Cela aide à garder notre communauté en sécurité.",
     "verificationPending": "Vérification en Attente",
     "pendingDesc": "Vos documents sont en cours d'examen. Nous vous informerons sous 24-48 heures.",
     "returnHome": "Retour à l'Accueil"
