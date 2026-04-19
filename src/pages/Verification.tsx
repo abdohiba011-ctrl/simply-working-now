@@ -561,7 +561,7 @@ const Verification = () => {
               <Alert className="mb-6 bg-amber-50 border-amber-300 dark:bg-amber-950/30 dark:border-amber-700">
                 <AlertTriangle className="h-4 w-4 text-amber-600" />
                 <AlertDescription className="text-amber-800 dark:text-amber-200">
-                  <strong>Re-verification Required:</strong> {rejectionReason}
+                  <strong>{t('verificationPage.reverificationRequired')}</strong> {rejectionReason}
                 </AlertDescription>
               </Alert>
             )}
@@ -571,18 +571,18 @@ const Verification = () => {
               <div className="space-y-2">
                 <Label htmlFor="phone" className="flex items-center gap-2">
                   <Phone className="h-4 w-4" />
-                  Phone Number
+                  {t('verificationPage.phoneNumber')}
                 </Label>
                 <Input
                   id="phone"
                   type="tel"
-                  placeholder="+212 6XX XXX XXX"
+                  placeholder={t('verificationPage.phonePlaceholder')}
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   className={!validatePhone(phone) && phone.length > 0 ? 'border-destructive' : ''}
                 />
                 {!validatePhone(phone) && phone.length > 0 && (
-                  <p className="text-xs text-destructive">Enter a valid Moroccan phone number</p>
+                  <p className="text-xs text-destructive">{t('verificationPage.invalidPhone')}</p>
                 )}
               </div>
 
@@ -590,12 +590,12 @@ const Verification = () => {
               <div className="space-y-2">
                 <Label htmlFor="firstName" className="flex items-center gap-2">
                   <User className="h-4 w-4" />
-                  First Name (as on ID)
+                  {t('verificationPage.firstName')}
                 </Label>
                 <Input
                   id="firstName"
                   type="text"
-                  placeholder="Enter your first name"
+                  placeholder={t('verificationPage.firstNamePlaceholder')}
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
                 />
@@ -605,12 +605,12 @@ const Verification = () => {
               <div className="space-y-2">
                 <Label htmlFor="familyName" className="flex items-center gap-2">
                   <User className="h-4 w-4" />
-                  Family Name (as on ID)
+                  {t('verificationPage.familyName')}
                 </Label>
                 <Input
                   id="familyName"
                   type="text"
-                  placeholder="Enter your family name"
+                  placeholder={t('verificationPage.familyNamePlaceholder')}
                   value={familyName}
                   onChange={(e) => setFamilyName(e.target.value)}
                 />
@@ -620,12 +620,12 @@ const Verification = () => {
               <div className="space-y-2">
                 <Label htmlFor="idNumber" className="flex items-center gap-2">
                   <CreditCard className="h-4 w-4" />
-                  ID Card Number (CIN)
+                  {t('verificationPage.idCardNumber')}
                 </Label>
                 <Input
                   id="idNumber"
                   type="text"
-                  placeholder="Enter your CIN number"
+                  placeholder={t('verificationPage.idNumberPlaceholder')}
                   value={idNumber}
                   onChange={(e) => setIdNumber(e.target.value)}
                 />
@@ -635,17 +635,17 @@ const Verification = () => {
               <div className="space-y-4">
                 <h3 className="font-medium text-foreground flex items-center gap-2">
                   <FileText className="h-4 w-4" />
-                  ID Card Photos
+                  {t('verificationPage.idCardPhotos')}
                 </h3>
-                {renderUploadBox('front', frontId, setFrontId, frontInputRef, frontCameraRef, 'Front of ID Card')}
-                {renderUploadBox('back', backId, setBackId, backInputRef, backCameraRef, 'Back of ID Card')}
+                {renderUploadBox('front', frontId, setFrontId, frontInputRef, frontCameraRef, t('verificationPage.frontOfId'))}
+                {renderUploadBox('back', backId, setBackId, backInputRef, backCameraRef, t('verificationPage.backOfId'))}
               </div>
 
               {/* Selfie with ID Section */}
               <div className="space-y-4 border-t pt-6">
                 <div className="flex items-center gap-2">
                   <UserCircle className="h-4 w-4" />
-                  <h3 className="font-medium text-foreground">Selfie with ID Card</h3>
+                  <h3 className="font-medium text-foreground">{t('verificationPage.selfieWithIdTitle')}</h3>
                 </div>
                 
               {/* Verification Guide Image - Full width with padding */}
@@ -668,25 +668,25 @@ const Verification = () => {
                       </div>
                     </div>
                     <div className="absolute bottom-1 left-1 right-1 text-[8px] text-gray-500 text-center font-medium">
-                      Face + ID visible
+                      {t('verificationPage.faceIdVisible')}
                     </div>
                   </div>
                   <div className="space-y-1">
                     <p className="text-sm text-foreground font-medium">
-                      Hold your ID card next to your face
+                      {t('verificationPage.holdIdNextToFace')}
                     </p>
                     <ul className="text-xs text-muted-foreground space-y-1">
                       <li className="flex items-center gap-1">
                         <span className="w-1 h-1 bg-gray-400 rounded-full" />
-                        Both your face and ID must be clearly visible
+                        {t('verificationPage.selfieTip1')}
                       </li>
                       <li className="flex items-center gap-1">
                         <span className="w-1 h-1 bg-gray-400 rounded-full" />
-                        Good lighting, no glare on the ID
+                        {t('verificationPage.selfieTip2')}
                       </li>
                       <li className="flex items-center gap-1">
                         <span className="w-1 h-1 bg-gray-400 rounded-full" />
-                        This helps us verify faster
+                        {t('verificationPage.selfieTip3')}
                       </li>
                     </ul>
                   </div>
@@ -698,7 +698,7 @@ const Verification = () => {
                   setSelfieWithId, 
                   selfieInputRef, 
                   selfieCameraRef, 
-                  'Upload Selfie with ID',
+                  t('verificationPage.uploadSelfieWithId'),
                   false
                 )}
               </div>
@@ -715,16 +715,16 @@ const Verification = () => {
                     htmlFor="privacy"
                     className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
                   >
-                    I accept the Privacy Policy
+                    {t('verificationPage.acceptPrivacy')}
                   </label>
                   <p className="text-xs text-muted-foreground">
-                    By checking this box, you agree to our{" "}
+                    {t('verificationPage.privacyAgreementText')}{" "}
                     <Link to="/privacy-policy" className="text-gray-700 hover:text-gray-900 underline" target="_blank">
-                      Privacy Policy
+                      {t('verificationPage.privacyPolicy')}
                     </Link>
-                    {" "}and{" "}
+                    {" "}{t('verificationPage.and')}{" "}
                     <Link to="/terms" className="text-gray-700 hover:text-gray-900 underline" target="_blank">
-                      Terms & Conditions
+                      {t('verificationPage.termsConditions')}
                     </Link>
                   </p>
                 </div>
@@ -739,10 +739,10 @@ const Verification = () => {
                 {isSubmitting ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Submitting...
+                    {t('verificationPage.submitting')}
                   </>
                 ) : (
-                  "Submit Verification"
+                  t('verificationPage.submit')
                 )}
               </Button>
             </form>
