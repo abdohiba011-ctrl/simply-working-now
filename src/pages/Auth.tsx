@@ -520,23 +520,23 @@ const Auth = () => {
                 <CardContent className="p-8">
                   <div className="text-center mb-6">
                     <h1 className="text-3xl font-bold text-foreground mb-2">
-                      Verify Your Email
+                      {t('auth.verifyYourEmail')}
                     </h1>
                     <p className="text-muted-foreground">
-                      We sent a 6-digit code to <strong>{email}</strong>
+                      {t('auth.codeSentToEmail')} <strong>{email}</strong>
                     </p>
                   </div>
                   
                   <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="email-otp">Verification Code</Label>
+                      <Label htmlFor="email-otp">{t('auth.verificationCode')}</Label>
                       <Input
                         id="email-otp"
                         type="text"
                         value={emailOtp}
                         onChange={(e) => setEmailOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
                         required
-                        placeholder="Enter 6-digit code"
+                        placeholder={t('auth.enterSixDigitCode')}
                         maxLength={6}
                         className="text-center text-2xl tracking-widest font-bold"
                         autoComplete="one-time-code"
@@ -550,7 +550,7 @@ const Auth = () => {
                         variant="hero"
                         disabled={isLoading || emailOtp.length !== 6}
                       >
-                        {isLoading ? "Verifying..." : "Verify & Create Account"}
+                        {isLoading ? t('auth.verifying') : t('auth.verifyAndCreate')}
                       </Button>
                       <Button 
                         type="button" 
@@ -561,7 +561,7 @@ const Auth = () => {
                         }}
                         disabled={isLoading}
                       >
-                        Back
+                        {t('auth.back')}
                       </Button>
                     </div>
 
@@ -573,7 +573,7 @@ const Auth = () => {
                         onClick={handleSendEmailOtp}
                         disabled={otpSending}
                       >
-                        {otpSending ? "Sending..." : "Resend code"}
+                        {otpSending ? t('auth.sending') : t('auth.resendCode')}
                       </Button>
                     </div>
                   </form>
@@ -584,7 +584,7 @@ const Auth = () => {
                 <CardContent className="p-8">
                   <div className="text-center mb-6">
                     <h1 className="text-3xl font-bold text-foreground mb-2">
-                      {isSignup ? "Create Account" : "Welcome Back"}
+                      {isSignup ? t('auth.createAccount') : t('auth.welcomeBack')}
                     </h1>
                   </div>
 
@@ -600,7 +600,7 @@ const Auth = () => {
                       }`}
                     >
                       <span className="text-base">🏍️</span>
-                      <span>I'm a Client</span>
+                      <span>{t('auth.imAClient')}</span>
                     </button>
                     <button
                       type="button"
@@ -612,7 +612,7 @@ const Auth = () => {
                       }`}
                     >
                       <span className="text-base">💼</span>
-                      <span>I'm a Business</span>
+                      <span>{t('auth.imABusiness')}</span>
                     </button>
                   </div>
                   
@@ -623,7 +623,7 @@ const Auth = () => {
                     className="w-full h-11 gap-3"
                     onClick={handleGoogleSignIn}
                     disabled={isLoading}
-                    aria-label={isSignup ? "Sign up with Google" : "Sign in with Google"}
+                    aria-label={isSignup ? t('auth.signUpWithGoogle') : t('auth.continueWithGoogle')}
                   >
                     <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
                       <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -631,7 +631,7 @@ const Auth = () => {
                       <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
                       <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
                     </svg>
-                    {isSignup ? "Sign up with Google" : "Continue with Google"}
+                    {isSignup ? t('auth.signUpWithGoogle') : t('auth.continueWithGoogle')}
                   </Button>
 
                   <div className="relative my-6">
@@ -639,7 +639,7 @@ const Auth = () => {
                       <span className="w-full border-t border-border" />
                     </div>
                     <div className="relative flex justify-center text-xs uppercase">
-                      <span className="bg-card px-2 text-muted-foreground">Or continue with email</span>
+                      <span className="bg-card px-2 text-muted-foreground">{t('auth.orContinueWithEmail')}</span>
                     </div>
                   </div>
 
@@ -648,14 +648,14 @@ const Auth = () => {
                        <>
                         
                         <div className="space-y-2">
-                          <Label htmlFor="name">Full Name</Label>
+                          <Label htmlFor="name">{t('auth.fullName')}</Label>
                           <Input
                             id="name"
                             type="text"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
                             required
-                            placeholder="Enter your name"
+                            placeholder={t('auth.enterYourName')}
                             autoComplete="name"
                           />
                         </div>
@@ -663,20 +663,20 @@ const Auth = () => {
                     )}
                     
                     <div className="space-y-2">
-                      <Label htmlFor="email">Email</Label>
+                      <Label htmlFor="email">{t('auth.email')}</Label>
                       <Input
                         id="email"
                         type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         required
-                        placeholder="Enter your email"
+                        placeholder={t('auth.enterYourEmail')}
                         autoComplete="email"
                       />
                     </div>
                     
                     <div className="space-y-2">
-                      <Label htmlFor="password">Password</Label>
+                      <Label htmlFor="password">{t('auth.password')}</Label>
                       <div className="relative">
                         <Input
                           id="password"
@@ -684,7 +684,7 @@ const Auth = () => {
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
                           required
-                          placeholder="Enter your password"
+                          placeholder={t('auth.enterYourPassword')}
                           className="pr-10"
                           autoComplete={isSignup ? "new-password" : "current-password"}
                         />
@@ -708,7 +708,7 @@ const Auth = () => {
                           className="h-5 w-5"
                         />
                         <Label htmlFor="rememberMe" className="text-base font-medium cursor-pointer">
-                          Remember me
+                          {t('auth.rememberMe')}
                         </Label>
                       </div>
                     )}
@@ -716,7 +716,7 @@ const Auth = () => {
                     {isSignup && (
                       <>
                         <div className="space-y-2">
-                          <Label htmlFor="confirmPassword">Confirm Password</Label>
+                          <Label htmlFor="confirmPassword">{t('auth.confirmPassword')}</Label>
                           <div className="relative">
                             <Input
                               id="confirmPassword"
@@ -724,7 +724,7 @@ const Auth = () => {
                               value={confirmPassword}
                               onChange={(e) => setConfirmPassword(e.target.value)}
                               required
-                              placeholder="Confirm your password"
+                              placeholder={t('auth.confirmYourPassword')}
                               className="pr-10"
                               autoComplete="new-password"
                             />
@@ -737,10 +737,10 @@ const Auth = () => {
                             </button>
                           </div>
                           {confirmPassword && password !== confirmPassword && (
-                            <p className="text-xs text-destructive">Passwords do not match</p>
+                            <p className="text-xs text-destructive">{t('auth.passwordsDoNotMatch')}</p>
                           )}
                           {confirmPassword && password === confirmPassword && password.length > 0 && (
-                            <p className="text-xs text-green-600">Passwords match ✓</p>
+                            <p className="text-xs text-green-600">{t('auth.passwordsMatch')}</p>
                           )}
                         </div>
 
@@ -757,24 +757,24 @@ const Auth = () => {
                               htmlFor="terms"
                               className="text-sm font-medium leading-none cursor-pointer"
                             >
-                              I agree to the Terms and Privacy Policy
+                              {t('auth.agreeToTerms')}
                             </label>
                             <p className="text-xs text-muted-foreground">
-                              By creating an account, you agree to our{" "}
+                              {t('auth.agreeToTermsDesc')}{" "}
                               <button
                                 type="button"
                                 onClick={() => setShowTermsModal(true)}
                                 className="text-muted-foreground underline hover:text-foreground"
                               >
-                                Terms of Service
+                                {t('auth.termsOfService')}
                               </button>
-                              {" "}and{" "}
+                              {" "}{t('auth.and')}{" "}
                               <button
                                 type="button"
                                 onClick={() => setShowPrivacyModal(true)}
                                 className="text-muted-foreground underline hover:text-foreground"
                               >
-                                Privacy Policy
+                                {t('auth.privacyPolicy')}
                               </button>
                             </p>
                           </div>
@@ -789,7 +789,7 @@ const Auth = () => {
                       variant="hero"
                       disabled={isLoading || otpSending || (isSignup && !termsAccepted)}
                     >
-                      {isLoading || otpSending ? "Please wait..." : (isSignup ? "Continue" : "Login")}
+                      {isLoading || otpSending ? t('auth.pleaseWait') : (isSignup ? t('auth.continue') : t('auth.login'))}
                     </Button>
 
                     {!isSignup && (
@@ -801,7 +801,7 @@ const Auth = () => {
                             className="p-0 text-sm text-primary hover:underline"
                             onClick={() => setShowForgotPassword(true)}
                           >
-                            Forgot password?
+                            {t('auth.forgotPassword')}
                           </Button>
                         </div>
                       </>
@@ -810,12 +810,12 @@ const Auth = () => {
                   
                   <div className="mt-6 text-center">
                     <p className="text-muted-foreground">
-                      {isSignup ? "Already have an account?" : "Don't have an account?"}{" "}
+                      {isSignup ? t('auth.haveAccount') : t('auth.noAccount')}{" "}
                       <button
                         onClick={() => navigate(isSignup ? "/auth" : "/auth?mode=signup")}
                         className="text-primary font-semibold hover:underline"
                       >
-                        {isSignup ? "Log In" : "Sign Up"}
+                        {isSignup ? t('auth.logIn') : t('auth.signUp')}
                       </button>
                     </p>
                   </div>
