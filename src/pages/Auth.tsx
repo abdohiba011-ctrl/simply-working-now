@@ -11,6 +11,7 @@ import { signupSchema, loginSchema } from "@/lib/validationSchemas";
 import { z } from "zod";
 import { Eye, EyeOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable";
 import { Checkbox } from "@/components/ui/checkbox";
 import { safeGetItem } from "@/lib/safeStorage";
 import { PasswordStrengthIndicator } from "@/components/PasswordStrengthIndicator";
@@ -290,6 +291,30 @@ const Auth = () => {
     } catch (error: unknown) {
       toast.error(getErrMsg(error) || "Failed to reset password. Please try again.");
     } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setIsLoading(true);
+    try {
+      const result = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: window.location.origin,
+      });
+      if (result.error) {
+        toast.error(getErrMsg(result.error) || "Google sign-in failed. Please try again.");
+        setIsLoading(false);
+        return;
+      }
+      if (result.redirected) {
+        // Browser is redirecting to Google
+        return;
+      }
+      // Tokens received and session set; auth state listener will handle redirect
+      playSuccessSound();
+      toast.success("Signed in with Google!");
+    } catch (error: unknown) {
+      toast.error(getErrMsg(error) || "Google sign-in failed. Please try again.");
       setIsLoading(false);
     }
   };
