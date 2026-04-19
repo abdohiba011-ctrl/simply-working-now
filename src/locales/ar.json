@@ -268,7 +268,21 @@
     "tryAnotherNeighborhood": "جرب حياً آخر",
     "available": "متوفر",
     "loading": "جاري تحميل الدراجات المتوفرة...",
-    "backToHomepage": "العودة للصفحة الرئيسية"
+    "backToHomepage": "العودة للصفحة الرئيسية",
+    "resultsCount": "{count} دراجة متوفرة",
+    "sortBy": "ترتيب حسب",
+    "sortRecommended": "موصى به",
+    "sortPriceLow": "السعر: من الأقل للأعلى",
+    "sortPriceHigh": "السعر: من الأعلى للأقل",
+    "sortRating": "الأعلى تقييماً",
+    "saved": "محفوظة",
+    "save": "حفظ",
+    "addedToFavorites": "تمت الإضافة للمفضلة",
+    "removedFromFavorites": "تمت الإزالة من المفضلة",
+    "perDay": "/يوم",
+    "from": "ابتداءً من",
+    "allLocations": "جميع المواقع",
+    "filtersTitle": "حسّن بحثك"
   },
   "bikeDetails": {
     "backToListings": "العودة للقائمة",
