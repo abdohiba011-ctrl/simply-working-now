@@ -58,6 +58,38 @@ export const useAdminNotifications = () => {
         .subscribe();
 
       channels.push(bikeTypesChannel);
+
+      // Admin notifications for new verification submissions
+      const verificationsChannel = supabase
+        .channel("admin-verifications")
+        .on(
+          "postgres_changes",
+          {
+            event: "UPDATE",
+            schema: "public",
+            table: "profiles",
+            filter: "verification_status=eq.pending_review",
+          },
+          (payload: RealtimePostgresChangesPayload<{ id: string; name: string | null; verification_status: string }>) => {
+            const newProfile = payload.new as { id: string; name: string | null; verification_status: string };
+            const oldProfile = payload.old as { verification_status: string };
+            if (
+              newProfile?.verification_status === "pending_review" &&
+              oldProfile?.verification_status !== "pending_review"
+            ) {
+              toast.info("New Verification Submitted", {
+                description: `${newProfile.name || "A user"} submitted ID verification for review.`,
+                action: {
+                  label: "Review",
+                  onClick: () => (window.location.href = `/admin/verifications/${newProfile.id}`),
+                },
+              });
+            }
+          }
+        )
+        .subscribe();
+
+      channels.push(verificationsChannel);
     }
 
     // Business notifications for booking assignments and bike approvals
