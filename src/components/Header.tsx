@@ -2,8 +2,8 @@ import { useState, useEffect, memo, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Menu, X, Globe, User, LogOut, Settings, Lock, Building2, Calendar as CalendarIcon, MoreHorizontal, Users, Phone, Shield, MapPin, Bell, ShieldCheck, LayoutDashboard, BadgeCheck, Tag, ShoppingBag, Bike } from "lucide-react";
-import logoLight from "@/assets/motori-logo.svg";
-import logoDark from "@/assets/motori-logo-dark.svg";
+import logoLight from "@/assets/motonita-logo.svg";
+import logoDark from "@/assets/motonita-logo-dark.svg";
 import { useTheme } from "@/hooks/useTheme";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -243,7 +243,7 @@ export const Header = memo(() => {
               {/* Light mode logo */}
               <img 
                 src={logoLight} 
-                alt="Motori Logo" 
+                alt="Motonita Logo" 
                 width={166}
                 height={40}
                 className={cn(
@@ -257,7 +257,7 @@ export const Header = memo(() => {
               {/* Dark mode logo */}
               <img 
                 src={logoDark} 
-                alt="Motori Logo" 
+                alt="Motonita Logo" 
                 width={166}
                 height={40}
                 className={cn(
@@ -454,7 +454,7 @@ export const Header = memo(() => {
                 {/* Light mode logo */}
                 <img 
                   src={logoLight} 
-                  alt="Motori" 
+                  alt="Motonita" 
                   className={cn(
                     "h-10 w-auto absolute transition-opacity duration-200 hover:scale-105",
                     theme === 'dark' ? 'opacity-0' : 'opacity-100'
@@ -464,7 +464,7 @@ export const Header = memo(() => {
                 {/* Dark mode logo */}
                 <img 
                   src={logoDark} 
-                  alt="Motori" 
+                  alt="Motonita" 
                   className={cn(
                     "h-10 w-auto absolute transition-opacity duration-200 hover:scale-105",
                     theme === 'dark' ? 'opacity-100' : 'opacity-0'

@@ -334,8 +334,8 @@ export const AdminEmployeesTab = () => {
         user_id: profile.id,
         title: newEmployeeRole === 'full_admin' ? 'Full Admin Access Granted' : 'Support Access Granted',
         message: newEmployeeRole === 'full_admin' 
-          ? 'You have been granted full admin access to the Motori platform. You can now manage users, bookings, and settings.'
-          : 'You have been granted support access to the Motori platform with limited permissions.',
+          ? 'You have been granted full admin access to the Motonita platform. You can now manage users, bookings, and settings.'
+          : 'You have been granted support access to the Motonita platform with limited permissions.',
         type: 'success'
       });
 
@@ -384,7 +384,7 @@ export const AdminEmployeesTab = () => {
       await supabase.from('notifications').insert({
         user_id: userId,
         title: 'Admin Access Revoked',
-        message: 'Your admin access to the Motori platform has been revoked.',
+        message: 'Your admin access to the Motonita platform has been revoked.',
         type: 'warning'
       });
 

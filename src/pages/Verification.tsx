@@ -520,7 +520,7 @@ const Verification = () => {
                 <Button 
                   variant="outline" 
                   className="min-h-[44px] gap-2 border-amber-300 dark:border-amber-700 hover:bg-amber-100 dark:hover:bg-amber-900"
-                  onClick={() => window.location.href = 'mailto:contact@motori.ma'}
+                  onClick={() => window.location.href = 'mailto:contact@motonita.ma'}
                 >
                   <FileText className="h-5 w-5" />
                   Email

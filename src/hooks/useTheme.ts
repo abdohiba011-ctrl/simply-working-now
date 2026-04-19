@@ -5,7 +5,7 @@ type Theme = 'light' | 'dark';
 export const useTheme = () => {
   const [theme, setTheme] = useState<Theme>(() => {
     // Check localStorage first
-    const saved = localStorage.getItem('motori-theme') as Theme;
+    const saved = localStorage.getItem('motonita-theme') as Theme;
     if (saved) return saved;
     
     // Check system preference
@@ -24,7 +24,7 @@ export const useTheme = () => {
     root.classList.add(theme);
     
     // Save to localStorage
-    localStorage.setItem('motori-theme', theme);
+    localStorage.setItem('motonita-theme', theme);
   }, [theme]);
 
   const toggleTheme = () => {

@@ -14,7 +14,7 @@ interface BlockedUserModalProps {
 }
 
 const WHATSAPP_NUMBER = "3453452345";
-const SUPPORT_EMAIL = "contact@motori.ma";
+const SUPPORT_EMAIL = "contact@motonita.ma";
 
 export const BlockedUserModal = ({ reason }: BlockedUserModalProps) => {
   const [showContactOptions, setShowContactOptions] = useState(false);

@@ -410,7 +410,7 @@ const BookingHistory = () => {
                     </Button>
                     <Button 
                       variant="outline" 
-                      onClick={() => window.location.href = 'mailto:contact@motori.ma'}
+                      onClick={() => window.location.href = 'mailto:contact@motonita.ma'}
                       className="gap-2"
                     >
                       <Mail className="h-4 w-4" />

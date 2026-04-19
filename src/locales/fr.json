@@ -185,7 +185,7 @@
   "affiliatePage": {
     "badge": "Programme Affilié",
     "heroTitle": "Gagnez de l'Argent en Partageant",
-    "heroTitleHighlight": "Motori.ma",
+    "heroTitleHighlight": "Motonita.ma",
     "heroSubtitle": "Rejoignez notre programme d'affiliation et gagnez 15% de commission sur chaque location que vous référez. Aucun investissement requis - partagez simplement votre lien et commencez à gagner !",
     "becomeAffiliate": "Devenir Affilié",
     "noInvestment": "Aucun investissement requis",
@@ -224,14 +224,14 @@
       "monthlyPayoutsDesc": "Soyez payé chaque mois par virement bancaire ou mobile"
     },
     "earningsTitle": "Calculateur de Gains",
-    "earningsSubtitle": "Voyez combien vous pourriez gagner en tant qu'affilié Motori.ma",
+    "earningsSubtitle": "Voyez combien vous pourriez gagner en tant qu'affilié Motonita.ma",
     "avgBookingValue": "Valeur Moyenne de Réservation",
     "yourCommission": "Votre Commission (15%)",
     "referralsPerWeek": "10 Références par Semaine",
     "potentialEarnings": "Vos Gains Potentiels Hebdomadaires",
     "withJustReferrals": "Avec seulement 10 références réussies",
     "ctaTitle": "Prêt à Commencer à Gagner ?",
-    "ctaSubtitle": "Rejoignez des centaines d'affiliés qui gagnent déjà avec Motori.ma. L'inscription ne prend que 2 minutes !",
+    "ctaSubtitle": "Rejoignez des centaines d'affiliés qui gagnent déjà avec Motonita.ma. L'inscription ne prend que 2 minutes !",
     "joinNow": "Rejoindre Maintenant",
     "noFees": "Aucun frais d'inscription",
     "freeTools": "Outils marketing gratuits",
@@ -544,7 +544,7 @@
   },
   "affiliate": {
     "title": "Programme Affilié",
-    "subtitle": "Gagnez de l'argent en référant des clients à Motori",
+    "subtitle": "Gagnez de l'argent en référant des clients à Motonita",
     "joinNow": "Rejoindre Maintenant",
     "benefits": "Avantages",
     "howItWorks": "Comment Ça Marche",
@@ -787,10 +787,10 @@
     "submitApplication": "Soumettre la Candidature",
     "submitting": "Soumission...",
     "readyToStart": "Prêt à Commencer ?",
-    "readyToStartDesc": "Créez un compte et commencez votre parcours en tant que partenaire Motori",
+    "readyToStartDesc": "Créez un compte et commencez votre parcours en tant que partenaire Motonita",
     "createAccount": "Créer un Compte",
     "becomePartnerTitle": "Devenir Partenaire Commercial",
-    "becomePartnerDesc": "Listez vos motos et commencez à gagner avec Motori. Choisissez votre type de partenariat.",
+    "becomePartnerDesc": "Listez vos motos et commencez à gagner avec Motonita. Choisissez votre type de partenariat.",
     "accountVerified": "Compte Vérifié",
     "individualOwnerDesc": "Auto-entrepreneur avec des motos personnelles",
     "rentalShopDesc": "Société enregistrée avec plusieurs motos",
@@ -871,7 +871,7 @@
     "manageSettings": "Gérez les paramètres de votre compte",
     "goToSettings": "Aller aux Paramètres",
     "wantToRent": "Vous voulez louer votre moto ?",
-    "joinAsPartner": "Rejoignez Motori en tant que partenaire et commencez à gagner dès aujourd'hui",
+    "joinAsPartner": "Rejoignez Motonita en tant que partenaire et commencez à gagner dès aujourd'hui",
     "becomePartner": "Devenir Partenaire"
   },
   "verificationPage": {
@@ -1015,10 +1015,10 @@
     "uploadComplete": "Téléchargement terminé !"
   },
   "aboutPage": {
-    "title": "À Propos de Motori",
+    "title": "À Propos de Motonita",
     "subtitle": "La principale place de marché de location de motos au Maroc, connectant les motards avec des partenaires de location de confiance à travers le pays.",
     "ourStory": "Notre Histoire",
-    "ourStoryContent": "Fondé en octobre 2025, Motori est né d'une simple observation : louer une moto au Maroc était compliqué, chronophage et souvent peu fiable. Nous avons décidé de changer cela en créant une plateforme qui permet à chacun de trouver, réserver et conduire facilement des motos de qualité à travers les belles villes et paysages du Maroc.",
+    "ourStoryContent": "Fondé en octobre 2025, Motonita est né d'une simple observation : louer une moto au Maroc était compliqué, chronophage et souvent peu fiable. Nous avons décidé de changer cela en créant une plateforme qui permet à chacun de trouver, réserver et conduire facilement des motos de qualité à travers les belles villes et paysages du Maroc.",
     "ourMission": "Notre Mission",
     "ourMissionDesc": "Rendre la location de motos accessible, sûre et pratique pour tous au Maroc.",
     "communityFirst": "Communauté d'Abord",
@@ -1032,7 +1032,7 @@
     "title": "Politique de Confidentialité",
     "lastUpdated": "Dernière Mise à Jour",
     "introduction": "Introduction",
-    "introductionContent": "Chez Motori.ma, nous nous engageons à protéger votre vie privée. Cette Politique de Confidentialité explique comment nous collectons, utilisons, divulguons et protégeons vos informations lorsque vous utilisez notre plateforme de location de motos.",
+    "introductionContent": "Chez Motonita.ma, nous nous engageons à protéger votre vie privée. Cette Politique de Confidentialité explique comment nous collectons, utilisons, divulguons et protégeons vos informations lorsque vous utilisez notre plateforme de location de motos.",
     "informationCollected": "Informations que Nous Collectons",
     "informationCollectedContent": "Nous collectons les informations que vous nous fournissez directement, comme lorsque vous créez un compte, effectuez une réservation ou nous contactez. Cela inclut : nom, adresse email, numéro de téléphone, informations de carte d'identité, photos de profil et informations de paiement.",
     "howWeUse": "Comment Nous Utilisons Vos Informations",
@@ -1052,13 +1052,13 @@
     "policyChanges": "Modifications de la Politique",
     "policyChangesContent": "Nous pouvons mettre à jour cette Politique de Confidentialité de temps en temps. Nous vous informerons de tout changement en publiant la nouvelle politique sur cette page.",
     "contactUs": "Contactez-nous",
-    "contactUsContent": "Si vous avez des questions sur cette Politique de Confidentialité, veuillez nous contacter à contact@motori.ma."
+    "contactUsContent": "Si vous avez des questions sur cette Politique de Confidentialité, veuillez nous contacter à contact@motonita.ma."
   },
   "termsPage": {
     "title": "Conditions Générales",
     "lastUpdated": "Dernière Mise à Jour",
     "agreementToTerms": "Acceptation des Conditions",
-    "agreementToTermsContent": "En accédant ou en utilisant Motori.ma, vous acceptez d'être lié par ces Conditions Générales. Si vous n'acceptez pas ces conditions, veuillez ne pas utiliser nos services.",
+    "agreementToTermsContent": "En accédant ou en utilisant Motonita.ma, vous acceptez d'être lié par ces Conditions Générales. Si vous n'acceptez pas ces conditions, veuillez ne pas utiliser nos services.",
     "rentalRequirements": "Conditions de Location",
     "rentalRequirementsContent": "Pour louer une moto, vous devez : avoir au moins 18 ans, posséder une carte d'identité marocaine (CIN) ou un passeport valide, compléter notre processus de vérification d'identité et accepter nos conditions de location.",
     "bookingPayment": "Réservation et Paiement",
@@ -1082,7 +1082,7 @@
     "changesToTerms": "Modifications des Conditions",
     "changesToTermsContent": "Nous pouvons mettre à jour ces conditions à tout moment. L'utilisation continue de nos services constitue l'acceptation des conditions mises à jour.",
     "contactUs": "Contactez-nous",
-    "contactUsContent": "Pour toute question sur ces Conditions Générales, veuillez nous contacter à contact@motori.ma."
+    "contactUsContent": "Pour toute question sur ces Conditions Générales, veuillez nous contacter à contact@motonita.ma."
   },
   "cookiesPage": {
     "title": "Politique des Cookies",
@@ -1111,7 +1111,7 @@
     "policyUpdates": "Mises à Jour de la Politique",
     "policyUpdatesContent": "Nous pouvons mettre à jour cette Politique des Cookies de temps en temps. Les modifications seront publiées sur cette page avec une date mise à jour.",
     "contactUs": "Contactez-nous",
-    "contactUsContent": "Si vous avez des questions sur notre utilisation des cookies, veuillez nous contacter à contact@motori.ma."
+    "contactUsContent": "Si vous avez des questions sur notre utilisation des cookies, veuillez nous contacter à contact@motonita.ma."
   },
   "changePasswordPage": {
     "title": "Changer le Mot de Passe",
@@ -1142,7 +1142,7 @@
     },
     "business": {
       "title": "Candidature Business Soumise !",
-      "description": "Merci d'avoir postulé pour devenir partenaire Motori.",
+      "description": "Merci d'avoir postulé pour devenir partenaire Motonita.",
       "details": "Nous répondons généralement sous 24-48 heures."
     },
     "affiliate": {
@@ -1165,7 +1165,7 @@
     "verificationTime": "La vérification prend généralement 24-48 heures",
     "contactSupport": "Des questions ou problèmes avec la vérification ?",
     "whatsappContact": "Contactez-nous sur WhatsApp",
-    "copyEmail": "Copier l'Email: support@motori.ma",
+    "copyEmail": "Copier l'Email: support@motonita.ma",
     "emailCopied": "Email copié !",
     "goToBookings": "Voir Mes Réservations",
     "backToHome": "Retour à l'Accueil",
@@ -1177,7 +1177,7 @@
   },
   "affiliateSignup": {
     "title": "Rejoignez Notre Programme d'Affiliation",
-    "subtitle": "Partagez vos coordonnées et nous vous expliquerons comment commencer à gagner avec Motori.ma",
+    "subtitle": "Partagez vos coordonnées et nous vous expliquerons comment commencer à gagner avec Motonita.ma",
     "formTitle": "Candidature Affilié",
     "formDescription": "Remplissez le formulaire ci-dessous et nous vous contacterons avec plus d'informations sur notre programme de parrainage",
     "fullName": "Nom Complet",
@@ -1189,7 +1189,7 @@
     "submitButton": "Je Veux Rejoindre le Programme d'Affiliation",
     "submitting": "Envoi en cours...",
     "submitError": "Échec de l'envoi. Veuillez réessayer.",
-    "consentText": "En soumettant ce formulaire, vous acceptez d'être contacté concernant le programme d'affiliation Motori.ma",
+    "consentText": "En soumettant ce formulaire, vous acceptez d'être contacté concernant le programme d'affiliation Motonita.ma",
     "whatHappensNext": "Que se passe-t-il ensuite ?",
     "step1": "Notre équipe examinera votre candidature sous 24-48 heures",
     "step2": "Nous vous contacterons par email ou téléphone pour expliquer les détails du programme",
@@ -1484,7 +1484,7 @@
     "cancelled": "Annulée"
   },
   "phoneCaptureModal": {
-    "title": "Bienvenue chez Motori ! 🎉",
+    "title": "Bienvenue chez Motonita ! 🎉",
     "description": "Veuillez fournir votre numéro de téléphone ou WhatsApp pour compléter votre profil. Cela nous aide à vous contacter pour les mises à jour de réservation.",
     "phoneLabel": "Numéro de téléphone / WhatsApp *",
     "placeholder": "+212 6XX XXX XXX",

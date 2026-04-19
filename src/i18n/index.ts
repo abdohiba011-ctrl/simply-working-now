@@ -9,7 +9,7 @@ import ar from '@/locales/ar.json';
 const getInitialLanguage = (): string => {
   try {
     if (typeof window !== 'undefined' && window.localStorage) {
-      const saved = localStorage.getItem('motori-language');
+      const saved = localStorage.getItem('motonita-language');
       if (saved && ['en', 'fr', 'ar'].includes(saved)) {
         return saved;
       }

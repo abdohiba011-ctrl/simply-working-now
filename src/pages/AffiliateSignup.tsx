@@ -31,7 +31,7 @@ const AffiliateSignup = () => {
           name: formData.fullName,
           email: formData.email,
           phone: formData.phone,
-          message: "I want to join the affiliate program at Motori.ma",
+          message: "I want to join the affiliate program at Motonita.ma",
           type: 'affiliate'
         }
       });

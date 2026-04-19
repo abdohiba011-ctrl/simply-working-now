@@ -304,7 +304,7 @@ export const HeroSection = memo(() => {
               <AlertTriangle className="h-4 w-4 text-white" />
               <AlertDescription className="text-white">
                 {t('hero.blockedMessage')} 
-                <a href="mailto:contact@motori.ma" className="underline ml-1 font-medium text-white">{t('hero.contactSupport')}</a>
+                <a href="mailto:contact@motonita.ma" className="underline ml-1 font-medium text-white">{t('hero.contactSupport')}</a>
               </AlertDescription>
             </Alert>
           )}

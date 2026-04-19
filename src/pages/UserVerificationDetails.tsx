@@ -167,7 +167,7 @@ const UserVerificationDetails = () => {
       await supabase.from('notifications').insert({
         user_id: user.id,
         title: 'Account Verified! ✅',
-        message: 'Congratulations! Your account has been verified. You can now rent motorbikes on Motori.',
+        message: 'Congratulations! Your account has been verified. You can now rent motorbikes on Motonita.',
         type: 'success'
       });
 

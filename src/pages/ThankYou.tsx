@@ -172,7 +172,7 @@ const ThankYou = () => {
                   </a>
                   <button 
                     onClick={() => {
-                      navigator.clipboard.writeText("support@motori.ma");
+                      navigator.clipboard.writeText("support@motonita.ma");
                       toast.success(t("thankYouPage.emailCopied"));
                     }}
                     className="inline-flex items-center gap-2 text-sm font-medium text-foreground hover:underline text-left"

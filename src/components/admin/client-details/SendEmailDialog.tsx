@@ -236,8 +236,8 @@ export const SendEmailDialog = ({
                   variant="outline"
                   size="sm"
                   onClick={() => {
-                    setSubject("Booking Reminder - Motori");
-                    setContent(`Dear ${clientName},\n\nThis is a friendly reminder about your upcoming booking with Motori.\n\nPlease make sure to have your ID ready for pickup.\n\nIf you have any questions, don't hesitate to contact us.\n\nBest regards,\nThe Motori Team`);
+                    setSubject("Booking Reminder - Motonita");
+                    setContent(`Dear ${clientName},\n\nThis is a friendly reminder about your upcoming booking with Motonita.\n\nPlease make sure to have your ID ready for pickup.\n\nIf you have any questions, don't hesitate to contact us.\n\nBest regards,\nThe Motonita Team`);
                   }}
                   disabled={isSending}
                 >
@@ -248,8 +248,8 @@ export const SendEmailDialog = ({
                   variant="outline"
                   size="sm"
                   onClick={() => {
-                    setSubject("Special Offer Just for You - Motori");
-                    setContent(`Dear ${clientName},\n\nWe have an exclusive offer just for you!\n\n[Add your offer details here]\n\nBook now and enjoy special discounts.\n\nBest regards,\nThe Motori Team`);
+                    setSubject("Special Offer Just for You - Motonita");
+                    setContent(`Dear ${clientName},\n\nWe have an exclusive offer just for you!\n\n[Add your offer details here]\n\nBook now and enjoy special discounts.\n\nBest regards,\nThe Motonita Team`);
                   }}
                   disabled={isSending}
                 >
@@ -260,8 +260,8 @@ export const SendEmailDialog = ({
                   variant="outline"
                   size="sm"
                   onClick={() => {
-                    setSubject("Thank You for Renting with Motori!");
-                    setContent(`Dear ${clientName},\n\nThank you for choosing Motori for your motorbike rental!\n\nWe hope you had a great experience. We'd love to hear your feedback.\n\nWe look forward to serving you again!\n\nBest regards,\nThe Motori Team`);
+                    setSubject("Thank You for Renting with Motonita!");
+                    setContent(`Dear ${clientName},\n\nThank you for choosing Motonita for your motorbike rental!\n\nWe hope you had a great experience. We'd love to hear your feedback.\n\nWe look forward to serving you again!\n\nBest regards,\nThe Motonita Team`);
                   }}
                   disabled={isSending}
                 >
@@ -272,8 +272,8 @@ export const SendEmailDialog = ({
                   variant="outline"
                   size="sm"
                   onClick={() => {
-                    setSubject("Verification Required - Motori");
-                    setContent(`Dear ${clientName},\n\nWe noticed that your account verification is incomplete or requires attention.\n\nPlease log in to your Motori account and complete the verification process to continue using our services.\n\nIf you need any assistance, please contact our support team.\n\nBest regards,\nThe Motori Team`);
+                    setSubject("Verification Required - Motonita");
+                    setContent(`Dear ${clientName},\n\nWe noticed that your account verification is incomplete or requires attention.\n\nPlease log in to your Motonita account and complete the verification process to continue using our services.\n\nIf you need any assistance, please contact our support team.\n\nBest regards,\nThe Motonita Team`);
                   }}
                   disabled={isSending}
                 >

@@ -14,7 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { LogOut, User, Home } from "lucide-react";
-import logo from "@/assets/motori-logo.svg";
+import logo from "@/assets/motonita-logo.svg";
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -73,9 +73,9 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
         <div className="px-4">
           <div className="flex items-center justify-between h-14">
             <Link to="/admin/panel" className="flex items-center gap-2">
-              <img src={logo} alt="Motori Logo" className="h-8 w-auto" />
+              <img src={logo} alt="Motonita Logo" className="h-8 w-auto" />
               <span className="font-bold text-sm hidden sm:inline bg-gradient-to-r from-gray-900 via-gray-700 to-gray-900 dark:from-gray-100 dark:via-gray-300 dark:to-gray-100 bg-clip-text text-transparent">
-                Motori Admin
+                Motonita Admin
               </span>
             </Link>
 
@@ -131,7 +131,7 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
       <footer className="bg-background border-t border-border py-3">
         <div className="container mx-auto px-4 text-center">
           <p className="text-muted-foreground text-xs">
-            © {new Date().getFullYear()} Motori Maroc. All rights reserved.
+            © {new Date().getFullYear()} Motonita Maroc. All rights reserved.
           </p>
         </div>
       </footer>

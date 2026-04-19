@@ -48,7 +48,7 @@ export const LanguageProvider = ({ children }: LanguageProviderProps) => {
     }
     
     // Save to localStorage
-    localStorage.setItem('motori-language', language);
+    localStorage.setItem('motonita-language', language);
   }, [language, isRTL]);
 
   const setLanguage = (lang: Language) => {

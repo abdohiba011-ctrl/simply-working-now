@@ -23,7 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { LogOut, User, Home, Globe, LayoutDashboard, Calendar, Menu, X, ChevronLeft, ChevronRight, Bike } from "lucide-react";
-import logo from "@/assets/motori-logo.svg";
+import logo from "@/assets/motonita-logo.svg";
 import { cn } from "@/lib/utils";
 
 interface BusinessLayoutProps {
@@ -105,9 +105,9 @@ export const BusinessLayout = ({ children }: BusinessLayoutProps) => {
               </button>
               
               <Link to="/business-dashboard" className="flex items-center gap-2">
-                <img src={logo} alt="Motori Logo" className="h-8 w-auto" />
+                <img src={logo} alt="Motonita Logo" className="h-8 w-auto" />
                 <span className="font-bold text-sm hidden sm:inline bg-gradient-to-r from-emerald-700 via-teal-600 to-emerald-700 dark:from-emerald-400 dark:via-teal-300 dark:to-emerald-400 bg-clip-text text-transparent">
-                  Motori Business
+                  Motonita Business
                 </span>
               </Link>
             </div>
@@ -228,7 +228,7 @@ export const BusinessLayout = ({ children }: BusinessLayoutProps) => {
       <footer className="bg-background border-t border-border py-3">
         <div className="container mx-auto px-4 text-center">
           <p className="text-muted-foreground text-xs">
-            © {new Date().getFullYear()} Motori Maroc. All rights reserved.
+            © {new Date().getFullYear()} Motonita Maroc. All rights reserved.
           </p>
         </div>
       </footer>
