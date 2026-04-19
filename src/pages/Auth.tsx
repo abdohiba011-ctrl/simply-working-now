@@ -18,10 +18,12 @@ import { PasswordStrengthIndicator } from "@/components/PasswordStrengthIndicato
 import { PrivacyTermsModal } from "@/components/PrivacyTermsModal";
 import { getUserFriendlyError, getErrMsg } from "@/lib/errorMessages";
 import { playSuccessSound } from "@/lib/soundEffects";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const { login, signup, isAuthenticated, isLoading: authLoading, hasRole } = useAuth();
   const isSignup = searchParams.get("mode") === "signup";
   const returnUrl = searchParams.get("returnUrl");
@@ -104,11 +106,11 @@ const Auth = () => {
       
       if (error) throw error;
       
-      toast.success("Verification code sent to your email!");
+      toast.success(t('auth.codeSentSuccess'));
       setSignupStep("verify");
     } catch (error: unknown) {
       console.error('Send OTP error:', error);
-      toast.error(getErrMsg(error) || "Failed to send verification code. Please try again.");
+      toast.error(getErrMsg(error) || t('auth.failedToSendCode'));
     } finally {
       setOtpSending(false);
     }
@@ -123,13 +125,13 @@ const Auth = () => {
       if (error) throw error;
       
       if (!data?.success) {
-        throw new Error("Invalid verification code");
+        throw new Error(t('auth.invalidOrExpiredCode'));
       }
       
       return true;
     } catch (error: unknown) {
       console.error('Verify OTP error:', error);
-      toast.error(getErrMsg(error) || "Invalid or expired verification code");
+      toast.error(getErrMsg(error) || t('auth.invalidOrExpiredCode'));
       return false;
     }
   };
@@ -142,7 +144,7 @@ const Auth = () => {
       if (isSignup) {
         // Check terms acceptance
         if (!termsAccepted) {
-          toast.error("Please accept the Privacy Policy and Terms of Service");
+          toast.error(t('auth.acceptTermsRequired'));
           setIsLoading(false);
           return;
         }
@@ -163,7 +165,7 @@ const Auth = () => {
           accountType === "business" ? "business" : "user"
         );
         
-        toast.success("Account created successfully! Welcome!");
+        toast.success(t('auth.accountCreatedSuccess'));
         
         // Navigate to home or return URL
         navigate(returnUrl || '/');
@@ -180,7 +182,7 @@ const Auth = () => {
         // Play success sound on login
         playSuccessSound();
         
-        toast.success("Logged in successfully!");
+        toast.success(t('auth.loggedInSuccess'));
         
         // Check for pending booking
         const pendingBooking = safeGetItem<unknown>('pendingBooking', null);
@@ -218,10 +220,10 @@ const Auth = () => {
       
       if (error) throw error;
       
-      toast.success("Verification code sent! Please check your email.");
+      toast.success(t('auth.codeSentSuccess'));
       setResetStep("otp");
     } catch (error: unknown) {
-      toast.error(getErrMsg(error) || "Failed to send verification code. Please try again.");
+      toast.error(getErrMsg(error) || t('auth.failedToSendCode'));
     } finally {
       setIsLoading(false);
     }
@@ -241,14 +243,14 @@ const Auth = () => {
       }
       
       if (!data?.success) {
-        throw new Error("Invalid or expired verification code");
+        throw new Error(t('auth.invalidOrExpiredCode'));
       }
       
-      toast.success("Code verified! Please create a new password.");
+      toast.success(t('auth.codeVerifiedSuccess'));
       setResetStep("password");
     } catch (error: unknown) {
       console.error('OTP verification error:', error);
-      toast.error(getErrMsg(error) || "Invalid verification code. Please try again.");
+      toast.error(getErrMsg(error) || t('auth.invalidOrExpiredCode'));
     } finally {
       setIsLoading(false);
     }
@@ -258,12 +260,12 @@ const Auth = () => {
     e.preventDefault();
     
     if (newPassword !== confirmNewPassword) {
-      toast.error("Passwords do not match");
+      toast.error(t('auth.passwordsDoNotMatch'));
       return;
     }
 
     if (newPassword.length < 8) {
-      toast.error("Password must be at least 8 characters long");
+      toast.error(t('auth.passwordMin8'));
       return;
     }
 
@@ -281,7 +283,7 @@ const Auth = () => {
       
       if (error) throw error;
       
-      toast.success("Password reset successfully! You can now log in.");
+      toast.success(t('auth.passwordResetSuccess'));
       setShowForgotPassword(false);
       setResetStep("email");
       setResetEmail("");
@@ -289,7 +291,7 @@ const Auth = () => {
       setNewPassword("");
       setConfirmNewPassword("");
     } catch (error: unknown) {
-      toast.error(getErrMsg(error) || "Failed to reset password. Please try again.");
+      toast.error(getErrMsg(error) || t('auth.passwordResetFailed'));
     } finally {
       setIsLoading(false);
     }
@@ -302,7 +304,7 @@ const Auth = () => {
         redirect_uri: window.location.origin,
       });
       if (result.error) {
-        toast.error(getErrMsg(result.error) || "Google sign-in failed. Please try again.");
+        toast.error(getErrMsg(result.error) || t('auth.googleSignInFailed'));
         setIsLoading(false);
         return;
       }
@@ -312,9 +314,9 @@ const Auth = () => {
       }
       // Tokens received and session set; auth state listener will handle redirect
       playSuccessSound();
-      toast.success("Signed in with Google!");
+      toast.success(t('auth.googleSignInSuccess'));
     } catch (error: unknown) {
-      toast.error(getErrMsg(error) || "Google sign-in failed. Please try again.");
+      toast.error(getErrMsg(error) || t('auth.googleSignInFailed'));
       setIsLoading(false);
     }
   };
@@ -332,22 +334,22 @@ const Auth = () => {
                   {resetStep === "email" && (
                     <>
                       <h1 className="text-3xl font-bold text-center mb-2 text-foreground">
-                        Reset Password
+                        {t('auth.resetPassword')}
                       </h1>
                       <p className="text-center text-muted-foreground mb-6">
-                        Enter your email address and we'll send you a verification code.
+                        {t('auth.resetPasswordDesc')}
                       </p>
                       
                       <form onSubmit={handleSendOTP} className="space-y-4">
                         <div className="space-y-2">
-                          <Label htmlFor="reset-email">Email</Label>
+                          <Label htmlFor="reset-email">{t('auth.email')}</Label>
                           <Input
                             id="reset-email"
                             type="email"
                             value={resetEmail}
                             onChange={(e) => setResetEmail(e.target.value)}
                             required
-                            placeholder="your@email.com"
+                            placeholder={t('auth.yourEmailPlaceholder')}
                             autoComplete="email"
                           />
                         </div>
@@ -358,7 +360,7 @@ const Auth = () => {
                             className="flex-1" 
                             disabled={isLoading}
                           >
-                            {isLoading ? "Sending..." : "Send Verification Code"}
+                            {isLoading ? t('auth.sending') : t('auth.sendVerificationCode')}
                           </Button>
                           <Button 
                             type="button" 
@@ -369,7 +371,7 @@ const Auth = () => {
                             }}
                             disabled={isLoading}
                           >
-                            Cancel
+                            {t('auth.cancel')}
                           </Button>
                         </div>
                       </form>
@@ -379,22 +381,22 @@ const Auth = () => {
                   {resetStep === "otp" && (
                     <>
                       <h1 className="text-3xl font-bold text-center mb-2 text-foreground">
-                        Enter Verification Code
+                        {t('auth.enterVerificationCode')}
                       </h1>
                       <p className="text-center text-muted-foreground mb-6">
-                        We sent an 8-digit code to {resetEmail}
+                        {t('auth.codeSentTo')} {resetEmail}
                       </p>
                       
                       <form onSubmit={handleVerifyOTP} className="space-y-4">
                         <div className="space-y-2">
-                          <Label htmlFor="otp-code">Verification Code</Label>
+                          <Label htmlFor="otp-code">{t('auth.verificationCode')}</Label>
                           <Input
                             id="otp-code"
                             type="text"
                             value={otpCode}
                             onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 8))}
                             required
-                            placeholder="Enter 8-digit code"
+                            placeholder={t('auth.enterCode')}
                             maxLength={8}
                             className="text-center text-2xl tracking-widest font-bold"
                             autoComplete="one-time-code"
@@ -407,7 +409,7 @@ const Auth = () => {
                             className="flex-1" 
                             disabled={isLoading || otpCode.length !== 8}
                           >
-                            {isLoading ? "Verifying..." : "Verify Code"}
+                            {isLoading ? t('auth.verifying') : t('auth.verify')}
                           </Button>
                           <Button 
                             type="button" 
@@ -418,7 +420,7 @@ const Auth = () => {
                             }}
                             disabled={isLoading}
                           >
-                            Back
+                            {t('auth.back')}
                           </Button>
                         </div>
 
@@ -430,7 +432,7 @@ const Auth = () => {
                             onClick={handleSendOTP}
                             disabled={isLoading}
                           >
-                            Resend code
+                            {t('auth.resendCode')}
                           </Button>
                         </div>
                       </form>
@@ -440,15 +442,15 @@ const Auth = () => {
                   {resetStep === "password" && (
                     <>
                       <h1 className="text-3xl font-bold text-center mb-2 text-foreground">
-                        Create New Password
+                        {t('auth.createNewPassword')}
                       </h1>
                       <p className="text-center text-muted-foreground mb-6">
-                        Enter your new password below
+                        {t('auth.enterNewPassword')}
                       </p>
                       
                       <form onSubmit={handleResetPassword} className="space-y-4">
                         <div className="space-y-2">
-                          <Label htmlFor="new-password">New Password</Label>
+                          <Label htmlFor="new-password">{t('auth.newPassword')}</Label>
                           <div className="relative">
                             <Input
                               id="new-password"
@@ -456,7 +458,7 @@ const Auth = () => {
                               value={newPassword}
                               onChange={(e) => setNewPassword(e.target.value)}
                               required
-                              placeholder="Enter new password"
+                              placeholder={t('auth.enterNewPasswordPlaceholder')}
                               className="pr-10"
                               autoComplete="new-password"
                             />
@@ -472,7 +474,7 @@ const Auth = () => {
                         </div>
 
                         <div className="space-y-2">
-                          <Label htmlFor="confirm-new-password">Confirm New Password</Label>
+                          <Label htmlFor="confirm-new-password">{t('auth.confirmNewPassword')}</Label>
                           <div className="relative">
                             <Input
                               id="confirm-new-password"
@@ -480,7 +482,7 @@ const Auth = () => {
                               value={confirmNewPassword}
                               onChange={(e) => setConfirmNewPassword(e.target.value)}
                               required
-                              placeholder="Confirm new password"
+                              placeholder={t('auth.confirmNewPasswordPlaceholder')}
                               className="pr-10"
                               autoComplete="new-password"
                             />
@@ -493,10 +495,10 @@ const Auth = () => {
                             </button>
                           </div>
                           {confirmNewPassword && newPassword !== confirmNewPassword && (
-                            <p className="text-xs text-destructive">Passwords do not match</p>
+                            <p className="text-xs text-destructive">{t('auth.passwordsDoNotMatch')}</p>
                           )}
                           {confirmNewPassword && newPassword === confirmNewPassword && (
-                            <p className="text-xs text-green-600">Passwords match ✓</p>
+                            <p className="text-xs text-green-600">{t('auth.passwordsMatch')}</p>
                           )}
                         </div>
                         
@@ -505,7 +507,7 @@ const Auth = () => {
                           className="w-full" 
                           disabled={isLoading}
                         >
-                          {isLoading ? "Resetting..." : "Reset Password"}
+                          {isLoading ? t('auth.resetting') : t('auth.resetPasswordBtn')}
                         </Button>
                       </form>
                     </>
@@ -518,23 +520,23 @@ const Auth = () => {
                 <CardContent className="p-8">
                   <div className="text-center mb-6">
                     <h1 className="text-3xl font-bold text-foreground mb-2">
-                      Verify Your Email
+                      {t('auth.verifyYourEmail')}
                     </h1>
                     <p className="text-muted-foreground">
-                      We sent a 6-digit code to <strong>{email}</strong>
+                      {t('auth.codeSentToEmail')} <strong>{email}</strong>
                     </p>
                   </div>
                   
                   <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="email-otp">Verification Code</Label>
+                      <Label htmlFor="email-otp">{t('auth.verificationCode')}</Label>
                       <Input
                         id="email-otp"
                         type="text"
                         value={emailOtp}
                         onChange={(e) => setEmailOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
                         required
-                        placeholder="Enter 6-digit code"
+                        placeholder={t('auth.enterSixDigitCode')}
                         maxLength={6}
                         className="text-center text-2xl tracking-widest font-bold"
                         autoComplete="one-time-code"
@@ -548,7 +550,7 @@ const Auth = () => {
                         variant="hero"
                         disabled={isLoading || emailOtp.length !== 6}
                       >
-                        {isLoading ? "Verifying..." : "Verify & Create Account"}
+                        {isLoading ? t('auth.verifying') : t('auth.verifyAndCreate')}
                       </Button>
                       <Button 
                         type="button" 
@@ -559,7 +561,7 @@ const Auth = () => {
                         }}
                         disabled={isLoading}
                       >
-                        Back
+                        {t('auth.back')}
                       </Button>
                     </div>
 
@@ -571,7 +573,7 @@ const Auth = () => {
                         onClick={handleSendEmailOtp}
                         disabled={otpSending}
                       >
-                        {otpSending ? "Sending..." : "Resend code"}
+                        {otpSending ? t('auth.sending') : t('auth.resendCode')}
                       </Button>
                     </div>
                   </form>
@@ -582,7 +584,7 @@ const Auth = () => {
                 <CardContent className="p-8">
                   <div className="text-center mb-6">
                     <h1 className="text-3xl font-bold text-foreground mb-2">
-                      {isSignup ? "Create Account" : "Welcome Back"}
+                      {isSignup ? t('auth.createAccount') : t('auth.welcomeBack')}
                     </h1>
                   </div>
 
@@ -598,7 +600,7 @@ const Auth = () => {
                       }`}
                     >
                       <span className="text-base">🏍️</span>
-                      <span>I'm a Client</span>
+                      <span>{t('auth.imAClient')}</span>
                     </button>
                     <button
                       type="button"
@@ -610,7 +612,7 @@ const Auth = () => {
                       }`}
                     >
                       <span className="text-base">💼</span>
-                      <span>I'm a Business</span>
+                      <span>{t('auth.imABusiness')}</span>
                     </button>
                   </div>
                   
@@ -621,7 +623,7 @@ const Auth = () => {
                     className="w-full h-11 gap-3"
                     onClick={handleGoogleSignIn}
                     disabled={isLoading}
-                    aria-label={isSignup ? "Sign up with Google" : "Sign in with Google"}
+                    aria-label={isSignup ? t('auth.signUpWithGoogle') : t('auth.continueWithGoogle')}
                   >
                     <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
                       <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -629,7 +631,7 @@ const Auth = () => {
                       <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
                       <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
                     </svg>
-                    {isSignup ? "Sign up with Google" : "Continue with Google"}
+                    {isSignup ? t('auth.signUpWithGoogle') : t('auth.continueWithGoogle')}
                   </Button>
 
                   <div className="relative my-6">
@@ -637,7 +639,7 @@ const Auth = () => {
                       <span className="w-full border-t border-border" />
                     </div>
                     <div className="relative flex justify-center text-xs uppercase">
-                      <span className="bg-card px-2 text-muted-foreground">Or continue with email</span>
+                      <span className="bg-card px-2 text-muted-foreground">{t('auth.orContinueWithEmail')}</span>
                     </div>
                   </div>
 
@@ -646,14 +648,14 @@ const Auth = () => {
                        <>
                         
                         <div className="space-y-2">
-                          <Label htmlFor="name">Full Name</Label>
+                          <Label htmlFor="name">{t('auth.fullName')}</Label>
                           <Input
                             id="name"
                             type="text"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
                             required
-                            placeholder="Enter your name"
+                            placeholder={t('auth.enterYourName')}
                             autoComplete="name"
                           />
                         </div>
@@ -661,20 +663,20 @@ const Auth = () => {
                     )}
                     
                     <div className="space-y-2">
-                      <Label htmlFor="email">Email</Label>
+                      <Label htmlFor="email">{t('auth.email')}</Label>
                       <Input
                         id="email"
                         type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         required
-                        placeholder="Enter your email"
+                        placeholder={t('auth.enterYourEmail')}
                         autoComplete="email"
                       />
                     </div>
                     
                     <div className="space-y-2">
-                      <Label htmlFor="password">Password</Label>
+                      <Label htmlFor="password">{t('auth.password')}</Label>
                       <div className="relative">
                         <Input
                           id="password"
@@ -682,7 +684,7 @@ const Auth = () => {
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
                           required
-                          placeholder="Enter your password"
+                          placeholder={t('auth.enterYourPassword')}
                           className="pr-10"
                           autoComplete={isSignup ? "new-password" : "current-password"}
                         />
@@ -706,7 +708,7 @@ const Auth = () => {
                           className="h-5 w-5"
                         />
                         <Label htmlFor="rememberMe" className="text-base font-medium cursor-pointer">
-                          Remember me
+                          {t('auth.rememberMe')}
                         </Label>
                       </div>
                     )}
@@ -714,7 +716,7 @@ const Auth = () => {
                     {isSignup && (
                       <>
                         <div className="space-y-2">
-                          <Label htmlFor="confirmPassword">Confirm Password</Label>
+                          <Label htmlFor="confirmPassword">{t('auth.confirmPassword')}</Label>
                           <div className="relative">
                             <Input
                               id="confirmPassword"
@@ -722,7 +724,7 @@ const Auth = () => {
                               value={confirmPassword}
                               onChange={(e) => setConfirmPassword(e.target.value)}
                               required
-                              placeholder="Confirm your password"
+                              placeholder={t('auth.confirmYourPassword')}
                               className="pr-10"
                               autoComplete="new-password"
                             />
@@ -735,10 +737,10 @@ const Auth = () => {
                             </button>
                           </div>
                           {confirmPassword && password !== confirmPassword && (
-                            <p className="text-xs text-destructive">Passwords do not match</p>
+                            <p className="text-xs text-destructive">{t('auth.passwordsDoNotMatch')}</p>
                           )}
                           {confirmPassword && password === confirmPassword && password.length > 0 && (
-                            <p className="text-xs text-green-600">Passwords match ✓</p>
+                            <p className="text-xs text-green-600">{t('auth.passwordsMatch')}</p>
                           )}
                         </div>
 
@@ -755,24 +757,24 @@ const Auth = () => {
                               htmlFor="terms"
                               className="text-sm font-medium leading-none cursor-pointer"
                             >
-                              I agree to the Terms and Privacy Policy
+                              {t('auth.agreeToTerms')}
                             </label>
                             <p className="text-xs text-muted-foreground">
-                              By creating an account, you agree to our{" "}
+                              {t('auth.agreeToTermsDesc')}{" "}
                               <button
                                 type="button"
                                 onClick={() => setShowTermsModal(true)}
                                 className="text-muted-foreground underline hover:text-foreground"
                               >
-                                Terms of Service
+                                {t('auth.termsOfService')}
                               </button>
-                              {" "}and{" "}
+                              {" "}{t('auth.and')}{" "}
                               <button
                                 type="button"
                                 onClick={() => setShowPrivacyModal(true)}
                                 className="text-muted-foreground underline hover:text-foreground"
                               >
-                                Privacy Policy
+                                {t('auth.privacyPolicy')}
                               </button>
                             </p>
                           </div>
@@ -787,7 +789,7 @@ const Auth = () => {
                       variant="hero"
                       disabled={isLoading || otpSending || (isSignup && !termsAccepted)}
                     >
-                      {isLoading || otpSending ? "Please wait..." : (isSignup ? "Continue" : "Login")}
+                      {isLoading || otpSending ? t('auth.pleaseWait') : (isSignup ? t('auth.continue') : t('auth.login'))}
                     </Button>
 
                     {!isSignup && (
@@ -799,7 +801,7 @@ const Auth = () => {
                             className="p-0 text-sm text-primary hover:underline"
                             onClick={() => setShowForgotPassword(true)}
                           >
-                            Forgot password?
+                            {t('auth.forgotPassword')}
                           </Button>
                         </div>
                       </>
@@ -808,12 +810,12 @@ const Auth = () => {
                   
                   <div className="mt-6 text-center">
                     <p className="text-muted-foreground">
-                      {isSignup ? "Already have an account?" : "Don't have an account?"}{" "}
+                      {isSignup ? t('auth.haveAccount') : t('auth.noAccount')}{" "}
                       <button
                         onClick={() => navigate(isSignup ? "/auth" : "/auth?mode=signup")}
                         className="text-primary font-semibold hover:underline"
                       >
-                        {isSignup ? "Log In" : "Sign Up"}
+                        {isSignup ? t('auth.logIn') : t('auth.signUp')}
                       </button>
                     </p>
                   </div>
