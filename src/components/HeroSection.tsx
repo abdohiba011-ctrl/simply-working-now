@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, memo, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Calendar, MapPin, Check, Bike, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
