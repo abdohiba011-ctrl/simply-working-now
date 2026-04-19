@@ -106,11 +106,11 @@ const Auth = () => {
       
       if (error) throw error;
       
-      toast.success("Verification code sent to your email!");
+      toast.success(t('auth.codeSentSuccess'));
       setSignupStep("verify");
     } catch (error: unknown) {
       console.error('Send OTP error:', error);
-      toast.error(getErrMsg(error) || "Failed to send verification code. Please try again.");
+      toast.error(getErrMsg(error) || t('auth.failedToSendCode'));
     } finally {
       setOtpSending(false);
     }
@@ -125,13 +125,13 @@ const Auth = () => {
       if (error) throw error;
       
       if (!data?.success) {
-        throw new Error("Invalid verification code");
+        throw new Error(t('auth.invalidOrExpiredCode'));
       }
       
       return true;
     } catch (error: unknown) {
       console.error('Verify OTP error:', error);
-      toast.error(getErrMsg(error) || "Invalid or expired verification code");
+      toast.error(getErrMsg(error) || t('auth.invalidOrExpiredCode'));
       return false;
     }
   };
@@ -144,7 +144,7 @@ const Auth = () => {
       if (isSignup) {
         // Check terms acceptance
         if (!termsAccepted) {
-          toast.error("Please accept the Privacy Policy and Terms of Service");
+          toast.error(t('auth.acceptTermsRequired'));
           setIsLoading(false);
           return;
         }
@@ -165,7 +165,7 @@ const Auth = () => {
           accountType === "business" ? "business" : "user"
         );
         
-        toast.success("Account created successfully! Welcome!");
+        toast.success(t('auth.accountCreatedSuccess'));
         
         // Navigate to home or return URL
         navigate(returnUrl || '/');
@@ -182,7 +182,7 @@ const Auth = () => {
         // Play success sound on login
         playSuccessSound();
         
-        toast.success("Logged in successfully!");
+        toast.success(t('auth.loggedInSuccess'));
         
         // Check for pending booking
         const pendingBooking = safeGetItem<unknown>('pendingBooking', null);
@@ -220,10 +220,10 @@ const Auth = () => {
       
       if (error) throw error;
       
-      toast.success("Verification code sent! Please check your email.");
+      toast.success(t('auth.codeSentSuccess'));
       setResetStep("otp");
     } catch (error: unknown) {
-      toast.error(getErrMsg(error) || "Failed to send verification code. Please try again.");
+      toast.error(getErrMsg(error) || t('auth.failedToSendCode'));
     } finally {
       setIsLoading(false);
     }
@@ -243,14 +243,14 @@ const Auth = () => {
       }
       
       if (!data?.success) {
-        throw new Error("Invalid or expired verification code");
+        throw new Error(t('auth.invalidOrExpiredCode'));
       }
       
-      toast.success("Code verified! Please create a new password.");
+      toast.success(t('auth.codeVerifiedSuccess'));
       setResetStep("password");
     } catch (error: unknown) {
       console.error('OTP verification error:', error);
-      toast.error(getErrMsg(error) || "Invalid verification code. Please try again.");
+      toast.error(getErrMsg(error) || t('auth.invalidOrExpiredCode'));
     } finally {
       setIsLoading(false);
     }
@@ -260,12 +260,12 @@ const Auth = () => {
     e.preventDefault();
     
     if (newPassword !== confirmNewPassword) {
-      toast.error("Passwords do not match");
+      toast.error(t('auth.passwordsDoNotMatch'));
       return;
     }
 
     if (newPassword.length < 8) {
-      toast.error("Password must be at least 8 characters long");
+      toast.error(t('auth.passwordMin8'));
       return;
     }
 
@@ -283,7 +283,7 @@ const Auth = () => {
       
       if (error) throw error;
       
-      toast.success("Password reset successfully! You can now log in.");
+      toast.success(t('auth.passwordResetSuccess'));
       setShowForgotPassword(false);
       setResetStep("email");
       setResetEmail("");
@@ -291,7 +291,7 @@ const Auth = () => {
       setNewPassword("");
       setConfirmNewPassword("");
     } catch (error: unknown) {
-      toast.error(getErrMsg(error) || "Failed to reset password. Please try again.");
+      toast.error(getErrMsg(error) || t('auth.passwordResetFailed'));
     } finally {
       setIsLoading(false);
     }
@@ -304,7 +304,7 @@ const Auth = () => {
         redirect_uri: window.location.origin,
       });
       if (result.error) {
-        toast.error(getErrMsg(result.error) || "Google sign-in failed. Please try again.");
+        toast.error(getErrMsg(result.error) || t('auth.googleSignInFailed'));
         setIsLoading(false);
         return;
       }
@@ -314,9 +314,9 @@ const Auth = () => {
       }
       // Tokens received and session set; auth state listener will handle redirect
       playSuccessSound();
-      toast.success("Signed in with Google!");
+      toast.success(t('auth.googleSignInSuccess'));
     } catch (error: unknown) {
-      toast.error(getErrMsg(error) || "Google sign-in failed. Please try again.");
+      toast.error(getErrMsg(error) || t('auth.googleSignInFailed'));
       setIsLoading(false);
     }
   };
