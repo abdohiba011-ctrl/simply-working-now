@@ -70,11 +70,9 @@ export const HeroSection = memo(() => {
   const [bikeType, setBikeType] = useState("");
   const [isBlocked, setIsBlocked] = useState(false);
   const [formErrors, setFormErrors] = useState<{ bike?: boolean; location?: boolean; dates?: boolean }>({});
-  const [bikeTypes, setBikeTypes] = useState<BikeTypeDisplay[]>(fallbackBikeTypes);
   const [isOtherLocation, setIsOtherLocation] = useState(false);
   const [customCity, setCustomCity] = useState("");
   const [customLocationDetail, setCustomLocationDetail] = useState("");
-  const [neighborhoods, setNeighborhoods] = useState<string[]>(fallbackNeighborhoods);
   const bikeSelectionRef = useRef<HTMLDivElement>(null);
   const locationRef = useRef<HTMLSelectElement>(null);
   const dateRef = useRef<HTMLButtonElement>(null);
@@ -84,34 +82,23 @@ export const HeroSection = memo(() => {
   const isMobile = useIsMobile();
   const { data: pricingTiers } = usePricingTiers();
 
-  // Fetch locations from database (only from available cities)
-  useEffect(() => {
-    const fetchLocations = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('service_locations')
-          .select('id, name, city_id, service_cities!inner(is_available)')
-          .eq('is_active', true)
-          .order('name');
-        
-        if (error) throw error;
-        
-        if (data && data.length > 0) {
-          // Filter only locations from available cities
-          type LocRow = { name: string; service_cities?: { is_available?: boolean } | null };
-          const availableLocations = (data as LocRow[]).filter((loc) => loc.service_cities?.is_available === true);
-          if (availableLocations.length > 0) {
-            setNeighborhoods(availableLocations.map((loc) => loc.name));
-          }
-        }
-      } catch (error) {
-        console.error("Failed to fetch locations:", error);
-        // Keep fallback neighborhoods on error
-      }
-    };
-    
-    fetchLocations();
-  }, []);
+  // Fetch locations from database (cached, available cities only)
+  const { data: neighborhoods = fallbackNeighborhoods } = useQuery({
+    queryKey: ['hero-service-locations'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('service_locations')
+        .select('id, name, city_id, service_cities!inner(is_available)')
+        .eq('is_active', true)
+        .order('name');
+      if (error) throw error;
+      type LocRow = { name: string; service_cities?: { is_available?: boolean } | null };
+      const available = (data as LocRow[] | null)?.filter(l => l.service_cities?.is_available === true) ?? [];
+      return available.length > 0 ? available.map(l => l.name) : fallbackNeighborhoods;
+    },
+    staleTime: 10 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+  });
 
   // Calculate price range from pricing tiers
   const priceRange = useMemo(() => {
@@ -124,57 +111,28 @@ export const HeroSection = memo(() => {
     return `${minPrice}-${maxPrice} DH/day`;
   }, [pricingTiers]);
 
-  // Fetch bike types from database with real-time updates
-  useEffect(() => {
-    const fetchBikeTypes = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('bike_types')
-          .select('id, name, main_image_url, daily_price')
-          .eq('is_original', true)
-          .eq('is_approved', true)
-          .order('name');
-
-        if (error) throw error;
-        
-        if (data && data.length > 0) {
-          const mappedBikes = data.map(bike => ({
-            id: bike.id,
-            name: bike.name,
-            image: resolveBikeImageUrl(bike.main_image_url),
-            price: priceRange
-          }));
-          setBikeTypes(mappedBikes);
-        }
-      } catch (error) {
-        console.error("Failed to fetch bike types:", error);
-        // Keep fallback bikes on error
-      }
-    };
-    
-    fetchBikeTypes();
-
-    // Subscribe to real-time updates for bike_types
-    const channel = supabase
-      .channel('hero_bike_types')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'bike_types'
-        },
-        () => {
-          // Refetch when bike types change
-          fetchBikeTypes();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
+  // Fetch bike types from database (cached, no realtime on landing)
+  const { data: bikeTypes = fallbackBikeTypes } = useQuery({
+    queryKey: ['hero-bike-types', priceRange],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('bike_types')
+        .select('id, name, main_image_url, daily_price')
+        .eq('is_original', true)
+        .eq('is_approved', true)
+        .order('name');
+      if (error) throw error;
+      if (!data || data.length === 0) return fallbackBikeTypes;
+      return data.map(bike => ({
+        id: bike.id,
+        name: bike.name,
+        image: resolveBikeImageUrl(bike.main_image_url),
+        price: priceRange,
+      })) as BikeTypeDisplay[];
+    },
+    staleTime: 10 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+  });
 
   // Check if user is blocked
   useEffect(() => {
