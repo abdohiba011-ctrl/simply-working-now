@@ -14,9 +14,12 @@ import { ScrollToTopButton } from "./components/ScrollToTopButton";
 import { LanguageSuggestionBanner } from "./components/LanguageSuggestionBanner";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 
-// Lazy load all page components
-const Index = lazy(() => import("./pages/Index"));
-const Listings = lazy(() => import("./pages/Listings"));
+// Eagerly load critical above-the-fold pages
+import Index from "./pages/Index";
+import Listings from "./pages/Listings";
+import Auth from "./pages/Auth";
+
+// Lazy load all other page components
 const BecomeSeller = lazy(() => import("./pages/BecomeSeller"));
 const Affiliate = lazy(() => import("./pages/Affiliate"));
 const AffiliateSignup = lazy(() => import("./pages/AffiliateSignup"));
@@ -29,7 +32,7 @@ const Quarterly = lazy(() => import("./pages/Quarterly"));
 const Insurances = lazy(() => import("./pages/Insurances"));
 const OurShops = lazy(() => import("./pages/OurShops"));
 const GPSTracking = lazy(() => import("./pages/GPSTracking"));
-const Auth = lazy(() => import("./pages/Auth"));
+
 const BecomeBusiness = lazy(() => import("./pages/BecomeBusiness"));
 const Profile = lazy(() => import("./pages/Profile"));
 const BikeDetails = lazy(() => import("./pages/BikeDetails"));
