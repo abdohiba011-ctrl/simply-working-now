@@ -334,22 +334,22 @@ const Auth = () => {
                   {resetStep === "email" && (
                     <>
                       <h1 className="text-3xl font-bold text-center mb-2 text-foreground">
-                        Reset Password
+                        {t('auth.resetPassword')}
                       </h1>
                       <p className="text-center text-muted-foreground mb-6">
-                        Enter your email address and we'll send you a verification code.
+                        {t('auth.resetPasswordDesc')}
                       </p>
                       
                       <form onSubmit={handleSendOTP} className="space-y-4">
                         <div className="space-y-2">
-                          <Label htmlFor="reset-email">Email</Label>
+                          <Label htmlFor="reset-email">{t('auth.email')}</Label>
                           <Input
                             id="reset-email"
                             type="email"
                             value={resetEmail}
                             onChange={(e) => setResetEmail(e.target.value)}
                             required
-                            placeholder="your@email.com"
+                            placeholder={t('auth.yourEmailPlaceholder')}
                             autoComplete="email"
                           />
                         </div>
@@ -360,7 +360,7 @@ const Auth = () => {
                             className="flex-1" 
                             disabled={isLoading}
                           >
-                            {isLoading ? "Sending..." : "Send Verification Code"}
+                            {isLoading ? t('auth.sending') : t('auth.sendVerificationCode')}
                           </Button>
                           <Button 
                             type="button" 
@@ -371,7 +371,7 @@ const Auth = () => {
                             }}
                             disabled={isLoading}
                           >
-                            Cancel
+                            {t('auth.cancel')}
                           </Button>
                         </div>
                       </form>
@@ -381,22 +381,22 @@ const Auth = () => {
                   {resetStep === "otp" && (
                     <>
                       <h1 className="text-3xl font-bold text-center mb-2 text-foreground">
-                        Enter Verification Code
+                        {t('auth.enterVerificationCode')}
                       </h1>
                       <p className="text-center text-muted-foreground mb-6">
-                        We sent an 8-digit code to {resetEmail}
+                        {t('auth.codeSentTo')} {resetEmail}
                       </p>
                       
                       <form onSubmit={handleVerifyOTP} className="space-y-4">
                         <div className="space-y-2">
-                          <Label htmlFor="otp-code">Verification Code</Label>
+                          <Label htmlFor="otp-code">{t('auth.verificationCode')}</Label>
                           <Input
                             id="otp-code"
                             type="text"
                             value={otpCode}
                             onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 8))}
                             required
-                            placeholder="Enter 8-digit code"
+                            placeholder={t('auth.enterCode')}
                             maxLength={8}
                             className="text-center text-2xl tracking-widest font-bold"
                             autoComplete="one-time-code"
@@ -409,7 +409,7 @@ const Auth = () => {
                             className="flex-1" 
                             disabled={isLoading || otpCode.length !== 8}
                           >
-                            {isLoading ? "Verifying..." : "Verify Code"}
+                            {isLoading ? t('auth.verifying') : t('auth.verify')}
                           </Button>
                           <Button 
                             type="button" 
@@ -420,7 +420,7 @@ const Auth = () => {
                             }}
                             disabled={isLoading}
                           >
-                            Back
+                            {t('auth.back')}
                           </Button>
                         </div>
 
@@ -432,7 +432,7 @@ const Auth = () => {
                             onClick={handleSendOTP}
                             disabled={isLoading}
                           >
-                            Resend code
+                            {t('auth.resendCode')}
                           </Button>
                         </div>
                       </form>
@@ -442,15 +442,15 @@ const Auth = () => {
                   {resetStep === "password" && (
                     <>
                       <h1 className="text-3xl font-bold text-center mb-2 text-foreground">
-                        Create New Password
+                        {t('auth.createNewPassword')}
                       </h1>
                       <p className="text-center text-muted-foreground mb-6">
-                        Enter your new password below
+                        {t('auth.enterNewPassword')}
                       </p>
                       
                       <form onSubmit={handleResetPassword} className="space-y-4">
                         <div className="space-y-2">
-                          <Label htmlFor="new-password">New Password</Label>
+                          <Label htmlFor="new-password">{t('auth.newPassword')}</Label>
                           <div className="relative">
                             <Input
                               id="new-password"
@@ -458,7 +458,7 @@ const Auth = () => {
                               value={newPassword}
                               onChange={(e) => setNewPassword(e.target.value)}
                               required
-                              placeholder="Enter new password"
+                              placeholder={t('auth.enterNewPasswordPlaceholder')}
                               className="pr-10"
                               autoComplete="new-password"
                             />
@@ -474,7 +474,7 @@ const Auth = () => {
                         </div>
 
                         <div className="space-y-2">
-                          <Label htmlFor="confirm-new-password">Confirm New Password</Label>
+                          <Label htmlFor="confirm-new-password">{t('auth.confirmNewPassword')}</Label>
                           <div className="relative">
                             <Input
                               id="confirm-new-password"
@@ -482,7 +482,7 @@ const Auth = () => {
                               value={confirmNewPassword}
                               onChange={(e) => setConfirmNewPassword(e.target.value)}
                               required
-                              placeholder="Confirm new password"
+                              placeholder={t('auth.confirmNewPasswordPlaceholder')}
                               className="pr-10"
                               autoComplete="new-password"
                             />
@@ -495,10 +495,10 @@ const Auth = () => {
                             </button>
                           </div>
                           {confirmNewPassword && newPassword !== confirmNewPassword && (
-                            <p className="text-xs text-destructive">Passwords do not match</p>
+                            <p className="text-xs text-destructive">{t('auth.passwordsDoNotMatch')}</p>
                           )}
                           {confirmNewPassword && newPassword === confirmNewPassword && (
-                            <p className="text-xs text-green-600">Passwords match ✓</p>
+                            <p className="text-xs text-green-600">{t('auth.passwordsMatch')}</p>
                           )}
                         </div>
                         
@@ -507,7 +507,7 @@ const Auth = () => {
                           className="w-full" 
                           disabled={isLoading}
                         >
-                          {isLoading ? "Resetting..." : "Reset Password"}
+                          {isLoading ? t('auth.resetting') : t('auth.resetPasswordBtn')}
                         </Button>
                       </form>
                     </>
