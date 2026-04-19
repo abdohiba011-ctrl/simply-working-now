@@ -18,10 +18,12 @@ import { PasswordStrengthIndicator } from "@/components/PasswordStrengthIndicato
 import { PrivacyTermsModal } from "@/components/PrivacyTermsModal";
 import { getUserFriendlyError, getErrMsg } from "@/lib/errorMessages";
 import { playSuccessSound } from "@/lib/soundEffects";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const { login, signup, isAuthenticated, isLoading: authLoading, hasRole } = useAuth();
   const isSignup = searchParams.get("mode") === "signup";
   const returnUrl = searchParams.get("returnUrl");
