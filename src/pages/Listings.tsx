@@ -1,13 +1,27 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
-
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { BikeTypeSkeleton } from "@/components/ui/bike-skeleton";
 import { DateRangePicker } from "@/components/DateRangePicker";
-import { Calendar, Bike, Star, MapPin as MapPinIcon, Info, ArrowLeft } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Calendar,
+  Bike,
+  Star,
+  MapPin as MapPinIcon,
+  ArrowLeft,
+  Heart,
+  SlidersHorizontal,
+} from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useBikeTypes, useBikes } from "@/hooks/useBikes";
 import { getBikeImageUrl } from "@/lib/bikeImages";
@@ -16,13 +30,13 @@ import { cn } from "@/lib/utils";
 import { DateRange } from "react-day-picker";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface Neighborhood {
   id: string;
   name: string;
 }
 
-// Fallback neighborhoods (used while loading)
 const fallbackNeighborhoods: Neighborhood[] = [
   { id: "tet-mellil", name: "Tet Mellil" },
   { id: "mediouna", name: "Mediouna" },
@@ -32,29 +46,30 @@ const fallbackNeighborhoods: Neighborhood[] = [
   { id: "sidi-maarouf", name: "Sidi Maarouf" },
   { id: "anfa", name: "Anfa" },
   { id: "ain-diab", name: "Ain Diab" },
-  { id: "bouskoura", name: "Bouskoura" }
+  { id: "bouskoura", name: "Bouskoura" },
 ];
 
-// Quantity available for each bike type (random between 5-15)
 const bikeQuantities: Record<string, number> = {
   "Sanya R1000": 12,
   "Becane 33": 8,
   "Cappuccino S": 15,
   "SYM Orbit II 50cc": 7,
-  "SH": 11
+  SH: 11,
 };
+
+type SortOption = "recommended" | "price-asc" | "price-desc" | "rating";
+const FAVORITES_KEY = "motonita_favorites";
 
 const Listings = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
-  const [selectedBike, setSelectedBike] = useState<string | null>(null);
   const [neighborhoods, setNeighborhoods] = useState<Neighborhood[]>(fallbackNeighborhoods);
   const [selectedTab, setSelectedTab] = useState<string>(fallbackNeighborhoods[0].id);
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
-  
+  const [sortBy, setSortBy] = useState<SortOption>("recommended");
+  const [favorites, setFavorites] = useState<Set<string>>(new Set());
+
   const { t, isRTL } = useLanguage();
-  
-  // Fetch bike types and bikes from database
   const { data: bikeTypes, isLoading: isLoadingTypes } = useBikeTypes();
   const { data: bikes, isLoading: isLoadingBikes } = useBikes();
 
@@ -62,77 +77,96 @@ const Listings = () => {
   const pickupDate = searchParams.get("pickup") || "";
   const endDate = searchParams.get("end") || "";
 
-  // Fetch locations from database (only from available cities)
+  // Load favorites from localStorage
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(FAVORITES_KEY);
+      if (raw) setFavorites(new Set(JSON.parse(raw)));
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  const toggleFavorite = useCallback(
+    (id: string, name: string) => {
+      setFavorites((prev) => {
+        const next = new Set(prev);
+        if (next.has(id)) {
+          next.delete(id);
+          toast.success(t("listings.removedFromFavorites"));
+        } else {
+          next.add(id);
+          toast.success(`${name} • ${t("listings.addedToFavorites")}`);
+        }
+        try {
+          localStorage.setItem(FAVORITES_KEY, JSON.stringify(Array.from(next)));
+        } catch {
+          /* ignore */
+        }
+        return next;
+      });
+    },
+    [t]
+  );
+
+  // Fetch service locations
   useEffect(() => {
     const fetchLocations = async () => {
       try {
         const { data, error } = await supabase
-          .from('service_locations')
-          .select('id, name, city_id, service_cities!inner(is_available)')
-          .eq('is_active', true)
-          .order('name');
-        
+          .from("service_locations")
+          .select("id, name, city_id, service_cities!inner(is_available)")
+          .eq("is_active", true)
+          .order("name");
+
         if (error) throw error;
-        
+
         if (data && data.length > 0) {
-          // Filter only locations from available cities
-          type LocRow = { id: string; name: string; service_cities?: { is_available?: boolean } | null };
-          const availableLocations = (data as LocRow[]).filter((loc) => loc.service_cities?.is_available === true);
+          type LocRow = {
+            id: string;
+            name: string;
+            service_cities?: { is_available?: boolean } | null;
+          };
+          const availableLocations = (data as LocRow[]).filter(
+            (loc) => loc.service_cities?.is_available === true
+          );
           if (availableLocations.length > 0) {
-            const mappedLocations = availableLocations.map((loc) => ({
-              id: loc.id,
-              name: loc.name
-            }));
-            setNeighborhoods(mappedLocations);
-            // Set initial tab to first available location
-            if (!location) {
-              setSelectedTab(mappedLocations[0].id);
-            }
+            const mapped = availableLocations.map((loc) => ({ id: loc.id, name: loc.name }));
+            setNeighborhoods(mapped);
+            if (!location) setSelectedTab(mapped[0].id);
           }
         }
-      } catch (error) {
-        console.error("Failed to fetch locations:", error);
-        // Keep fallback neighborhoods on error
+      } catch (e) {
+        console.error("Failed to fetch locations:", e);
       }
     };
-    
     fetchLocations();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Initialize dates from URL
   useEffect(() => {
     if (pickupDate && endDate) {
-      setDateRange({
-        from: new Date(pickupDate),
-        to: new Date(endDate)
-      });
+      setDateRange({ from: new Date(pickupDate), to: new Date(endDate) });
     }
   }, [pickupDate, endDate]);
 
-  // Set initial tab from URL location
   useEffect(() => {
     if (location) {
-      const neighborhood = neighborhoods.find(n => n.name === location);
-      if (neighborhood) {
-        setSelectedTab(neighborhood.id);
-      }
+      const n = neighborhoods.find((x) => x.name === location);
+      if (n) setSelectedTab(n.id);
     }
-  }, [location]);
+  }, [location, neighborhoods]);
 
-  // Get current neighborhood name
-  const currentNeighborhood = neighborhoods.find(n => n.id === selectedTab)?.name || neighborhoods[0].name;
+  const currentNeighborhood =
+    neighborhoods.find((n) => n.id === selectedTab)?.name || neighborhoods[0]?.name || "";
 
-  // Transform database bikes to match expected format for display
   const motorbikes = useMemo(() => {
     if (!bikes || !bikeTypes) return [];
-    
     return bikes
-      .filter(bike => bike.location === currentNeighborhood)
+      .filter((bike) => bike.location === currentNeighborhood)
       .map((bike) => {
-        const bikeType = bike.bike_type || bikeTypes.find(t => t.id === bike.bike_type_id);
-        
+        const bikeType = bike.bike_type || bikeTypes.find((t) => t.id === bike.bike_type_id);
         if (!bikeType) return null;
-        
         return {
           id: bike.id,
           name: bikeType?.name || "Unknown",
@@ -142,248 +176,278 @@ const Listings = () => {
           rating: Number(bikeType?.rating || 5),
           image: getBikeImageUrl(bikeType?.main_image_url || "sanya-main"),
           features: Array.isArray(bikeType?.features) ? bikeType.features : [],
-          quantity: bikeQuantities[bikeType?.name] || 10
+          quantity: bikeQuantities[bikeType?.name] || 10,
         };
       })
-      .filter(bike => bike !== null);
+      .filter((b): b is NonNullable<typeof b> => b !== null);
   }, [bikes, bikeTypes, currentNeighborhood]);
 
   // Group bikes by type
   const groupedBikes = useMemo(() => {
     const groups: Record<string, typeof motorbikes> = {};
-    motorbikes.forEach(bike => {
-      if (!groups[bike.type]) {
-        groups[bike.type] = [];
-      }
+    motorbikes.forEach((bike) => {
+      if (!groups[bike.type]) groups[bike.type] = [];
       groups[bike.type].push(bike);
     });
     return groups;
   }, [motorbikes]);
 
+  // Sort the grouped bikes
+  const sortedGroups = useMemo(() => {
+    const entries = Object.entries(groupedBikes).map(([type, list]) => ({
+      type,
+      first: list[0],
+      list,
+    }));
+    switch (sortBy) {
+      case "price-asc":
+        entries.sort((a, b) => (a.first?.price || 0) - (b.first?.price || 0));
+        break;
+      case "price-desc":
+        entries.sort((a, b) => (b.first?.price || 0) - (a.first?.price || 0));
+        break;
+      case "rating":
+        entries.sort((a, b) => (b.first?.rating || 0) - (a.first?.rating || 0));
+        break;
+      default:
+        break;
+    }
+    return entries;
+  }, [groupedBikes, sortBy]);
+
   const handleBikeSelect = (bikeId: string) => {
-    const dates = dateRange?.from && dateRange?.to
-      ? `?pickup=${format(dateRange.from, "yyyy-MM-dd")}&end=${format(dateRange.to, "yyyy-MM-dd")}`
-      : "";
+    const dates =
+      dateRange?.from && dateRange?.to
+        ? `?pickup=${format(dateRange.from, "yyyy-MM-dd")}&end=${format(dateRange.to, "yyyy-MM-dd")}`
+        : "";
     navigate(`/bike/${bikeId}${dates}`);
   };
 
   const handleTabChange = (tabId: string) => {
     setSelectedTab(tabId);
-    const neighborhood = neighborhoods.find(n => n.id === tabId);
-    if (neighborhood) {
-      const newParams = new URLSearchParams(searchParams);
-      newParams.set("location", neighborhood.name);
-      setSearchParams(newParams);
+    const n = neighborhoods.find((x) => x.id === tabId);
+    if (n) {
+      const params = new URLSearchParams(searchParams);
+      params.set("location", n.name);
+      setSearchParams(params);
     }
   };
 
   const handleDateChange = (range: DateRange | undefined) => {
     setDateRange(range);
+    const params = new URLSearchParams(searchParams);
     if (range?.from && range?.to) {
-      const newParams = new URLSearchParams(searchParams);
-      newParams.set("pickup", format(range.from, "yyyy-MM-dd"));
-      newParams.set("end", format(range.to, "yyyy-MM-dd"));
-      setSearchParams(newParams);
+      params.set("pickup", format(range.from, "yyyy-MM-dd"));
+      params.set("end", format(range.to, "yyyy-MM-dd"));
     } else if (!range) {
-      const newParams = new URLSearchParams(searchParams);
-      newParams.delete("pickup");
-      newParams.delete("end");
-      setSearchParams(newParams);
+      params.delete("pickup");
+      params.delete("end");
     }
+    setSearchParams(params);
   };
-  
-  if (isLoadingTypes || isLoadingBikes) {
-    return (
-      <div className="min-h-screen bg-background">
-        <Header />
-        <div className="bg-gradient-to-br from-primary/5 via-background to-secondary/5 border-b py-8">
-          <div className="container mx-auto px-4 text-center">
-            <h1 className="text-3xl md:text-5xl font-black text-foreground mb-3">{t('listings.title')}</h1>
-            <p className="text-lg text-muted-foreground">{t('listings.loading')}</p>
-          </div>
-        </div>
-        <div className="container mx-auto px-4 py-8 md:py-12">
-          <div className="max-w-7xl mx-auto space-y-8">
-            {[1, 2].map((i) => (
-              <BikeTypeSkeleton key={i} />
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
+
+  const isLoading = isLoadingTypes || isLoadingBikes;
 
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      
-      {/* Back to Homepage Button */}
-      <div className="container mx-auto px-4 pt-4">
-        <Button
-          variant="ghost"
-          onClick={() => navigate('/')}
-          className="gap-2 text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          {t('listings.backToHomepage')}
-        </Button>
-      </div>
-      
-      {/* Hero-style Header */}
-      <div className="bg-gradient-to-br from-primary/5 via-background to-secondary/5 border-b">
-        <div className="container mx-auto px-4 py-8 md:py-12">
-          <div className="text-center max-w-3xl mx-auto mb-8">
-            <h1 className="text-3xl md:text-5xl font-black text-foreground mb-3">
-              {t('listings.title')}
-            </h1>
-            <p className="text-lg text-muted-foreground">
-              {t('listings.subtitle')}
-            </p>
-          </div>
 
-          {/* Location Tabs */}
-          <div className="mb-6">
-            <div className="flex items-center justify-center gap-2 mb-4">
-              <MapPinIcon className="h-5 w-5 text-foreground" />
-              <h2 className="text-xl font-bold text-foreground">{t('listings.selectLocation')}</h2>
-            </div>
-            <div className="flex flex-wrap justify-center gap-2 md:gap-3">
-              {neighborhoods.map((neighborhood) => (
-                <button
-                  key={neighborhood.id}
-                  onClick={() => handleTabChange(neighborhood.id)}
-                  className={cn(
-                    "px-4 md:px-6 py-2.5 md:py-3 rounded-xl font-semibold text-sm md:text-base transition-all duration-300 border-2",
-                    selectedTab === neighborhood.id
-                      ? "bg-primary text-primary-foreground border-primary shadow-lg scale-105"
-                      : "bg-background text-foreground border-border hover:border-primary/50 hover:bg-primary/5"
-                  )}
-                >
-                  {neighborhood.name}
-                </button>
-              ))}
+      {/* Sticky filter bar */}
+      <div className="sticky top-16 z-40 bg-background/95 backdrop-blur-md border-b border-border">
+        <div className="container mx-auto px-4 py-3">
+          {/* Back + title row */}
+          <div className="flex items-center justify-between mb-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate("/")}
+              className="gap-2 text-muted-foreground hover:text-foreground -ml-2"
+            >
+              <ArrowLeft className={cn("h-4 w-4", isRTL && "rotate-180")} />
+              <span className="hidden sm:inline">{t("listings.backToHomepage")}</span>
+            </Button>
+            <div className="hidden md:flex items-center gap-2 text-sm text-muted-foreground">
+              <SlidersHorizontal className="h-4 w-4" />
+              <span>{t("listings.filtersTitle")}</span>
             </div>
           </div>
 
-          {/* Date Selection */}
-          <div className="max-w-md mx-auto">
-            <div className="flex items-center justify-center gap-2 mb-3">
-              <Calendar className="h-5 w-5 text-foreground" />
-              <h2 className="text-xl font-bold text-foreground">{t('listings.selectDates')}</h2>
-            </div>
-            <DateRangePicker
-              dateRange={dateRange}
-              onDateChange={handleDateChange}
-              maxDays={30}
-              showPriceBreakdown={false}
-            />
+          {/* Location pills - horizontal scroll */}
+          <div className="flex items-center gap-2 mb-3 overflow-x-auto pb-1 scrollbar-hide -mx-4 px-4">
+            {neighborhoods.map((n) => (
+              <button
+                key={n.id}
+                onClick={() => handleTabChange(n.id)}
+                className={cn(
+                  "flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 border",
+                  selectedTab === n.id
+                    ? "bg-foreground text-background border-foreground"
+                    : "bg-background text-foreground border-border hover:border-foreground/40"
+                )}
+              >
+                <MapPinIcon className="inline h-3.5 w-3.5 mr-1.5 -mt-0.5" />
+                {n.name}
+              </button>
+            ))}
           </div>
 
-          {/* More Cities Coming Soon */}
-          <div className="mt-6 text-center">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/50 border border-border">
-              <Info className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-medium text-muted-foreground">
-                {t('listings.moreCitiesComingSoon')}
-              </span>
+          {/* Date + sort row */}
+          <div className="flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between">
+            <div className="flex-1 sm:max-w-md">
+              <DateRangePicker
+                dateRange={dateRange}
+                onDateChange={handleDateChange}
+                maxDays={30}
+                showPriceBreakdown={false}
+              />
             </div>
+            <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
+              <SelectTrigger className="w-full sm:w-[200px]">
+                <SelectValue placeholder={t("listings.sortBy")} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="recommended">{t("listings.sortRecommended")}</SelectItem>
+                <SelectItem value="price-asc">{t("listings.sortPriceLow")}</SelectItem>
+                <SelectItem value="price-desc">{t("listings.sortPriceHigh")}</SelectItem>
+                <SelectItem value="rating">{t("listings.sortRating")}</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
       </div>
 
-      {/* Bike Types Grid */}
-      <div className="container mx-auto px-4 py-8 md:py-12">
+      {/* Results header */}
+      <div className="container mx-auto px-4 pt-6 pb-2">
         <div className="max-w-7xl mx-auto">
-        {Object.keys(groupedBikes).length === 0 ? (
-          <EmptyState
-            icon={Bike}
-            title={t('listings.noMotorbikesTitle')}
-            description={t('listings.noMotorbikesDesc').replace('{location}', currentNeighborhood)}
-            actionLabel={t('listings.tryAnotherNeighborhood')}
-            onAction={() => {
-              const currentIndex = neighborhoods.findIndex(n => n.id === selectedTab);
-              const nextIndex = (currentIndex + 1) % neighborhoods.length;
-              handleTabChange(neighborhoods[nextIndex].id);
-            }}
-          />
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {Object.entries(groupedBikes).map(([bikeType, bikesOfType]) => {
-              const firstBike = bikesOfType[0];
-              const quantity = firstBike?.quantity || 0;
-              
-              return (
-                <Card
-                  key={bikeType}
-                  className={cn(
-                    "cursor-pointer transition-all duration-300 hover:shadow-xl border-2 overflow-hidden",
-                    selectedBike === firstBike?.id
-                      ? "border-primary shadow-lg scale-[1.02]"
-                      : "border-transparent hover:border-primary/20"
-                  )}
-                  onClick={() => handleBikeSelect(firstBike?.id)}
-                >
-                  <CardContent className="p-0">
-                    {/* Bike Image with Quantity Badge */}
-                    <div className="relative aspect-[4/3] bg-white p-4 flex items-center justify-center">
-                      <Badge 
-                        variant="secondary" 
-                        className={`absolute top-3 ${isRTL ? 'left-3' : 'right-3'} text-sm font-bold px-3 py-1 bg-background/90 backdrop-blur-sm`}
-                      >
-                        {quantity} {t('listings.available')}
-                      </Badge>
-                      <img
-                        src={firstBike?.image}
-                        alt={bikeType}
-                        className="max-w-full max-h-full object-contain"
-                        loading="lazy"
-                      />
-                    </div>
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-1">
+            {currentNeighborhood || t("listings.title")}
+          </h1>
+          {!isLoading && (
+            <p className="text-sm text-muted-foreground">
+              {t("listings.resultsCount").replace(
+                "{count}",
+                String(motorbikes.reduce((acc, b) => acc + b.quantity, 0))
+              )}
+            </p>
+          )}
+        </div>
+      </div>
 
-                    {/* Bike Details */}
-                    <div className="p-5 space-y-3">
-                      <div className="flex items-start justify-between">
-                        <h3 className="font-bold text-foreground text-xl">
-                          {bikeType}
-                        </h3>
-                        <div className="flex items-center gap-1">
-                          <Star className="h-4 w-4 fill-primary text-primary" />
-                          <span className="text-sm font-semibold text-foreground">
-                            {firstBike?.rating}
+      {/* Grid */}
+      <div className="container mx-auto px-4 py-6 md:py-8">
+        <div className="max-w-7xl mx-auto">
+          {isLoading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 md:gap-6">
+              {[1, 2, 3, 4].map((i) => (
+                <BikeTypeSkeleton key={i} />
+              ))}
+            </div>
+          ) : sortedGroups.length === 0 ? (
+            <EmptyState
+              icon={Bike}
+              title={t("listings.noMotorbikesTitle")}
+              description={t("listings.noMotorbikesDesc").replace(
+                "{location}",
+                currentNeighborhood
+              )}
+              actionLabel={t("listings.tryAnotherNeighborhood")}
+              onAction={() => {
+                const idx = neighborhoods.findIndex((n) => n.id === selectedTab);
+                const next = (idx + 1) % neighborhoods.length;
+                handleTabChange(neighborhoods[next].id);
+              }}
+            />
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 md:gap-6">
+              {sortedGroups.map(({ type, first, list }, idx) => {
+                const quantity = first?.quantity || 0;
+                const isFav = first ? favorites.has(first.id) : false;
+                return (
+                  <Card
+                    key={type}
+                    className="group cursor-pointer border border-border bg-card hover:shadow-lg transition-all duration-300 overflow-hidden rounded-2xl animate-fade-in"
+                    style={{ animationDelay: `${idx * 60}ms` }}
+                    onClick={() => first && handleBikeSelect(first.id)}
+                  >
+                    <CardContent className="p-0">
+                      {/* Image */}
+                      <div className="relative aspect-square bg-muted/30 overflow-hidden">
+                        <img
+                          src={first?.image}
+                          alt={type}
+                          className="w-full h-full object-contain p-6 transition-transform duration-500 group-hover:scale-105"
+                          loading="lazy"
+                        />
+
+                        {/* Favorite button */}
+                        <button
+                          aria-label={isFav ? t("listings.saved") : t("listings.save")}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (first) toggleFavorite(first.id, type);
+                          }}
+                          className={cn(
+                            "absolute top-3 rounded-full p-2 backdrop-blur-md transition-all",
+                            isRTL ? "left-3" : "right-3",
+                            isFav
+                              ? "bg-primary/90 text-primary-foreground"
+                              : "bg-background/80 text-foreground hover:bg-background"
+                          )}
+                        >
+                          <Heart className={cn("h-4 w-4", isFav && "fill-current")} />
+                        </button>
+
+                        {/* Quantity */}
+                        <Badge
+                          variant="secondary"
+                          className={cn(
+                            "absolute bottom-3 text-xs font-semibold bg-background/90 backdrop-blur-sm text-foreground border-0",
+                            isRTL ? "right-3" : "left-3"
+                          )}
+                        >
+                          {quantity} {t("listings.available")}
+                        </Badge>
+                      </div>
+
+                      {/* Details */}
+                      <div className="p-4 space-y-2">
+                        <div className="flex items-start justify-between gap-2">
+                          <h3 className="font-semibold text-foreground text-base leading-tight line-clamp-1">
+                            {type}
+                          </h3>
+                          <div className="flex items-center gap-1 flex-shrink-0">
+                            <Star className="h-3.5 w-3.5 fill-foreground text-foreground" />
+                            <span className="text-sm font-medium text-foreground">
+                              {first?.rating?.toFixed(1)}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                          <MapPinIcon className="h-3 w-3" />
+                          <span className="line-clamp-1">{currentNeighborhood}</span>
+                        </div>
+
+                        <div className="pt-2">
+                          <span className="text-xs text-muted-foreground">
+                            {t("listings.from")}{" "}
+                          </span>
+                          <span className="text-lg font-bold text-foreground">
+                            {first?.price} DH
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            {t("listings.perDay")}
                           </span>
                         </div>
                       </div>
-
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <MapPinIcon className="h-4 w-4" />
-                        <span>{currentNeighborhood}</span>
-                      </div>
-
-                      <div className="flex items-center justify-between pt-2 border-t">
-                        <p className="text-2xl font-black text-foreground">
-                          {firstBike?.price} DH<span className="text-sm font-normal text-muted-foreground">{t('hero.perDay')}</span>
-                        </p>
-                        <Button 
-                          variant="hero"
-                          className="min-h-[44px]"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleBikeSelect(firstBike?.id);
-                          }}
-                        >
-                          {t('hero.bookNow')}
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
-      </div>
-
     </div>
   );
 };
