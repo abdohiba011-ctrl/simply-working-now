@@ -9,7 +9,7 @@ export const PrivacyPolicyPopup = () => {
   const { t } = useLanguage();
 
   useEffect(() => {
-    const hasAccepted = localStorage.getItem("motoriPrivacyAccepted");
+    const hasAccepted = localStorage.getItem("motonitaPrivacyAccepted");
     if (!hasAccepted) {
       // Show popup after 1 second
       setTimeout(() => setIsVisible(true), 1000);
@@ -17,7 +17,7 @@ export const PrivacyPolicyPopup = () => {
   }, []);
 
   const handleAccept = () => {
-    localStorage.setItem("motoriPrivacyAccepted", "true");
+    localStorage.setItem("motonitaPrivacyAccepted", "true");
     setIsVisible(false);
   };
 

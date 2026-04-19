@@ -147,7 +147,7 @@ const Contact = () => {
                   <CardHeader>
                     <Mail className="w-8 h-8 text-primary mb-2" />
                     <CardTitle>{t('profile.email')}</CardTitle>
-                    <CardDescription>contact@motori.ma</CardDescription>
+                    <CardDescription>contact@motonita.ma</CardDescription>
                   </CardHeader>
                 </Card>
 

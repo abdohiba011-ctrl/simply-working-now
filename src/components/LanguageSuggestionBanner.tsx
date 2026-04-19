@@ -3,7 +3,7 @@ import { X, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLanguage, Language } from '@/contexts/LanguageContext';
 
-const STORAGE_KEY = 'motori-lang-banner-dismissed';
+const STORAGE_KEY = 'motonita-lang-banner-dismissed';
 
 interface LanguageConfig {
   code: Language;

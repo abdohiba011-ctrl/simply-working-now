@@ -155,7 +155,7 @@ export const HeroSection = memo(() => {
   }, [user]);
   // Restore search data from localStorage on mount
   useEffect(() => {
-    const savedSearch = localStorage.getItem("motoriSearch");
+    const savedSearch = localStorage.getItem("motonitaSearch");
     if (savedSearch) {
       try {
         const data = JSON.parse(savedSearch);
@@ -241,7 +241,7 @@ export const HeroSection = memo(() => {
       endDate,
       bikeType
     };
-    localStorage.setItem("motoriSearch", JSON.stringify(searchData));
+    localStorage.setItem("motonitaSearch", JSON.stringify(searchData));
 
     // Navigate directly to bike details page for the selected bike type
     // First, we need to find a bike of that type in the selected location
@@ -304,7 +304,7 @@ export const HeroSection = memo(() => {
               <AlertTriangle className="h-4 w-4 text-white" />
               <AlertDescription className="text-white">
                 {t('hero.blockedMessage')} 
-                <a href="mailto:contact@motori.ma" className="underline ml-1 font-medium text-white">{t('hero.contactSupport')}</a>
+                <a href="mailto:contact@motonita.ma" className="underline ml-1 font-medium text-white">{t('hero.contactSupport')}</a>
               </AlertDescription>
             </Alert>
           )}

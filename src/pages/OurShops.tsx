@@ -10,21 +10,21 @@ const OurShops = () => {
 
   const shops = [
     {
-      name: "Motori Casablanca Central",
+      name: "Motonita Casablanca Central",
       address: "123 Rue Mohammed V, Casablanca",
       phone: "+212 600 111 222",
       hours: "8:00 AM - 8:00 PM",
       bikes: 25
     },
     {
-      name: "Motori Marrakech",
+      name: "Motonita Marrakech",
       address: "45 Avenue Hassan II, Marrakech",
       phone: "+212 600 333 444",
       hours: "8:00 AM - 8:00 PM",
       bikes: 20
     },
     {
-      name: "Motori Rabat",
+      name: "Motonita Rabat",
       address: "78 Boulevard Al Massira, Rabat",
       phone: "+212 600 555 666",
       hours: "8:00 AM - 8:00 PM",

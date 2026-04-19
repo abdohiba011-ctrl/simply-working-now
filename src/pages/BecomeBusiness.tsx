@@ -149,8 +149,8 @@ const BecomeBusiness = () => {
         await supabase.functions.invoke('send-booking-notification', {
           body: {
             type: 'new_business_application',
-            recipientEmail: 'admin@motori.ma',
-            recipientName: 'Motori Admin',
+            recipientEmail: 'admin@motonita.ma',
+            recipientName: 'Motonita Admin',
             data: {
               partnerType,
               businessName: businessName || 'Individual Partner',
@@ -749,7 +749,7 @@ const BecomeBusiness = () => {
                 {t('becomeBusiness.becomePartnerTitle') || 'Become a Business Partner'}
               </h1>
               <p className="text-lg text-muted-foreground max-w-xl mx-auto">
-                {t('becomeBusiness.becomePartnerDesc') || 'List your motorbikes and start earning with Motori. Choose your partner type to continue.'}
+                {t('becomeBusiness.becomePartnerDesc') || 'List your motorbikes and start earning with Motonita. Choose your partner type to continue.'}
               </p>
               
               {/* Verified Badge */}

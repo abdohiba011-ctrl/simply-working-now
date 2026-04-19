@@ -121,7 +121,7 @@ const BikeDetails = () => {
   // Get tiered daily price based on rental duration
   const dailyPrice = getDailyPriceForDuration(pricingTiers, days);
   const deliveryFee = deliveryMethod === "delivery" ? 25 : 0;
-  const promoDiscount = appliedPromo === "Motori25" && days >= 3 ? 25 : 0;
+  const promoDiscount = appliedPromo === "Motonita25" && days >= 3 ? 25 : 0;
   const totalPrice = (days * dailyPrice) + deliveryFee - promoDiscount;
 
   // Check if same day and validate times
@@ -257,9 +257,9 @@ const BikeDetails = () => {
     }
 
     // Case insensitive comparison
-    if (promoCode.toLowerCase() === "motori25") {
+    if (promoCode.toLowerCase() === "motonita25") {
       if (days >= 3) {
-        setAppliedPromo("Motori25");
+        setAppliedPromo("Motonita25");
         setPromoSuccess("Promo code applied successfully!");
         setPromoError("");
       } else {
@@ -515,7 +515,7 @@ const BikeDetails = () => {
                                 <Button
                                   variant="outline"
                                   className="gap-2 w-full min-h-[44px] py-3"
-                                  onClick={() => window.location.href = 'mailto:contact@motori.ma'}
+                                  onClick={() => window.location.href = 'mailto:contact@motonita.ma'}
                                 >
                                   <Mail className="h-4 w-4 flex-shrink-0" />
                                   Email
@@ -738,7 +738,7 @@ const BikeDetails = () => {
                         )}
                         {promoDiscount > 0 && (
                           <div className="flex justify-between text-sm text-green-600">
-                            <span>Promo (Motori25)</span>
+                            <span>Promo (Motonita25)</span>
                             <span>-{promoDiscount} DH</span>
                           </div>
                         )}
@@ -856,7 +856,7 @@ const BikeDetails = () => {
                       <Building2 className="w-5 h-5 sm:w-6 sm:h-6 text-foreground" />
                     </div>
                     <div className="min-w-0">
-                      <p className="font-medium text-sm sm:text-base text-foreground">Motori Rental Shop</p>
+                      <p className="font-medium text-sm sm:text-base text-foreground">Motonita Rental Shop</p>
                       <div className="flex items-center gap-2">
                         <Badge variant="secondary" className="text-[10px] sm:text-xs">Verified Shop</Badge>
                         <div className="flex items-center gap-0.5">

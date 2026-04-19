@@ -44,11 +44,11 @@ export const PrivacyTermsModal = ({ isOpen, onClose, onAccept, type }: PrivacyTe
       <p>لديك الحق في الوصول إلى بياناتك الشخصية وتصحيحها وحذفها.</p>
 
       <h4 className="font-semibold mt-4">5. اتصل بنا</h4>
-      <p>للأسئلة المتعلقة بهذه السياسة، اتصل بنا على: contact@motori.ma</p>
+      <p>للأسئلة المتعلقة بهذه السياسة، اتصل بنا على: contact@motonita.ma</p>
     </div>
   ) : language === 'fr' ? (
     <div className="space-y-4 text-sm">
-      <h3 className="font-semibold text-lg">Politique de Confidentialité - Motori.ma</h3>
+      <h3 className="font-semibold text-lg">Politique de Confidentialité - Motonita.ma</h3>
       <p>Dernière mise à jour : Décembre 2024</p>
       
       <h4 className="font-semibold mt-4">1. Informations que nous collectons</h4>
@@ -76,11 +76,11 @@ export const PrivacyTermsModal = ({ isOpen, onClose, onAccept, type }: PrivacyTe
       <p>Vous avez le droit d'accéder, corriger et supprimer vos données personnelles.</p>
 
       <h4 className="font-semibold mt-4">5. Contactez-nous</h4>
-      <p>Pour toute question concernant cette politique, contactez-nous à : contact@motori.ma</p>
+      <p>Pour toute question concernant cette politique, contactez-nous à : contact@motonita.ma</p>
     </div>
   ) : (
     <div className="space-y-4 text-sm">
-      <h3 className="font-semibold text-lg">Privacy Policy - Motori.ma</h3>
+      <h3 className="font-semibold text-lg">Privacy Policy - Motonita.ma</h3>
       <p>Last updated: December 2024</p>
       
       <h4 className="font-semibold mt-4">1. Information We Collect</h4>
@@ -108,7 +108,7 @@ export const PrivacyTermsModal = ({ isOpen, onClose, onAccept, type }: PrivacyTe
       <p>You have the right to access, correct, and delete your personal data.</p>
 
       <h4 className="font-semibold mt-4">5. Contact Us</h4>
-      <p>For questions about this policy, contact us at: contact@motori.ma</p>
+      <p>For questions about this policy, contact us at: contact@motonita.ma</p>
     </div>
   );
 
@@ -142,11 +142,11 @@ export const PrivacyTermsModal = ({ isOpen, onClose, onAccept, type }: PrivacyTe
     </div>
   ) : language === 'fr' ? (
     <div className="space-y-4 text-sm">
-      <h3 className="font-semibold text-lg">Conditions d'Utilisation - Motori.ma</h3>
+      <h3 className="font-semibold text-lg">Conditions d'Utilisation - Motonita.ma</h3>
       <p>Dernière mise à jour : Décembre 2024</p>
       
       <h4 className="font-semibold mt-4">1. Acceptation</h4>
-      <p>En utilisant Motori.ma, vous acceptez d'être lié par ces conditions générales.</p>
+      <p>En utilisant Motonita.ma, vous acceptez d'être lié par ces conditions générales.</p>
 
       <h4 className="font-semibold mt-4">2. Conditions d'éligibilité</h4>
       <ul className="list-disc pl-6 space-y-1">
@@ -166,15 +166,15 @@ export const PrivacyTermsModal = ({ isOpen, onClose, onAccept, type }: PrivacyTe
       <p>Annulation gratuite jusqu'à 24h avant la prise en charge. Les annulations tardives peuvent entraîner des frais.</p>
 
       <h4 className="font-semibold mt-4">5. Responsabilité</h4>
-      <p>Motori.ma n'est pas responsable des accidents ou blessures pendant la période de location.</p>
+      <p>Motonita.ma n'est pas responsable des accidents ou blessures pendant la période de location.</p>
     </div>
   ) : (
     <div className="space-y-4 text-sm">
-      <h3 className="font-semibold text-lg">Terms of Service - Motori.ma</h3>
+      <h3 className="font-semibold text-lg">Terms of Service - Motonita.ma</h3>
       <p>Last updated: December 2024</p>
       
       <h4 className="font-semibold mt-4">1. Acceptance</h4>
-      <p>By using Motori.ma, you agree to be bound by these terms and conditions.</p>
+      <p>By using Motonita.ma, you agree to be bound by these terms and conditions.</p>
 
       <h4 className="font-semibold mt-4">2. Eligibility Requirements</h4>
       <ul className="list-disc pl-6 space-y-1">
@@ -194,7 +194,7 @@ export const PrivacyTermsModal = ({ isOpen, onClose, onAccept, type }: PrivacyTe
       <p>Free cancellation up to 24 hours before pickup. Late cancellations may incur fees.</p>
 
       <h4 className="font-semibold mt-4">5. Liability</h4>
-      <p>Motori.ma is not responsible for accidents or injuries during the rental period.</p>
+      <p>Motonita.ma is not responsible for accidents or injuries during the rental period.</p>
     </div>
   );
 

@@ -14,7 +14,7 @@ export const Footer = memo(() => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
           {/* Company Info */}
           <div>
-            <h3 className="text-xl font-bold mb-4 text-primary">Motori Maroc</h3>
+            <h3 className="text-xl font-bold mb-4 text-primary">Motonita Maroc</h3>
             <p className="text-background/80 mb-4 leading-relaxed">
               {t('footer.description')}
             </p>
@@ -29,7 +29,7 @@ export const Footer = memo(() => {
                 <Facebook className="h-5 w-5" />
               </a>
               <a
-                href="https://www.instagram.com/motori.maroc/"
+                href="https://www.instagram.com/motonita.maroc/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-10 h-10 rounded-full bg-primary/20 hover:bg-primary flex items-center justify-center transition-colors"
@@ -131,8 +131,8 @@ export const Footer = memo(() => {
               </li>
               <li className="flex items-center gap-3">
                 <Mail className="h-5 w-5 text-primary flex-shrink-0" aria-hidden="true" />
-                <a href="mailto:contact@motori.ma" className="text-background/80 hover:text-primary transition-colors">
-                  contact@motori.ma
+                <a href="mailto:contact@motonita.ma" className="text-background/80 hover:text-primary transition-colors">
+                  contact@motonita.ma
                 </a>
               </li>
             </ul>
@@ -142,7 +142,7 @@ export const Footer = memo(() => {
         <div className="border-t border-background/20 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-background/60">
-              © {new Date().getFullYear()} Motori Maroc. {t('footer.rights')}
+              © {new Date().getFullYear()} Motonita Maroc. {t('footer.rights')}
             </p>
             <div className="flex items-center gap-2 md:gap-4 text-sm text-background/60">
               <Link to="/privacy-policy" className="hover:text-primary transition-colors">

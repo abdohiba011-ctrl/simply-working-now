@@ -28,7 +28,7 @@ export const SearchPersistence = () => {
 
   useEffect(() => {
     try {
-      const savedSearch = localStorage.getItem("motoriSearch");
+      const savedSearch = localStorage.getItem("motonitaSearch");
       if (savedSearch) {
         const parsed = JSON.parse(savedSearch);
         // Validate parsed data structure
@@ -38,18 +38,18 @@ export const SearchPersistence = () => {
           setSearchData(parsed);
         } else {
           // Clear invalid data
-          localStorage.removeItem("motoriSearch");
+          localStorage.removeItem("motonitaSearch");
         }
       }
     } catch (error) {
       // Clear corrupted data
       console.error('Error parsing saved search data:', error);
-      localStorage.removeItem("motoriSearch");
+      localStorage.removeItem("motonitaSearch");
     }
   }, []);
 
   const handleClear = () => {
-    localStorage.removeItem("motoriSearch");
+    localStorage.removeItem("motonitaSearch");
     setSearchData(null);
     setIsEditing(false);
   };
@@ -78,7 +78,7 @@ export const SearchPersistence = () => {
         endDate: format(editDateRange.to, "yyyy-MM-dd"),
         bikeType: editBikeType
       };
-      localStorage.setItem("motoriSearch", JSON.stringify(newSearchData));
+      localStorage.setItem("motonitaSearch", JSON.stringify(newSearchData));
       setSearchData(newSearchData);
       setIsEditing(false);
     }

@@ -185,7 +185,7 @@
   "affiliatePage": {
     "badge": "Affiliate Program",
     "heroTitle": "Earn Money by Sharing",
-    "heroTitleHighlight": "Motori.ma",
+    "heroTitleHighlight": "Motonita.ma",
     "heroSubtitle": "Join our affiliate program and earn 15% commission on every rental you refer. No investment required - just share your link and start earning!",
     "becomeAffiliate": "Become an Affiliate",
     "noInvestment": "No investment required",
@@ -224,14 +224,14 @@
       "monthlyPayoutsDesc": "Get paid every month via bank transfer or mobile money"
     },
     "earningsTitle": "Earnings Calculator",
-    "earningsSubtitle": "See how much you could earn as a Motori.ma affiliate",
+    "earningsSubtitle": "See how much you could earn as a Motonita.ma affiliate",
     "avgBookingValue": "Average Booking Value",
     "yourCommission": "Your Commission (15%)",
     "referralsPerWeek": "10 Referrals per Week",
     "potentialEarnings": "Your Potential Weekly Earnings",
     "withJustReferrals": "With just 10 successful referrals",
     "ctaTitle": "Ready to Start Earning?",
-    "ctaSubtitle": "Join hundreds of affiliates already earning with Motori.ma. Sign up takes just 2 minutes!",
+    "ctaSubtitle": "Join hundreds of affiliates already earning with Motonita.ma. Sign up takes just 2 minutes!",
     "joinNow": "Join Now",
     "noFees": "No signup fees",
     "freeTools": "Free marketing tools",
@@ -544,7 +544,7 @@
   },
   "affiliate": {
     "title": "Affiliate Program",
-    "subtitle": "Earn money by referring customers to Motori",
+    "subtitle": "Earn money by referring customers to Motonita",
     "joinNow": "Join Now",
     "benefits": "Benefits",
     "howItWorks": "How It Works",
@@ -787,10 +787,10 @@
     "submitApplication": "Submit Application",
     "submitting": "Submitting...",
     "readyToStart": "Ready to Start?",
-    "readyToStartDesc": "Create an account and start your journey as a Motori partner",
+    "readyToStartDesc": "Create an account and start your journey as a Motonita partner",
     "createAccount": "Create Account",
     "becomePartnerTitle": "Become a Business Partner",
-    "becomePartnerDesc": "List your motorbikes and start earning with Motori. Choose your partner type to continue.",
+    "becomePartnerDesc": "List your motorbikes and start earning with Motonita. Choose your partner type to continue.",
     "accountVerified": "Account Verified",
     "individualOwnerDesc": "Auto-entrepreneur with personal bikes",
     "rentalShopDesc": "Registered company with multiple bikes",
@@ -871,7 +871,7 @@
     "manageSettings": "Manage your account settings",
     "goToSettings": "Go to Settings",
     "wantToRent": "Want to rent out your motorbike?",
-    "joinAsPartner": "Join Motori as a partner and start earning today",
+    "joinAsPartner": "Join Motonita as a partner and start earning today",
     "becomePartner": "Become a Partner"
   },
   "verificationPage": {
@@ -1015,10 +1015,10 @@
     "uploadComplete": "Upload complete!"
   },
   "aboutPage": {
-    "title": "About Motori",
+    "title": "About Motonita",
     "subtitle": "Morocco's leading motorbike rental marketplace, connecting riders with trusted rental partners across the country.",
     "ourStory": "Our Story",
-    "ourStoryContent": "Founded in October 2025, Motori was born from a simple observation: renting a motorbike in Morocco was complicated, time-consuming, and often unreliable. We set out to change that by creating a platform that makes it easy for anyone to find, book, and ride quality motorbikes across Morocco's beautiful cities and landscapes.",
+    "ourStoryContent": "Founded in October 2025, Motonita was born from a simple observation: renting a motorbike in Morocco was complicated, time-consuming, and often unreliable. We set out to change that by creating a platform that makes it easy for anyone to find, book, and ride quality motorbikes across Morocco's beautiful cities and landscapes.",
     "ourMission": "Our Mission",
     "ourMissionDesc": "To make motorbike rentals accessible, safe, and convenient for everyone in Morocco.",
     "communityFirst": "Community First",
@@ -1032,7 +1032,7 @@
     "title": "Privacy Policy",
     "lastUpdated": "Last Updated",
     "introduction": "Introduction",
-    "introductionContent": "At Motori.ma, we are committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our motorbike rental platform.",
+    "introductionContent": "At Motonita.ma, we are committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our motorbike rental platform.",
     "informationCollected": "Information We Collect",
     "informationCollectedContent": "We collect information you provide directly to us, such as when you create an account, make a booking, or contact us. This includes: name, email address, phone number, ID card information, profile photos, and payment information.",
     "howWeUse": "How We Use Your Information",
@@ -1052,13 +1052,13 @@
     "policyChanges": "Policy Changes",
     "policyChangesContent": "We may update this Privacy Policy from time to time. We will notify you of any changes by posting the new policy on this page.",
     "contactUs": "Contact Us",
-    "contactUsContent": "If you have any questions about this Privacy Policy, please contact us at contact@motori.ma."
+    "contactUsContent": "If you have any questions about this Privacy Policy, please contact us at contact@motonita.ma."
   },
   "termsPage": {
     "title": "Terms & Conditions",
     "lastUpdated": "Last Updated",
     "agreementToTerms": "Agreement to Terms",
-    "agreementToTermsContent": "By accessing or using Motori.ma, you agree to be bound by these Terms and Conditions. If you do not agree to these terms, please do not use our services.",
+    "agreementToTermsContent": "By accessing or using Motonita.ma, you agree to be bound by these Terms and Conditions. If you do not agree to these terms, please do not use our services.",
     "rentalRequirements": "Rental Requirements",
     "rentalRequirementsContent": "To rent a motorbike, you must: be at least 18 years old, possess a valid Moroccan ID card (CIN) or passport, complete our identity verification process, and agree to our rental terms.",
     "bookingPayment": "Booking and Payment",
@@ -1082,7 +1082,7 @@
     "changesToTerms": "Changes to Terms",
     "changesToTermsContent": "We may update these terms at any time. Continued use of our services constitutes acceptance of the updated terms.",
     "contactUs": "Contact Us",
-    "contactUsContent": "For questions about these Terms and Conditions, please contact us at contact@motori.ma."
+    "contactUsContent": "For questions about these Terms and Conditions, please contact us at contact@motonita.ma."
   },
   "cookiesPage": {
     "title": "Cookies Policy",
@@ -1111,7 +1111,7 @@
     "policyUpdates": "Policy Updates",
     "policyUpdatesContent": "We may update this Cookies Policy from time to time. Changes will be posted on this page with an updated date.",
     "contactUs": "Contact Us",
-    "contactUsContent": "If you have questions about our use of cookies, please contact us at contact@motori.ma."
+    "contactUsContent": "If you have questions about our use of cookies, please contact us at contact@motonita.ma."
   },
   "changePasswordPage": {
     "title": "Change Password",
@@ -1142,7 +1142,7 @@
     },
     "business": {
       "title": "Business Application Submitted!",
-      "description": "Thank you for applying to become a Motori business partner.",
+      "description": "Thank you for applying to become a Motonita business partner.",
       "details": "We typically respond within 24-48 hours. You'll receive a notification once your application is reviewed."
     },
     "affiliate": {
@@ -1165,7 +1165,7 @@
     "verificationTime": "Verification typically takes 24-48 hours",
     "contactSupport": "Have questions or issues with verification?",
     "whatsappContact": "Contact us on WhatsApp",
-    "copyEmail": "Copy Email: support@motori.ma",
+    "copyEmail": "Copy Email: support@motonita.ma",
     "emailCopied": "Email copied to clipboard!",
     "goToBookings": "Go to My Bookings",
     "backToHome": "Back to Home",
@@ -1177,7 +1177,7 @@
   },
   "affiliateSignup": {
     "title": "Join Our Affiliate Program",
-    "subtitle": "Share your details and we'll reach out to explain how you can start earning with Motori.ma",
+    "subtitle": "Share your details and we'll reach out to explain how you can start earning with Motonita.ma",
     "formTitle": "Affiliate Application",
     "formDescription": "Fill out the form below and we'll contact you with more information about our referral program",
     "fullName": "Full Name",
@@ -1189,7 +1189,7 @@
     "submitButton": "I Want to Join Affiliate Program",
     "submitting": "Submitting...",
     "submitError": "Failed to submit application. Please try again.",
-    "consentText": "By submitting this form, you agree to be contacted about the Motori.ma affiliate program",
+    "consentText": "By submitting this form, you agree to be contacted about the Motonita.ma affiliate program",
     "whatHappensNext": "What happens next?",
     "step1": "Our team will review your application within 24-48 hours",
     "step2": "We'll contact you via email or phone to explain the referral program details",
@@ -1484,7 +1484,7 @@
     "cancelled": "Cancelled"
   },
   "phoneCaptureModal": {
-    "title": "Welcome to Motori! 🎉",
+    "title": "Welcome to Motonita! 🎉",
     "description": "Please provide your phone number or WhatsApp to complete your profile. This helps us reach you for booking updates.",
     "phoneLabel": "Phone / WhatsApp Number *",
     "placeholder": "+212 6XX XXX XXX",
