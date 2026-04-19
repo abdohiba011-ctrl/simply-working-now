@@ -1,0 +1,1 @@
+UPDATE public.service_cities SET show_in_homepage = true WHERE is_available = true AND show_in_homepage = false;
