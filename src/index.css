@@ -1,0 +1,315 @@
+/* Fonts loaded via index.html with font-display: swap for better performance */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 216 19% 16%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 216 19% 16%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 216 19% 16%;
+
+    /* Custom green #9fe870 - ACCESSIBILITY: Dark text on green for contrast */
+    --primary: 96 73% 67%;
+    --primary-foreground: 216 19% 16%;
+    --primary-hover: 96 73% 60%;
+
+    --secondary: 96 20% 96%;
+    --secondary-foreground: 96 30% 25%;
+
+    --muted: 220 13% 95%;
+    --muted-foreground: 220 9% 46%;
+
+    --accent: 96 72.7811% 66.8627%;
+    --accent-foreground: 216 19% 16%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Semantic status colors */
+    --success: 142 71% 45%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+    --info: 217 91% 60%;
+    --info-foreground: 0 0% 100%;
+
+    --border: 216 12.1951% 83.9216%;
+    --input: 216 12.1951% 83.9216%;
+    --ring: 217 32.5843% 17.451%;
+
+    --radius: 0.75rem;
+
+    /* Sidebar */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 216 19% 16%;
+    --sidebar-primary: 96 73% 67%;
+    --sidebar-primary-foreground: 216 19% 16%;
+    --sidebar-accent: 96 20% 96%;
+    --sidebar-accent-foreground: 96 30% 25%;
+    --sidebar-border: 216 12% 84%;
+    --sidebar-ring: 217 33% 17%;
+
+    /* Gradients */
+    --gradient-hero: linear-gradient(135deg, hsl(96 73% 67%) 0%, hsl(96 73% 75%) 100%);
+    --gradient-card: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(96 20% 98%) 100%);
+
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 hsl(220 13% 91% / 0.05);
+    --shadow-md: 0 4px 6px -1px hsl(220 13% 91% / 0.1);
+    --shadow-lg: 0 10px 15px -3px hsl(220 13% 91% / 0.1);
+    --shadow-xl: 0 20px 25px -5px hsl(220 13% 91% / 0.1);
+
+    /* Transitions */
+    --transition-base: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .dark {
+    --background: 216 19% 12%;
+    --foreground: 0 0% 98%;
+
+    --card: 216 19% 16%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 216 19% 16%;
+    --popover-foreground: 0 0% 98%;
+
+    /* ACCESSIBILITY: Dark text on green for contrast */
+    --primary: 96 73% 67%;
+    --primary-foreground: 216 19% 16%;
+    --primary-hover: 96 73% 60%;
+
+    --secondary: 216 19% 20%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 216 19% 20%;
+    --muted-foreground: 220 9% 60%;
+
+    --accent: 96 73% 67%;
+    --accent-foreground: 216 19% 12%;
+
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Semantic status colors - dark mode */
+    --success: 142 64% 50%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 55%;
+    --warning-foreground: 216 19% 12%;
+    --info: 217 91% 65%;
+    --info-foreground: 0 0% 100%;
+
+    --border: 216 19% 24%;
+    --input: 216 19% 24%;
+    --ring: 96 73% 67%;
+
+    /* Sidebar */
+    --sidebar-background: 216 19% 12%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 96 73% 67%;
+    --sidebar-primary-foreground: 216 19% 16%;
+    --sidebar-accent: 216 19% 20%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 216 19% 24%;
+    --sidebar-ring: 96 73% 67%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  
+  .content-visibility-auto {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 500px;
+  }
+
+  body {
+    overflow-x: hidden;
+    max-width: 100vw;
+  }
+
+  /* RTL Support */
+  html[dir="rtl"] {
+    font-family: 'Noto Sans Arabic', 'Inter', sans-serif;
+  }
+
+  html[dir="rtl"] body {
+    text-align: right;
+  }
+
+  html.rtl .flex-row {
+    flex-direction: row-reverse;
+  }
+
+  .rtl-flip {
+    transform: scaleX(1);
+  }
+  
+  html[dir="rtl"] .rtl-flip,
+  html.rtl .rtl-flip {
+    transform: scaleX(-1);
+  }
+
+  html[dir="rtl"] input[type="email"],
+  html[dir="rtl"] input[type="url"],
+  html[dir="rtl"] input[type="tel"],
+  html[dir="rtl"] input[type="number"],
+  html[dir="rtl"] .ltr-input {
+    direction: ltr;
+    text-align: right;
+  }
+
+  html[dir="rtl"] code,
+  html[dir="rtl"] pre,
+  html[dir="rtl"] .ltr-content {
+    direction: ltr;
+    text-align: left;
+  }
+
+  html[dir="rtl"] .ltr\:mr-2 {
+    margin-right: 0;
+    margin-left: 0.5rem;
+  }
+
+  html[dir="rtl"] .ltr\:ml-2 {
+    margin-left: 0;
+    margin-right: 0.5rem;
+  }
+
+  html[dir="rtl"] .ltr\:pl-4 {
+    padding-left: 0;
+    padding-right: 1rem;
+  }
+
+  html[dir="rtl"] .ltr\:pr-4 {
+    padding-right: 0;
+    padding-left: 1rem;
+  }
+
+  html[dir="rtl"] .text-left {
+    text-align: right;
+  }
+
+  html[dir="rtl"] .text-right {
+    text-align: left;
+  }
+
+  html[dir="rtl"] .rtl\:flex-row-reverse {
+    flex-direction: row-reverse;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold tracking-tight;
+  }
+
+  h1 {
+    @apply text-4xl md:text-5xl lg:text-6xl;
+  }
+
+  h2 {
+    @apply text-3xl md:text-4xl lg:text-5xl;
+  }
+
+  h3 {
+    @apply text-2xl md:text-3xl;
+  }
+}
+
+@layer utilities {
+  .animate-fade-in {
+    animation: fadeIn 0.6s ease-out;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.6s ease-out;
+  }
+
+  .animate-scale-in {
+    animation: scaleIn 0.4s ease-out;
+  }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  @keyframes mapPulse {
+    0%, 100% {
+      background-color: transparent;
+      box-shadow: 0 0 0 0 hsl(var(--primary) / 0.4);
+    }
+    50% {
+      background-color: hsl(var(--primary) / 0.1);
+      box-shadow: 0 0 20px 5px hsl(var(--primary) / 0.3);
+    }
+  }
+
+  .animate-map-pulse {
+    animation: mapPulse 2s ease-in-out infinite;
+  }
+
+  @keyframes marquee {
+    0% {
+      transform: translateX(0);
+    }
+    100% {
+      transform: translateX(-50%);
+    }
+  }
+
+  .animate-marquee {
+    animation: marquee 20s linear infinite;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes scaleIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+  }
+}
+
+/* Toast close button accessibility */
+[data-sonner-toast] [data-close-button] {
+  background: white !important;
+  color: hsl(216 19% 16%) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  opacity: 1 !important;
+}
+
+[data-sonner-toast] [data-close-button]:hover {
+  background: hsl(var(--muted)) !important;
+}
+
+[data-sonner-toast] [data-close-button] svg {
+  color: hsl(216 19% 16%) !important;
+}

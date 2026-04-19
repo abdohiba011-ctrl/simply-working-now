@@ -1,0 +1,984 @@
+import { useState, useMemo, useEffect } from "react";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
+import { Header } from "@/components/Header";
+
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Star, MapPin, Bike, Shield, Calendar as CalendarIcon, User, ChevronLeft, ChevronRight, Clock, ArrowLeft, Zap, Fuel, ThumbsUp, GraduationCap, Building2, Truck, Edit2, Tag, Loader2, Phone, Mail, LogIn, AlertTriangle } from "lucide-react";
+import { DateRange } from "react-day-picker";
+import { format, differenceInDays, addDays } from "date-fns";
+import { cn } from "@/lib/utils";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { useBike, useBikeTypeImages } from "@/hooks/useBikes";
+import { getBikeImageUrl } from "@/lib/bikeImages";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { usePricingTiers, getDailyPriceForDuration } from "@/hooks/usePricingTiers";
+import { DateRangePicker } from "@/components/DateRangePicker";
+
+// Mock data removed - using database
+
+const timeSlots = [
+  "08:00", "08:30", "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
+  "12:00", "12:30", "13:00", "13:30", "14:00", "14:30", "15:00", "15:30",
+  "16:00", "16:30", "17:00", "17:30", "18:00", "18:30", "19:00", "19:30", "20:00"
+];
+
+const MAX_RENTAL_DAYS = 30;
+
+const BikeDetails = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { t } = useLanguage();
+  const { isAuthenticated, user } = useAuth();
+  
+  // Fetch bike and detail images from database
+  const { data: bike, isLoading: isLoadingBike } = useBike(id || "");
+  const { data: detailImages, isLoading: isLoadingImages } = useBikeTypeImages(bike?.bike_type_id || "");
+  const { data: pricingTiers } = usePricingTiers();
+  
+  const [dateRange, setDateRange] = useState<DateRange | undefined>();
+  const [pickupTime, setPickupTime] = useState<string>("");
+  const [dropoffTime, setDropoffTime] = useState<string>("");
+  const [deliveryMethod, setDeliveryMethod] = useState<string>("pickup");
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  const [isEditingDates, setIsEditingDates] = useState(false);
+  const [promoCode, setPromoCode] = useState("");
+  const [appliedPromo, setAppliedPromo] = useState("");
+  const [promoError, setPromoError] = useState("");
+  const [promoSuccess, setPromoSuccess] = useState("");
+  const [showPromoField, setShowPromoField] = useState(false);
+  const [deliveryAddress, setDeliveryAddress] = useState("");
+  const [saveDeliveryAddress, setSaveDeliveryAddress] = useState(false);
+  
+  // Verification status
+  const [isVerified, setIsVerified] = useState(false);
+  const [verificationStatus, setVerificationStatus] = useState<string>('not_started');
+  const [isCheckingVerification, setIsCheckingVerification] = useState(true);
+  
+  // Check user verification status
+  useEffect(() => {
+    const checkVerification = async () => {
+      if (!user) {
+        setIsCheckingVerification(false);
+        return;
+      }
+      
+      try {
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('is_verified, verification_status')
+          .eq('id', user.id)
+          .single();
+        
+        if (!error && profile) {
+          setIsVerified(profile.is_verified || false);
+          setVerificationStatus(profile.verification_status || 'not_started');
+        }
+      } catch (err) {
+        console.error('Error checking verification:', err);
+      } finally {
+        setIsCheckingVerification(false);
+      }
+    };
+    
+    checkVerification();
+  }, [user]);
+
+  const pickupParam = searchParams.get("pickup");
+  const endParam = searchParams.get("end");
+  
+  // Pre-fill dates from URL params
+  useEffect(() => {
+    if (pickupParam && endParam) {
+      setDateRange({
+        from: new Date(pickupParam),
+        to: new Date(endParam)
+      });
+    }
+  }, [pickupParam, endParam]);
+  
+  // Only show main image
+  const allImages = useMemo(() => {
+    if (!bike?.bike_type) return [];
+    return [getBikeImageUrl(bike.bike_type.main_image_url)];
+  }, [bike]);
+
+  const days = dateRange?.from && dateRange?.to 
+    ? differenceInDays(dateRange.to, dateRange.from)
+    : 0;
+  
+  // Get tiered daily price based on rental duration
+  const dailyPrice = getDailyPriceForDuration(pricingTiers, days);
+  const deliveryFee = deliveryMethod === "delivery" ? 25 : 0;
+  const promoDiscount = appliedPromo === "Motori25" && days >= 3 ? 25 : 0;
+  const totalPrice = (days * dailyPrice) + deliveryFee - promoDiscount;
+
+  // Check if same day and validate times
+  const isSameDay = dateRange?.from && dateRange?.to && 
+    format(dateRange.from, "yyyy-MM-dd") === format(dateRange.to, "yyyy-MM-dd");
+
+  // Get valid dropoff times based on pickup time (only for same day)
+  const getValidDropoffTimes = () => {
+    if (!isSameDay || !pickupTime) return timeSlots;
+    const pickupIndex = timeSlots.indexOf(pickupTime);
+    if (pickupIndex === -1) return timeSlots;
+    return timeSlots.slice(pickupIndex + 1); // Only times after pickup
+  };
+
+  const validDropoffTimes = getValidDropoffTimes();
+
+  // Reset dropoff time if it becomes invalid
+  useEffect(() => {
+    if (isSameDay && dropoffTime && pickupTime) {
+      const pickupIndex = timeSlots.indexOf(pickupTime);
+      const dropoffIndex = timeSlots.indexOf(dropoffTime);
+      if (dropoffIndex <= pickupIndex) {
+        setDropoffTime("");
+      }
+    }
+  }, [pickupTime, isSameDay, dropoffTime]);
+
+  // Validate date range (max 30 days)
+  const handleDateRangeSelect = (range: DateRange | undefined) => {
+    if (range?.from && range?.to) {
+      const daysDiff = differenceInDays(range.to, range.from);
+      if (daysDiff > MAX_RENTAL_DAYS) {
+        toast.error(t('datePicker.maxDaysError').replace('{{maxDays}}', String(MAX_RENTAL_DAYS)));
+        setDateRange({
+          from: range.from,
+          to: addDays(range.from, MAX_RENTAL_DAYS)
+        });
+        return;
+      }
+      if (daysDiff > 14) {
+        toast.warning(t('datePicker.longRentalWarning'));
+      }
+    }
+    setDateRange(range);
+    if (range?.from && range?.to) {
+      setIsEditingDates(false);
+    }
+  };
+
+  
+  if (isLoadingBike || isLoadingImages) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="container mx-auto px-4 py-20 text-center">
+          <p className="text-lg text-muted-foreground">Loading bike details...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  if (!bike || !bike.bike_type) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="container mx-auto px-4 py-20 text-center">
+          <p className="text-lg text-muted-foreground">Bike not found</p>
+          <Button onClick={() => navigate('/listings')} className="mt-4">Back to Listings</Button>
+        </div>
+      </div>
+    );
+  }
+  
+  const bikeType = bike.bike_type;
+
+  const handleBookNow = () => {
+    if (!dateRange?.from || !dateRange?.to) {
+      toast.error("Please select dates");
+      return;
+    }
+    if (!pickupTime || !dropoffTime) {
+      toast.error("Please select pickup and drop-off times");
+      return;
+    }
+    
+    const pickup = format(dateRange.from, "yyyy-MM-dd");
+    const end = format(dateRange.to, "yyyy-MM-dd");
+    
+    // Navigate to booking review page with tiered daily price
+    navigate(`/booking-review?bikeId=${id}&bikeName=${encodeURIComponent(bikeType.name)}&pickup=${pickup}&end=${end}&pickupTime=${pickupTime}&dropoffTime=${dropoffTime}&deliveryMethod=${deliveryMethod}&location=${encodeURIComponent(bike.location)}&dailyPrice=${dailyPrice}`);
+  };
+
+  const handleNextImage = () => {
+    setCurrentImageIndex((prev) => (prev === allImages.length - 1 ? 0 : prev + 1));
+  };
+
+  const handlePrevImage = () => {
+    setCurrentImageIndex((prev) => (prev === 0 ? allImages.length - 1 : prev - 1));
+  };
+
+  // Minimum swipe distance (in px)
+  const minSwipeDistance = 50;
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+    
+    if (isLeftSwipe) {
+      handleNextImage();
+    } else if (isRightSwipe) {
+      handlePrevImage();
+    }
+  };
+
+  const handleApplyPromo = () => {
+    if (!promoCode.trim()) {
+      setAppliedPromo("");
+      setPromoError("");
+      setPromoSuccess("");
+      return;
+    }
+
+    // Case insensitive comparison
+    if (promoCode.toLowerCase() === "motori25") {
+      if (days >= 3) {
+        setAppliedPromo("Motori25");
+        setPromoSuccess("Promo code applied successfully!");
+        setPromoError("");
+      } else {
+        setPromoError("You need to select 3 days or more to make this coupon code work");
+        setPromoSuccess("");
+        setAppliedPromo("");
+      }
+    } else {
+      setPromoError("Invalid code");
+      setPromoSuccess("");
+      setAppliedPromo("");
+    }
+  };
+
+  return (
+    <>
+      {/* Product Structured Data for SEO */}
+      <script 
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org/",
+            "@type": "Product",
+            "name": `${bikeType.name} Rental - Casablanca`,
+            "image": allImages,
+            "description": bikeType.description || `Rent ${bikeType.name} motorbike in Casablanca, Morocco. Perfect for exploring the city.`,
+            "brand": {
+              "@type": "Brand",
+              "name": "MotoMorocco"
+            },
+            "offers": {
+              "@type": "Offer",
+              "url": `https://motomorocco.com/bike/${id}`,
+              "priceCurrency": "MAD",
+              "price": bikeType.daily_price,
+              "priceValidUntil": "2025-12-31",
+              "availability": "https://schema.org/InStock",
+              "seller": {
+                "@type": "Organization",
+                "name": "MotoMorocco"
+              }
+            },
+            "aggregateRating": {
+              "@type": "AggregateRating",
+              "ratingValue": bikeType.rating,
+              "reviewCount": "3",
+              "bestRating": "5",
+              "worstRating": "1"
+            }
+          })
+        }}
+      />
+      
+      <div className="min-h-screen bg-background overflow-x-hidden">
+        <Header />
+
+        <main className="container mx-auto px-3 sm:px-4 py-4 md:py-8 max-w-7xl overflow-hidden">
+        {/* Desktop Back Button */}
+        <Button
+          variant="outline"
+          onClick={() => navigate(-1)}
+          className="mb-6 hidden md:flex gap-2"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          {t('bikeDetails.backToListings')}
+        </Button>
+
+        {/* Mobile Back Button */}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => navigate(-1)}
+          className="mb-4 md:hidden gap-2"
+        >
+          <ChevronLeft className="h-4 w-4" />
+          {t('bikeDetails.backToListings')}
+        </Button>
+
+        <div className="grid lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
+          {/* Main Content */}
+          <div className="lg:col-span-2 space-y-4 sm:space-y-6 min-w-0">
+            {/* Image Gallery */}
+            <div 
+              className="relative h-64 sm:h-80 md:h-96 rounded-xl sm:rounded-2xl overflow-hidden group touch-pan-y"
+              onTouchStart={onTouchStart}
+              onTouchMove={onTouchMove}
+              onTouchEnd={onTouchEnd}
+            >
+              <img
+                src={allImages[currentImageIndex]}
+                alt={`Rent ${bikeType.name} motorbike in Casablanca - Image ${currentImageIndex + 1}`}
+                className="w-full h-full object-cover transition-transform duration-300 select-none"
+                draggable={false}
+              />
+              
+              {/* Navigation Arrows - Only show when multiple images */}
+              {allImages.length > 1 && (
+                <>
+                  <button
+                    onClick={handlePrevImage}
+                    className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full md:opacity-0 md:group-hover:opacity-100 transition-opacity z-10"
+                    aria-label="Previous image"
+                  >
+                    <ChevronLeft className="h-6 w-6" />
+                  </button>
+                  <button
+                    onClick={handleNextImage}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full md:opacity-0 md:group-hover:opacity-100 transition-opacity z-10"
+                    aria-label="Next image"
+                  >
+                    <ChevronRight className="h-6 w-6" />
+                  </button>
+                </>
+              )}
+
+              {/* Image Indicators - Only show when multiple images */}
+              {allImages.length > 1 && (
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+                  {allImages.map((_, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setCurrentImageIndex(index)}
+                      className={cn(
+                        "w-2 h-2 rounded-full transition-all",
+                        index === currentImageIndex ? "bg-white w-8" : "bg-white/50"
+                      )}
+                      aria-label={`Go to image ${index + 1}`}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+            
+            {/* Thumbnail Strip - Only show when multiple images */}
+            {allImages.length > 1 && (
+              <div className="flex gap-1.5 sm:gap-2 overflow-x-auto pb-2 scrollbar-hide touch-pan-x -mx-3 sm:mx-0 px-3 sm:px-0">
+                {allImages.map((image, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setCurrentImageIndex(index)}
+                    className={cn(
+                      "flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden border-2 transition-all",
+                      index === currentImageIndex ? "border-primary ring-2 ring-primary/30" : "border-transparent opacity-60 hover:opacity-100"
+                    )}
+                  >
+                    <img
+                      src={image}
+                      alt={`${bike.bike_type.name} motorbike rental Casablanca - view ${index + 1}`}
+                      className="w-full h-full object-cover select-none"
+                      draggable={false}
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
+          
+            {/* Title Section */}
+            <Card className="min-w-0">
+              <CardContent className="p-3 sm:p-4 md:p-6">
+                <div className="flex flex-col sm:flex-row items-start justify-between mb-3 sm:mb-4 gap-2 sm:gap-3">
+                  <div className="flex-1 min-w-0 w-full">
+                    <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-2 break-words">Rent {bikeType.name} - Casablanca Motorbike Rental</h1>
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-3 md:gap-4 text-xs sm:text-sm text-muted-foreground">
+                      <span className="flex items-center gap-1 whitespace-nowrap">
+                        <Bike className="h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0 text-foreground" />
+                        <span className="truncate max-w-[120px] sm:max-w-none">{bikeType.name}</span>
+                      </span>
+                      <span className="flex items-center gap-1 whitespace-nowrap">
+                        <MapPin className="h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0 text-foreground" />
+                        <span className="truncate max-w-[120px] sm:max-w-none">Casablanca - {bike.location}</span>
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    <Star className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 text-yellow-400 fill-yellow-400" />
+                    <span className="text-base sm:text-lg md:text-xl font-bold text-foreground">{Number(bikeType.rating).toFixed(1)}</span>
+                    <span className="text-muted-foreground text-xs sm:text-sm">(0)</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Booking Section - Desktop & Mobile */}
+            <Card className="border-2 border-primary/20 bg-card shadow-lg relative overflow-hidden">
+              <CardContent className="p-4 sm:p-6">
+                <div className="mb-4 sm:mb-6">
+                  <span className="text-xs sm:text-sm text-muted-foreground font-medium">
+                    {days > 0 ? `Price for ${days} day${days > 1 ? 's' : ''} rental` : 'Starting from'}
+                  </span>
+                  <p className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground">
+                    {days > 0 ? dailyPrice : getDailyPriceForDuration(pricingTiers, 30)} DH<span className="text-base font-normal text-muted-foreground">/day</span>
+                  </p>
+                  {days >= 3 && (
+                    <p className="text-xs text-primary font-medium mt-1">
+                      Longer rental = Better rate!
+                    </p>
+                  )}
+                </div>
+                
+                {/* Blur overlay for guests or unverified users */}
+                {(!isAuthenticated || (!isCheckingVerification && !isVerified)) && (
+                  <>
+                    {/* Blur the booking form content - positioned below the price header */}
+                    <div className="absolute inset-x-0 bottom-0 top-24 bg-background/60 backdrop-blur-sm z-10" />
+                    
+                    {/* Overlay message - properly positioned and scrollable */}
+                    <div className="absolute inset-x-0 bottom-0 top-24 flex items-start justify-center z-20 p-3 sm:p-4 overflow-y-auto">
+                      <Card className="w-full max-w-[300px] sm:max-w-sm bg-card/95 backdrop-blur shadow-xl border-2 my-4">
+                        <CardContent className="p-4 sm:p-6 text-center space-y-3 sm:space-y-4">
+                          {!isAuthenticated ? (
+                            <>
+                              <LogIn className="h-10 w-10 sm:h-12 sm:w-12 text-foreground mx-auto" />
+                              <h3 className="text-base sm:text-lg font-bold text-foreground">{t('bikeDetails.loginOrSignup') || 'Log In or Sign Up'}</h3>
+                              <p className="text-xs sm:text-sm text-muted-foreground">
+                                {t('bikeDetails.guestMessage') || 'Have an account? Log in. New here? Create an account to rent a motorbike.'}
+                              </p>
+                              <div className="flex flex-col gap-2 pt-2 w-full">
+                                <Button
+                                  variant="hero"
+                                  className="w-full min-h-[44px] py-3"
+                                  onClick={() => navigate('/auth?mode=login')}
+                                >
+                                  {t('bikeDetails.login') || 'Log In'}
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  className="w-full min-h-[44px] py-3"
+                                  onClick={() => navigate('/auth?mode=signup')}
+                                >
+                                  {t('bikeDetails.signup') || 'Sign Up'}
+                                </Button>
+                              </div>
+                            </>
+                          ) : verificationStatus === 'pending_review' ? (
+                            <>
+                              <Loader2 className="h-10 w-10 sm:h-12 sm:w-12 text-amber-600 animate-spin mx-auto" />
+                              <h3 className="text-base sm:text-lg font-bold text-foreground">Account Pending Review</h3>
+                              <p className="text-xs sm:text-sm text-muted-foreground">
+                                Your account is being verified. Please wait 24-48 hours.
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                If 24 hours pass without an update, contact us:
+                              </p>
+                              <div className="flex flex-col gap-2 pt-2 w-full">
+                                <Button
+                                  variant="outline"
+                                  className="gap-2 w-full min-h-[44px] py-3"
+                                  onClick={() => window.open('https://wa.me/212710564476', '_blank')}
+                                >
+                                  <Phone className="h-4 w-4 flex-shrink-0" />
+                                  WhatsApp
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  className="gap-2 w-full min-h-[44px] py-3"
+                                  onClick={() => window.location.href = 'mailto:contact@motori.ma'}
+                                >
+                                  <Mail className="h-4 w-4 flex-shrink-0" />
+                                  Email
+                                </Button>
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              <Shield className="h-10 w-10 sm:h-12 sm:w-12 text-foreground mx-auto" />
+                              <h3 className="text-base sm:text-lg font-bold text-foreground">Verify Your Account</h3>
+                              <p className="text-xs sm:text-sm text-muted-foreground">
+                                Complete verification to rent a motorbike
+                              </p>
+                              <Button
+                                variant="hero"
+                                onClick={() => navigate('/verification')}
+                                className="w-full min-h-[44px] py-3"
+                              >
+                                Verify Now
+                              </Button>
+                            </>
+                          )}
+                        </CardContent>
+                      </Card>
+                    </div>
+                  </>
+                )}
+
+                <div className="space-y-3 sm:space-y-4">
+                  {/* Date display with edit functionality */}
+                  {dateRange?.from && dateRange?.to && !isEditingDates ? (
+                    <div className="space-y-2">
+                      <Label className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                        <CalendarIcon className="h-4 w-4 text-foreground" />
+                        {t('bikeDetails.rentalPeriod')}
+                      </Label>
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 min-h-[48px] px-4 py-3 rounded-lg border-2 border-border bg-muted/30 flex items-center gap-2">
+                          <CalendarIcon className="h-4 w-4 text-foreground flex-shrink-0" />
+                          <span className="font-medium text-foreground">
+                            {format(dateRange.from, "MMM dd")} - {format(dateRange.to, "MMM dd, y")}
+                          </span>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => setIsEditingDates(true)}
+                          className="h-[48px] w-[48px] flex-shrink-0"
+                        >
+                          <Edit2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <Label className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                        <CalendarIcon className="h-4 w-4 text-foreground" />
+                        {t('bikeDetails.selectRentalPeriod')}
+                      </Label>
+                      <DateRangePicker
+                        dateRange={dateRange}
+                        onDateChange={(range) => {
+                          handleDateRangeSelect(range);
+                          if (range?.from && range?.to) {
+                            setIsEditingDates(false);
+                          }
+                        }}
+                        maxDays={MAX_RENTAL_DAYS}
+                        showPriceBreakdown={false}
+                        placeholder={t('datePicker.pickDates')}
+                        triggerClassName="min-h-[48px]"
+                      />
+                    </div>
+                  )}
+
+                  {/* Always show time pickers if dates are available - in one row */}
+                  {dateRange?.from && dateRange?.to && (
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-2">
+                          <Label className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                            <Clock className="h-4 w-4 text-foreground" />
+                            {t('bikeDetails.pickupTime')}
+                          </Label>
+                          <Select value={pickupTime} onValueChange={setPickupTime}>
+                            <SelectTrigger className="w-full min-h-[48px] border-2 bg-background">
+                              <SelectValue placeholder={t('bikeDetails.selectTime')} />
+                            </SelectTrigger>
+                            <SelectContent className="bg-popover border shadow-lg max-h-[200px]">
+                              {timeSlots.map((time) => (
+                                <SelectItem key={time} value={time}>
+                                  {time}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                            <Clock className="h-4 w-4 text-foreground" />
+                            {t('bikeDetails.dropoffTime')}
+                          </Label>
+                          <Select 
+                            value={dropoffTime} 
+                            onValueChange={setDropoffTime}
+                            disabled={isSameDay && !pickupTime}
+                          >
+                            <SelectTrigger className={cn(
+                              "w-full min-h-[48px] border-2 bg-background",
+                              isSameDay && !pickupTime && "opacity-50"
+                            )}>
+                              <SelectValue placeholder={t('bikeDetails.selectTime')} />
+                            </SelectTrigger>
+                            <SelectContent className="bg-popover border shadow-lg max-h-[200px]">
+                              {validDropoffTimes.map((time) => (
+                                <SelectItem key={time} value={time}>
+                                  {time}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                      
+                      {/* Same day warning */}
+                      {isSameDay && (
+                        <div className="flex items-center gap-2 p-2 bg-amber-500/10 rounded-md text-amber-600 dark:text-amber-400 text-xs">
+                          <AlertTriangle className="h-3.5 w-3.5 flex-shrink-0" />
+                          <span>{t('timeValidation.dropoffAfterPickup')}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {dateRange?.from && dateRange?.to && (
+                    <div className="space-y-3 border-t pt-3 sm:pt-4">
+                      <Label className="text-sm font-bold text-foreground">Delivery Method</Label>
+                      <RadioGroup value={deliveryMethod} onValueChange={setDeliveryMethod} className="space-y-2">
+                        <div 
+                          onClick={() => setDeliveryMethod("pickup")}
+                          className={cn(
+                            "flex items-start space-x-3 border-2 rounded-lg p-3 cursor-pointer transition-all bg-background",
+                            deliveryMethod === "pickup" 
+                              ? "border-foreground bg-foreground/10 ring-2 ring-foreground/30" 
+                              : "border-border hover:border-foreground/50 hover:bg-muted/20"
+                          )}
+                        >
+                          <RadioGroupItem value="pickup" id="pickup-main" className="mt-0.5" />
+                          <div className="flex-1">
+                            <Label htmlFor="pickup-main" className="text-sm font-medium cursor-pointer flex items-center gap-2">
+                              <MapPin className="h-4 w-4 text-foreground" />
+                              Pick up at shop
+                            </Label>
+                            <p className="text-xs text-muted-foreground mt-1">Free</p>
+                          </div>
+                        </div>
+                        
+                        <div 
+                          onClick={() => setDeliveryMethod("delivery")}
+                          className={cn(
+                            "flex flex-col border-2 rounded-lg p-3 cursor-pointer transition-all bg-background",
+                            deliveryMethod === "delivery" 
+                              ? "border-foreground bg-foreground/10 ring-2 ring-foreground/30" 
+                              : "border-border hover:border-foreground/50 hover:bg-muted/20"
+                          )}
+                        >
+                          <div className="flex items-start space-x-3">
+                            <RadioGroupItem value="delivery" id="delivery-main" className="mt-0.5" />
+                            <div className="flex-1">
+                              <Label htmlFor="delivery-main" className="text-sm font-medium cursor-pointer flex items-center gap-2">
+                                <Truck className="h-4 w-4 text-foreground" />
+                                Home delivery
+                              </Label>
+                              <p className="text-xs text-muted-foreground mt-1">+25 DH</p>
+                            </div>
+                          </div>
+                          
+                          {/* Delivery Location Input - INSIDE the Home Delivery option */}
+                          {deliveryMethod === "delivery" && (
+                            <div className="mt-3 pt-3 border-t border-border/50 space-y-2" onClick={(e) => e.stopPropagation()}>
+                              <Label className="text-sm font-medium text-foreground flex items-center gap-2">
+                                <MapPin className="h-4 w-4" />
+                                Delivery Location
+                              </Label>
+                              <Input
+                                placeholder="Enter your delivery address"
+                                className="min-h-[44px]"
+                                value={deliveryAddress}
+                                onChange={(e) => setDeliveryAddress(e.target.value)}
+                              />
+                              <label className="flex items-center gap-2 cursor-pointer">
+                                <input 
+                                  type="checkbox" 
+                                  checked={saveDeliveryAddress}
+                                  onChange={(e) => setSaveDeliveryAddress(e.target.checked)}
+                                  className="h-4 w-4 rounded border-border"
+                                />
+                                <span className="text-xs text-muted-foreground">Save to my profile locations</span>
+                              </label>
+                            </div>
+                          )}
+                        </div>
+                      </RadioGroup>
+                    </div>
+                  )}
+
+                  {days > 0 && (
+                    <div className="border-t pt-3 sm:pt-4 space-y-3">
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm text-muted-foreground">
+                          <span>{Number(bikeType.daily_price).toFixed(0)} DH × {days} days</span>
+                          <span>{(days * Number(bikeType.daily_price)).toFixed(0)} DH</span>
+                        </div>
+                        {deliveryFee > 0 && (
+                          <div className="flex justify-between text-sm text-muted-foreground">
+                            <span>Delivery fee</span>
+                            <span>+{deliveryFee} DH</span>
+                          </div>
+                        )}
+                        {promoDiscount > 0 && (
+                          <div className="flex justify-between text-sm text-green-600">
+                            <span>Promo (Motori25)</span>
+                            <span>-{promoDiscount} DH</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Promo Code Section */}
+                      <div className="border-t pt-3 space-y-2">
+                        {appliedPromo ? (
+                          /* Show applied promo (auto-applied or manually applied) */
+                          <div className="flex items-center gap-2 text-green-600">
+                            <Tag className="h-4 w-4" />
+                            <span className="text-sm font-medium">Promo applied: {appliedPromo}</span>
+                          </div>
+                        ) : showPromoField ? (
+                          /* Show input field when user clicks the button */
+                          <div className="space-y-2">
+                            <div className="flex gap-2">
+                              <Input
+                                placeholder="Enter code"
+                                value={promoCode}
+                                onChange={(e) => {
+                                  setPromoCode(e.target.value);
+                                  setPromoError("");
+                                  setPromoSuccess("");
+                                }}
+                                className="flex-1 h-10 text-sm"
+                                autoFocus
+                              />
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={handleApplyPromo}
+                                className="h-10 px-4"
+                              >
+                                Apply
+                              </Button>
+                            </div>
+                            {promoError && (
+                              <p className="text-xs text-red-600">{promoError}</p>
+                            )}
+                          </div>
+                        ) : (
+                          /* Show button to reveal field */
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => setShowPromoField(true)}
+                            className="text-muted-foreground hover:text-foreground p-0 h-auto"
+                          >
+                            <Tag className="h-4 w-4 mr-2" />
+                            Have a promo code?
+                          </Button>
+                        )}
+                      </div>
+
+                      <div className="flex justify-between font-semibold text-lg pt-2 border-t">
+                        <span className="text-foreground">Total</span>
+                        <span className="text-foreground font-bold">{totalPrice.toFixed(0)} DH</span>
+                      </div>
+                    </div>
+                  )}
+
+                  <Button
+                    size="lg"
+                    variant="hero"
+                    className="w-full min-h-[48px] touch-manipulation active:scale-95 transition-transform"
+                    onClick={handleBookNow}
+                    disabled={!dateRange?.from || !dateRange?.to || !pickupTime || !dropoffTime}
+                  >
+                    {t('hero.bookNow')}
+                  </Button>
+
+                  <p className="text-xs text-muted-foreground text-center">
+                    You won't be charged yet
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+            
+            {/* Details */}
+            <Card className="min-w-0">
+              <CardContent className="p-3 sm:p-4 md:p-6">
+                <div className="border-b pb-3 sm:pb-4 mb-3 sm:mb-4">
+                  <h2 className="font-semibold text-base sm:text-lg mb-2 text-foreground">Description</h2>
+                  <p className="text-sm sm:text-base text-muted-foreground break-words">{bikeType.description || "High-quality motorbike perfect for exploring Morocco."}</p>
+                </div>
+
+                <div className="border-t pt-3 sm:pt-4 mt-3 sm:mt-4">
+                  <h2 className="font-semibold text-base sm:text-lg mb-2 sm:mb-3 text-foreground">Features</h2>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="flex items-center gap-3 text-sm sm:text-base text-foreground bg-secondary/30 p-3 rounded-lg">
+                      <Zap className="h-5 w-5 text-foreground flex-shrink-0" />
+                      <span className="font-medium">Automatic Transmission</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-sm sm:text-base text-foreground bg-secondary/30 p-3 rounded-lg">
+                      <Fuel className="h-5 w-5 text-foreground flex-shrink-0" />
+                      <span className="font-medium">Fuel Efficient</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-sm sm:text-base text-foreground bg-secondary/30 p-3 rounded-lg">
+                      <ThumbsUp className="h-5 w-5 text-foreground flex-shrink-0" />
+                      <span className="font-medium">Easy to Ride</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-sm sm:text-base text-foreground bg-secondary/30 p-3 rounded-lg">
+                      <GraduationCap className="h-5 w-5 text-foreground flex-shrink-0" />
+                      <span className="font-medium">Perfect for Beginners</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border-t pt-3 sm:pt-4 mt-3 sm:mt-4">
+                  <h2 className="font-semibold text-base sm:text-lg mb-2 sm:mb-3 text-foreground">Owner</h2>
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    {/* Show Building icon for rental shops, User icon for individuals */}
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-secondary/30 flex items-center justify-center flex-shrink-0">
+                      <Building2 className="w-5 h-5 sm:w-6 sm:h-6 text-foreground" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-medium text-sm sm:text-base text-foreground">Motori Rental Shop</p>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="secondary" className="text-[10px] sm:text-xs">Verified Shop</Badge>
+                        <div className="flex items-center gap-0.5">
+                          <Star className="w-3 h-3 fill-primary text-primary" />
+                          <span className="text-xs text-muted-foreground">4.9</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Customer Reviews */}
+            <Card className="min-w-0">
+              <CardContent className="p-3 sm:p-4 md:p-6">
+                <h2 className="font-semibold text-lg sm:text-xl md:text-2xl mb-4 sm:mb-6 text-foreground">Customer Reviews</h2>
+                
+                <div className="space-y-4 sm:space-y-6">
+                  {/* Review 1 */}
+                  <div className="border-b pb-4">
+                    <div className="flex items-start gap-3 mb-2">
+                      <img 
+                        src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop&crop=face" 
+                        alt="Reviewer"
+                        className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between mb-1">
+                          <p className="font-semibold text-sm sm:text-base text-foreground">Sarah M.</p>
+                          <div className="flex gap-0.5">
+                            {[...Array(5)].map((_, i) => (
+                              <Star key={i} className="h-3.5 w-3.5 text-primary fill-primary" />
+                            ))}
+                          </div>
+                        </div>
+                        <p className="text-xs text-muted-foreground mb-2">2 weeks ago</p>
+                        <p className="text-sm text-muted-foreground">Perfect bike for exploring Casablanca! Easy to handle and great fuel economy. Highly recommend for beginners.</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Review 2 */}
+                  <div className="border-b pb-4">
+                    <div className="flex items-start gap-3 mb-2">
+                      <img 
+                        src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face" 
+                        alt="Reviewer"
+                        className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between mb-1">
+                          <p className="font-semibold text-sm sm:text-base text-foreground">Ahmed K.</p>
+                          <div className="flex gap-0.5">
+                            {[...Array(5)].map((_, i) => (
+                              <Star key={i} className="h-3.5 w-3.5 text-primary fill-primary" />
+                            ))}
+                          </div>
+                        </div>
+                        <p className="text-xs text-muted-foreground mb-2">1 month ago</p>
+                        <p className="text-sm text-muted-foreground">Excellent service and the bike was in pristine condition. Made my trip around the city so much more enjoyable!</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Review 3 */}
+                  <div>
+                    <div className="flex items-start gap-3 mb-2">
+                      <img 
+                        src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=face" 
+                        alt="Reviewer"
+                        className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between mb-1">
+                          <p className="font-semibold text-sm sm:text-base text-foreground">Maria L.</p>
+                          <div className="flex gap-0.5">
+                            {[...Array(4)].map((_, i) => (
+                              <Star key={i} className="h-3.5 w-3.5 text-primary fill-primary" />
+                            ))}
+                            <Star className="h-3.5 w-3.5 text-muted-foreground" />
+                          </div>
+                        </div>
+                        <p className="text-xs text-muted-foreground mb-2">3 weeks ago</p>
+                        <p className="text-sm text-muted-foreground">Great bike overall. Very comfortable for city rides. Only minor issue was the pickup process took a bit longer than expected.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Sidebar - Hidden on mobile, visible on desktop */}
+          <div className="hidden lg:block lg:col-span-1 min-w-0">
+            <div className="lg:sticky lg:top-24">
+              <Card className="border-2 border-primary/20">
+                <CardContent className="p-6">
+                  <h3 className="text-lg font-semibold mb-4 text-foreground">Quick Summary</h3>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3 text-sm">
+                      <Bike className="h-5 w-5 text-primary" />
+                      <span className="text-muted-foreground">{bikeType.name}</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-sm">
+                      <MapPin className="h-5 w-5 text-primary" />
+                      <span className="text-muted-foreground">{bike.location}</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-sm">
+                      <Star className="h-5 w-5 text-primary fill-primary" />
+                      <span className="text-muted-foreground">{Number(bikeType.rating).toFixed(1)} rating</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </div>
+        </main>
+      </div>
+    </>
+  );
+};
+
+export default BikeDetails;
