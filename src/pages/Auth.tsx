@@ -790,44 +790,8 @@ const Auth = () => {
                       {isLoading || otpSending ? "Please wait..." : (isSignup ? "Continue" : "Login")}
                     </Button>
 
-                    {isSignup && (
-                      <div className="pt-3">
-                        <p className="text-center text-xs text-muted-foreground mb-2">
-                          {accountType === "client"
-                            ? "Signing up as a renter? Switch if you own bikes:"
-                            : "Signing up as a business? Switch if you want to rent:"}
-                        </p>
-                        <button
-                          type="button"
-                          onClick={() => setAccountType(accountType === "client" ? "business" : "client")}
-                          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border-2 border-primary/40 bg-primary/5 hover:bg-primary/10 hover:border-primary text-foreground font-medium text-sm transition-all"
-                        >
-                          <span className="text-lg">{accountType === "client" ? "💼" : "🏍️"}</span>
-                          <span>
-                            {accountType === "client"
-                              ? "Switch to Business Account"
-                              : "Switch to Client Account"}
-                          </span>
-                        </button>
-                      </div>
-                    )}
-
                     {!isSignup && (
                       <>
-                        <div className="pt-3">
-                          <button
-                            type="button"
-                            onClick={() => setAccountType(accountType === "client" ? "business" : "client")}
-                            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border-2 border-primary/40 bg-primary/5 hover:bg-primary/10 hover:border-primary text-foreground font-medium text-sm transition-all"
-                          >
-                            <span className="text-lg">{accountType === "client" ? "💼" : "🏍️"}</span>
-                            <span>
-                              {accountType === "client"
-                                ? "Switch to Business Login"
-                                : "Switch to Client Login"}
-                            </span>
-                          </button>
-                        </div>
                         <div className="text-center">
                           <Button
                             type="button"
