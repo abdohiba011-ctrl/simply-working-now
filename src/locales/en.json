@@ -268,7 +268,21 @@
     "tryAnotherNeighborhood": "Try Another Neighborhood",
     "available": "Available",
     "loading": "Loading available bikes...",
-    "backToHomepage": "Back to Homepage"
+    "backToHomepage": "Back to Homepage",
+    "resultsCount": "{count} bikes available",
+    "sortBy": "Sort by",
+    "sortRecommended": "Recommended",
+    "sortPriceLow": "Price: Low to High",
+    "sortPriceHigh": "Price: High to Low",
+    "sortRating": "Top Rated",
+    "saved": "Saved",
+    "save": "Save",
+    "addedToFavorites": "Added to favorites",
+    "removedFromFavorites": "Removed from favorites",
+    "perDay": "/day",
+    "from": "From",
+    "allLocations": "All locations",
+    "filtersTitle": "Refine your search"
   },
   "bikeDetails": {
     "backToListings": "Back to Listings",

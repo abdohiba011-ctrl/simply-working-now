@@ -268,7 +268,21 @@
     "tryAnotherNeighborhood": "Essayer un Autre Quartier",
     "available": "Disponible",
     "loading": "Chargement des motos disponibles...",
-    "backToHomepage": "Retour à l'accueil"
+    "backToHomepage": "Retour à l'accueil",
+    "resultsCount": "{count} motos disponibles",
+    "sortBy": "Trier par",
+    "sortRecommended": "Recommandées",
+    "sortPriceLow": "Prix : croissant",
+    "sortPriceHigh": "Prix : décroissant",
+    "sortRating": "Mieux notées",
+    "saved": "Enregistrée",
+    "save": "Enregistrer",
+    "addedToFavorites": "Ajoutée aux favoris",
+    "removedFromFavorites": "Retirée des favoris",
+    "perDay": "/jour",
+    "from": "À partir de",
+    "allLocations": "Tous les lieux",
+    "filtersTitle": "Affinez votre recherche"
   },
   "bikeDetails": {
     "backToListings": "Retour aux Annonces",
