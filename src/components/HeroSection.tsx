@@ -237,9 +237,6 @@ export const HeroSection = memo(() => {
     // Collect all validation errors
     const errors: { bike?: boolean; location?: boolean; dates?: boolean } = {};
     
-    if (!bikeType) {
-      errors.bike = true;
-    }
     if (!location && !isOtherLocation) {
       errors.location = true;
     } else if (isOtherLocation && (!customCity.trim() || !customLocationDetail.trim())) {
@@ -253,15 +250,7 @@ export const HeroSection = memo(() => {
     if (Object.keys(errors).length > 0) {
       setFormErrors(errors);
       
-      if (errors.bike) {
-        toast.error(t('hero.noBikeError'), {
-          description: t('hero.noBikeDesc')
-        });
-        // Defer scroll to next frame to avoid forced reflow
-        requestAnimationFrame(() => {
-          bikeSelectionRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-        });
-      } else if (errors.location) {
+      if (errors.location) {
         toast.error(t('hero.noLocationError'), {
           description: t('hero.noLocationDesc')
         });
@@ -362,52 +351,6 @@ export const HeroSection = memo(() => {
           )}
           
           <form onSubmit={handleSearch} className="space-y-6">
-            {/* Bike Type Selection Cards - with ref */}
-            <div className="space-y-3" ref={bikeSelectionRef}>
-              <Label className={`text-lg font-bold ${formErrors.bike ? 'text-destructive' : 'text-foreground'}`}>
-                {t('hero.selectBikeType')} {formErrors.bike && <span className="text-sm font-normal">({t('hero.required')})</span>}
-              </Label>
-              <div className={`grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 ${formErrors.bike ? 'ring-2 ring-destructive/50 rounded-xl p-2' : ''}`}>
-                {bikeTypes.map(bike => <button key={bike.id} type="button" onClick={() => { setBikeType(bike.name); setFormErrors(prev => ({ ...prev, bike: false })); }} className={`relative group overflow-hidden rounded-xl border-2 transition-all duration-300 bg-white hover:shadow-lg hover:scale-105 ${bikeType === bike.name ? 'border-primary ring-4 ring-primary/30 shadow-xl scale-105' : formErrors.bike ? 'border-destructive/50' : 'border-border hover:border-primary/50'}`} aria-label={`${bike.price} - ${bike.name}. Click to select`}>
-                    {/* Price Badge - Red Ribbon Style */}
-                    <div className="absolute top-0 left-0 z-10">
-                      <div className="relative">
-                        <div className="bg-red-600 text-white px-3 py-1 shadow-lg font-bold text-xs">
-                          {bike.price}
-                        </div>
-                        <div className="absolute bottom-0 left-0 w-0 h-0 border-t-[6px] border-t-red-800 border-r-[6px] border-r-transparent transform translate-y-full"></div>
-                      </div>
-                    </div>
-
-                    {/* Selected Indicator */}
-                    {bikeType === bike.name && <div className="absolute top-2 right-2 z-10 bg-primary text-primary-foreground rounded-full p-1.5 shadow-lg animate-scale-in">
-                        <Check className="h-4 w-4" />
-                      </div>}
-                    
-                    {/* Bike Image - optimized with proper sizing hints */}
-                    <div className="aspect-[4/3] w-full overflow-hidden bg-white p-2">
-                      <img 
-                        src={bike.image} 
-                        alt={bike.name} 
-                        loading="lazy"
-                        decoding="async"
-                        fetchPriority="low"
-                        width={200}
-                        height={150}
-                        className="w-full h-full object-contain" 
-                      />
-                    </div>
-                    
-                    {/* Bike Name */}
-                    <div className={`p-2 border-t transition-colors ${bikeType === bike.name ? 'bg-primary text-primary-foreground border-primary' : 'bg-muted/50 text-foreground border-border group-hover:bg-primary/10'}`}>
-                      <p className="text-xs sm:text-sm font-semibold text-center leading-tight">
-                        {bike.name}
-                      </p>
-                    </div>
-                  </button>)}
-              </div>
-            </div>
-
             {/* Location and Date Selection */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Location */}
