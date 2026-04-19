@@ -329,6 +329,29 @@ const Verification = () => {
 
       if (error) throw error;
 
+      // Notify all admins of the new verification submission
+      try {
+        const { data: admins } = await supabase
+          .from('user_roles')
+          .select('user_id')
+          .eq('role', 'admin');
+
+        if (admins && admins.length > 0) {
+          const fullName = `${firstName.trim()} ${familyName.trim()}`.trim();
+          const notifications = admins.map((a) => ({
+            user_id: a.user_id,
+            title: 'New Verification Submitted',
+            message: `${fullName || 'A user'} submitted ID verification for review.`,
+            type: 'verification',
+            link: `/admin/verifications/${user?.id}`,
+            action_url: `/admin/verifications/${user?.id}`,
+          }));
+          await supabase.from('notifications').insert(notifications);
+        }
+      } catch (notifErr) {
+        console.error('Failed to notify admins:', notifErr);
+      }
+
       // Navigate to thank you page for verification
       navigate('/thank-you?type=verification');
     } catch (err: unknown) {
