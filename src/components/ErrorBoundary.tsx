@@ -1,8 +1,8 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
-import motoriLogo from '@/assets/motonita-logo.svg';
-import motoriLogoDark from '@/assets/motonita-logo-dark.svg';
+import motonitaLogo from '@/assets/motonita-logo.svg';
+import motonitaLogoDark from '@/assets/motonita-logo-dark.svg';
 
 interface ErrorBoundaryState {
   hasError: boolean;
@@ -114,7 +114,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
             {/* Motonita Logo */}
             <div className="flex justify-center mb-4">
               <img 
-                src={isDarkMode ? motoriLogoDark : motoriLogo} 
+                src={isDarkMode ? motonitaLogoDark : motonitaLogo} 
                 alt="Motonita.ma" 
                 className="h-10 w-auto"
               />
