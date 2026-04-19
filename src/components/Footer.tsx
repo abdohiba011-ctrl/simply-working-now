@@ -4,6 +4,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
 import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
+import logoDark from "@/assets/motonita-logo-dark.svg";
 
 export const Footer = memo(() => {
   const { t } = useLanguage();
@@ -14,7 +15,7 @@ export const Footer = memo(() => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
           {/* Company Info */}
           <div>
-            <h3 className="text-xl font-bold mb-4 text-primary">Motonita Maroc</h3>
+            <img src={logoDark} alt="Motonita Maroc" className="h-10 w-auto mb-4" translate="no" />
             <p className="text-background/80 mb-4 leading-relaxed">
               {t('footer.description')}
             </p>
