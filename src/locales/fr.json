@@ -1,4 +1,72 @@
 {
+  "bookingFee": {
+    "title": "Frais de Réservation & Conditions",
+    "subtitle": "Veuillez lire attentivement avant de confirmer votre réservation",
+    "step": "Étape 2 sur 3",
+    "breadcrumb": {
+      "home": "Accueil",
+      "bookFixer": "Réserver un Réparateur",
+      "feeTerms": "Frais & Conditions"
+    },
+    "steps": { "select": "Choisir le réparateur", "review": "Vérifier les frais", "pay": "Payer" },
+    "mock": {
+      "service": "Réparation moteur",
+      "location": "Maarif, Casablanca",
+      "eta": "ETA 15 min"
+    },
+    "breakdown": {
+      "title": "Détail des frais",
+      "bookingFee": "Frais de réservation",
+      "repairCost": "Coût de la réparation",
+      "paidDirectly": "Payé directement au réparateur",
+      "platformService": "Service de la plateforme",
+      "included": "Inclus",
+      "totalDueNow": "Total à payer maintenant",
+      "microcopy": "Ces frais sécurisent votre réservation et déclenchent l'envoi du réparateur. Les pièces et la main-d'œuvre sont payées séparément au mécanicien après le service."
+    },
+    "noRefund": {
+      "title": "Ces frais sont non remboursables",
+      "body": "Une fois votre réservation confirmée, les 10 DH ne peuvent être remboursés — même si vous annulez, si le réparateur est en retard, ou si vous changez d'avis. Ces frais compensent le réparateur pour avoir réservé son temps pour vous.",
+      "exceptionLabel": "Exception :",
+      "exception": "Les remboursements ne sont émis que si le réparateur ne se présente pas ou si la plateforme annule la réservation de notre côté."
+    },
+    "cases": {
+      "cancellation": "Annulation par le client",
+      "noShow": "Absence du client au lieu de rendez-vous",
+      "changedMind": "Le client change d'avis après confirmation",
+      "wrongService": "Mauvais service sélectionné par le client"
+    },
+    "checklist": {
+      "title": "Avant de confirmer, vérifiez bien :",
+      "location": "Votre adresse est correcte",
+      "service": "Le service sélectionné correspond à votre problème réel",
+      "specialty": "La spécialité du réparateur couvre votre besoin",
+      "eta": "Le délai d'intervention estimé vous convient",
+      "phone": "Votre numéro de contact est joignable",
+      "note": "Les erreurs dans les détails de réservation sont traitées comme une annulation client — aucun remboursement ne sera émis."
+    },
+    "faq": {
+      "title": "Questions fréquentes",
+      "q1": "Pourquoi y a-t-il des frais de réservation ?",
+      "a1": "Les 10 DH compensent le mécanicien pour avoir réservé son temps et s'être déplacé chez vous. Cela garantit l'équité envers les réparateurs qui refusent d'autres missions pour vous.",
+      "q2": "Puis-je être remboursé si le réparateur est en retard ?",
+      "a2": "Si le réparateur ne se présente pas du tout, vous serez intégralement remboursé. Les petits retards ne sont pas remboursables, mais vous pouvez noter le réparateur en conséquence.",
+      "q3": "Que se passe-t-il si le mécanicien ne peut pas réparer ma moto ?",
+      "a3": "Les frais de réservation couvrent le déplacement — pas une garantie de réparation. Si les pièces ne sont pas disponibles, le réparateur vous conseillera la suite. Les 10 DH ne sont pas remboursables dans ce cas.",
+      "q4": "Comment payer les pièces et la main-d'œuvre ?",
+      "a4": "Les frais de réparation sont payés directement au réparateur en espèces ou par virement mobile une fois le travail terminé. La plateforme ne prélève aucune commission.",
+      "q5": "Les 10 DH sont-ils déduits du coût de la réparation ?",
+      "a5": "Non. Les 10 DH sont des frais de réservation distincts et indépendants du prix de la réparation convenu avec le mécanicien."
+    },
+    "ack": {
+      "label": "J'ai lu et compris que les frais de réservation de 10 DH sont non remboursables."
+    },
+    "cta": {
+      "confirm": "Confirmer & Payer",
+      "back": "Retour pour modifier la réservation",
+      "terms": "En confirmant, vous acceptez nos Conditions d'utilisation et notre Politique d'annulation."
+    }
+  },
   "common": {
     "all": "Tous",
     "refresh": "Actualiser",

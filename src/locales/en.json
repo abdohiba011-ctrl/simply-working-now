@@ -1,4 +1,72 @@
 {
+  "bookingFee": {
+    "title": "Booking Fee & Terms",
+    "subtitle": "Please read carefully before confirming your booking",
+    "step": "Step 2 of 3",
+    "breadcrumb": {
+      "home": "Home",
+      "bookFixer": "Book a Fixer",
+      "feeTerms": "Fee & Terms"
+    },
+    "steps": { "select": "Select Fixer", "review": "Review Fees", "pay": "Pay" },
+    "mock": {
+      "service": "Engine repair",
+      "location": "Maarif, Casablanca",
+      "eta": "ETA 15 min"
+    },
+    "breakdown": {
+      "title": "Fee Breakdown",
+      "bookingFee": "Booking Fee",
+      "repairCost": "Repair Cost",
+      "paidDirectly": "Paid directly to fixer",
+      "platformService": "Platform Service",
+      "included": "Included",
+      "totalDueNow": "Total Due Now",
+      "microcopy": "This secures your booking and dispatches your fixer. Repair parts and labor are paid separately to the mechanic after service."
+    },
+    "noRefund": {
+      "title": "This fee is non-refundable",
+      "body": "Once you confirm your booking, the 10 DH fee cannot be refunded — even if you cancel, the fixer is delayed, or you change your mind. This fee compensates the fixer for reserving their time for you.",
+      "exceptionLabel": "Exception:",
+      "exception": "Refunds are only issued if the fixer fails to arrive or the platform cancels the booking on our end."
+    },
+    "cases": {
+      "cancellation": "Cancellation by the client",
+      "noShow": "Client no-show at location",
+      "changedMind": "Client changes mind after confirmation",
+      "wrongService": "Wrong service selected by client"
+    },
+    "checklist": {
+      "title": "Before you confirm, double-check:",
+      "location": "Your location is correct",
+      "service": "The service selected matches your actual problem",
+      "specialty": "The fixer's specialty covers your repair need",
+      "eta": "The estimated response time works for you",
+      "phone": "Your contact number is reachable",
+      "note": "Mistakes in booking details are treated as client cancellation — no refund will be issued."
+    },
+    "faq": {
+      "title": "Frequently asked",
+      "q1": "Why is there a booking fee?",
+      "a1": "The 10 DH fee compensates the mechanic for reserving their time and dispatching to your location. It keeps the marketplace fair to fixers who turn down other jobs to come to you.",
+      "q2": "Can I get a refund if the fixer is late?",
+      "a2": "If the fixer fails to arrive at all, you'll receive a full refund. Minor delays are not refundable, but you can rate the fixer accordingly.",
+      "q3": "What if the mechanic can't fix my bike?",
+      "a3": "The booking fee covers the dispatch — not a repair guarantee. If parts aren't available or the issue is beyond their expertise, the fixer will advise on next steps. The 10 DH is not refundable in this case.",
+      "q4": "How do I pay for parts and labor?",
+      "a4": "Repair costs are paid directly to the fixer in cash or by mobile transfer once the work is done. The platform does not charge a commission on the repair itself.",
+      "q5": "Is the 10 DH counted toward the repair cost?",
+      "a5": "No. The 10 DH is a separate booking fee paid to secure the dispatch and is independent from the repair price agreed with the mechanic."
+    },
+    "ack": {
+      "label": "I have read and understood that the 10 DH booking fee is non-refundable."
+    },
+    "cta": {
+      "confirm": "Confirm & Pay",
+      "back": "Go back to edit booking",
+      "terms": "By confirming, you agree to our Terms of Service and Cancellation Policy."
+    }
+  },
   "common": {
     "all": "All",
     "refresh": "Refresh",
