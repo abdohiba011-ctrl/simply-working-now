@@ -308,10 +308,6 @@ export const Header = memo(() => {
                     <span className="text-xs font-medium text-center text-muted-foreground">{t('header.marketplace')}<br/><span className="text-red-500 font-semibold">{t('header.comingSoon')}</span></span>
                   </div>
                   <div className="flex flex-col items-center gap-2 p-3 rounded-lg opacity-60 cursor-not-allowed">
-                    <Building2 className="h-6 w-6 text-muted-foreground" />
-                    <span className="text-xs font-medium text-center text-muted-foreground">{t('header.ourShops')}<br/><span className="text-red-500 font-semibold">{t('header.comingSoon')}</span></span>
-                  </div>
-                  <div className="flex flex-col items-center gap-2 p-3 rounded-lg opacity-60 cursor-not-allowed">
                     <MapPin className="h-6 w-6 text-muted-foreground" />
                     <span className="text-xs font-medium text-center text-muted-foreground">{t('header.gpsTracking')}<br/><span className="text-red-500 font-semibold">{t('header.comingSoon')}</span></span>
                   </div>
