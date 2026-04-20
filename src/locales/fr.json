@@ -1403,14 +1403,45 @@
     "title": "Réparateurs de Confiance",
     "subtitle": "Mécaniciens vérifiés prêts à réparer votre moto partout, à tout moment",
     "verified": "Réparateur Vérifié",
+    "verifiedTooltip": "Identité vérifiée, assurance confirmée, +50 missions réussies",
     "rating": "Note",
+    "reviews": "avis",
     "responseTime": "Temps de Réponse",
-    "engineRepair": "Réparation Moteur",
-    "tirePuncture": "Pneus & Crevaisons",
-    "electricalBattery": "Électrique & Batterie",
-    "brakesGears": "Freins & Vitesses",
-    "generalMaintenance": "Entretien Général",
-    "roadsideAssistance": "Assistance Routière"
+    "jobsCompleted": "réparations effectuées",
+    "kmAway": "km",
+    "minRide": "min de route",
+    "minutes": "min",
+    "lastActive": "Vu",
+    "minAgo": "min",
+    "requestRepair": "Demander une réparation",
+    "call": "Appeler",
+    "resultsCount": "réparateurs disponibles",
+    "searchPlaceholder": "Entrez votre quartier ou ville",
+    "engineRepair": "Moteur",
+    "tirePuncture": "Pneus",
+    "electricalBattery": "Électrique",
+    "brakesGears": "Freins",
+    "generalMaintenance": "Général",
+    "roadsideAssistance": "Dépannage",
+    "emergency": {
+      "title": "Besoin d'aide MAINTENANT ?",
+      "subtitle": "Appuyez pour contacter automatiquement le réparateur le plus proche",
+      "cta": "Trouver de l'aide"
+    },
+    "filters": { "all": "Tous" },
+    "sort": {
+      "nearest": "Plus proche",
+      "fastest": "Réponse rapide",
+      "rating": "Meilleure note",
+      "price": "Prix bas"
+    },
+    "view": { "grid": "Grille", "map": "Carte" },
+    "status": { "open": "Ouvert", "closed": "Fermé", "opensAt": "Ouvre à" },
+    "empty": {
+      "title": "Aucun réparateur trouvé",
+      "subtitle": "Essayez d'élargir votre recherche ou changez de spécialité.",
+      "reset": "Réinitialiser"
+    }
   },
   "quarterly": {
     "title": "Performance Trimestrielle",

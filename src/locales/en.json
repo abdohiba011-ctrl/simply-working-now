@@ -1403,14 +1403,45 @@
     "title": "Trusted Bike Fixers",
     "subtitle": "Verified mechanics ready to repair your motorbike anywhere, anytime",
     "verified": "Verified Fixer",
+    "verifiedTooltip": "ID checked, insurance verified, 50+ completed jobs",
     "rating": "Rating",
+    "reviews": "reviews",
     "responseTime": "Response Time",
-    "engineRepair": "Engine Repair",
-    "tirePuncture": "Tire & Puncture",
-    "electricalBattery": "Electrical & Battery",
-    "brakesGears": "Brakes & Gears",
-    "generalMaintenance": "General Maintenance",
-    "roadsideAssistance": "Roadside Assistance"
+    "jobsCompleted": "repairs completed",
+    "kmAway": "km away",
+    "minRide": "min ride",
+    "minutes": "min",
+    "lastActive": "Last active",
+    "minAgo": "min ago",
+    "requestRepair": "Request Repair",
+    "call": "Call",
+    "resultsCount": "fixers available",
+    "searchPlaceholder": "Enter your location or neighborhood",
+    "engineRepair": "Engine",
+    "tirePuncture": "Tires",
+    "electricalBattery": "Electrical",
+    "brakesGears": "Brakes",
+    "generalMaintenance": "General",
+    "roadsideAssistance": "Roadside",
+    "emergency": {
+      "title": "Need help NOW?",
+      "subtitle": "Tap to auto-match the nearest available fixer",
+      "cta": "Find Help Now"
+    },
+    "filters": { "all": "All" },
+    "sort": {
+      "nearest": "Nearest",
+      "fastest": "Fastest response",
+      "rating": "Highest rated",
+      "price": "Lowest price"
+    },
+    "view": { "grid": "Grid", "map": "Map" },
+    "status": { "open": "Open now", "closed": "Closed", "opensAt": "Opens at" },
+    "empty": {
+      "title": "No fixers match your filters",
+      "subtitle": "Try widening your search or selecting a different specialty.",
+      "reset": "Reset filters"
+    }
   },
   "quarterly": {
     "title": "Quarterly Performance",
