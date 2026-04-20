@@ -9,12 +9,11 @@ const LONG_PAGES = [
   '/listings',
   '/affiliate',
   '/about',
-  '/partners',
+  '/fixers',
   '/contact',
   '/privacy-policy',
   '/terms',
   '/cookies',
-  '/our-shops',
 ];
 
 export const ScrollToTopButton = () => {
