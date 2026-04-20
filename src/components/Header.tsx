@@ -208,7 +208,7 @@ export const Header = memo(() => {
   return (
     <>
       {/* Marketing Banner - scrolls with page (NOT sticky) */}
-      <Link to="/pricing" className="block relative bg-primary text-primary-foreground py-2 overflow-hidden cursor-pointer hover:bg-primary/90 transition-colors">
+      <Link to="/listings" className="block relative bg-primary text-primary-foreground py-2 overflow-hidden cursor-pointer hover:bg-primary/90 transition-colors">
         <div className="animate-marquee whitespace-nowrap inline-block">
           <span className="text-sm font-medium mx-8 flex items-center gap-2 inline-flex">
             <Bike className="h-4 w-4" />
@@ -295,17 +295,9 @@ export const Header = memo(() => {
                     <Users className="h-6 w-6 text-foreground group-hover:scale-110 transition-transform" />
                     <span className="text-sm font-medium text-center">{t('header.aboutUs')}</span>
                   </Link>
-                  <Link to="/partners" className="flex flex-col items-center gap-2 p-3 rounded-lg hover:bg-muted transition-colors group">
+                  <Link to="/fixers" className="flex flex-col items-center gap-2 p-3 rounded-lg hover:bg-muted transition-colors group">
                     <Building2 className="h-6 w-6 text-foreground group-hover:scale-110 transition-transform" />
-                    <span className="text-sm font-medium text-center">{t('header.ourPartners')}</span>
-                  </Link>
-                  <Link to="/pricing" className="flex flex-col items-center gap-2 p-3 rounded-lg hover:bg-muted transition-colors group">
-                    <Tag className="h-6 w-6 text-foreground group-hover:scale-110 transition-transform" />
-                    <span className="text-sm font-medium text-center">{t('header.pricing')}</span>
-                  </Link>
-                  <Link to="/insurances" className="flex flex-col items-center gap-2 p-3 rounded-lg hover:bg-muted transition-colors group">
-                    <Shield className="h-6 w-6 text-foreground group-hover:scale-110 transition-transform" />
-                    <span className="text-sm font-medium text-center">{t('header.insurances')}</span>
+                    <span className="text-sm font-medium text-center">{t('header.fixers')}</span>
                   </Link>
                   <Link to="/contact" className="flex flex-col items-center gap-2 p-3 rounded-lg hover:bg-muted transition-colors group">
                     <Phone className="h-6 w-6 text-foreground group-hover:scale-110 transition-transform" />
@@ -598,9 +590,7 @@ export const Header = memo(() => {
                 </summary>
                 <div className="ltr:pl-4 rtl:pr-4 space-y-1 mt-1">
                   <Link to="/about" className="text-foreground transition-colors font-medium py-3 px-4 text-sm rounded hover:bg-muted min-h-[44px] flex items-center" onClick={() => setIsMenuOpen(false)}>{t('header.aboutUs')}</Link>
-                  <Link to="/partners" className="text-foreground transition-colors font-medium py-3 px-4 text-sm rounded hover:bg-muted min-h-[44px] flex items-center" onClick={() => setIsMenuOpen(false)}>{t('header.ourPartners')}</Link>
-                  <Link to="/pricing" className="text-foreground transition-colors font-medium py-3 px-4 text-sm rounded hover:bg-muted min-h-[44px] flex items-center" onClick={() => setIsMenuOpen(false)}>{t('header.pricing')}</Link>
-                  <Link to="/insurances" className="text-foreground transition-colors font-medium py-3 px-4 text-sm rounded hover:bg-muted min-h-[44px] flex items-center" onClick={() => setIsMenuOpen(false)}>{t('header.insurances')}</Link>
+                  <Link to="/fixers" className="text-foreground transition-colors font-medium py-3 px-4 text-sm rounded hover:bg-muted min-h-[44px] flex items-center" onClick={() => setIsMenuOpen(false)}>{t('header.fixers')}</Link>
                   <Link to="/contact" className="text-foreground transition-colors font-medium py-3 px-4 text-sm rounded hover:bg-muted min-h-[44px] flex items-center" onClick={() => setIsMenuOpen(false)}>{t('header.contactUs')}</Link>
                   <div className="text-muted-foreground py-3 px-4 text-sm rounded min-h-[44px] flex items-center opacity-60">{t('header.marketplace')} <span className="text-red-500 font-semibold ltr:ml-2 rtl:mr-2">{t('header.comingSoon')}</span></div>
                   <div className="text-muted-foreground py-3 px-4 text-sm rounded min-h-[44px] flex items-center opacity-60">{t('header.ourShops')} <span className="text-red-500 font-semibold ltr:ml-2 rtl:mr-2">{t('header.comingSoon')}</span></div>

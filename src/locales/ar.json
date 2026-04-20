@@ -94,7 +94,8 @@
     "logout": "تسجيل الخروج",
     "more": "المزيد",
     "aboutUs": "من نحن",
-    "ourPartners": "شركاؤنا",
+    "ourPartners": "المُصلحون",
+    "fixers": "المُصلحون",
     "contactUs": "اتصل بنا",
     "insurances": "التأمينات",
     "ourShops": "فروعنا",
@@ -1398,12 +1399,18 @@
     "officialShop": "فرع رسمي",
     "bikesAvailable": "دراجة متوفرة"
   },
-  "partners": {
-    "title": "شركاؤنا الموثوقون",
-    "subtitle": "تعرف على شركاء التأجير المعتمدين عبر المغرب",
-    "verified": "شريك معتمد",
+  "fixers": {
+    "title": "مُصلحو الدراجات الموثوقون",
+    "subtitle": "ميكانيكيون معتمدون جاهزون لإصلاح دراجتك في أي مكان وأي وقت",
+    "verified": "مُصلح معتمد",
     "rating": "التقييم",
-    "bikesAvailable": "دراجة متوفرة"
+    "responseTime": "وقت الاستجابة",
+    "engineRepair": "إصلاح المحرك",
+    "tirePuncture": "الإطارات والثقوب",
+    "electricalBattery": "الكهرباء والبطارية",
+    "brakesGears": "الفرامل والتروس",
+    "generalMaintenance": "الصيانة العامة",
+    "roadsideAssistance": "المساعدة على الطريق"
   },
   "quarterly": {
     "title": "الأداء الفصلي",

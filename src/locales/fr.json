@@ -94,7 +94,8 @@
     "logout": "Déconnexion",
     "more": "Plus",
     "aboutUs": "À Propos",
-    "ourPartners": "Nos Partenaires",
+    "ourPartners": "Nos Réparateurs",
+    "fixers": "Réparateurs",
     "contactUs": "Contactez-nous",
     "insurances": "Assurances",
     "ourShops": "Nos Boutiques",
@@ -1398,12 +1399,18 @@
     "officialShop": "Boutique Officielle",
     "bikesAvailable": "motos disponibles"
   },
-  "partners": {
-    "title": "Nos Partenaires de Confiance",
-    "subtitle": "Découvrez nos partenaires de location vérifiés à travers le Maroc",
-    "verified": "Partenaire Vérifié",
+  "fixers": {
+    "title": "Réparateurs de Confiance",
+    "subtitle": "Mécaniciens vérifiés prêts à réparer votre moto partout, à tout moment",
+    "verified": "Réparateur Vérifié",
     "rating": "Note",
-    "bikesAvailable": "motos disponibles"
+    "responseTime": "Temps de Réponse",
+    "engineRepair": "Réparation Moteur",
+    "tirePuncture": "Pneus & Crevaisons",
+    "electricalBattery": "Électrique & Batterie",
+    "brakesGears": "Freins & Vitesses",
+    "generalMaintenance": "Entretien Général",
+    "roadsideAssistance": "Assistance Routière"
   },
   "quarterly": {
     "title": "Performance Trimestrielle",
