@@ -20,9 +20,16 @@ import {
   Info,
   ChevronRight,
   ArrowLeft,
-  Clock,
+  Calendar,
   MapPin,
-  Wrench,
+  Bike,
+  Star,
+  BadgeCheck,
+  Fuel,
+  Clock,
+  HardHat,
+  Ban,
+  Pencil,
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
@@ -31,18 +38,22 @@ import { cn } from "@/lib/utils";
  * ─────────────────────────────────────────────────────────────────────────────
  *  DESIGN RATIONALE
  * ─────────────────────────────────────────────────────────────────────────────
- *  • Warning is AMBER (not red): red signals failure/danger; amber signals
- *    "pay attention, important info." Red here would feel hostile to a user
- *    who hasn't done anything wrong yet.
- *  • Required checkbox: prevents misunderstanding-driven chargebacks. The
- *    user must perform a deliberate action to acknowledge the no-refund rule.
- *  • Fee uses a TABLE LAYOUT (label … dotted leaders … amount): mirrors a
- *    receipt — a familiar, trusted financial pattern. Total uses the largest
- *    number on the page so it's the visual anchor.
+ *  • Bike hero card first: the user must instantly recognize what they're
+ *    renting — photo + model + agency + verified badge.
+ *  • Two-total layout in price breakdown (pay NOW vs pay AT PICKUP) prevents
+ *    sticker shock and matches Turo / Booking.com mental models.
+ *  • Amber (not red) warning for the no-refund clause: red signals failure;
+ *    amber signals "important info, pay attention" — calmer and trust-building.
+ *  • Required acknowledgment checkbox: deliberate action eliminates the
+ *    "I didn't read" chargeback excuse.
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
-const BOOKING_FEE = 10;
+const RESERVATION_FEE = 10;
+const DAILY_RATE = 250;
+const RENTAL_DAYS = 3;
+const DEPOSIT = 1500;
+const RENTAL_SUBTOTAL = DAILY_RATE * RENTAL_DAYS;
 
 const formatCurrency = (amount: number, locale: string) => {
   const formatted = new Intl.NumberFormat(
@@ -58,33 +69,63 @@ const BookingFee = () => {
   const isRtl = language === "ar";
   const [acknowledged, setAcknowledged] = useState(false);
 
-  const totalFormatted = useMemo(
-    () => formatCurrency(BOOKING_FEE, language),
-    [language],
-  );
+  const reservationFmt = useMemo(() => formatCurrency(RESERVATION_FEE, language), [language]);
+  const dailyRateFmt = useMemo(() => formatCurrency(DAILY_RATE, language), [language]);
+  const subtotalFmt = useMemo(() => formatCurrency(RENTAL_SUBTOTAL, language), [language]);
+  const depositFmt = useMemo(() => formatCurrency(DEPOSIT, language), [language]);
 
-  // Mock booking summary — in production, comes from previous step's state
-  const booking = {
-    fixerName: "Hassan El Amrani",
-    fixerAvatar: "https://i.pravatar.cc/128?img=12",
-    service: t("bookingFee.mock.service"),
-    location: t("bookingFee.mock.location"),
-    eta: t("bookingFee.mock.eta"),
+  // Mock booking — in production, comes from previous step state
+  const bike = {
+    name: "Yamaha MT-07 (2023)",
+    image:
+      "https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?w=900&auto=format&fit=crop&q=70",
+    engine: "689cc",
+    transmission: t("bookingFee.bike.manual"),
+    type: t("bookingFee.bike.sport"),
+    licenseRequired: "A",
+    agencyName: "Ana Agency Rentals",
+    agencyLocation: t("bookingFee.bike.agencyLocation"),
+    rating: 4.8,
+    reviewCount: 213,
   };
 
-  const checkItems = [
-    "bookingFee.checklist.location",
-    "bookingFee.checklist.service",
-    "bookingFee.checklist.specialty",
-    "bookingFee.checklist.eta",
-    "bookingFee.checklist.phone",
-  ];
+  const rental = {
+    pickupDate: t("bookingFee.rental.pickupDateValue"),
+    returnDate: t("bookingFee.rental.returnDateValue"),
+    duration: t("bookingFee.rental.durationValue"),
+    pickupLocation: bike.agencyLocation,
+    returnLocation: t("bookingFee.rental.sameAsPickup"),
+  };
 
   const noRefundCases = [
     "bookingFee.cases.cancellation",
     "bookingFee.cases.noShow",
+    "bookingFee.cases.wrongDates",
     "bookingFee.cases.changedMind",
-    "bookingFee.cases.wrongService",
+  ];
+
+  const pickupRequirements = [
+    "bookingFee.pickup.license",
+    "bookingFee.pickup.idPassport",
+    "bookingFee.pickup.deposit",
+    "bookingFee.pickup.confirmation",
+  ];
+
+  const verifyChecklist = [
+    "bookingFee.verify.bike",
+    "bookingFee.verify.dates",
+    "bookingFee.verify.location",
+    "bookingFee.verify.license",
+    "bookingFee.verify.phone",
+  ];
+
+  const policyHighlights: { icon: typeof ShieldCheck; key: string }[] = [
+    { icon: ShieldCheck, key: "bookingFee.policy.insurance" },
+    { icon: Fuel, key: "bookingFee.policy.fuel" },
+    { icon: MapPin, key: "bookingFee.policy.geo" },
+    { icon: Clock, key: "bookingFee.policy.late" },
+    { icon: HardHat, key: "bookingFee.policy.helmet" },
+    { icon: Ban, key: "bookingFee.policy.offroad" },
   ];
 
   const faqs = [
@@ -97,7 +138,6 @@ const BookingFee = () => {
 
   const handleConfirm = () => {
     if (!acknowledged) return;
-    // Navigate to payment step
     navigate("/checkout");
   };
 
@@ -122,15 +162,15 @@ const BookingFee = () => {
               className={cn("h-4 w-4 shrink-0", isRtl && "rotate-180")}
               aria-hidden="true"
             />
-            <Link to="/fixers" className="hover:text-foreground transition-colors">
-              {t("bookingFee.breadcrumb.bookFixer")}
+            <Link to="/listings" className="hover:text-foreground transition-colors">
+              {t("bookingFee.breadcrumb.browse")}
             </Link>
             <ChevronRight
               className={cn("h-4 w-4 shrink-0", isRtl && "rotate-180")}
               aria-hidden="true"
             />
             <span className="text-foreground font-medium">
-              {t("bookingFee.breadcrumb.feeTerms")}
+              {t("bookingFee.breadcrumb.details")}
             </span>
           </nav>
 
@@ -146,9 +186,8 @@ const BookingFee = () => {
             </div>
             <p className="text-muted-foreground">{t("bookingFee.subtitle")}</p>
 
-            {/* Progress steps */}
             <ol className="flex items-center gap-2 mt-4 text-xs">
-              <ProgressDot label={t("bookingFee.steps.select")} state="done" />
+              <ProgressDot label={t("bookingFee.steps.choose")} state="done" />
               <ProgressLine state="done" />
               <ProgressDot label={t("bookingFee.steps.review")} state="active" />
               <ProgressLine state="todo" />
@@ -156,88 +195,166 @@ const BookingFee = () => {
             </ol>
           </header>
 
-          {/* Booking summary mini-card */}
-          <Card className="rounded-2xl border-border/60 mb-6">
-            <CardContent className="p-4 md:p-5 flex items-center gap-4">
-              <img
-                src={booking.fixerAvatar}
-                alt={booking.fixerName}
-                className="h-14 w-14 rounded-full object-cover ring-2 ring-primary/20"
-                loading="lazy"
-              />
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold text-foreground truncate">
-                  {booking.fixerName}
-                </p>
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground mt-0.5">
-                  <span className="inline-flex items-center gap-1">
-                    <Wrench className="h-3.5 w-3.5" aria-hidden="true" />
-                    {booking.service}
-                  </span>
-                  <span className="inline-flex items-center gap-1">
-                    <MapPin className="h-3.5 w-3.5" aria-hidden="true" />
-                    {booking.location}
-                  </span>
-                  <span className="inline-flex items-center gap-1">
-                    <Clock className="h-3.5 w-3.5" aria-hidden="true" />
-                    {booking.eta}
-                  </span>
+          {/* BIKE SUMMARY CARD */}
+          <Card className="rounded-2xl border-border/60 mb-6 overflow-hidden">
+            <CardContent className="p-0">
+              <div className="grid md:grid-cols-2 gap-0">
+                <div className="relative aspect-video md:aspect-auto md:min-h-[260px] bg-muted">
+                  <img
+                    src={bike.image}
+                    alt={bike.name}
+                    className="absolute inset-0 w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                </div>
+                <div className="p-5 md:p-6 space-y-3">
+                  <div>
+                    <h2 className="text-xl md:text-2xl font-bold text-foreground">
+                      {bike.name}
+                    </h2>
+                    <div className="flex flex-wrap items-center gap-2 mt-2">
+                      <Badge variant="outline" className="font-normal">
+                        {bike.engine}
+                      </Badge>
+                      <Badge variant="outline" className="font-normal">
+                        {bike.transmission}
+                      </Badge>
+                      <Badge variant="outline" className="font-normal">
+                        {bike.type}
+                      </Badge>
+                      <Badge variant="outline" className="font-normal">
+                        {t("bookingFee.bike.licenseLabel")} {bike.licenseRequired}
+                      </Badge>
+                    </div>
+                  </div>
+
+                  <div className="border-t border-border pt-3 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-foreground">
+                        {bike.agencyName}
+                      </span>
+                      <BadgeCheck
+                        className="h-4 w-4 text-primary"
+                        aria-label={t("bookingFee.bike.verifiedAgency")}
+                      />
+                      <span className="text-xs text-primary font-medium">
+                        {t("bookingFee.bike.verifiedAgency")}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Star
+                        className="h-4 w-4 fill-amber-400 text-amber-400"
+                        aria-hidden="true"
+                      />
+                      <span className="font-medium text-foreground">
+                        {bike.rating.toFixed(1)}
+                      </span>
+                      <span>
+                        ({bike.reviewCount} {t("bookingFee.bike.reviews")})
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <MapPin className="h-4 w-4" aria-hidden="true" />
+                      {bike.agencyLocation}
+                    </div>
+                  </div>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* Fee breakdown — most prominent element */}
+          {/* RENTAL DETAILS */}
+          <Card className="rounded-2xl border-border/60 mb-6">
+            <CardContent className="p-5 md:p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                  <Calendar className="h-5 w-5 text-primary" aria-hidden="true" />
+                  {t("bookingFee.rental.title")}
+                </h3>
+                <Link
+                  to="/listings"
+                  className="text-sm text-primary hover:underline inline-flex items-center gap-1"
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                  {t("bookingFee.rental.edit")}
+                </Link>
+              </div>
+
+              <dl className="grid sm:grid-cols-2 gap-x-6 gap-y-3 text-sm">
+                <RentalRow label={t("bookingFee.rental.pickup")} value={rental.pickupDate} />
+                <RentalRow label={t("bookingFee.rental.return")} value={rental.returnDate} />
+                <RentalRow label={t("bookingFee.rental.duration")} value={rental.duration} />
+                <RentalRow label={t("bookingFee.rental.dailyRate")} value={`${dailyRateFmt}/${t("bookingFee.rental.day")}`} />
+                <RentalRow label={t("bookingFee.rental.pickupLocation")} value={rental.pickupLocation} />
+                <RentalRow label={t("bookingFee.rental.returnLocation")} value={rental.returnLocation} />
+              </dl>
+            </CardContent>
+          </Card>
+
+          {/* PRICE BREAKDOWN */}
           <Card className="rounded-2xl border-2 border-primary/30 shadow-sm mb-6">
             <CardContent className="p-6 md:p-8">
               <div className="text-center mb-6">
                 <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/15 mb-3">
-                  <ShieldCheck
-                    className="h-6 w-6 text-primary"
-                    aria-hidden="true"
-                  />
+                  <ShieldCheck className="h-6 w-6 text-primary" aria-hidden="true" />
                 </div>
                 <h2 className="text-lg md:text-xl font-semibold text-foreground">
                   {t("bookingFee.breakdown.title")}
                 </h2>
               </div>
 
-              {/* Receipt-style rows */}
               <dl className="space-y-3 text-base">
                 <FeeRow
-                  label={t("bookingFee.breakdown.bookingFee")}
-                  value={totalFormatted}
+                  label={`${t("bookingFee.breakdown.dailyRate")} × ${RENTAL_DAYS} ${t("bookingFee.rental.days")}`}
+                  value={subtotalFmt}
                 />
                 <FeeRow
-                  label={t("bookingFee.breakdown.repairCost")}
-                  value={t("bookingFee.breakdown.paidDirectly")}
-                  muted
-                />
-                <FeeRow
-                  label={t("bookingFee.breakdown.platformService")}
+                  label={t("bookingFee.breakdown.insurance")}
                   value={t("bookingFee.breakdown.included")}
                   muted
+                />
+                <FeeRow
+                  label={t("bookingFee.breakdown.deposit")}
+                  value={depositFmt}
+                  muted
+                />
+                <FeeRow
+                  label={t("bookingFee.breakdown.reservationFee")}
+                  value={reservationFmt}
                 />
               </dl>
 
               <div className="border-t border-border my-5" />
 
-              <div className="flex items-baseline justify-between">
-                <dt className="font-semibold text-foreground">
-                  {t("bookingFee.breakdown.totalDueNow")}
-                </dt>
-                <dd className="text-3xl md:text-5xl font-bold text-primary tabular-nums">
-                  {totalFormatted}
-                </dd>
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div className="rounded-xl border border-border bg-muted/40 p-4">
+                  <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">
+                    {t("bookingFee.breakdown.payAtPickup")}
+                  </p>
+                  <p className="text-xl font-bold text-foreground tabular-nums mt-1">
+                    {subtotalFmt}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    + {depositFmt} {t("bookingFee.breakdown.depositNote")}
+                  </p>
+                </div>
+                <div className="rounded-xl border-2 border-primary/40 bg-primary/5 p-4">
+                  <p className="text-xs text-primary uppercase tracking-wide font-semibold">
+                    {t("bookingFee.breakdown.payNow")}
+                  </p>
+                  <p className="text-3xl md:text-4xl font-bold text-primary tabular-nums mt-1">
+                    {reservationFmt}
+                  </p>
+                </div>
               </div>
 
-              <p className="text-sm text-muted-foreground mt-4 text-center max-w-md mx-auto">
+              <p className="text-sm text-muted-foreground mt-4 text-center max-w-xl mx-auto">
                 {t("bookingFee.breakdown.microcopy")}
               </p>
             </CardContent>
           </Card>
 
-          {/* No-refund notice — amber, sticky-visible on desktop */}
+          {/* NO-REFUND NOTICE */}
           <div
             role="alert"
             className="rounded-2xl bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-900/50 border ltr:border-l-4 rtl:border-r-4 ltr:border-l-amber-500 rtl:border-r-amber-500 p-5 md:p-6 mb-6"
@@ -263,16 +380,12 @@ const BookingFee = () => {
                   key={key}
                   className="flex items-start gap-2 text-sm text-amber-900 dark:text-amber-100"
                 >
-                  <XCircle
-                    className="h-4 w-4 text-red-500 shrink-0 mt-0.5"
-                    aria-hidden="true"
-                  />
+                  <XCircle className="h-4 w-4 text-red-500 shrink-0 mt-0.5" aria-hidden="true" />
                   <span>{t(key)}</span>
                 </li>
               ))}
             </ul>
 
-            {/* Exception block */}
             <div className="mt-5 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/50 p-4 flex gap-3">
               <Info
                 className="h-5 w-5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5"
@@ -287,14 +400,63 @@ const BookingFee = () => {
             </div>
           </div>
 
-          {/* Read carefully checklist */}
+          {/* PICKUP REQUIREMENTS */}
           <Card className="rounded-2xl border-border/60 mb-6">
             <CardContent className="p-5 md:p-6">
               <h3 className="text-lg font-semibold text-foreground mb-4">
-                {t("bookingFee.checklist.title")}
+                {t("bookingFee.pickup.title")}
               </h3>
               <ul className="space-y-3">
-                {checkItems.map((key) => (
+                {pickupRequirements.map((key) => (
+                  <li key={key} className="flex items-start gap-3">
+                    <CheckCircle2
+                      className="h-5 w-5 text-primary shrink-0 mt-0.5"
+                      aria-hidden="true"
+                    />
+                    <span className="text-sm text-foreground">{t(key)}</span>
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-5 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 p-3 flex gap-2.5">
+                <AlertTriangle
+                  className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5"
+                  aria-hidden="true"
+                />
+                <p className="text-xs text-amber-900 dark:text-amber-100">
+                  {t("bookingFee.pickup.note")}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* POLICY HIGHLIGHTS */}
+          <Card className="rounded-2xl border-border/60 mb-6">
+            <CardContent className="p-5 md:p-6">
+              <h3 className="text-lg font-semibold text-foreground mb-4">
+                {t("bookingFee.policy.title")}
+              </h3>
+              <ul className="grid sm:grid-cols-2 gap-3">
+                {policyHighlights.map(({ icon: Icon, key }) => (
+                  <li
+                    key={key}
+                    className="flex items-start gap-3 rounded-xl border border-border bg-muted/30 p-3"
+                  >
+                    <Icon className="h-5 w-5 text-primary shrink-0 mt-0.5" aria-hidden="true" />
+                    <span className="text-sm text-foreground">{t(key)}</span>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+
+          {/* DOUBLE-CHECK BEFORE CONFIRM */}
+          <Card className="rounded-2xl border-border/60 mb-6">
+            <CardContent className="p-5 md:p-6">
+              <h3 className="text-lg font-semibold text-foreground mb-4">
+                {t("bookingFee.verify.title")}
+              </h3>
+              <ul className="space-y-3">
+                {verifyChecklist.map((key) => (
                   <li key={key} className="flex items-start gap-3">
                     <CheckCircle2
                       className="h-5 w-5 text-primary shrink-0 mt-0.5"
@@ -305,7 +467,7 @@ const BookingFee = () => {
                 ))}
               </ul>
               <p className="text-xs text-muted-foreground mt-5 ltr:border-l-2 rtl:border-r-2 border-amber-500/60 ltr:pl-3 rtl:pr-3 italic">
-                {t("bookingFee.checklist.note")}
+                {t("bookingFee.verify.note")}
               </p>
             </CardContent>
           </Card>
@@ -336,7 +498,7 @@ const BookingFee = () => {
             <AcknowledgmentBlock
               acknowledged={acknowledged}
               onToggle={setAcknowledged}
-              total={totalFormatted}
+              total={reservationFmt}
               onConfirm={handleConfirm}
               onBack={() => navigate(-1)}
             />
@@ -349,7 +511,7 @@ const BookingFee = () => {
         <AcknowledgmentBlock
           acknowledged={acknowledged}
           onToggle={setAcknowledged}
-          total={totalFormatted}
+          total={reservationFmt}
           onConfirm={handleConfirm}
           onBack={() => navigate(-1)}
           compact
@@ -363,7 +525,7 @@ const BookingFee = () => {
   );
 };
 
-/* ─────────────────────────────────────────────────────────────── */
+/* ──────────────────────────────────────────── */
 
 const FeeRow = ({
   label,
@@ -388,6 +550,15 @@ const FeeRow = ({
     >
       {value}
     </dd>
+  </div>
+);
+
+const RentalRow = ({ label, value }: { label: string; value: string }) => (
+  <div>
+    <dt className="text-xs uppercase tracking-wide text-muted-foreground font-medium">
+      {label}
+    </dt>
+    <dd className="text-foreground font-medium mt-0.5">{value}</dd>
   </div>
 );
 
