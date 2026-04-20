@@ -229,6 +229,7 @@ const responseSpeed = (mins: number): ResponseSpeed => {
 
 const Fixers = () => {
   const { t, language } = useLanguage();
+  const { isAuthenticated } = useAuth();
   const isRtl = language === "ar";
 
   const [view, setView] = useState<"grid" | "map">("grid");
