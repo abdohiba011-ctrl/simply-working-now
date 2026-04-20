@@ -98,7 +98,15 @@
       "q4": "What is the security deposit for?",
       "a4": "The deposit (around 1,500 DH) is held by the agency in cash or as a card hold to cover any damage, late return, or fuel difference. It is fully refunded at the end of the rental if the bike is returned in the same condition.",
       "q5": "What happens if the agency cancels?",
-      "a5": "If the agency cancels, the bike becomes unavailable, or the bike is delivered in non-working condition, you receive a full refund of the 10 DH plus any other charges."
+      "a5": "If the agency cancels, the bike becomes unavailable, or the bike is delivered in non-working condition, you receive a full refund of the 10 DH plus any other charges.",
+      "q6": "What if I need to change my dates?",
+      "a6": "Date changes depend on bike availability and must be arranged directly with the agency before pickup. If new dates aren't possible, the original 10 DH reservation fee remains non-refundable.",
+      "q7": "Can I extend my rental on the spot?",
+      "a7": "Yes, if the bike is still available you can extend directly with the agency at the same daily rate. Extensions are paid in cash or by card to the agency, not through the platform.",
+      "q8": "What if the bike has a problem during my rental?",
+      "a8": "Contact the agency immediately. Verified agencies are required to provide assistance, a replacement bike, or a partial refund depending on the situation. Always document the issue with photos.",
+      "q9": "Do I need an international driver's license?",
+      "a9": "Foreign visitors should carry both their national driver's license and an International Driving Permit (IDP). Moroccan residents only need a valid Moroccan license of the correct category."
     },
     "ack": {
       "label": "I have read and understood that the 10 DH reservation fee is non-refundable."

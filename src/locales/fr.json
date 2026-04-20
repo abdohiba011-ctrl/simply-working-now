@@ -99,7 +99,15 @@
       "q4": "À quoi sert la caution de garantie ?",
       "a4": "La caution (environ 1 500 DH) est conservée par l'agence en espèces ou via empreinte CB pour couvrir d'éventuels dommages, retards ou différences de carburant. Elle est intégralement restituée à la fin de la location si la moto est rendue dans le même état.",
       "q5": "Que se passe-t-il si l'agence annule ?",
-      "a5": "Si l'agence annule, si la moto devient indisponible, ou si elle est livrée non fonctionnelle, vous êtes intégralement remboursé des 10 DH ainsi que de tout autre frais."
+      "a5": "Si l'agence annule, si la moto devient indisponible, ou si elle est livrée non fonctionnelle, vous êtes intégralement remboursé des 10 DH ainsi que de tout autre frais.",
+      "q6": "Que faire si je dois changer mes dates ?",
+      "a6": "La modification des dates dépend de la disponibilité de la moto et doit être convenue directement avec l'agence avant la prise en charge. Si de nouvelles dates ne sont pas possibles, les 10 DH de frais de réservation restent non remboursables.",
+      "q7": "Puis-je prolonger ma location sur place ?",
+      "a7": "Oui, si la moto est encore disponible, vous pouvez prolonger directement avec l'agence au même tarif journalier. Les prolongations sont payées en espèces ou par carte à l'agence, pas via la plateforme.",
+      "q8": "Que faire si la moto a un problème pendant la location ?",
+      "a8": "Contactez immédiatement l'agence. Les agences vérifiées sont tenues de fournir une assistance, une moto de remplacement, ou un remboursement partiel selon la situation. Documentez toujours le problème avec des photos.",
+      "q9": "Ai-je besoin d'un permis de conduire international ?",
+      "a9": "Les visiteurs étrangers doivent présenter leur permis de conduire national accompagné d'un Permis de Conduire International (PCI). Les résidents marocains n'ont besoin que d'un permis marocain valide de la catégorie appropriée."
     },
     "ack": {
       "label": "J'ai lu et compris que les frais de réservation de 10 DH sont non remboursables."

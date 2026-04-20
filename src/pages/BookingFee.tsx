@@ -134,6 +134,9 @@ const BookingFee = () => {
     { q: "bookingFee.faq.q3", a: "bookingFee.faq.a3" },
     { q: "bookingFee.faq.q4", a: "bookingFee.faq.a4" },
     { q: "bookingFee.faq.q5", a: "bookingFee.faq.a5" },
+    { q: "bookingFee.faq.q6", a: "bookingFee.faq.a6" },
+    { q: "bookingFee.faq.q7", a: "bookingFee.faq.a7" },
+    { q: "bookingFee.faq.q8", a: "bookingFee.faq.a8" },
   ];
 
   const handleConfirm = () => {
