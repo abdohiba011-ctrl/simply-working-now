@@ -1,62 +1,105 @@
 {
   "bookingFee": {
-    "title": "Frais de Réservation & Conditions",
-    "subtitle": "Veuillez lire attentivement avant de confirmer votre réservation",
+    "title": "Vérifiez votre réservation",
+    "subtitle": "Veuillez vérifier tous les détails avant de confirmer",
     "step": "Étape 2 sur 3",
     "breadcrumb": {
       "home": "Accueil",
-      "bookFixer": "Réserver un Réparateur",
-      "feeTerms": "Frais & Conditions"
+      "browse": "Parcourir les motos",
+      "details": "Détails de la réservation"
     },
-    "steps": { "select": "Choisir le réparateur", "review": "Vérifier les frais", "pay": "Payer" },
-    "mock": {
-      "service": "Réparation moteur",
-      "location": "Maarif, Casablanca",
-      "eta": "ETA 15 min"
+    "steps": { "choose": "Choisir la moto", "review": "Vérifier", "pay": "Payer" },
+    "bike": {
+      "manual": "Manuelle",
+      "automatic": "Automatique",
+      "sport": "Sportive",
+      "cruiser": "Cruiser",
+      "scooter": "Scooter",
+      "adventure": "Aventure",
+      "licenseLabel": "Permis",
+      "verifiedAgency": "Agence vérifiée",
+      "agencyLocation": "Maarif, Casablanca",
+      "reviews": "avis"
+    },
+    "rental": {
+      "title": "Détails de la location",
+      "edit": "Modifier la réservation",
+      "pickup": "Prise en charge",
+      "return": "Retour",
+      "duration": "Durée totale",
+      "dailyRate": "Tarif journalier",
+      "day": "jour",
+      "days": "jours",
+      "pickupLocation": "Lieu de prise",
+      "returnLocation": "Lieu de retour",
+      "sameAsPickup": "Identique au lieu de prise",
+      "pickupDateValue": "Lun. 28 avr. 2026 — 10:00",
+      "returnDateValue": "Jeu. 1 mai 2026 — 10:00",
+      "durationValue": "3 jours"
     },
     "breakdown": {
-      "title": "Détail des frais",
-      "bookingFee": "Frais de réservation",
-      "repairCost": "Coût de la réparation",
-      "paidDirectly": "Payé directement au réparateur",
-      "platformService": "Service de la plateforme",
+      "title": "Détail du prix",
+      "dailyRate": "Tarif journalier",
+      "insurance": "Assurance (de base, incluse)",
+      "deposit": "Caution de l'agence (remboursable au retour)",
+      "reservationFee": "Frais de réservation (payés maintenant)",
       "included": "Inclus",
-      "totalDueNow": "Total à payer maintenant",
-      "microcopy": "Ces frais sécurisent votre réservation et déclenchent l'envoi du réparateur. Les pièces et la main-d'œuvre sont payées séparément au mécanicien après le service."
+      "payAtPickup": "À payer à la prise",
+      "payNow": "À payer maintenant",
+      "depositNote": "caution remboursable",
+      "microcopy": "Vous ne payez aujourd'hui que 10 DH pour réserver votre moto. Le coût de la location et la caution remboursable sont payés directement à l'agence lors de la prise en charge."
     },
     "noRefund": {
-      "title": "Ces frais sont non remboursables",
-      "body": "Une fois votre réservation confirmée, les 10 DH ne peuvent être remboursés — même si vous annulez, si le réparateur est en retard, ou si vous changez d'avis. Ces frais compensent le réparateur pour avoir réservé son temps pour vous.",
+      "title": "Les 10 DH de frais de réservation sont non remboursables",
+      "body": "Une fois cette réservation confirmée, les 10 DH ne peuvent être remboursés — même si vous annulez, changez d'avis, ou ne vous présentez pas. Ces frais compensent l'agence pour avoir réservé la moto pour vous et l'avoir retirée de la disponibilité publique.",
       "exceptionLabel": "Exception :",
-      "exception": "Les remboursements ne sont émis que si le réparateur ne se présente pas ou si la plateforme annule la réservation de notre côté."
+      "exception": "Vos 10 DH sont remboursés uniquement si l'agence annule, si la moto devient indisponible, ou si l'agence ne livre pas la moto en état de fonctionnement."
     },
     "cases": {
-      "cancellation": "Annulation par le client",
-      "noShow": "Absence du client au lieu de rendez-vous",
-      "changedMind": "Le client change d'avis après confirmation",
-      "wrongService": "Mauvais service sélectionné par le client"
+      "cancellation": "Annulation par le client (toute raison)",
+      "noShow": "Absence du client à la prise",
+      "wrongDates": "Mauvaises dates choisies par le client",
+      "changedMind": "Changement d'avis après confirmation"
     },
-    "checklist": {
-      "title": "Avant de confirmer, vérifiez bien :",
-      "location": "Votre adresse est correcte",
-      "service": "Le service sélectionné correspond à votre problème réel",
-      "specialty": "La spécialité du réparateur couvre votre besoin",
-      "eta": "Le délai d'intervention estimé vous convient",
-      "phone": "Votre numéro de contact est joignable",
-      "note": "Les erreurs dans les détails de réservation sont traitées comme une annulation client — aucun remboursement ne sera émis."
+    "pickup": {
+      "title": "À apporter le jour de la prise",
+      "license": "Permis de conduire valide (catégorie A / A2 / B selon la moto)",
+      "idPassport": "Carte nationale ou passeport",
+      "deposit": "Caution remboursable (1 500 DH en espèces ou empreinte CB)",
+      "confirmation": "Cette confirmation de réservation (SMS ou e-mail)",
+      "note": "L'absence des documents requis à la prise est considérée comme un no-show. Les 10 DH de frais de réservation ne seront pas remboursés."
+    },
+    "policy": {
+      "title": "Points clés de la politique de location",
+      "insurance": "Assurance de base incluse",
+      "fuel": "Carburant : restituer au même niveau qu'au départ",
+      "geo": "Limite géographique : Maroc uniquement",
+      "late": "Retour tardif : 50 DH/heure après le délai de grâce",
+      "helmet": "Casque fourni gratuitement avec la location",
+      "offroad": "Pas de hors-piste ni d'utilisation sur circuit"
+    },
+    "verify": {
+      "title": "Avant de confirmer, veuillez vérifier :",
+      "bike": "Le modèle de moto correspond à ce que vous vouliez louer",
+      "dates": "Les dates et heures de prise et retour sont correctes",
+      "location": "Le lieu de prise vous convient",
+      "license": "Vous possédez la catégorie de permis requise",
+      "phone": "Votre numéro de téléphone est joignable"
+    ,
+      "note": "Les erreurs dans les détails de réservation sont traitées comme une annulation client — les 10 DH ne seront pas remboursés."
     },
     "faq": {
       "title": "Questions fréquentes",
-      "q1": "Pourquoi y a-t-il des frais de réservation ?",
-      "a1": "Les 10 DH compensent le mécanicien pour avoir réservé son temps et s'être déplacé chez vous. Cela garantit l'équité envers les réparateurs qui refusent d'autres missions pour vous.",
-      "q2": "Puis-je être remboursé si le réparateur est en retard ?",
-      "a2": "Si le réparateur ne se présente pas du tout, vous serez intégralement remboursé. Les petits retards ne sont pas remboursables, mais vous pouvez noter le réparateur en conséquence.",
-      "q3": "Que se passe-t-il si le mécanicien ne peut pas réparer ma moto ?",
-      "a3": "Les frais de réservation couvrent le déplacement — pas une garantie de réparation. Si les pièces ne sont pas disponibles, le réparateur vous conseillera la suite. Les 10 DH ne sont pas remboursables dans ce cas.",
-      "q4": "Comment payer les pièces et la main-d'œuvre ?",
-      "a4": "Les frais de réparation sont payés directement au réparateur en espèces ou par virement mobile une fois le travail terminé. La plateforme ne prélève aucune commission.",
-      "q5": "Les 10 DH sont-ils déduits du coût de la réparation ?",
-      "a5": "Non. Les 10 DH sont des frais de réservation distincts et indépendants du prix de la réparation convenu avec le mécanicien."
+      "q1": "Pourquoi y a-t-il des frais de réservation de 10 DH ?",
+      "a1": "Les 10 DH compensent l'agence pour avoir réservé votre moto et l'avoir retirée de la disponibilité publique pour les dates choisies. Cela garantit que la moto vous est exclusivement réservée.",
+      "q2": "Les 10 DH sont-ils déduits du prix de la location ?",
+      "a2": "Non. Les 10 DH sont des frais de réservation distincts. Le coût total de la location est payé directement à l'agence lors de la prise en charge.",
+      "q3": "Que se passe-t-il si j'annule ma réservation ?",
+      "a3": "Les 10 DH de frais de réservation sont non remboursables — quelle que soit la raison ou le moment de l'annulation. Le coût de la location n'est pas facturé puisque rien n'a encore été versé à l'agence.",
+      "q4": "À quoi sert la caution de garantie ?",
+      "a4": "La caution (environ 1 500 DH) est conservée par l'agence en espèces ou via empreinte CB pour couvrir d'éventuels dommages, retards ou différences de carburant. Elle est intégralement restituée à la fin de la location si la moto est rendue dans le même état.",
+      "q5": "Que se passe-t-il si l'agence annule ?",
+      "a5": "Si l'agence annule, si la moto devient indisponible, ou si elle est livrée non fonctionnelle, vous êtes intégralement remboursé des 10 DH ainsi que de tout autre frais."
     },
     "ack": {
       "label": "J'ai lu et compris que les frais de réservation de 10 DH sont non remboursables."

@@ -1,65 +1,107 @@
 {
   "bookingFee": {
-    "title": "Booking Fee & Terms",
-    "subtitle": "Please read carefully before confirming your booking",
+    "title": "Review Your Booking",
+    "subtitle": "Please check all details carefully before confirming",
     "step": "Step 2 of 3",
     "breadcrumb": {
       "home": "Home",
-      "bookFixer": "Book a Fixer",
-      "feeTerms": "Fee & Terms"
+      "browse": "Browse Bikes",
+      "details": "Booking Details"
     },
-    "steps": { "select": "Select Fixer", "review": "Review Fees", "pay": "Pay" },
-    "mock": {
-      "service": "Engine repair",
-      "location": "Maarif, Casablanca",
-      "eta": "ETA 15 min"
+    "steps": { "choose": "Choose Bike", "review": "Review", "pay": "Pay" },
+    "bike": {
+      "manual": "Manual",
+      "automatic": "Automatic",
+      "sport": "Sport",
+      "cruiser": "Cruiser",
+      "scooter": "Scooter",
+      "adventure": "Adventure",
+      "licenseLabel": "License",
+      "verifiedAgency": "Verified Agency",
+      "agencyLocation": "Maarif, Casablanca",
+      "reviews": "reviews"
+    },
+    "rental": {
+      "title": "Rental Details",
+      "edit": "Edit booking",
+      "pickup": "Pickup",
+      "return": "Return",
+      "duration": "Total duration",
+      "dailyRate": "Daily rate",
+      "day": "day",
+      "days": "days",
+      "pickupLocation": "Pickup location",
+      "returnLocation": "Return location",
+      "sameAsPickup": "Same as pickup",
+      "pickupDateValue": "Mon, 28 Apr 2026 — 10:00 AM",
+      "returnDateValue": "Thu, 1 May 2026 — 10:00 AM",
+      "durationValue": "3 days"
     },
     "breakdown": {
-      "title": "Fee Breakdown",
-      "bookingFee": "Booking Fee",
-      "repairCost": "Repair Cost",
-      "paidDirectly": "Paid directly to fixer",
-      "platformService": "Platform Service",
+      "title": "Price Breakdown",
+      "dailyRate": "Daily rate",
+      "insurance": "Insurance (basic, included)",
+      "deposit": "Agency deposit (refundable at return)",
+      "reservationFee": "Reservation fee (paid now)",
       "included": "Included",
-      "totalDueNow": "Total Due Now",
-      "microcopy": "This secures your booking and dispatches your fixer. Repair parts and labor are paid separately to the mechanic after service."
+      "payAtPickup": "Pay at pickup",
+      "payNow": "Pay now",
+      "depositNote": "refundable deposit",
+      "microcopy": "You only pay 10 DH today to reserve your bike. The rental cost and refundable deposit are paid directly to the agency at pickup."
     },
     "noRefund": {
-      "title": "This fee is non-refundable",
-      "body": "Once you confirm your booking, the 10 DH fee cannot be refunded — even if you cancel, the fixer is delayed, or you change your mind. This fee compensates the fixer for reserving their time for you.",
+      "title": "The 10 DH reservation fee is non-refundable",
+      "body": "Once you confirm this booking, the 10 DH reservation fee cannot be refunded — even if you cancel, change your mind, or do not show up at pickup. This fee compensates the agency for holding the bike for you and removing it from public availability.",
       "exceptionLabel": "Exception:",
-      "exception": "Refunds are only issued if the fixer fails to arrive or the platform cancels the booking on our end."
+      "exception": "Your 10 DH IS refunded only if the agency cancels, the bike becomes unavailable, or the agency fails to deliver the bike in working condition."
     },
     "cases": {
-      "cancellation": "Cancellation by the client",
-      "noShow": "Client no-show at location",
-      "changedMind": "Client changes mind after confirmation",
-      "wrongService": "Wrong service selected by client"
+      "cancellation": "Cancellation by the client (any reason)",
+      "noShow": "Client no-show at pickup",
+      "wrongDates": "Wrong dates selected by client",
+      "changedMind": "Change of mind after confirmation"
     },
-    "checklist": {
-      "title": "Before you confirm, double-check:",
-      "location": "Your location is correct",
-      "service": "The service selected matches your actual problem",
-      "specialty": "The fixer's specialty covers your repair need",
-      "eta": "The estimated response time works for you",
-      "phone": "Your contact number is reachable",
-      "note": "Mistakes in booking details are treated as client cancellation — no refund will be issued."
+    "pickup": {
+      "title": "What to bring at pickup",
+      "license": "Valid driver's license (category A / A2 / B as required)",
+      "idPassport": "National ID or Passport",
+      "deposit": "Refundable security deposit (1,500 DH cash or card hold)",
+      "confirmation": "This booking confirmation (SMS or email)",
+      "note": "Failure to present required documents at pickup is treated as a no-show. The 10 DH reservation fee will not be refunded."
+    },
+    "policy": {
+      "title": "Rental Policy Highlights",
+      "insurance": "Basic insurance included",
+      "fuel": "Fuel: return with the same level as pickup",
+      "geo": "Geographic limit: Morocco only",
+      "late": "Late return: 50 DH/hour after grace period",
+      "helmet": "Helmet provided free with rental",
+      "offroad": "No off-road or track use"
+    },
+    "verify": {
+      "title": "Before confirming, please verify:",
+      "bike": "The bike model matches what you wanted to rent",
+      "dates": "Pickup and return dates and times are correct",
+      "location": "Pickup location is convenient for you",
+      "license": "You hold the required license category",
+      "phone": "Your contact phone is reachable",
+      "note": "Mistakes in booking details are treated as client cancellation — the 10 DH reservation fee will not be refunded."
     },
     "faq": {
       "title": "Frequently asked",
-      "q1": "Why is there a booking fee?",
-      "a1": "The 10 DH fee compensates the mechanic for reserving their time and dispatching to your location. It keeps the marketplace fair to fixers who turn down other jobs to come to you.",
-      "q2": "Can I get a refund if the fixer is late?",
-      "a2": "If the fixer fails to arrive at all, you'll receive a full refund. Minor delays are not refundable, but you can rate the fixer accordingly.",
-      "q3": "What if the mechanic can't fix my bike?",
-      "a3": "The booking fee covers the dispatch — not a repair guarantee. If parts aren't available or the issue is beyond their expertise, the fixer will advise on next steps. The 10 DH is not refundable in this case.",
-      "q4": "How do I pay for parts and labor?",
-      "a4": "Repair costs are paid directly to the fixer in cash or by mobile transfer once the work is done. The platform does not charge a commission on the repair itself.",
-      "q5": "Is the 10 DH counted toward the repair cost?",
-      "a5": "No. The 10 DH is a separate booking fee paid to secure the dispatch and is independent from the repair price agreed with the mechanic."
+      "q1": "Why is there a 10 DH reservation fee?",
+      "a1": "The 10 DH compensates the agency for holding your bike and removing it from public availability for the dates you selected. It guarantees the bike is reserved exclusively for you.",
+      "q2": "Is the 10 DH counted toward the rental price?",
+      "a2": "No. The 10 DH is a separate reservation fee. The full rental cost is paid directly to the agency at pickup.",
+      "q3": "What if I cancel my booking?",
+      "a3": "The 10 DH reservation fee is non-refundable — regardless of when you cancel or the reason. The rental cost is not charged because nothing has been paid to the agency yet.",
+      "q4": "What is the security deposit for?",
+      "a4": "The deposit (around 1,500 DH) is held by the agency in cash or as a card hold to cover any damage, late return, or fuel difference. It is fully refunded at the end of the rental if the bike is returned in the same condition.",
+      "q5": "What happens if the agency cancels?",
+      "a5": "If the agency cancels, the bike becomes unavailable, or the bike is delivered in non-working condition, you receive a full refund of the 10 DH plus any other charges."
     },
     "ack": {
-      "label": "I have read and understood that the 10 DH booking fee is non-refundable."
+      "label": "I have read and understood that the 10 DH reservation fee is non-refundable."
     },
     "cta": {
       "confirm": "Confirm & Pay",
