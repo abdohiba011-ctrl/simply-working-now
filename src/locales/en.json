@@ -94,7 +94,8 @@
     "logout": "Logout",
     "more": "More",
     "aboutUs": "About Us",
-    "ourPartners": "Our Partners",
+    "ourPartners": "Our Fixers",
+    "fixers": "Fixers",
     "contactUs": "Contact Us",
     "insurances": "Insurances",
     "ourShops": "Our Shops",
@@ -1398,12 +1399,18 @@
     "officialShop": "Official Shop",
     "bikesAvailable": "bikes available"
   },
-  "partners": {
-    "title": "Our Trusted Partners",
-    "subtitle": "Meet our verified rental partners across Morocco",
-    "verified": "Verified Partner",
+  "fixers": {
+    "title": "Trusted Bike Fixers",
+    "subtitle": "Verified mechanics ready to repair your motorbike anywhere, anytime",
+    "verified": "Verified Fixer",
     "rating": "Rating",
-    "bikesAvailable": "bikes available"
+    "responseTime": "Response Time",
+    "engineRepair": "Engine Repair",
+    "tirePuncture": "Tire & Puncture",
+    "electricalBattery": "Electrical & Battery",
+    "brakesGears": "Brakes & Gears",
+    "generalMaintenance": "General Maintenance",
+    "roadsideAssistance": "Roadside Assistance"
   },
   "quarterly": {
     "title": "Quarterly Performance",

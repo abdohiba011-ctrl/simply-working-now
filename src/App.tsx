@@ -25,12 +25,10 @@ const Affiliate = lazy(() => import("./pages/Affiliate"));
 const AffiliateSignup = lazy(() => import("./pages/AffiliateSignup"));
 const ThankYou = lazy(() => import("./pages/ThankYou"));
 const About = lazy(() => import("./pages/About"));
-const Partners = lazy(() => import("./pages/Partners"));
+const Fixers = lazy(() => import("./pages/Fixers"));
 const Contact = lazy(() => import("./pages/Contact"));
 const ContactMessages = lazy(() => import("./pages/ContactMessages"));
 const Quarterly = lazy(() => import("./pages/Quarterly"));
-const Insurances = lazy(() => import("./pages/Insurances"));
-const OurShops = lazy(() => import("./pages/OurShops"));
 const GPSTracking = lazy(() => import("./pages/GPSTracking"));
 
 const BecomeBusiness = lazy(() => import("./pages/BecomeBusiness"));
@@ -67,7 +65,6 @@ const Verification = lazy(() => import("./pages/Verification"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const TermsConditions = lazy(() => import("./pages/TermsConditions"));
 const CookiesPolicy = lazy(() => import("./pages/CookiesPolicy"));
-const Pricing = lazy(() => import("./pages/Pricing"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -104,14 +101,12 @@ const App = () => (
                   <Route path="/affiliate-signup" element={<AffiliateSignup />} />
                   <Route path="/thank-you" element={<ThankYou />} />
                   <Route path="/about" element={<About />} />
-                  <Route path="/partners" element={<Partners />} />
+                  <Route path="/fixers" element={<Fixers />} />
                   <Route path="/contact" element={<Contact />} />
                   <Route path="/contact-messages" element={
                     <ProtectedRoute requireRole="admin"><ContactMessages /></ProtectedRoute>
                   } />
                   <Route path="/quarterly" element={<Quarterly />} />
-                  <Route path="/insurances" element={<Insurances />} />
-                  <Route path="/our-shops" element={<OurShops />} />
                   <Route path="/gps-tracking" element={<GPSTracking />} />
                   <Route path="/auth" element={<Auth />} />
                   <Route path="/login" element={<Auth />} />
@@ -119,7 +114,6 @@ const App = () => (
                   <Route path="/become-business" element={<BecomeBusiness />} />
                   <Route path="/verification" element={<ProtectedRoute><Verification /></ProtectedRoute>} />
                   <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-                  <Route path="/pricing" element={<Pricing />} />
                   <Route path="/terms" element={<TermsConditions />} />
                   <Route path="/cookies" element={<CookiesPolicy />} />
                   <Route path="/profile" element={<ProtectedRoute><Suspense fallback={<ProfileSkeleton />}><Profile /></Suspense></ProtectedRoute>} />
