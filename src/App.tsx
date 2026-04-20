@@ -26,6 +26,7 @@ const AffiliateSignup = lazy(() => import("./pages/AffiliateSignup"));
 const ThankYou = lazy(() => import("./pages/ThankYou"));
 const About = lazy(() => import("./pages/About"));
 const Fixers = lazy(() => import("./pages/Fixers"));
+const BookingFee = lazy(() => import("./pages/BookingFee"));
 const Contact = lazy(() => import("./pages/Contact"));
 const ContactMessages = lazy(() => import("./pages/ContactMessages"));
 const Quarterly = lazy(() => import("./pages/Quarterly"));
@@ -102,6 +103,7 @@ const App = () => (
                   <Route path="/thank-you" element={<ThankYou />} />
                   <Route path="/about" element={<About />} />
                   <Route path="/fixers" element={<Fixers />} />
+                  <Route path="/booking-fee" element={<ProtectedRoute><BookingFee /></ProtectedRoute>} />
                   <Route path="/contact" element={<Contact />} />
                   <Route path="/contact-messages" element={
                     <ProtectedRoute requireRole="admin"><ContactMessages /></ProtectedRoute>
