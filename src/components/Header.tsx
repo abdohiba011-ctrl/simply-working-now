@@ -308,10 +308,6 @@ export const Header = memo(() => {
                     <span className="text-xs font-medium text-center text-muted-foreground">{t('header.marketplace')}<br/><span className="text-red-500 font-semibold">{t('header.comingSoon')}</span></span>
                   </div>
                   <div className="flex flex-col items-center gap-2 p-3 rounded-lg opacity-60 cursor-not-allowed">
-                    <Building2 className="h-6 w-6 text-muted-foreground" />
-                    <span className="text-xs font-medium text-center text-muted-foreground">{t('header.ourShops')}<br/><span className="text-red-500 font-semibold">{t('header.comingSoon')}</span></span>
-                  </div>
-                  <div className="flex flex-col items-center gap-2 p-3 rounded-lg opacity-60 cursor-not-allowed">
                     <MapPin className="h-6 w-6 text-muted-foreground" />
                     <span className="text-xs font-medium text-center text-muted-foreground">{t('header.gpsTracking')}<br/><span className="text-red-500 font-semibold">{t('header.comingSoon')}</span></span>
                   </div>
@@ -593,7 +589,7 @@ export const Header = memo(() => {
                   <Link to="/fixers" className="text-foreground transition-colors font-medium py-3 px-4 text-sm rounded hover:bg-muted min-h-[44px] flex items-center" onClick={() => setIsMenuOpen(false)}>{t('header.fixers')}</Link>
                   <Link to="/contact" className="text-foreground transition-colors font-medium py-3 px-4 text-sm rounded hover:bg-muted min-h-[44px] flex items-center" onClick={() => setIsMenuOpen(false)}>{t('header.contactUs')}</Link>
                   <div className="text-muted-foreground py-3 px-4 text-sm rounded min-h-[44px] flex items-center opacity-60">{t('header.marketplace')} <span className="text-red-500 font-semibold ltr:ml-2 rtl:mr-2">{t('header.comingSoon')}</span></div>
-                  <div className="text-muted-foreground py-3 px-4 text-sm rounded min-h-[44px] flex items-center opacity-60">{t('header.ourShops')} <span className="text-red-500 font-semibold ltr:ml-2 rtl:mr-2">{t('header.comingSoon')}</span></div>
+                  
                   <div className="text-muted-foreground py-3 px-4 text-sm rounded min-h-[44px] flex items-center opacity-60">{t('header.gpsTracking')} <span className="text-red-500 font-semibold ltr:ml-2 rtl:mr-2">{t('header.comingSoon')}</span></div>
                 </div>
               </details>

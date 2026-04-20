@@ -632,7 +632,7 @@ const FixerCard = ({ fixer }: { fixer: Fixer }) => {
             className="flex-1 min-h-[44px] font-semibold"
             disabled={fixer.openStatus === "closed"}
           >
-            <a href={`tel:${fixer.phone}`}>{t("fixers.requestRepair")}</a>
+            <Link to="/booking-fee">{t("fixers.requestRepair")}</Link>
           </Button>
           <Button
             asChild
