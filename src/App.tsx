@@ -103,7 +103,7 @@ const App = () => (
                   <Route path="/thank-you" element={<ThankYou />} />
                   <Route path="/about" element={<About />} />
                   <Route path="/fixers" element={<Fixers />} />
-                  <Route path="/booking-fee" element={<ProtectedRoute><BookingFee /></ProtectedRoute>} />
+                  <Route path="/booking-fee" element={<BookingFee />} />
                   <Route path="/contact" element={<Contact />} />
                   <Route path="/contact-messages" element={
                     <ProtectedRoute requireRole="admin"><ContactMessages /></ProtectedRoute>
