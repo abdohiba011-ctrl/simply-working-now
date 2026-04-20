@@ -38,6 +38,9 @@ import {
   Frown,
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { Link } from "react-router-dom";
+import { Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /**
@@ -226,6 +229,7 @@ const responseSpeed = (mins: number): ResponseSpeed => {
 
 const Fixers = () => {
   const { t, language } = useLanguage();
+  const { isAuthenticated } = useAuth();
   const isRtl = language === "ar";
 
   const [view, setView] = useState<"grid" | "map">("grid");
@@ -442,10 +446,48 @@ const Fixers = () => {
           ) : filtered.length === 0 ? (
             <EmptyState onReset={() => { setSpecialty("all"); setSearch(""); }} />
           ) : view === "grid" ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-              {filtered.map((f) => (
-                <FixerCard key={f.id} fixer={f} />
-              ))}
+            <div className="relative">
+              <div
+                className={cn(
+                  "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 transition-all",
+                  !isAuthenticated && "blur-md pointer-events-none select-none",
+                )}
+                aria-hidden={!isAuthenticated}
+              >
+                {filtered.map((f) => (
+                  <FixerCard key={f.id} fixer={f} />
+                ))}
+              </div>
+
+              {!isAuthenticated && (
+                <div className="absolute inset-0 flex items-center justify-center p-4">
+                  <div className="max-w-md w-full rounded-2xl border bg-card/95 backdrop-blur-sm shadow-xl p-6 md:p-8 text-center space-y-4">
+                    <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/15 mx-auto">
+                      <Lock className="h-7 w-7 text-primary" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <h3 className="text-xl font-semibold text-foreground">
+                        {t("fixers.loginRequired.title")}
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        {t("fixers.loginRequired.subtitle")}
+                      </p>
+                    </div>
+                    <div className="flex flex-col sm:flex-row gap-2 justify-center pt-2">
+                      <Button asChild size="lg" className="min-h-[44px]">
+                        <Link to={`/auth?returnUrl=${encodeURIComponent("/fixers")}`}>
+                          {t("fixers.loginRequired.login")}
+                        </Link>
+                      </Button>
+                      <Button asChild variant="outline" size="lg" className="min-h-[44px]">
+                        <Link to={`/auth?returnUrl=${encodeURIComponent("/fixers")}`}>
+                          {t("fixers.loginRequired.signup")}
+                        </Link>
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <FixerMap fixers={filtered} />

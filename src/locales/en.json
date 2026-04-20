@@ -1428,7 +1428,12 @@
       "subtitle": "Tap to auto-match the nearest available fixer",
       "cta": "Find Help Now"
     },
-    "filters": { "all": "All" },
+    "loginRequired": {
+      "title": "Login to view fixers",
+      "subtitle": "Sign in to see verified mechanics near you, contact details, and request a repair.",
+      "login": "Log in",
+      "signup": "Sign up"
+    },
     "sort": {
       "nearest": "Nearest",
       "fastest": "Fastest response",

@@ -1428,7 +1428,12 @@
       "subtitle": "Appuyez pour contacter automatiquement le réparateur le plus proche",
       "cta": "Trouver de l'aide"
     },
-    "filters": { "all": "Tous" },
+    "loginRequired": {
+      "title": "Connectez-vous pour voir les réparateurs",
+      "subtitle": "Inscrivez-vous pour voir les mécaniciens vérifiés près de chez vous, les coordonnées et demander une réparation.",
+      "login": "Se connecter",
+      "signup": "S'inscrire"
+    },
     "sort": {
       "nearest": "Plus proche",
       "fastest": "Réponse rapide",
