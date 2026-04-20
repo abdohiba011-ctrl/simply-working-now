@@ -162,8 +162,8 @@
     "logout": "Déconnexion",
     "more": "Plus",
     "aboutUs": "À Propos",
-    "ourPartners": "Nos Réparateurs",
-    "fixers": "Réparateurs",
+    "ourPartners": "Nos Mécaniciens",
+    "fixers": "Mécaniciens",
     "contactUs": "Contactez-nous",
     "bookingFee": "Frais & Conditions",
     "insurances": "Assurances",
@@ -1469,9 +1469,9 @@
     "bikesAvailable": "motos disponibles"
   },
   "fixers": {
-    "title": "Réparateurs de Confiance",
+    "title": "Mécaniciens de Confiance",
     "subtitle": "Mécaniciens vérifiés prêts à réparer votre moto partout, à tout moment",
-    "verified": "Réparateur Vérifié",
+    "verified": "Mécanicien Vérifié",
     "verifiedTooltip": "Identité vérifiée, assurance confirmée, +50 missions réussies",
     "rating": "Note",
     "reviews": "avis",

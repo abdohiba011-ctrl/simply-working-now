@@ -162,8 +162,8 @@
     "logout": "Logout",
     "more": "More",
     "aboutUs": "About Us",
-    "ourPartners": "Our Fixers",
-    "fixers": "Fixers",
+    "ourPartners": "Our Mechanics",
+    "fixers": "Mechanics",
     "contactUs": "Contact Us",
     "bookingFee": "Booking Fee & Terms",
     "insurances": "Insurances",
@@ -1469,9 +1469,9 @@
     "bikesAvailable": "bikes available"
   },
   "fixers": {
-    "title": "Trusted Bike Fixers",
+    "title": "Trusted Bike Mechanics",
     "subtitle": "Verified mechanics ready to repair your motorbike anywhere, anytime",
-    "verified": "Verified Fixer",
+    "verified": "Verified Mechanic",
     "verifiedTooltip": "ID checked, insurance verified, 50+ completed jobs",
     "rating": "Rating",
     "reviews": "reviews",
