@@ -117,6 +117,78 @@
       "terms": "By confirming, you agree to our Terms of Service and Cancellation Policy."
     }
   },
+  "bookingFeeInfo": {
+    "tag": "Help & Information",
+    "title": "Understanding the 10 DH Booking Fee",
+    "subtitle": "Everything you need to know about how our reservation fee works.",
+    "breadcrumb": { "home": "Home", "help": "Help", "fee": "Booking Fee" },
+    "hero": {
+      "headline": "When you book a bike with us, you pay a small 10 DH reservation fee to lock in your booking.",
+      "support": "It's quick, transparent, and helps both you and the rental agency."
+    },
+    "covers": {
+      "title": "What does the 10 DH fee cover?",
+      "reserve": { "title": "Reserves your bike", "body": "Your chosen bike is locked just for you and removed from availability for other renters." },
+      "confirm": { "title": "Confirms your booking with the agency", "body": "The agency receives your booking instantly and prepares your bike for pickup." },
+      "protect": { "title": "Protects the agency's time", "body": "Agencies trust the booking is real and won't be a no-show, so they can plan their day." }
+    },
+    "isNot": {
+      "title": "What the fee is NOT",
+      "partOfRental": "It is NOT part of the rental cost.",
+      "deposit": "It is NOT a deposit you get back.",
+      "hidden": "It is NOT a hidden charge — it's shown upfront, every time.",
+      "profit": "It is NOT paid to the platform as profit only — most goes to the agency."
+    },
+    "refund": {
+      "title": "Is the 10 DH refundable?",
+      "statement": "No — the 10 DH booking fee is non-refundable.",
+      "explanation": "Once you book, the agency holds the bike for you and turns away other potential renters. That's why this small fee cannot be returned, even if you cancel or change your mind.",
+      "whenTitle": "When IS it refunded?"
+    },
+    "refundCases": {
+      "agencyCancels": "The agency cancels your booking.",
+      "unavailable": "The bike becomes unavailable before pickup.",
+      "notWorking": "The agency fails to deliver the bike in working condition."
+    },
+    "why": {
+      "title": "Why such a small fee?",
+      "body": "We kept it intentionally low — just 10 DH — so booking a bike feels easy and accessible to everyone. It's enough to make bookings serious, but small enough to never be a barrier.",
+      "comparison": "Less than the price of a coffee — and it secures your ride for days."
+    },
+    "fits": {
+      "title": "Where does the 10 DH fit in my total?",
+      "note": "You only pay the 10 DH online. Everything else is handled directly with the rental agency at pickup."
+    },
+    "breakdown": {
+      "bookingFee": "Booking fee",
+      "paidOnline": "Paid online today",
+      "dailyRental": "Daily rental",
+      "atPickup": "Paid at pickup",
+      "deposit": "Security deposit",
+      "refundable": "Refundable at return"
+    },
+    "faq": {
+      "title": "Frequently asked",
+      "q1": "Why do I have to pay before pickup?",
+      "a1": "Paying online confirms that your booking is real and instantly notifies the agency to reserve the bike for you. Without it, agencies can't trust the booking enough to hold the bike.",
+      "q2": "Can I avoid the 10 DH fee?",
+      "a2": "No — the 10 DH applies to every booking on our platform. It's the same for everyone and is what makes it possible to reserve a bike instantly.",
+      "q3": "What if I change my booking dates?",
+      "a3": "Date changes depend on bike availability and must be arranged with the agency before pickup. The original 10 DH stays with the booking and is not charged again.",
+      "q4": "Is the 10 DH the same for every bike?",
+      "a4": "Yes — whether you book a scooter or a high-end sport bike, the booking fee is always 10 DH. Only the daily rental price changes.",
+      "q5": "Who receives the 10 DH — the platform or the agency?",
+      "a5": "Most of the 10 DH goes to the agency to compensate them for reserving the bike. A small portion covers the platform's payment processing and operating costs.",
+      "q6": "Is this fee legal in Morocco?",
+      "a6": "Yes. The 10 DH is a transparent, disclosed reservation fee shown before any booking is confirmed. Both you and the agency agree to it as part of the rental terms."
+    },
+    "footerLinks": {
+      "browse": "Browse available bikes",
+      "browseSub": "See what's available in your city",
+      "support": "Contact support",
+      "supportSub": "Have a question? We're here to help"
+    }
+  },
   "common": {
     "all": "All",
     "refresh": "Refresh",

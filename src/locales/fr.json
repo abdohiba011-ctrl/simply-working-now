@@ -118,6 +118,78 @@
       "terms": "En confirmant, vous acceptez nos Conditions d'utilisation et notre Politique d'annulation."
     }
   },
+  "bookingFeeInfo": {
+    "tag": "Aide & Informations",
+    "title": "Comprendre les frais de réservation de 10 DH",
+    "subtitle": "Tout ce que vous devez savoir sur le fonctionnement de nos frais de réservation.",
+    "breadcrumb": { "home": "Accueil", "help": "Aide", "fee": "Frais de réservation" },
+    "hero": {
+      "headline": "Lorsque vous réservez une moto chez nous, vous payez de petits frais de réservation de 10 DH pour bloquer votre réservation.",
+      "support": "C'est rapide, transparent, et utile à la fois pour vous et pour l'agence de location."
+    },
+    "covers": {
+      "title": "Que couvrent les 10 DH ?",
+      "reserve": { "title": "Réserve votre moto", "body": "La moto choisie vous est verrouillée et retirée de la disponibilité pour les autres locataires." },
+      "confirm": { "title": "Confirme votre réservation auprès de l'agence", "body": "L'agence reçoit votre réservation instantanément et prépare votre moto pour la prise en charge." },
+      "protect": { "title": "Protège le temps de l'agence", "body": "Les agences savent que la réservation est sérieuse et qu'il n'y aura pas d'absence, donc elles peuvent organiser leur journée." }
+    },
+    "isNot": {
+      "title": "Ce que les frais ne sont PAS",
+      "partOfRental": "Ce n'est PAS une partie du coût de location.",
+      "deposit": "Ce n'est PAS une caution que vous récupérez.",
+      "hidden": "Ce n'est PAS un frais caché — il est affiché clairement, à chaque fois.",
+      "profit": "Ce n'est PAS uniquement un profit pour la plateforme — la majeure partie revient à l'agence."
+    },
+    "refund": {
+      "title": "Les 10 DH sont-ils remboursables ?",
+      "statement": "Non — les frais de réservation de 10 DH ne sont pas remboursables.",
+      "explanation": "Une fois la réservation faite, l'agence garde la moto pour vous et refuse d'autres locataires potentiels. C'est pour cela que ces petits frais ne peuvent pas être restitués, même si vous annulez ou changez d'avis.",
+      "whenTitle": "Quand SONT-ILS remboursés ?"
+    },
+    "refundCases": {
+      "agencyCancels": "L'agence annule votre réservation.",
+      "unavailable": "La moto devient indisponible avant la prise en charge.",
+      "notWorking": "L'agence ne parvient pas à livrer la moto en état de fonctionnement."
+    },
+    "why": {
+      "title": "Pourquoi un montant si petit ?",
+      "body": "Nous l'avons gardé volontairement bas — seulement 10 DH — pour que réserver une moto soit simple et accessible à tous. Assez pour rendre les réservations sérieuses, mais assez petit pour ne jamais être une barrière.",
+      "comparison": "Moins que le prix d'un café — et ça vous garantit votre moto pour plusieurs jours."
+    },
+    "fits": {
+      "title": "Où se situent les 10 DH dans mon total ?",
+      "note": "Vous ne payez que les 10 DH en ligne. Tout le reste est géré directement avec l'agence de location lors de la prise en charge."
+    },
+    "breakdown": {
+      "bookingFee": "Frais de réservation",
+      "paidOnline": "Payés en ligne aujourd'hui",
+      "dailyRental": "Location journalière",
+      "atPickup": "Payée à la prise en charge",
+      "deposit": "Caution de garantie",
+      "refundable": "Remboursable au retour"
+    },
+    "faq": {
+      "title": "Questions fréquentes",
+      "q1": "Pourquoi dois-je payer avant la prise en charge ?",
+      "a1": "Le paiement en ligne confirme que votre réservation est sérieuse et notifie immédiatement l'agence de bloquer la moto pour vous. Sans cela, les agences ne peuvent pas faire confiance à la réservation pour garder la moto.",
+      "q2": "Puis-je éviter les 10 DH ?",
+      "a2": "Non — les 10 DH s'appliquent à chaque réservation sur notre plateforme. C'est identique pour tout le monde et c'est ce qui permet de réserver une moto instantanément.",
+      "q3": "Que se passe-t-il si je change mes dates de réservation ?",
+      "a3": "Le changement de dates dépend de la disponibilité de la moto et doit être arrangé avec l'agence avant la prise en charge. Les 10 DH initiaux restent attachés à la réservation et ne sont pas facturés à nouveau.",
+      "q4": "Les 10 DH sont-ils identiques pour toutes les motos ?",
+      "a4": "Oui — que vous réserviez un scooter ou une moto sportive haut de gamme, les frais de réservation sont toujours de 10 DH. Seul le tarif journalier varie.",
+      "q5": "Qui reçoit les 10 DH — la plateforme ou l'agence ?",
+      "a5": "La majeure partie des 10 DH revient à l'agence pour compenser la réservation de la moto. Une petite partie couvre les frais de traitement et les coûts opérationnels de la plateforme.",
+      "q6": "Ces frais sont-ils légaux au Maroc ?",
+      "a6": "Oui. Les 10 DH sont des frais de réservation transparents et clairement annoncés avant toute confirmation de réservation. Vous et l'agence les acceptez dans le cadre des conditions de location."
+    },
+    "footerLinks": {
+      "browse": "Parcourir les motos disponibles",
+      "browseSub": "Voyez ce qui est disponible dans votre ville",
+      "support": "Contacter le support",
+      "supportSub": "Une question ? Nous sommes là pour vous aider"
+    }
+  },
   "common": {
     "all": "Tous",
     "refresh": "Actualiser",

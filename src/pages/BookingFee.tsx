@@ -1,11 +1,7 @@
-import { useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Badge } from "@/components/ui/badge";
 import {
   Accordion,
   AccordionContent,
@@ -13,23 +9,17 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import {
-  AlertTriangle,
+  Info,
+  Lock,
+  Handshake,
+  ShieldCheck,
+  Coins,
   CheckCircle2,
   XCircle,
-  ShieldCheck,
-  Info,
   ChevronRight,
-  ArrowLeft,
-  Calendar,
-  MapPin,
+  Coffee,
   Bike,
-  Star,
-  BadgeCheck,
-  Fuel,
-  Clock,
-  HardHat,
-  Ban,
-  Pencil,
+  LifeBuoy,
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
@@ -38,111 +28,65 @@ import { cn } from "@/lib/utils";
  * ─────────────────────────────────────────────────────────────────────────────
  *  DESIGN RATIONALE
  * ─────────────────────────────────────────────────────────────────────────────
- *  • Bike hero card first: the user must instantly recognize what they're
- *    renting — photo + model + agency + verified badge.
- *  • Two-total layout in price breakdown (pay NOW vs pay AT PICKUP) prevents
- *    sticker shock and matches Turo / Booking.com mental models.
- *  • Amber (not red) warning for the no-refund clause: red signals failure;
- *    amber signals "important info, pay attention" — calmer and trust-building.
- *  • Required acknowledgment checkbox: deliberate action eliminates the
- *    "I didn't read" chargeback excuse.
+ *  • Purely educational page — no CTAs, no checkboxes, no payment actions.
+ *    The reader should leave informed, not pressured.
+ *  • Amber (not red) for the non-refundable section: red triggers a "danger"
+ *    response; amber says "important, please read" — calmer and trust-building.
+ *  • 3-card layout for "what the fee covers": three is the magic number for
+ *    scannability — fewer feels thin, more feels overwhelming.
+ *  • The "10 DH" numeral is the visual anchor in the hero — bold and large
+ *    so the reader anchors on the actual amount immediately.
+ *  • Soft footer links (browse / contact) instead of a primary CTA — this
+ *    page is a destination, not a funnel step.
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
-const RESERVATION_FEE = 10;
-const DAILY_RATE = 250;
-const RENTAL_DAYS = 3;
-const DEPOSIT = 1500;
-const RENTAL_SUBTOTAL = DAILY_RATE * RENTAL_DAYS;
-
-const formatCurrency = (amount: number, locale: string) => {
-  const formatted = new Intl.NumberFormat(
-    locale === "fr" ? "fr-FR" : locale === "ar" ? "ar-MA" : "en-US",
-    { minimumFractionDigits: 2, maximumFractionDigits: 2 },
-  ).format(amount);
-  return `${formatted} DH`;
-};
-
-const BookingFee = () => {
+const BookingFeeInfo = () => {
   const { t, language } = useLanguage();
-  const navigate = useNavigate();
   const isRtl = language === "ar";
-  const [acknowledged, setAcknowledged] = useState(false);
 
-  const reservationFmt = useMemo(() => formatCurrency(RESERVATION_FEE, language), [language]);
-  const dailyRateFmt = useMemo(() => formatCurrency(DAILY_RATE, language), [language]);
-  const subtotalFmt = useMemo(() => formatCurrency(RENTAL_SUBTOTAL, language), [language]);
-  const depositFmt = useMemo(() => formatCurrency(DEPOSIT, language), [language]);
-
-  // Mock booking — in production, comes from previous step state
-  const bike = {
-    name: "Yamaha MT-07 (2023)",
-    image:
-      "https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?w=900&auto=format&fit=crop&q=70",
-    engine: "689cc",
-    transmission: t("bookingFee.bike.manual"),
-    type: t("bookingFee.bike.sport"),
-    licenseRequired: "A",
-    agencyName: "Ana Agency Rentals",
-    agencyLocation: t("bookingFee.bike.agencyLocation"),
-    rating: 4.8,
-    reviewCount: 213,
-  };
-
-  const rental = {
-    pickupDate: t("bookingFee.rental.pickupDateValue"),
-    returnDate: t("bookingFee.rental.returnDateValue"),
-    duration: t("bookingFee.rental.durationValue"),
-    pickupLocation: bike.agencyLocation,
-    returnLocation: t("bookingFee.rental.sameAsPickup"),
-  };
-
-  const noRefundCases = [
-    "bookingFee.cases.cancellation",
-    "bookingFee.cases.noShow",
-    "bookingFee.cases.wrongDates",
-    "bookingFee.cases.changedMind",
+  const covers = [
+    { icon: Lock, key: "bookingFeeInfo.covers.reserve" },
+    { icon: Handshake, key: "bookingFeeInfo.covers.confirm" },
+    { icon: ShieldCheck, key: "bookingFeeInfo.covers.protect" },
   ];
 
-  const pickupRequirements = [
-    "bookingFee.pickup.license",
-    "bookingFee.pickup.idPassport",
-    "bookingFee.pickup.deposit",
-    "bookingFee.pickup.confirmation",
+  const isNot = [
+    "bookingFeeInfo.isNot.partOfRental",
+    "bookingFeeInfo.isNot.deposit",
+    "bookingFeeInfo.isNot.hidden",
+    "bookingFeeInfo.isNot.profit",
   ];
 
-  const verifyChecklist = [
-    "bookingFee.verify.bike",
-    "bookingFee.verify.dates",
-    "bookingFee.verify.location",
-    "bookingFee.verify.license",
-    "bookingFee.verify.phone",
+  const refundCases = [
+    "bookingFeeInfo.refundCases.agencyCancels",
+    "bookingFeeInfo.refundCases.unavailable",
+    "bookingFeeInfo.refundCases.notWorking",
   ];
 
-  const policyHighlights: { icon: typeof ShieldCheck; key: string }[] = [
-    { icon: ShieldCheck, key: "bookingFee.policy.insurance" },
-    { icon: Fuel, key: "bookingFee.policy.fuel" },
-    { icon: MapPin, key: "bookingFee.policy.geo" },
-    { icon: Clock, key: "bookingFee.policy.late" },
-    { icon: HardHat, key: "bookingFee.policy.helmet" },
-    { icon: Ban, key: "bookingFee.policy.offroad" },
+  const breakdown = [
+    {
+      label: "bookingFeeInfo.breakdown.bookingFee",
+      value: "10 DH",
+      sub: "bookingFeeInfo.breakdown.paidOnline",
+      accent: true,
+    },
+    {
+      label: "bookingFeeInfo.breakdown.dailyRental",
+      value: "≈ 250 DH/day",
+      sub: "bookingFeeInfo.breakdown.atPickup",
+    },
+    {
+      label: "bookingFeeInfo.breakdown.deposit",
+      value: "≈ 1,500 DH",
+      sub: "bookingFeeInfo.breakdown.refundable",
+    },
   ];
 
-  const faqs = [
-    { q: "bookingFee.faq.q1", a: "bookingFee.faq.a1" },
-    { q: "bookingFee.faq.q2", a: "bookingFee.faq.a2" },
-    { q: "bookingFee.faq.q3", a: "bookingFee.faq.a3" },
-    { q: "bookingFee.faq.q4", a: "bookingFee.faq.a4" },
-    { q: "bookingFee.faq.q5", a: "bookingFee.faq.a5" },
-    { q: "bookingFee.faq.q6", a: "bookingFee.faq.a6" },
-    { q: "bookingFee.faq.q7", a: "bookingFee.faq.a7" },
-    { q: "bookingFee.faq.q8", a: "bookingFee.faq.a8" },
-  ];
-
-  const handleConfirm = () => {
-    if (!acknowledged) return;
-    navigate("/checkout");
-  };
+  const faqs = Array.from({ length: 6 }, (_, i) => ({
+    q: `bookingFeeInfo.faq.q${i + 1}`,
+    a: `bookingFeeInfo.faq.a${i + 1}`,
+  }));
 
   return (
     <div
@@ -151,519 +95,306 @@ const BookingFee = () => {
     >
       <Header />
 
-      <main className="flex-1 pb-32 md:pb-12">
-        <div className="container mx-auto px-4 py-6 md:py-10 max-w-4xl">
+      <main className="flex-1">
+        <div className="container mx-auto px-4 py-8 md:py-12 max-w-4xl">
           {/* Breadcrumb */}
           <nav
             aria-label="breadcrumb"
-            className="flex items-center gap-1.5 text-sm text-muted-foreground mb-4"
+            className="flex items-center gap-1.5 text-sm text-muted-foreground mb-6"
           >
             <Link to="/" className="hover:text-foreground transition-colors">
-              {t("bookingFee.breadcrumb.home")}
+              {t("bookingFeeInfo.breadcrumb.home")}
             </Link>
             <ChevronRight
               className={cn("h-4 w-4 shrink-0", isRtl && "rotate-180")}
               aria-hidden="true"
             />
-            <Link to="/listings" className="hover:text-foreground transition-colors">
-              {t("bookingFee.breadcrumb.browse")}
-            </Link>
+            <span className="text-muted-foreground">
+              {t("bookingFeeInfo.breadcrumb.help")}
+            </span>
             <ChevronRight
               className={cn("h-4 w-4 shrink-0", isRtl && "rotate-180")}
               aria-hidden="true"
             />
             <span className="text-foreground font-medium">
-              {t("bookingFee.breadcrumb.details")}
+              {t("bookingFeeInfo.breadcrumb.fee")}
             </span>
           </nav>
 
-          {/* Title */}
-          <header className="mb-6">
-            <div className="flex items-center justify-between flex-wrap gap-3 mb-2">
-              <h1 className="text-2xl md:text-4xl font-bold tracking-tight text-foreground">
-                {t("bookingFee.title")}
-              </h1>
-              <Badge variant="secondary" className="text-xs font-medium">
-                {t("bookingFee.step")}
-              </Badge>
+          {/* Header */}
+          <header className="mb-10 md:mb-14">
+            <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1.5 mb-4">
+              <Info className="h-4 w-4 text-primary" aria-hidden="true" />
+              <span className="text-xs font-medium text-primary uppercase tracking-wide">
+                {t("bookingFeeInfo.tag")}
+              </span>
             </div>
-            <p className="text-muted-foreground">{t("bookingFee.subtitle")}</p>
-
-            <ol className="flex items-center gap-2 mt-4 text-xs">
-              <ProgressDot label={t("bookingFee.steps.choose")} state="done" />
-              <ProgressLine state="done" />
-              <ProgressDot label={t("bookingFee.steps.review")} state="active" />
-              <ProgressLine state="todo" />
-              <ProgressDot label={t("bookingFee.steps.pay")} state="todo" />
-            </ol>
+            <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-foreground">
+              {t("bookingFeeInfo.title")}
+            </h1>
+            <p className="text-base md:text-lg text-muted-foreground mt-3 max-w-2xl">
+              {t("bookingFeeInfo.subtitle")}
+            </p>
           </header>
 
-          {/* BIKE SUMMARY CARD */}
-          <Card className="rounded-2xl border-border/60 mb-6 overflow-hidden">
-            <CardContent className="p-0">
-              <div className="grid md:grid-cols-2 gap-0">
-                <div className="relative aspect-video md:aspect-auto md:min-h-[260px] bg-muted">
-                  <img
-                    src={bike.image}
-                    alt={bike.name}
-                    className="absolute inset-0 w-full h-full object-cover"
-                    loading="lazy"
-                  />
-                </div>
-                <div className="p-5 md:p-6 space-y-3">
-                  <div>
-                    <h2 className="text-xl md:text-2xl font-bold text-foreground">
-                      {bike.name}
-                    </h2>
-                    <div className="flex flex-wrap items-center gap-2 mt-2">
-                      <Badge variant="outline" className="font-normal">
-                        {bike.engine}
-                      </Badge>
-                      <Badge variant="outline" className="font-normal">
-                        {bike.transmission}
-                      </Badge>
-                      <Badge variant="outline" className="font-normal">
-                        {bike.type}
-                      </Badge>
-                      <Badge variant="outline" className="font-normal">
-                        {t("bookingFee.bike.licenseLabel")} {bike.licenseRequired}
-                      </Badge>
+          {/* HERO — visual anchor */}
+          <section className="mb-12 md:mb-16">
+            <div className="rounded-3xl bg-gradient-to-br from-primary/5 via-primary/10 to-background border border-border/60 p-8 md:p-12 text-center">
+              <div className="inline-flex items-center justify-center mb-6">
+                <div className="relative">
+                  <div className="absolute inset-0 rounded-full bg-primary/20 blur-2xl" aria-hidden="true" />
+                  <div className="relative inline-flex h-28 w-28 md:h-32 md:w-32 items-center justify-center rounded-full bg-primary/15 border-4 border-primary/30">
+                    <div className="flex flex-col items-center">
+                      <Coins className="h-7 w-7 text-primary mb-0.5" aria-hidden="true" />
+                      <span className="text-2xl md:text-3xl font-bold text-primary tabular-nums leading-none">
+                        10
+                      </span>
+                      <span className="text-xs font-semibold text-primary/80 mt-0.5">
+                        DH
+                      </span>
                     </div>
                   </div>
+                </div>
+              </div>
+              <p className="text-xl md:text-2xl font-semibold text-foreground max-w-2xl mx-auto leading-snug">
+                {t("bookingFeeInfo.hero.headline")}
+              </p>
+              <p className="text-base text-muted-foreground mt-3 max-w-xl mx-auto">
+                {t("bookingFeeInfo.hero.support")}
+              </p>
+            </div>
+          </section>
 
-                  <div className="border-t border-border pt-3 space-y-2">
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold text-foreground">
-                        {bike.agencyName}
-                      </span>
-                      <BadgeCheck
-                        className="h-4 w-4 text-primary"
-                        aria-label={t("bookingFee.bike.verifiedAgency")}
-                      />
-                      <span className="text-xs text-primary font-medium">
-                        {t("bookingFee.bike.verifiedAgency")}
-                      </span>
+          {/* WHAT IT COVERS — 3 cards */}
+          <section className="mb-12 md:mb-16">
+            <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-6">
+              {t("bookingFeeInfo.covers.title")}
+            </h2>
+            <div className="grid sm:grid-cols-3 gap-4">
+              {covers.map(({ icon: Icon, key }) => (
+                <Card key={key} className="rounded-2xl border-border/60">
+                  <CardContent className="p-6">
+                    <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 mb-4">
+                      <Icon className="h-6 w-6 text-primary" aria-hidden="true" />
                     </div>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Star
-                        className="h-4 w-4 fill-amber-400 text-amber-400"
+                    <h3 className="font-semibold text-foreground mb-2">
+                      {t(`${key}.title`)}
+                    </h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      {t(`${key}.body`)}
+                    </p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </section>
+
+          {/* WHAT IT IS NOT */}
+          <section className="mb-12 md:mb-16">
+            <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-6">
+              {t("bookingFeeInfo.isNot.title")}
+            </h2>
+            <Card className="rounded-2xl border-border/60 bg-muted/30">
+              <CardContent className="p-6 md:p-8">
+                <ul className="space-y-3">
+                  {isNot.map((key) => (
+                    <li key={key} className="flex items-start gap-3">
+                      <XCircle
+                        className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5"
                         aria-hidden="true"
                       />
-                      <span className="font-medium text-foreground">
-                        {bike.rating.toFixed(1)}
+                      <span className="text-sm md:text-base text-foreground">
+                        {t(key)}
                       </span>
-                      <span>
-                        ({bike.reviewCount} {t("bookingFee.bike.reviews")})
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <MapPin className="h-4 w-4" aria-hidden="true" />
-                      {bike.agencyLocation}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          </section>
 
-          {/* RENTAL DETAILS */}
-          <Card className="rounded-2xl border-border/60 mb-6">
-            <CardContent className="p-5 md:p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
-                  <Calendar className="h-5 w-5 text-primary" aria-hidden="true" />
-                  {t("bookingFee.rental.title")}
-                </h3>
-                <Link
-                  to="/listings"
-                  className="text-sm text-primary hover:underline inline-flex items-center gap-1"
-                >
-                  <Pencil className="h-3.5 w-3.5" />
-                  {t("bookingFee.rental.edit")}
-                </Link>
-              </div>
+          {/* IS IT REFUNDABLE — amber, not red */}
+          <section className="mb-12 md:mb-16">
+            <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-6">
+              {t("bookingFeeInfo.refund.title")}
+            </h2>
 
-              <dl className="grid sm:grid-cols-2 gap-x-6 gap-y-3 text-sm">
-                <RentalRow label={t("bookingFee.rental.pickup")} value={rental.pickupDate} />
-                <RentalRow label={t("bookingFee.rental.return")} value={rental.returnDate} />
-                <RentalRow label={t("bookingFee.rental.duration")} value={rental.duration} />
-                <RentalRow label={t("bookingFee.rental.dailyRate")} value={`${dailyRateFmt}/${t("bookingFee.rental.day")}`} />
-                <RentalRow label={t("bookingFee.rental.pickupLocation")} value={rental.pickupLocation} />
-                <RentalRow label={t("bookingFee.rental.returnLocation")} value={rental.returnLocation} />
-              </dl>
-            </CardContent>
-          </Card>
+            <div className="rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 p-6 md:p-8 mb-4">
+              <p className="text-lg md:text-xl font-semibold text-amber-900 dark:text-amber-100 mb-2">
+                {t("bookingFeeInfo.refund.statement")}
+              </p>
+              <p className="text-sm md:text-base text-amber-900/90 dark:text-amber-100/90 leading-relaxed">
+                {t("bookingFeeInfo.refund.explanation")}
+              </p>
+            </div>
 
-          {/* PRICE BREAKDOWN */}
-          <Card className="rounded-2xl border-2 border-primary/30 shadow-sm mb-6">
-            <CardContent className="p-6 md:p-8">
-              <div className="text-center mb-6">
-                <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/15 mb-3">
-                  <ShieldCheck className="h-6 w-6 text-primary" aria-hidden="true" />
-                </div>
-                <h2 className="text-lg md:text-xl font-semibold text-foreground">
-                  {t("bookingFee.breakdown.title")}
+            <div className="rounded-2xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/50 p-6 md:p-8">
+              <h3 className="font-semibold text-emerald-900 dark:text-emerald-100 mb-3">
+                {t("bookingFeeInfo.refund.whenTitle")}
+              </h3>
+              <ul className="space-y-2.5">
+                {refundCases.map((key) => (
+                  <li key={key} className="flex items-start gap-3">
+                    <CheckCircle2
+                      className="h-5 w-5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5"
+                      aria-hidden="true"
+                    />
+                    <span className="text-sm md:text-base text-emerald-900 dark:text-emerald-100">
+                      {t(key)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </section>
+
+          {/* WHY 10 DH */}
+          <section className="mb-12 md:mb-16">
+            <Card className="rounded-2xl border-border/60">
+              <CardContent className="p-6 md:p-8">
+                <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-4">
+                  {t("bookingFeeInfo.why.title")}
                 </h2>
-              </div>
-
-              <dl className="space-y-3 text-base">
-                <FeeRow
-                  label={`${t("bookingFee.breakdown.dailyRate")} × ${RENTAL_DAYS} ${t("bookingFee.rental.days")}`}
-                  value={subtotalFmt}
-                />
-                <FeeRow
-                  label={t("bookingFee.breakdown.insurance")}
-                  value={t("bookingFee.breakdown.included")}
-                  muted
-                />
-                <FeeRow
-                  label={t("bookingFee.breakdown.deposit")}
-                  value={depositFmt}
-                  muted
-                />
-                <FeeRow
-                  label={t("bookingFee.breakdown.reservationFee")}
-                  value={reservationFmt}
-                />
-              </dl>
-
-              <div className="border-t border-border my-5" />
-
-              <div className="grid sm:grid-cols-2 gap-4">
-                <div className="rounded-xl border border-border bg-muted/40 p-4">
-                  <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">
-                    {t("bookingFee.breakdown.payAtPickup")}
-                  </p>
-                  <p className="text-xl font-bold text-foreground tabular-nums mt-1">
-                    {subtotalFmt}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    + {depositFmt} {t("bookingFee.breakdown.depositNote")}
-                  </p>
-                </div>
-                <div className="rounded-xl border-2 border-primary/40 bg-primary/5 p-4">
-                  <p className="text-xs text-primary uppercase tracking-wide font-semibold">
-                    {t("bookingFee.breakdown.payNow")}
-                  </p>
-                  <p className="text-3xl md:text-4xl font-bold text-primary tabular-nums mt-1">
-                    {reservationFmt}
-                  </p>
-                </div>
-              </div>
-
-              <p className="text-sm text-muted-foreground mt-4 text-center max-w-xl mx-auto">
-                {t("bookingFee.breakdown.microcopy")}
-              </p>
-            </CardContent>
-          </Card>
-
-          {/* NO-REFUND NOTICE */}
-          <div
-            role="alert"
-            className="rounded-2xl bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-900/50 border ltr:border-l-4 rtl:border-r-4 ltr:border-l-amber-500 rtl:border-r-amber-500 p-5 md:p-6 mb-6"
-          >
-            <div className="flex items-start gap-3 mb-3">
-              <AlertTriangle
-                className="h-6 w-6 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5"
-                aria-hidden="true"
-              />
-              <div>
-                <h3 className="text-lg font-semibold text-amber-900 dark:text-amber-100">
-                  {t("bookingFee.noRefund.title")}
-                </h3>
-                <p className="text-sm text-amber-900/90 dark:text-amber-100/90 mt-1 leading-relaxed">
-                  {t("bookingFee.noRefund.body")}
+                <p className="text-base text-muted-foreground leading-relaxed mb-4">
+                  {t("bookingFeeInfo.why.body")}
                 </p>
-              </div>
-            </div>
+                <div className="flex items-center gap-2 rounded-xl bg-muted/40 px-4 py-3 text-sm text-foreground">
+                  <Coffee className="h-4 w-4 text-primary shrink-0" aria-hidden="true" />
+                  <span>{t("bookingFeeInfo.why.comparison")}</span>
+                </div>
+              </CardContent>
+            </Card>
+          </section>
 
-            <ul className="space-y-2 mt-4 ltr:pl-9 rtl:pr-9">
-              {noRefundCases.map((key) => (
-                <li
-                  key={key}
-                  className="flex items-start gap-2 text-sm text-amber-900 dark:text-amber-100"
-                >
-                  <XCircle className="h-4 w-4 text-red-500 shrink-0 mt-0.5" aria-hidden="true" />
-                  <span>{t(key)}</span>
-                </li>
-              ))}
-            </ul>
-
-            <div className="mt-5 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/50 p-4 flex gap-3">
-              <Info
-                className="h-5 w-5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5"
-                aria-hidden="true"
-              />
-              <p className="text-sm text-emerald-900 dark:text-emerald-100">
-                <span className="font-semibold">
-                  {t("bookingFee.noRefund.exceptionLabel")}
-                </span>{" "}
-                {t("bookingFee.noRefund.exception")}
-              </p>
-            </div>
-          </div>
-
-          {/* PICKUP REQUIREMENTS */}
-          <Card className="rounded-2xl border-border/60 mb-6">
-            <CardContent className="p-5 md:p-6">
-              <h3 className="text-lg font-semibold text-foreground mb-4">
-                {t("bookingFee.pickup.title")}
-              </h3>
-              <ul className="space-y-3">
-                {pickupRequirements.map((key) => (
-                  <li key={key} className="flex items-start gap-3">
-                    <CheckCircle2
-                      className="h-5 w-5 text-primary shrink-0 mt-0.5"
-                      aria-hidden="true"
-                    />
-                    <span className="text-sm text-foreground">{t(key)}</span>
-                  </li>
-                ))}
-              </ul>
-              <div className="mt-5 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 p-3 flex gap-2.5">
-                <AlertTriangle
-                  className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5"
-                  aria-hidden="true"
-                />
-                <p className="text-xs text-amber-900 dark:text-amber-100">
-                  {t("bookingFee.pickup.note")}
+          {/* HOW IT FITS */}
+          <section className="mb-12 md:mb-16">
+            <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-6">
+              {t("bookingFeeInfo.fits.title")}
+            </h2>
+            <Card className="rounded-2xl border-border/60">
+              <CardContent className="p-6 md:p-8">
+                <ul className="space-y-3">
+                  {breakdown.map((row) => (
+                    <li
+                      key={row.label}
+                      className={cn(
+                        "flex items-center justify-between gap-4 rounded-xl border p-4",
+                        row.accent
+                          ? "border-primary/40 bg-primary/5"
+                          : "border-border bg-muted/20",
+                      )}
+                    >
+                      <div>
+                        <p className="font-medium text-foreground">
+                          {t(row.label)}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {t(row.sub)}
+                        </p>
+                      </div>
+                      <span
+                        className={cn(
+                          "tabular-nums font-bold whitespace-nowrap",
+                          row.accent ? "text-primary text-xl" : "text-foreground",
+                        )}
+                      >
+                        {row.value}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+                <p className="text-sm text-muted-foreground mt-5 text-center italic">
+                  {t("bookingFeeInfo.fits.note")}
                 </p>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* POLICY HIGHLIGHTS */}
-          <Card className="rounded-2xl border-border/60 mb-6">
-            <CardContent className="p-5 md:p-6">
-              <h3 className="text-lg font-semibold text-foreground mb-4">
-                {t("bookingFee.policy.title")}
-              </h3>
-              <ul className="grid sm:grid-cols-2 gap-3">
-                {policyHighlights.map(({ icon: Icon, key }) => (
-                  <li
-                    key={key}
-                    className="flex items-start gap-3 rounded-xl border border-border bg-muted/30 p-3"
-                  >
-                    <Icon className="h-5 w-5 text-primary shrink-0 mt-0.5" aria-hidden="true" />
-                    <span className="text-sm text-foreground">{t(key)}</span>
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-          </Card>
-
-          {/* DOUBLE-CHECK BEFORE CONFIRM */}
-          <Card className="rounded-2xl border-border/60 mb-6">
-            <CardContent className="p-5 md:p-6">
-              <h3 className="text-lg font-semibold text-foreground mb-4">
-                {t("bookingFee.verify.title")}
-              </h3>
-              <ul className="space-y-3">
-                {verifyChecklist.map((key) => (
-                  <li key={key} className="flex items-start gap-3">
-                    <CheckCircle2
-                      className="h-5 w-5 text-primary shrink-0 mt-0.5"
-                      aria-hidden="true"
-                    />
-                    <span className="text-sm text-foreground">{t(key)}</span>
-                  </li>
-                ))}
-              </ul>
-              <p className="text-xs text-muted-foreground mt-5 ltr:border-l-2 rtl:border-r-2 border-amber-500/60 ltr:pl-3 rtl:pr-3 italic">
-                {t("bookingFee.verify.note")}
-              </p>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </section>
 
           {/* FAQ */}
-          <Card className="rounded-2xl border-border/60 mb-6">
-            <CardContent className="p-5 md:p-6">
-              <h3 className="text-lg font-semibold text-foreground mb-3">
-                {t("bookingFee.faq.title")}
-              </h3>
-              <Accordion type="single" collapsible className="w-full">
-                {faqs.map((faq, idx) => (
-                  <AccordionItem key={faq.q} value={`item-${idx}`}>
-                    <AccordionTrigger className="text-start text-sm font-medium hover:no-underline">
-                      {t(faq.q)}
-                    </AccordionTrigger>
-                    <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
-                      {t(faq.a)}
-                    </AccordionContent>
-                  </AccordionItem>
-                ))}
-              </Accordion>
-            </CardContent>
-          </Card>
+          <section className="mb-12 md:mb-16">
+            <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-6">
+              {t("bookingFeeInfo.faq.title")}
+            </h2>
+            <Card className="rounded-2xl border-border/60">
+              <CardContent className="p-2 md:p-4">
+                <Accordion type="single" collapsible className="w-full">
+                  {faqs.map((faq, idx) => (
+                    <AccordionItem key={faq.q} value={`item-${idx}`} className="px-4">
+                      <AccordionTrigger className="text-start text-sm md:text-base font-medium hover:no-underline">
+                        {t(faq.q)}
+                      </AccordionTrigger>
+                      <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
+                        {t(faq.a)}
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))}
+                </Accordion>
+              </CardContent>
+            </Card>
+          </section>
 
-          {/* Desktop CTA */}
-          <div className="hidden md:block">
-            <AcknowledgmentBlock
-              acknowledged={acknowledged}
-              onToggle={setAcknowledged}
-              total={reservationFmt}
-              onConfirm={handleConfirm}
-              onBack={() => navigate(-1)}
-            />
-          </div>
+          {/* SOFT FOOTER — links, not CTAs */}
+          <section className="mb-8">
+            <div className="grid sm:grid-cols-2 gap-4">
+              <Link
+                to="/listings"
+                className="group rounded-2xl border border-border/60 bg-card p-5 hover:border-primary/40 hover:bg-primary/5 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 group-hover:bg-primary/15 transition-colors">
+                    <Bike className="h-5 w-5 text-primary" aria-hidden="true" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-medium text-foreground">
+                      {t("bookingFeeInfo.footerLinks.browse")}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {t("bookingFeeInfo.footerLinks.browseSub")}
+                    </p>
+                  </div>
+                  <ChevronRight
+                    className={cn(
+                      "h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors",
+                      isRtl && "rotate-180",
+                    )}
+                    aria-hidden="true"
+                  />
+                </div>
+              </Link>
+
+              <Link
+                to="/contact"
+                className="group rounded-2xl border border-border/60 bg-card p-5 hover:border-primary/40 hover:bg-primary/5 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 group-hover:bg-primary/15 transition-colors">
+                    <LifeBuoy className="h-5 w-5 text-primary" aria-hidden="true" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-medium text-foreground">
+                      {t("bookingFeeInfo.footerLinks.support")}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {t("bookingFeeInfo.footerLinks.supportSub")}
+                    </p>
+                  </div>
+                  <ChevronRight
+                    className={cn(
+                      "h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors",
+                      isRtl && "rotate-180",
+                    )}
+                    aria-hidden="true"
+                  />
+                </div>
+              </Link>
+            </div>
+          </section>
         </div>
       </main>
 
-      {/* Mobile sticky footer */}
-      <div className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-background/95 backdrop-blur border-t border-border p-4 shadow-[0_-4px_16px_rgba(0,0,0,0.06)]">
-        <AcknowledgmentBlock
-          acknowledged={acknowledged}
-          onToggle={setAcknowledged}
-          total={reservationFmt}
-          onConfirm={handleConfirm}
-          onBack={() => navigate(-1)}
-          compact
-        />
-      </div>
-
-      <div className="hidden md:block">
-        <Footer />
-      </div>
+      <Footer />
     </div>
   );
 };
 
-/* ──────────────────────────────────────────── */
-
-const FeeRow = ({
-  label,
-  value,
-  muted = false,
-}: {
-  label: string;
-  value: string;
-  muted?: boolean;
-}) => (
-  <div className="flex items-baseline gap-3">
-    <dt className="text-foreground">{label}</dt>
-    <span
-      className="flex-1 border-b border-dotted border-border/70 translate-y-[-4px]"
-      aria-hidden="true"
-    />
-    <dd
-      className={cn(
-        "tabular-nums font-medium",
-        muted ? "text-muted-foreground" : "text-foreground",
-      )}
-    >
-      {value}
-    </dd>
-  </div>
-);
-
-const RentalRow = ({ label, value }: { label: string; value: string }) => (
-  <div>
-    <dt className="text-xs uppercase tracking-wide text-muted-foreground font-medium">
-      {label}
-    </dt>
-    <dd className="text-foreground font-medium mt-0.5">{value}</dd>
-  </div>
-);
-
-const ProgressDot = ({
-  label,
-  state,
-}: {
-  label: string;
-  state: "done" | "active" | "todo";
-}) => (
-  <li className="flex items-center gap-1.5">
-    <span
-      className={cn(
-        "h-2 w-2 rounded-full",
-        state === "done" && "bg-primary",
-        state === "active" && "bg-primary ring-4 ring-primary/20",
-        state === "todo" && "bg-muted-foreground/30",
-      )}
-      aria-hidden="true"
-    />
-    <span
-      className={cn(
-        state === "active" || state === "done"
-          ? "text-foreground font-medium"
-          : "text-muted-foreground",
-      )}
-    >
-      {label}
-    </span>
-  </li>
-);
-
-const ProgressLine = ({ state }: { state: "done" | "todo" }) => (
-  <li
-    className={cn(
-      "flex-1 h-px max-w-12",
-      state === "done" ? "bg-primary" : "bg-border",
-    )}
-    aria-hidden="true"
-  />
-);
-
-const AcknowledgmentBlock = ({
-  acknowledged,
-  onToggle,
-  total,
-  onConfirm,
-  onBack,
-  compact = false,
-}: {
-  acknowledged: boolean;
-  onToggle: (v: boolean) => void;
-  total: string;
-  onConfirm: () => void;
-  onBack: () => void;
-  compact?: boolean;
-}) => {
-  const { t } = useLanguage();
-  return (
-    <div className={cn(!compact && "rounded-2xl border border-border/60 bg-card p-5 md:p-6")}>
-      <label
-        htmlFor="ack"
-        className="flex items-start gap-3 cursor-pointer mb-4 group"
-      >
-        <Checkbox
-          id="ack"
-          checked={acknowledged}
-          onCheckedChange={(v) => onToggle(v === true)}
-          className="mt-0.5 min-h-[20px] min-w-[20px]"
-        />
-        <span className="text-sm text-foreground leading-snug select-none">
-          {t("bookingFee.ack.label")}
-        </span>
-      </label>
-
-      <div className={cn("flex gap-3", compact ? "flex-col" : "flex-col sm:flex-row")}>
-        <Button
-          size="lg"
-          disabled={!acknowledged}
-          onClick={onConfirm}
-          className="flex-1 min-h-[48px] font-semibold"
-        >
-          {t("bookingFee.cta.confirm")} {total}
-        </Button>
-        {!compact && (
-          <Button
-            size="lg"
-            variant="outline"
-            onClick={onBack}
-            className="min-h-[48px] gap-2"
-          >
-            <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-            {t("bookingFee.cta.back")}
-          </Button>
-        )}
-      </div>
-
-      <p className="text-xs text-muted-foreground mt-3 text-center">
-        {t("bookingFee.cta.terms")}
-      </p>
-    </div>
-  );
-};
-
-export default BookingFee;
+export default BookingFeeInfo;
