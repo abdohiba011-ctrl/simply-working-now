@@ -592,6 +592,7 @@ export const Header = memo(() => {
                   <Link to="/about" className="text-foreground transition-colors font-medium py-3 px-4 text-sm rounded hover:bg-muted min-h-[44px] flex items-center" onClick={() => setIsMenuOpen(false)}>{t('header.aboutUs')}</Link>
                   <Link to="/fixers" className="text-foreground transition-colors font-medium py-3 px-4 text-sm rounded hover:bg-muted min-h-[44px] flex items-center" onClick={() => setIsMenuOpen(false)}>{t('header.fixers')}</Link>
                   <Link to="/contact" className="text-foreground transition-colors font-medium py-3 px-4 text-sm rounded hover:bg-muted min-h-[44px] flex items-center" onClick={() => setIsMenuOpen(false)}>{t('header.contactUs')}</Link>
+                  <Link to="/booking-fee" className="text-foreground transition-colors font-medium py-3 px-4 text-sm rounded hover:bg-muted min-h-[44px] flex items-center" onClick={() => setIsMenuOpen(false)}>{t('header.bookingFee')}</Link>
                   <div className="text-muted-foreground py-3 px-4 text-sm rounded min-h-[44px] flex items-center opacity-60">{t('header.marketplace')} <span className="text-red-500 font-semibold ltr:ml-2 rtl:mr-2">{t('header.comingSoon')}</span></div>
                   
                   <div className="text-muted-foreground py-3 px-4 text-sm rounded min-h-[44px] flex items-center opacity-60">{t('header.gpsTracking')} <span className="text-red-500 font-semibold ltr:ml-2 rtl:mr-2">{t('header.comingSoon')}</span></div>
