@@ -1,7 +1,7 @@
 import { useState, useEffect, memo, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Globe, User, LogOut, Settings, Lock, Building2, Calendar as CalendarIcon, MoreHorizontal, Users, Phone, Shield, MapPin, Bell, ShieldCheck, LayoutDashboard, BadgeCheck, Tag, ShoppingBag, Bike } from "lucide-react";
+import { Menu, X, Globe, User, LogOut, Settings, Lock, Building2, Calendar as CalendarIcon, MoreHorizontal, Users, Phone, Shield, MapPin, Bell, ShieldCheck, LayoutDashboard, BadgeCheck, Tag, ShoppingBag, Bike, Receipt } from "lucide-react";
 import logoLight from "@/assets/motonita-logo.svg";
 import logoDark from "@/assets/motonita-logo-dark.svg";
 import { useTheme } from "@/hooks/useTheme";
@@ -303,6 +303,10 @@ export const Header = memo(() => {
                     <Phone className="h-6 w-6 text-foreground group-hover:scale-110 transition-transform" />
                     <span className="text-sm font-medium text-center">{t('header.contactUs')}</span>
                   </Link>
+                  <Link to="/booking-fee" className="flex flex-col items-center gap-2 p-3 rounded-lg hover:bg-muted transition-colors group">
+                    <Receipt className="h-6 w-6 text-foreground group-hover:scale-110 transition-transform" />
+                    <span className="text-sm font-medium text-center">{t('header.bookingFee')}</span>
+                  </Link>
                   <div className="flex flex-col items-center gap-2 p-3 rounded-lg opacity-60 cursor-not-allowed">
                     <ShoppingBag className="h-6 w-6 text-muted-foreground" />
                     <span className="text-xs font-medium text-center text-muted-foreground">{t('header.marketplace')}<br/><span className="text-red-500 font-semibold">{t('header.comingSoon')}</span></span>
@@ -588,6 +592,7 @@ export const Header = memo(() => {
                   <Link to="/about" className="text-foreground transition-colors font-medium py-3 px-4 text-sm rounded hover:bg-muted min-h-[44px] flex items-center" onClick={() => setIsMenuOpen(false)}>{t('header.aboutUs')}</Link>
                   <Link to="/fixers" className="text-foreground transition-colors font-medium py-3 px-4 text-sm rounded hover:bg-muted min-h-[44px] flex items-center" onClick={() => setIsMenuOpen(false)}>{t('header.fixers')}</Link>
                   <Link to="/contact" className="text-foreground transition-colors font-medium py-3 px-4 text-sm rounded hover:bg-muted min-h-[44px] flex items-center" onClick={() => setIsMenuOpen(false)}>{t('header.contactUs')}</Link>
+                  <Link to="/booking-fee" className="text-foreground transition-colors font-medium py-3 px-4 text-sm rounded hover:bg-muted min-h-[44px] flex items-center" onClick={() => setIsMenuOpen(false)}>{t('header.bookingFee')}</Link>
                   <div className="text-muted-foreground py-3 px-4 text-sm rounded min-h-[44px] flex items-center opacity-60">{t('header.marketplace')} <span className="text-red-500 font-semibold ltr:ml-2 rtl:mr-2">{t('header.comingSoon')}</span></div>
                   
                   <div className="text-muted-foreground py-3 px-4 text-sm rounded min-h-[44px] flex items-center opacity-60">{t('header.gpsTracking')} <span className="text-red-500 font-semibold ltr:ml-2 rtl:mr-2">{t('header.comingSoon')}</span></div>
