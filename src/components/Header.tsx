@@ -1,7 +1,7 @@
 import { useState, useEffect, memo, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Globe, User, LogOut, Settings, Lock, Building2, Calendar as CalendarIcon, MoreHorizontal, Users, Phone, Shield, MapPin, Bell, ShieldCheck, LayoutDashboard, BadgeCheck, Tag, ShoppingBag, Bike, Receipt } from "lucide-react";
+import { Menu, X, Globe, User, LogOut, Settings, Lock, Building2, Calendar as CalendarIcon, MoreHorizontal, Users, Phone, Shield, MapPin, Bell, ShieldCheck, LayoutDashboard, BadgeCheck, Tag, ShoppingBag, Bike, Receipt, Wrench } from "lucide-react";
 import logoLight from "@/assets/motonita-logo.svg";
 import logoDark from "@/assets/motonita-logo-dark.svg";
 import { useTheme } from "@/hooks/useTheme";
@@ -296,7 +296,7 @@ export const Header = memo(() => {
                     <span className="text-sm font-medium text-center">{t('header.aboutUs')}</span>
                   </Link>
                   <Link to="/fixers" className="flex flex-col items-center gap-2 p-3 rounded-lg hover:bg-muted transition-colors group">
-                    <Building2 className="h-6 w-6 text-foreground group-hover:scale-110 transition-transform" />
+                    <Wrench className="h-6 w-6 text-foreground group-hover:scale-110 transition-transform" />
                     <span className="text-sm font-medium text-center">{t('header.fixers')}</span>
                   </Link>
                   <Link to="/contact" className="flex flex-col items-center gap-2 p-3 rounded-lg hover:bg-muted transition-colors group">
