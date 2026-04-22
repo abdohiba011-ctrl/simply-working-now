@@ -130,6 +130,41 @@ const Auth = () => {
     }
   }, [authLoading, isAuthenticated, hasRole, navigate, returnUrl]);
 
+  // Detect OAuth callback results from URL (query + hash) and surface them on-page.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const url = new URL(window.location.href);
+    const hashParams = new URLSearchParams(
+      window.location.hash.startsWith("#") ? window.location.hash.slice(1) : window.location.hash
+    );
+    const errorCode =
+      url.searchParams.get("error") ||
+      url.searchParams.get("error_code") ||
+      hashParams.get("error") ||
+      hashParams.get("error_code");
+    const errorDescription =
+      url.searchParams.get("error_description") ||
+      hashParams.get("error_description");
+    const code = url.searchParams.get("code");
+    const accessToken = hashParams.get("access_token");
+
+    if (errorCode || errorDescription) {
+      setOauthStatus({
+        phase: "callback_error",
+        message: `OAuth callback failed: ${errorCode || "unknown_error"}`,
+        detail: errorDescription || "No description provided by the provider.",
+        at: new Date().toISOString(),
+      });
+    } else if (code || accessToken) {
+      setOauthStatus({
+        phase: "callback_success",
+        message: "OAuth callback received. Completing sign-in…",
+        detail: code ? "Authorization code present in URL." : "Access token present in URL hash.",
+        at: new Date().toISOString(),
+      });
+    }
+  }, []);
+
   const handleSendEmailOtp = async () => {
     setOtpSending(true);
     try {
