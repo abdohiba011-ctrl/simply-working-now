@@ -729,23 +729,6 @@ const Auth = () => {
                     </Alert>
                   )}
 
-                  {/* Diagnostic: Test Google sign-in */}
-                  <Button
-                    type="button"
-
-                    variant="secondary"
-                    className="w-full h-10 mt-2"
-                    onClick={handleTestGoogleSignIn}
-                    disabled={oauthTesting}
-                  >
-                    {oauthTesting ? "Testing Google sign-in…" : "Test Google sign-in"}
-                  </Button>
-                  {oauthTestResult && (
-                    <pre className="mt-2 max-h-64 overflow-auto rounded-md border border-border bg-muted p-3 text-xs text-foreground whitespace-pre-wrap break-all">
-{oauthTestResult}
-                    </pre>
-                  )}
-
                   <div className="relative my-6">
                     <div className="absolute inset-0 flex items-center">
                       <span className="w-full border-t border-border" />
