@@ -9,8 +9,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { signupSchema, loginSchema } from "@/lib/validationSchemas";
 import { z } from "zod";
-import { Eye, EyeOff, AlertTriangle, CheckCircle2, XCircle, Loader2, Info } from "lucide-react";
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { Eye, EyeOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -20,6 +19,13 @@ import { PrivacyTermsModal } from "@/components/PrivacyTermsModal";
 import { getUserFriendlyError, getErrMsg } from "@/lib/errorMessages";
 import { playSuccessSound } from "@/lib/soundEffects";
 import { useLanguage } from "@/contexts/LanguageContext";
+import {
+  PRIMARY_PRODUCTION_ORIGIN,
+  getOAuthInitiationUrl,
+  isAllowedReturnOrigin,
+  isCustomProductionDomain,
+  resolveOAuthRedirectUri,
+} from "@/lib/oauthDomain";
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
