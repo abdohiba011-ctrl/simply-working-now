@@ -1,404 +1,389 @@
-import { useState, useEffect, useRef, memo, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { Calendar, MapPin, Check, Bike, AlertTriangle } from "lucide-react";
-import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useState, useEffect, useMemo, useCallback, memo } from "react";
+import { MapPin, Building2, Calendar as CalendarIcon, Bike } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useLanguage } from "@/contexts/LanguageContext";
-import { useAuth } from "@/contexts/AuthContext";
-import { DateRangePicker } from "@/components/DateRangePicker";
 import { format } from "date-fns";
 import { DateRange } from "react-day-picker";
-import { supabase } from "@/integrations/supabase/client";
-import heroImage from "@/assets/hero-casablanca-mosque.jpg";
-import { resolveBikeImageUrl } from "@/lib/bikeImageResolver";
-import { usePricingTiers } from "@/hooks/usePricingTiers";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
-// Fallback bike images (used while loading or if DB fails) - optimized thumbnails for 200x150 display
-import sanyaImg from "@/assets/hero-bikes/sanya-thumb.webp";
-import becaneImg from "@/assets/hero-bikes/becane-thumb.webp";
-import cappuccinoImg from "@/assets/hero-bikes/cappuccino-thumb.webp";
-import orbitImg from "@/assets/hero-bikes/orbit-thumb.webp";
-import shImg from "@/assets/hero-bikes/sh-thumb.webp";
+import casablancaImg from "@/assets/city-casablanca.avif";
+import marrakechImg from "@/assets/city-marrakesh.avif";
+import rabatImg from "@/assets/city-rabat.avif";
+import tangierImg from "@/assets/city-tangier.avif";
+import agadirImg from "@/assets/city-agadir.avif";
+import fesImg from "@/assets/city-fes.avif";
+import dakhlaImg from "@/assets/city-dakhla.jpg";
+import essaouiraImg from "@/assets/city-essaouira.avif";
 
-// Fallback Casablanca neighborhoods (used while loading)
-const fallbackNeighborhoods = ["Tet Mellil", "Mediouna", "Deroua - Berrechid", "Maarif", "Derb Sultan", "Sidi Maarouf", "Anfa", "Ain Diab", "Bouskoura"];
+type RotatingCity =
+  | "Casablanca"
+  | "Marrakech"
+  | "Rabat"
+  | "Tangier"
+  | "Agadir"
+  | "Fes"
+  | "Dakhla"
+  | "Essaouira";
 
-// Fallback bike types (shown while loading)
-const fallbackBikeTypes = [{
-  id: "sanya",
-  name: "Sanya R1000",
-  image: sanyaImg,
-  price: "59-99 DH/day"
-}, {
-  id: "becane",
-  name: "Becane 33",
-  image: becaneImg,
-  price: "59-99 DH/day"
-}, {
-  id: "cappuccino",
-  name: "Cappuccino S",
-  image: cappuccinoImg,
-  price: "59-99 DH/day"
-}, {
-  id: "orbit",
-  name: "SYM Orbit II 50cc",
-  image: orbitImg,
-  price: "59-99 DH/day"
-}, {
-  id: "sh",
-  name: "SH",
-  image: shImg,
-  price: "59-99 DH/day"
-}];
+const rotatingCities: RotatingCity[] = [
+  "Casablanca",
+  "Marrakech",
+  "Rabat",
+  "Tangier",
+  "Agadir",
+  "Fes",
+  "Dakhla",
+  "Essaouira",
+];
 
-interface BikeTypeDisplay {
-  id: string;
-  name: string;
-  image: string;
-  price: string;
-}
+const cityImages: Record<RotatingCity, string> = {
+  Casablanca: casablancaImg,
+  Marrakech: marrakechImg,
+  Rabat: rabatImg,
+  Tangier: tangierImg,
+  Agadir: agadirImg,
+  Fes: fesImg,
+  Dakhla: dakhlaImg,
+  Essaouira: essaouiraImg,
+};
+
+const allCities = [
+  "Casablanca",
+  "Marrakech",
+  "Rabat",
+  "Tangier",
+  "Agadir",
+  "Fes",
+  "Dakhla",
+  "Essaouira",
+  "Meknes",
+  "Oujda",
+  "Tetouan",
+  "El Jadida",
+  "Kenitra",
+  "Nador",
+  "Ifrane",
+  "Chefchaouen",
+];
+
+const neighborhoodsByCity: Record<string, string[]> = {
+  Casablanca: [
+    "Anfa",
+    "Maârif",
+    "Derb Sultan",
+    "Sidi Maârouf",
+    "Aïn Diab",
+    "Gauthier",
+    "Bourgogne",
+    "Hay Hassani",
+    "Sidi Bernoussi",
+    "Ain Sebaa",
+  ],
+  Marrakech: ["Guéliz", "Médina", "Hivernage", "Palmeraie", "Daoudiate", "Agdal"],
+  Rabat: ["Agdal", "Hassan", "Souissi", "Médina", "Hay Riad"],
+  Tangier: ["Malabata", "Centre-Ville", "Marshan", "Iberia", "Playa"],
+  Agadir: ["Centre-Ville", "Founty", "Talborjt", "Dakhla"],
+  Fes: ["Médina (Fes el-Bali)", "Ville Nouvelle", "Fes el-Jdid", "Aïn Chkef"],
+  Dakhla: ["Centre", "Lagune"],
+  Essaouira: ["Médina", "Quartier des Dunes"],
+  Meknes: ["Médina", "Hamria", "Ville Nouvelle"],
+  Oujda: ["Centre-Ville", "Médina"],
+  Tetouan: ["Centre-Ville", "Médina"],
+  "El Jadida": ["Centre-Ville", "Médina"],
+  Kenitra: ["Centre-Ville", "Médina"],
+  Nador: ["Centre-Ville", "Médina"],
+  Ifrane: ["Centre-Ville"],
+  Chefchaouen: ["Centre-Ville", "Médina"],
+};
+
+const ALL_NEIGHBORHOODS = "all";
+
 export const HeroSection = memo(() => {
-  const [currentCityIndex, setCurrentCityIndex] = useState(0);
-  const [location, setLocation] = useState("");
-  const [dateRange, setDateRange] = useState<DateRange | undefined>();
-  const [bikeType, setBikeType] = useState("");
-  const [isBlocked, setIsBlocked] = useState(false);
-  const [formErrors, setFormErrors] = useState<{ bike?: boolean; location?: boolean; dates?: boolean }>({});
-  const [isOtherLocation, setIsOtherLocation] = useState(false);
-  const [customCity, setCustomCity] = useState("");
-  const [customLocationDetail, setCustomLocationDetail] = useState("");
-  const bikeSelectionRef = useRef<HTMLDivElement>(null);
-  const locationRef = useRef<HTMLSelectElement>(null);
-  const dateRef = useRef<HTMLButtonElement>(null);
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const { t } = useLanguage();
-  const isMobile = useIsMobile();
-  const { data: pricingTiers } = usePricingTiers();
+  const [cityIndex, setCityIndex] = useState(0);
+  const [pillVisible, setPillVisible] = useState(true);
+  const [paused, setPaused] = useState(false);
+  const [reducedMotion, setReducedMotion] = useState(false);
 
-  // Fetch locations from database (cached, available cities only)
-  const { data: neighborhoods = fallbackNeighborhoods } = useQuery({
-    queryKey: ['hero-service-locations'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('service_locations')
-        .select('id, name, city_id, service_cities!inner(is_available)')
-        .eq('is_active', true)
-        .order('name');
-      if (error) throw error;
-      type LocRow = { name: string; service_cities?: { is_available?: boolean } | null };
-      const available = (data as LocRow[] | null)?.filter(l => l.service_cities?.is_available === true) ?? [];
-      return available.length > 0 ? available.map(l => l.name) : fallbackNeighborhoods;
-    },
-    staleTime: 10 * 60 * 1000,
-    gcTime: 30 * 60 * 1000,
-  });
+  const [city, setCity] = useState<string>("");
+  const [neighborhood, setNeighborhood] = useState<string>(ALL_NEIGHBORHOODS);
+  const [dateRange, setDateRange] = useState<DateRange | undefined>();
+  const [calendarOpen, setCalendarOpen] = useState(false);
 
-  // Calculate price range from pricing tiers
-  const priceRange = useMemo(() => {
-    if (!pricingTiers || pricingTiers.length === 0) {
-      return "59-99 DH/day";
-    }
-    const prices = pricingTiers.map(t => t.daily_price);
-    const minPrice = Math.min(...prices);
-    const maxPrice = Math.max(...prices);
-    return `${minPrice}-${maxPrice} DH/day`;
-  }, [pricingTiers]);
-
-  // Fetch bike types from database (cached, no realtime on landing)
-  const { data: bikeTypes = fallbackBikeTypes } = useQuery({
-    queryKey: ['hero-bike-types', priceRange],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('bike_types')
-        .select('id, name, main_image_url, daily_price')
-        .eq('is_original', true)
-        .eq('is_approved', true)
-        .order('name');
-      if (error) throw error;
-      if (!data || data.length === 0) return fallbackBikeTypes;
-      return data.map(bike => ({
-        id: bike.id,
-        name: bike.name,
-        image: resolveBikeImageUrl(bike.main_image_url),
-        price: priceRange,
-      })) as BikeTypeDisplay[];
-    },
-    staleTime: 10 * 60 * 1000,
-    gcTime: 30 * 60 * 1000,
-  });
-
-  // Check if user is blocked
+  // Preload images on mount
   useEffect(() => {
-    const checkBlockedStatus = async () => {
-      if (!user) {
-        setIsBlocked(false);
-        return;
-      }
-      
-      const { data } = await supabase
-        .from('profiles')
-        .select('is_frozen')
-        .eq('id', user.id)
-        .single();
-      
-      setIsBlocked(data?.is_frozen || false);
-    };
-    
-    checkBlockedStatus();
-  }, [user]);
-  // Restore search data from localStorage on mount
-  useEffect(() => {
-    const savedSearch = localStorage.getItem("motonitaSearch");
-    if (savedSearch) {
-      try {
-        const data = JSON.parse(savedSearch);
-        if (data.bikeType) setBikeType(data.bikeType);
-        if (data.location) setLocation(data.location);
-        if (data.pickupDate && data.endDate) {
-          setDateRange({
-            from: new Date(data.pickupDate),
-            to: new Date(data.endDate)
-          });
-        }
-      } catch (e) {
-        console.error("Failed to parse saved search data:", e);
-      }
-    }
+    rotatingCities.forEach((c) => {
+      const img = new Image();
+      img.src = cityImages[c];
+    });
   }, []);
 
+  // Reduced motion detection
   useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return;
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setReducedMotion(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setReducedMotion(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+
+  // City rotation
+  useEffect(() => {
+    if (reducedMotion || paused) return;
     const interval = setInterval(() => {
-      setCurrentCityIndex(prev => (prev + 1) % neighborhoods.length);
+      setPillVisible(false);
+      setTimeout(() => {
+        setCityIndex((prev) => (prev + 1) % rotatingCities.length);
+        setPillVisible(true);
+      }, 300);
     }, 3000);
     return () => clearInterval(interval);
+  }, [reducedMotion, paused]);
+
+  const activeCity = reducedMotion ? rotatingCities[0] : rotatingCities[cityIndex];
+
+  const neighborhoodOptions = useMemo(() => {
+    if (!city) return [];
+    return neighborhoodsByCity[city] || [];
+  }, [city]);
+
+  const handleCityChange = useCallback((value: string) => {
+    setCity(value);
+    setNeighborhood(ALL_NEIGHBORHOODS);
   }, []);
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Reset errors
-    setFormErrors({});
-    
-    // Check if user is blocked
-    if (isBlocked) {
-      toast.error(t('hero.blockedMessage'), {
-        description: t('hero.contactSupport')
-      });
-      return;
-    }
-    
-    // Collect all validation errors
-    const errors: { bike?: boolean; location?: boolean; dates?: boolean } = {};
-    
-    if (!location && !isOtherLocation) {
-      errors.location = true;
-    } else if (isOtherLocation && (!customCity.trim() || !customLocationDetail.trim())) {
-      errors.location = true;
-    }
-    if (!dateRange?.from || !dateRange?.to) {
-      errors.dates = true;
-    }
-    
-    // If there are errors, show them and scroll to first error
-    if (Object.keys(errors).length > 0) {
-      setFormErrors(errors);
-      
-      if (errors.location) {
-        toast.error(t('hero.noLocationError'), {
-          description: t('hero.noLocationDesc')
-        });
-        requestAnimationFrame(() => {
-          locationRef.current?.focus();
-        });
-      } else if (errors.dates) {
-        toast.error(t('hero.noDatesError'), {
-          description: t('hero.noDatesDesc')
-        });
-        requestAnimationFrame(() => {
-          dateRef.current?.click();
-        });
-      }
-      return;
-    }
-    const pickupDate = format(dateRange.from, "yyyy-MM-dd");
-    const endDate = format(dateRange.to, "yyyy-MM-dd");
 
-    // Determine final location value
-    const finalLocation = isOtherLocation 
-      ? `${customCity.trim()} - ${customLocationDetail.trim()}`
-      : location;
+  const handleSearch = useCallback(() => {
+    if (!city) return;
+    const params = new URLSearchParams();
+    params.set("city", city);
+    params.set("neighborhood", neighborhood || ALL_NEIGHBORHOODS);
+    if (dateRange?.from) params.set("start", format(dateRange.from, "yyyy-MM-dd"));
+    if (dateRange?.to) params.set("end", format(dateRange.to, "yyyy-MM-dd"));
+    navigate(`/listings?${params.toString()}`);
+  }, [city, neighborhood, dateRange, navigate]);
 
-    // Save search data to localStorage
-    const searchData = {
-      location: finalLocation,
-      pickupDate,
-      endDate,
-      bikeType
-    };
-    localStorage.setItem("motonitaSearch", JSON.stringify(searchData));
+  const dateLabel =
+    dateRange?.from && dateRange?.to
+      ? `${format(dateRange.from, "MMM d")} → ${format(dateRange.to, "MMM d")}`
+      : dateRange?.from
+        ? `${format(dateRange.from, "MMM d")} → ...`
+        : "Pick-up → Return";
 
-    // Navigate directly to bike details page for the selected bike type
-    // First, we need to find a bike of that type in the selected location
-    const {
-      supabase
-    } = await import("@/integrations/supabase/client");
-    const {
-      data: bikes
-    } = await supabase.from("bikes").select("id, bike_type_id, bike_type:bike_types(name)").eq("location", finalLocation).eq("available", true);
-    if (bikes && bikes.length > 0) {
-      // Find bike matching the selected type
-      const matchingBike = bikes.find(b => b.bike_type?.name === bikeType);
-      if (matchingBike) {
-        navigate(`/bike/${matchingBike.id}?pickup=${pickupDate}&end=${endDate}`);
-        return;
-      }
-    }
-
-    // Fallback to listings if no specific bike found
-    navigate(`/listings?bikeType=${encodeURIComponent(bikeType)}&location=${encodeURIComponent(finalLocation)}&pickup=${pickupDate}&end=${endDate}`);
-  };
-
-  // Memoize bike types to prevent unnecessary re-renders
-  const memoizedBikeTypes = useMemo(() => bikeTypes, [bikeTypes]);
-
-  return <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
-      {/* Background Image with Overlay - using img for LCP discovery */}
-      <div className="absolute inset-0">
-        <img 
-          src={heroImage} 
-          alt="" 
-          aria-hidden="true"
-          fetchPriority="high"
-          decoding="async"
-          className="absolute inset-0 w-full h-full object-cover object-[center_40%]"
+  return (
+    <section
+      className="relative w-full min-h-screen md:min-h-[90vh] flex items-center justify-center overflow-hidden"
+      aria-label="Find a motorbike in Morocco"
+    >
+      {/* Rotating background images with cross-fade */}
+      <div className="absolute inset-0" role="presentation" aria-hidden="true">
+        {rotatingCities.map((c, idx) => (
+          <img
+            key={c}
+            src={cityImages[c]}
+            alt=""
+            role="presentation"
+            fetchPriority={idx === 0 ? "high" : "low"}
+            loading={idx === 0 ? "eager" : "lazy"}
+            decoding="async"
+            className={cn(
+              "absolute inset-0 w-full h-full object-cover transition-opacity duration-[600ms] ease-in-out",
+              c === activeCity ? "opacity-100" : "opacity-0",
+            )}
+          />
+        ))}
+        {/* Dark gradient overlay for readability */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.55) 100%)",
+          }}
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/30 via-black/20 to-black/15" />
       </div>
 
       {/* Content */}
-      <div className="relative z-10 container mx-auto px-4 py-16">
-        <div className="max-w-5xl mx-auto text-center mb-12 animate-fade-in">
-          
-          <h1 className="text-white mb-6 leading-tight font-black text-3xl sm:text-4xl md:text-5xl lg:text-6xl px-4">{t('hero.title')}</h1>
-          <div className="h-16 flex items-center justify-center">
-            <div className="relative inline-block">
-              <p className="relative text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-foreground bg-primary rounded-2xl shadow-lg transition-all duration-500 animate-scale-in py-2 sm:py-3 px-6 sm:px-8 mx-0 text-center">
-                {t('hero.inLocation')} {neighborhoods[currentCityIndex]}
-              </p>
-            </div>
-          </div>
-          <p className="text-white/90 text-base sm:text-lg mt-4 font-semibold">{t('hero.subtitle')}</p>
+      <div className="relative z-10 container mx-auto px-4 py-16 md:py-24 flex flex-col items-center">
+        {/* H1 */}
+        <h1 className="text-white font-extrabold text-center tracking-tight text-5xl md:text-7xl max-w-[900px] leading-[1.05]">
+          Motorbike &amp; Scooter Rental in Morocco
+        </h1>
+
+        {/* Rotating city pill */}
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-3 text-white">
+          <span className="text-lg md:text-2xl font-medium opacity-90">
+            Available now in
+          </span>
+          <span
+            aria-live="polite"
+            aria-atomic="true"
+            onMouseEnter={() => setPaused(true)}
+            onMouseLeave={() => setPaused(false)}
+            onFocus={() => setPaused(true)}
+            onBlur={() => setPaused(false)}
+            tabIndex={0}
+            className={cn(
+              "inline-block rounded-xl px-6 py-2 text-xl md:text-3xl font-bold transition-opacity duration-300 outline-none focus-visible:ring-2 focus-visible:ring-white/70",
+              pillVisible ? "opacity-100" : "opacity-0",
+            )}
+            style={{ backgroundColor: "#9FE870", color: "#163300" }}
+          >
+            {activeCity}
+          </span>
         </div>
 
-        {/* Search Card */}
-        <Card className="max-w-6xl mx-auto p-4 sm:p-6 md:p-8 shadow-2xl bg-gradient-to-br from-background/95 to-card/95 backdrop-blur-md border-2 border-primary/20 animate-slide-up">
-          {/* Blocked User Alert */}
-          {isBlocked && (
-            <Alert className="mb-6 bg-destructive border-destructive">
-              <AlertTriangle className="h-4 w-4 text-white" />
-              <AlertDescription className="text-white">
-                {t('hero.blockedMessage')} 
-                <a href="mailto:contact@motonita.ma" className="underline ml-1 font-medium text-white">{t('hero.contactSupport')}</a>
-              </AlertDescription>
-            </Alert>
-          )}
-          
-          <form onSubmit={handleSearch} className="space-y-6">
-            {/* Location and Date Selection */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Location */}
-              <div className="space-y-2">
-                <Label htmlFor="location" className={`flex items-center gap-2 font-semibold ${formErrors.location ? 'text-destructive' : 'text-foreground'}`}>
-                  <MapPin className="h-4 w-4" />
-                  {t('hero.location')} {formErrors.location && <span className="text-sm font-normal">(Required)</span>}
-                </Label>
-                <select 
-                  ref={locationRef} 
-                  id="location" 
-                  value={isOtherLocation ? "other" : location} 
-                  onChange={e => { 
-                    const value = e.target.value;
-                    if (value === 'other') {
-                      setIsOtherLocation(true);
-                      setLocation('');
-                    } else {
-                      setIsOtherLocation(false);
-                      setLocation(value);
-                      setCustomCity('');
-                      setCustomLocationDetail('');
-                    }
-                    setFormErrors(prev => ({ ...prev, location: false })); 
-                  }} 
-                  className={`w-full h-12 px-4 pr-10 rounded-lg border-2 bg-background text-foreground hover:bg-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-medium appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22currentColor%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[right_0.75rem_center] bg-[length:1rem] ${formErrors.location ? 'border-destructive ring-2 ring-destructive/30' : ''}`} 
-                  required 
-                  aria-label="Select your location"
+        {/* Explainer */}
+        <p className="mt-8 max-w-[600px] text-center text-white/90 text-lg leading-relaxed">
+          Find verified motorbikes and scooters near you. Choose your city, pick your
+          exact neighborhood, and book in 60 seconds — in Arabic, French, or English.
+          Cash Plus and bank cards accepted.
+        </p>
+
+        {/* Search card */}
+        <div
+          className="mt-10 w-full max-w-[900px] mx-4 rounded-2xl shadow-2xl backdrop-blur-sm p-6 md:p-8"
+          style={{ backgroundColor: "rgba(255,255,255,0.98)", color: "#163300" }}
+        >
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* City */}
+            <div className="space-y-2">
+              <label
+                htmlFor="hero-city"
+                className="flex items-center gap-2 text-sm font-semibold"
+                style={{ color: "#163300" }}
+              >
+                <MapPin className="h-4 w-4" aria-hidden="true" />
+                City
+              </label>
+              <Select value={city} onValueChange={handleCityChange}>
+                <SelectTrigger
+                  id="hero-city"
+                  className="h-12 w-full border-2 bg-white"
+                  aria-label="Select a city"
                 >
-                  <option value="">{t('hero.selectNeighborhood')}</option>
-                  {neighborhoods.map(neighborhood => <option key={neighborhood} value={neighborhood}>{neighborhood}</option>)}
-                  <option value="other">{t('hero.otherLocation')}</option>
-                </select>
-                
-                {/* Custom location fields when "Other" is selected */}
-                {isOtherLocation && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3 animate-fade-in">
-                    <Input
-                      placeholder={t('hero.enterCityName')}
-                      value={customCity}
-                      onChange={(e) => {
-                        setCustomCity(e.target.value);
-                        setFormErrors(prev => ({ ...prev, location: false }));
-                      }}
-                      className={`h-12 ${formErrors.location && !customCity.trim() ? 'border-destructive ring-2 ring-destructive/30' : ''}`}
-                    />
-                    <Input
-                      placeholder={t('hero.enterLocationDetail')}
-                      value={customLocationDetail}
-                      onChange={(e) => {
-                        setCustomLocationDetail(e.target.value);
-                        setFormErrors(prev => ({ ...prev, location: false }));
-                      }}
-                      className={`h-12 ${formErrors.location && !customLocationDetail.trim() ? 'border-destructive ring-2 ring-destructive/30' : ''}`}
-                    />
-                  </div>
-                )}
-              </div>
-
-              {/* Date Range - Using unified DateRangePicker */}
-              <div className="space-y-2">
-                <Label className={`flex items-center gap-2 font-semibold ${formErrors.dates ? 'text-destructive' : 'text-foreground'}`}>
-                  <Calendar className="h-4 w-4" />
-                  {t('hero.selectedDates')} {formErrors.dates && <span className="text-sm font-normal">(Required)</span>}
-                </Label>
-                <DateRangePicker
-                  dateRange={dateRange}
-                  onDateChange={(range) => {
-                    setDateRange(range);
-                    setFormErrors(prev => ({ ...prev, dates: false }));
-                  }}
-                  maxDays={30}
-                  showPriceBreakdown={false}
-                  placeholder={t('hero.selectDatesPlaceholder')}
-                  triggerClassName={`h-12 ${formErrors.dates ? 'border-destructive ring-2 ring-destructive/30' : ''}`}
-                />
-              </div>
+                  <SelectValue placeholder="Select a city" />
+                </SelectTrigger>
+                <SelectContent className="bg-white max-h-[300px]">
+                  {allCities.map((c) => (
+                    <SelectItem key={c} value={c}>
+                      {c}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
-            <div className="flex justify-center pt-2">
-              <Button type="submit" variant="hero" size="xl" className="w-full sm:w-auto sm:min-w-[280px] flex items-center justify-center gap-3 text-lg font-bold shadow-xl hover:shadow-2xl transition-all group">
-                <Bike className="h-6 w-6 group-hover:scale-110 transition-transform" />
-                {t('hero.bookNow')}
-              </Button>
+            {/* Neighborhood */}
+            <div className="space-y-2">
+              <label
+                htmlFor="hero-neighborhood"
+                className="flex items-center gap-2 text-sm font-semibold"
+                style={{ color: "#163300" }}
+              >
+                <Building2 className="h-4 w-4" aria-hidden="true" />
+                Neighborhood
+              </label>
+              <Select
+                value={neighborhood}
+                onValueChange={setNeighborhood}
+                disabled={!city}
+              >
+                <SelectTrigger
+                  id="hero-neighborhood"
+                  className="h-12 w-full border-2 bg-white disabled:opacity-60"
+                  aria-label="Select a neighborhood"
+                >
+                  <SelectValue
+                    placeholder={city ? "All neighborhoods" : "Select city first"}
+                  />
+                </SelectTrigger>
+                <SelectContent className="bg-white max-h-[300px]">
+                  <SelectItem value={ALL_NEIGHBORHOODS}>All neighborhoods</SelectItem>
+                  {neighborhoodOptions.map((n) => (
+                    <SelectItem key={n} value={n}>
+                      {n}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-          </form>
-        </Card>
+
+            {/* Dates */}
+            <div className="space-y-2">
+              <label
+                htmlFor="hero-dates"
+                className="flex items-center gap-2 text-sm font-semibold"
+                style={{ color: "#163300" }}
+              >
+                <CalendarIcon className="h-4 w-4" aria-hidden="true" />
+                Dates
+              </label>
+              <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+                <PopoverTrigger asChild>
+                  <button
+                    id="hero-dates"
+                    type="button"
+                    className={cn(
+                      "h-12 w-full rounded-md border-2 bg-white px-3 text-left text-sm flex items-center justify-between gap-2",
+                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                      !dateRange?.from && "text-muted-foreground",
+                    )}
+                    aria-label="Pick rental dates"
+                  >
+                    <span className="truncate">{dateLabel}</span>
+                    <CalendarIcon className="h-4 w-4 opacity-60 shrink-0" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent
+                  className="w-auto p-0 bg-white z-50"
+                  align="start"
+                >
+                  <Calendar
+                    mode="range"
+                    selected={dateRange}
+                    onSelect={setDateRange}
+                    numberOfMonths={1}
+                    disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+          </div>
+
+          {/* Search button */}
+          <div className="mt-6 flex justify-center">
+            <button
+              type="button"
+              onClick={handleSearch}
+              disabled={!city}
+              aria-label="Find available motorbikes and scooters"
+              className={cn(
+                "w-full md:w-auto inline-flex items-center justify-center gap-2 rounded-xl py-4 px-8 text-lg font-bold shadow-md",
+                "transition-all duration-200 hover:scale-105 hover:shadow-xl",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
+                "disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100",
+              )}
+              style={{ backgroundColor: "#9FE870", color: "#163300" }}
+            >
+              <Bike className="h-5 w-5" aria-hidden="true" />
+              Find Available Bikes
+            </button>
+          </div>
+        </div>
       </div>
-    </section>;
+    </section>
+  );
 });
 
-HeroSection.displayName = 'HeroSection';
+HeroSection.displayName = "HeroSection";
