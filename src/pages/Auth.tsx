@@ -19,11 +19,7 @@ import { PrivacyTermsModal } from "@/components/PrivacyTermsModal";
 import { getUserFriendlyError, getErrMsg } from "@/lib/errorMessages";
 import { playSuccessSound } from "@/lib/soundEffects";
 import { useLanguage } from "@/contexts/LanguageContext";
-import {
-  PRIMARY_PRODUCTION_ORIGIN,
-  getOAuthInitiationUrl,
-  resolveOAuthRedirectUri,
-} from "@/lib/oauthDomain";
+import { PRIMARY_PRODUCTION_ORIGIN } from "@/lib/oauthDomain";
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
@@ -104,14 +100,10 @@ const Auth = () => {
     }
   }, [authLoading, isAuthenticated, hasRole, navigate, returnUrl]);
 
-  // 1) Force www → apex on the production domain so the OAuth round-trip
-  //    never crosses host boundaries (sessions are scoped per-host).
-  // 2) If we landed on the Lovable published origin with `?startGoogleOAuth=1`,
-  //    immediately kick off Google sign-in. The broker will send the user
-  //    back to `returnOrigin` with tokens in the URL hash.
-  // 3) If we landed back on the auth page with tokens in the hash but the
-  //    auth context hasn't picked them up yet, supabase-js handles it
-  //    automatically thanks to `detectSessionInUrl`.
+  // Canonicalize www → apex so the OAuth round-trip never crosses host
+  // boundaries (the broker's state cookie is scoped per-host). Also
+  // surface a clean error toast if the broker returned an OAuth error in
+  // the URL hash (e.g. `#error=server_error&error_description=...`).
   useEffect(() => {
     if (typeof window === "undefined") return;
 
@@ -122,16 +114,15 @@ const Auth = () => {
       return;
     }
 
-    // (2) Auto-start Google sign-in when bounced from the custom domain
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("startGoogleOAuth") === "1") {
-      const returnOrigin = params.get("returnOrigin") || PRIMARY_PRODUCTION_ORIGIN;
-      // Kick off the broker; the redirect will leave this page.
-      lovable.auth.signInWithOAuth("google", { redirect_uri: returnOrigin })
-        .catch((err) => {
-          console.error("[OAuth] Auto-start failed:", err);
-          toast.error(getErrMsg(err) || t('auth.googleSignInFailed'));
-        });
+    // (2) Surface OAuth errors returned by the broker in the URL hash.
+    if (window.location.hash.includes("error=")) {
+      const hashParams = new URLSearchParams(window.location.hash.slice(1));
+      const errDesc = hashParams.get("error_description") || hashParams.get("error");
+      if (errDesc) {
+        toast.error(decodeURIComponent(errDesc.replace(/\+/g, " ")));
+        // Clean the URL so the toast doesn't fire again on re-render.
+        window.history.replaceState({}, "", window.location.pathname + window.location.search);
+      }
     }
   }, [t]);
 
@@ -339,23 +330,13 @@ const Auth = () => {
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
     try {
-      const currentOrigin = window.location.origin;
-
-      // If we're on the custom domain (motonita.ma), the Lovable OAuth
-      // proxy may not intercept `/~oauth/initiate` here. Bounce the user
-      // to the always-working `*.lovable.app` published domain to start
-      // sign-in. After Google returns, the broker will send the user back
-      // to `motonita.ma` with the session tokens in the URL hash, where
-      // supabase-js (`detectSessionInUrl: true`) picks them up.
-      const initiationUrl = getOAuthInitiationUrl(currentOrigin);
-      if (initiationUrl) {
-        window.location.href = initiationUrl;
-        return; // browser is leaving this page
-      }
-
-      // Native flow on Lovable-hosted origins (preview / published).
+      // Standard flow: the Lovable OAuth proxy intercepts `/~oauth/initiate`
+      // on Lovable previews, the published domain, AND properly-provisioned
+      // custom domains. Initiation and callback MUST happen on the same
+      // origin — never bounce between hosts, otherwise the broker fails
+      // to exchange the authorization code (state cookie is per-host).
       const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: resolveOAuthRedirectUri(currentOrigin),
+        redirect_uri: window.location.origin,
       });
 
       if (result.error) {
