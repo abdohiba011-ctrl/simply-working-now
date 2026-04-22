@@ -220,10 +220,7 @@ export const HeroSection = memo(() => {
             onFocus={() => setPaused(true)}
             onBlur={() => setPaused(false)}
             tabIndex={0}
-            className={cn(
-              "inline-block rounded-xl px-6 py-2 text-xl md:text-3xl font-bold transition-opacity duration-300 outline-none focus-visible:ring-2 focus-visible:ring-white/70",
-              pillVisible ? "opacity-100" : "opacity-0",
-            )}
+            className="inline-block rounded-xl px-6 py-2 text-xl md:text-3xl font-bold outline-none focus-visible:ring-2 focus-visible:ring-white/70"
             style={{ backgroundColor: "#9FE870", color: "#163300" }}
           >
             {activeCity}
