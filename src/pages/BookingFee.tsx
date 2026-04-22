@@ -55,7 +55,6 @@ const BookingFeeInfo = () => {
     "bookingFeeInfo.isNot.partOfRental",
     "bookingFeeInfo.isNot.deposit",
     "bookingFeeInfo.isNot.hidden",
-    "bookingFeeInfo.isNot.profit",
   ];
 
   const refundCases = [
