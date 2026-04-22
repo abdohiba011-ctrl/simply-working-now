@@ -128,7 +128,7 @@ const App = () => (
                   <Route path="/payment-selection" element={<ProtectedRoute><PaymentSelection /></ProtectedRoute>} />
                   <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
                   <Route path="/confirmation" element={<ProtectedRoute><Confirmation /></ProtectedRoute>} />
-                  <Route path="/business-dashboard" element={<ProtectedRoute requireRole="business"><BusinessDashboard /></ProtectedRoute>} />
+                  <Route path="/business-dashboard" element={<Navigate to="/agency/dashboard" replace />} />
                   <Route path="/add-bike" element={<ProtectedRoute requireRole="business"><AddBike /></ProtectedRoute>} />
                   <Route path="/all-bookings" element={<ProtectedRoute requireRole="business"><AllBookings /></ProtectedRoute>} />
                   <Route path="/analytics" element={<ProtectedRoute requireRole="business"><Analytics /></ProtectedRoute>} />
