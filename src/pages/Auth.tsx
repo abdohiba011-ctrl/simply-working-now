@@ -777,6 +777,45 @@ const Auth = () => {
                     {isSignup ? t('auth.signUpWithGoogle') : t('auth.continueWithGoogle')}
                   </Button>
 
+                  {oauthStatus && (() => {
+                    const isError = oauthStatus.phase === "initiation_error" || oauthStatus.phase === "callback_error";
+                    const isPending = oauthStatus.phase === "initiating" || oauthStatus.phase === "redirecting";
+                    const isSuccess = oauthStatus.phase === "callback_success";
+                    const Icon = isError ? XCircle : isSuccess ? CheckCircle2 : isPending ? Loader2 : Info;
+                    return (
+                      <Alert
+                        variant={isError ? "destructive" : "default"}
+                        className="mb-3"
+                        role="status"
+                        aria-live="polite"
+                      >
+                        <Icon className={`h-4 w-4 ${isPending ? "animate-spin" : ""}`} />
+                        <AlertTitle className="flex items-center justify-between gap-2">
+                          <span>OAuth status: {oauthStatus.phase.replace(/_/g, " ")}</span>
+                          <button
+                            type="button"
+                            onClick={() => setOauthStatus(null)}
+                            className="text-xs font-normal text-muted-foreground hover:text-foreground underline"
+                            aria-label="Dismiss OAuth status"
+                          >
+                            dismiss
+                          </button>
+                        </AlertTitle>
+                        <AlertDescription>
+                          <p className="text-sm">{oauthStatus.message}</p>
+                          {oauthStatus.detail && (
+                            <p className="mt-1 text-xs break-words">
+                              <strong>Details:</strong> {oauthStatus.detail}
+                            </p>
+                          )}
+                          <p className="mt-1 text-[10px] text-muted-foreground">
+                            {new Date(oauthStatus.at).toLocaleTimeString()}
+                          </p>
+                        </AlertDescription>
+                      </Alert>
+                    );
+                  })()}
+
                   {redirectUriMismatch && (
                     <Alert variant="destructive" className="mb-3">
                       <AlertTriangle className="h-4 w-4" />
