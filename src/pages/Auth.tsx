@@ -22,8 +22,6 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import {
   PRIMARY_PRODUCTION_ORIGIN,
   getOAuthInitiationUrl,
-  isAllowedReturnOrigin,
-  isCustomProductionDomain,
   resolveOAuthRedirectUri,
 } from "@/lib/oauthDomain";
 
