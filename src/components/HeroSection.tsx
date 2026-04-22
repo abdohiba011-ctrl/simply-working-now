@@ -239,10 +239,9 @@ export const HeroSection = memo(() => {
         </div>
 
         {/* Explainer */}
-        <p className="mt-8 max-w-[600px] text-center text-white/90 text-lg leading-relaxed">
-          Find verified motorbikes and scooters near you. Choose your city, pick your
-          exact neighborhood, and book in 60 seconds — in Arabic, French, or English.
-          Cash Plus and bank cards accepted.
+        <p className="mt-8 max-w-[600px] text-center text-white/90 text-lg leading-relaxed whitespace-pre-line">
+          Find trusted motorbike and scooter rentals with flexible dates.{"\n\n"}
+          Rent with Ease, Anywhere in Morocco ☺️
         </p>
 
         {/* Search card */}
