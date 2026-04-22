@@ -8,6 +8,16 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/
 import { supabase } from "@/integrations/supabase/client";
 import { TrendingUp, DollarSign, Calendar as CalendarIcon, Bike, MapPin, Loader2, Download, ArrowUpRight, ArrowDownRight, Minus } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, BarChart, Bar, PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
+const AreaChartComponent = AreaChart as any;
+const AreaComponent = Area as any;
+const XAxisComponent = XAxis as any;
+const YAxisComponent = YAxis as any;
+const CartesianGridComponent = CartesianGrid as any;
+const BarChartComponent = BarChart as any;
+const BarComponent = Bar as any;
+const PieChartComponent = PieChart as any;
+const PieComponent = Pie as any;
+const ResponsiveContainerComponent = ResponsiveContainer as any;
 import { format, subDays, startOfMonth, endOfMonth, eachDayOfInterval, eachMonthOfInterval, differenceInDays } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -487,26 +497,26 @@ export const AdminAnalyticsTab = () => {
           </CardHeader>
           <CardContent>
             <ChartContainer config={chartConfig} className="h-[300px] w-full">
-              <AreaChart data={bookingTrends}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                <XAxis 
+              <AreaChartComponent data={bookingTrends}>
+                <CartesianGridComponent strokeDasharray="3 3" className="stroke-border" />
+                <XAxisComponent 
                   dataKey="date" 
                   tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
                   tickLine={{ stroke: "hsl(var(--border))" }}
                 />
-                <YAxis 
+                <YAxisComponent 
                   tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
                   tickLine={{ stroke: "hsl(var(--border))" }}
                 />
                 <ChartTooltip content={<ChartTooltipContent />} />
-                <Area
+                <AreaComponent
                   type="monotone"
                   dataKey="bookings"
                   stroke="hsl(var(--primary))"
                   fill="hsl(var(--primary) / 0.3)"
                   strokeWidth={2}
                 />
-              </AreaChart>
+              </AreaChartComponent>
             </ChartContainer>
           </CardContent>
         </Card>
@@ -521,24 +531,24 @@ export const AdminAnalyticsTab = () => {
           </CardHeader>
           <CardContent>
             <ChartContainer config={chartConfig} className="h-[300px] w-full">
-              <BarChart data={bookingTrends}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                <XAxis 
+              <BarChartComponent data={bookingTrends}>
+                <CartesianGridComponent strokeDasharray="3 3" className="stroke-border" />
+                <XAxisComponent 
                   dataKey="date" 
                   tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
                   tickLine={{ stroke: "hsl(var(--border))" }}
                 />
-                <YAxis 
+                <YAxisComponent 
                   tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
                   tickLine={{ stroke: "hsl(var(--border))" }}
                 />
                 <ChartTooltip content={<ChartTooltipContent />} />
-                <Bar
+                <BarComponent
                   dataKey="revenue"
                   fill="hsl(var(--primary))"
                   radius={[4, 4, 0, 0]}
                 />
-              </BarChart>
+              </BarChartComponent>
             </ChartContainer>
           </CardContent>
         </Card>
@@ -592,9 +602,9 @@ export const AdminAnalyticsTab = () => {
             {locationData.length > 0 ? (
               <div className="flex items-center gap-4">
                 <div className="w-1/2 h-[200px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
+                  <ResponsiveContainerComponent width="100%" height="100%">
+                    <PieChartComponent>
+                      <PieComponent
                         data={locationData}
                         dataKey="count"
                         nameKey="name"
@@ -606,10 +616,10 @@ export const AdminAnalyticsTab = () => {
                         {locationData.map((_, index) => (
                           <Cell key={index} fill={pieColors[index] || pieColors[0]} />
                         ))}
-                      </Pie>
+                      </PieComponent>
                       <ChartTooltip content={<ChartTooltipContent nameKey="name" />} />
-                    </PieChart>
-                  </ResponsiveContainer>
+                    </PieChartComponent>
+                  </ResponsiveContainerComponent>
                 </div>
                 <div className="w-1/2 space-y-2">
                   {locationData.map((loc, index) => (

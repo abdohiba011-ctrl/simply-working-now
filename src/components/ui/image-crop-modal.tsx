@@ -15,6 +15,8 @@ interface ImageCropModalProps {
   title?: string;
 }
 
+const CropperComponent = Cropper as any;
+
 export const ImageCropModal = ({
   isOpen,
   onClose,
@@ -118,7 +120,7 @@ export const ImageCropModal = ({
         </DialogHeader>
 
         <div className="relative w-full h-64 md:h-80 bg-muted rounded-lg overflow-hidden">
-          <Cropper
+          <CropperComponent
             image={imageSrc}
             crop={crop}
             zoom={zoom}
