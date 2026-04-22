@@ -106,40 +106,37 @@ const Auth = () => {
     }
   }, [authLoading, isAuthenticated, hasRole, navigate, returnUrl]);
 
-  // Detect OAuth callback results from URL (query + hash) and surface them on-page.
+  // 1) Force www → apex on the production domain so the OAuth round-trip
+  //    never crosses host boundaries (sessions are scoped per-host).
+  // 2) If we landed on the Lovable published origin with `?startGoogleOAuth=1`,
+  //    immediately kick off Google sign-in. The broker will send the user
+  //    back to `returnOrigin` with tokens in the URL hash.
+  // 3) If we landed back on the auth page with tokens in the hash but the
+  //    auth context hasn't picked them up yet, supabase-js handles it
+  //    automatically thanks to `detectSessionInUrl`.
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const url = new URL(window.location.href);
-    const hashParams = new URLSearchParams(
-      window.location.hash.startsWith("#") ? window.location.hash.slice(1) : window.location.hash
-    );
-    const errorCode =
-      url.searchParams.get("error") ||
-      url.searchParams.get("error_code") ||
-      hashParams.get("error") ||
-      hashParams.get("error_code");
-    const errorDescription =
-      url.searchParams.get("error_description") ||
-      hashParams.get("error_description");
-    const code = url.searchParams.get("code");
-    const accessToken = hashParams.get("access_token");
 
-    if (errorCode || errorDescription) {
-      setOauthStatus({
-        phase: "callback_error",
-        message: `OAuth callback failed: ${errorCode || "unknown_error"}`,
-        detail: errorDescription || "No description provided by the provider.",
-        at: new Date().toISOString(),
-      });
-    } else if (code || accessToken) {
-      setOauthStatus({
-        phase: "callback_success",
-        message: "OAuth callback received. Completing sign-in…",
-        detail: code ? "Authorization code present in URL." : "Access token present in URL hash.",
-        at: new Date().toISOString(),
-      });
+    // (1) Canonicalize www → apex
+    if (window.location.hostname === "www.motonita.ma") {
+      const target = `${PRIMARY_PRODUCTION_ORIGIN}${window.location.pathname}${window.location.search}${window.location.hash}`;
+      window.location.replace(target);
+      return;
     }
-  }, []);
+
+    // (2) Auto-start Google sign-in when bounced from the custom domain
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("startGoogleOAuth") === "1") {
+      const returnOrigin = params.get("returnOrigin") || PRIMARY_PRODUCTION_ORIGIN;
+      // Kick off the broker; the redirect will leave this page.
+      lovable.auth.signInWithOAuth("google", { redirect_uri: returnOrigin })
+        .catch((err) => {
+          console.error("[OAuth] Auto-start failed:", err);
+          toast.error(getErrMsg(err) || t('auth.googleSignInFailed'));
+        });
+    }
+  }, [t]);
+
 
   const handleSendEmailOtp = async () => {
     setOtpSending(true);
@@ -343,102 +340,50 @@ const Auth = () => {
 
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
-    setOauthStatus({
-      phase: "initiating",
-      message: "Initiating Google sign-in…",
-      detail: `Sending redirect_uri: ${window.location.origin}`,
-      at: new Date().toISOString(),
-    });
     try {
+      const currentOrigin = window.location.origin;
+
+      // If we're on the custom domain (motonita.ma), the Lovable OAuth
+      // proxy may not intercept `/~oauth/initiate` here. Bounce the user
+      // to the always-working `*.lovable.app` published domain to start
+      // sign-in. After Google returns, the broker will send the user back
+      // to `motonita.ma` with the session tokens in the URL hash, where
+      // supabase-js (`detectSessionInUrl: true`) picks them up.
+      const initiationUrl = getOAuthInitiationUrl(currentOrigin);
+      if (initiationUrl) {
+        window.location.href = initiationUrl;
+        return; // browser is leaving this page
+      }
+
+      // Native flow on Lovable-hosted origins (preview / published).
       const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin,
+        redirect_uri: resolveOAuthRedirectUri(currentOrigin),
       });
+
       if (result.error) {
         const msg = getErrMsg(result.error) || t('auth.googleSignInFailed');
-        setOauthStatus({
-          phase: "initiation_error",
-          message: "Failed to initiate Google sign-in",
-          detail: msg,
-          at: new Date().toISOString(),
-        });
+        console.error("[OAuth] Initiation error:", result.error);
         toast.error(msg);
         setIsLoading(false);
         return;
       }
       if (result.redirected) {
-        setOauthStatus({
-          phase: "redirecting",
-          message: "Redirecting to Google…",
-          detail: "If nothing happens, your browser may have blocked the redirect or the popup. Check the redirect URI in your provider settings.",
-          at: new Date().toISOString(),
-        });
+        // Browser is navigating to Google. Nothing more to do.
         return;
       }
-      setOauthStatus({
-        phase: "callback_success",
-        message: "Google sign-in succeeded",
-        detail: "Tokens received and session set.",
-        at: new Date().toISOString(),
-      });
+      // Popup flow (sandbox / iframe): tokens already set on the supabase
+      // client. The auth context's `onAuthStateChange` listener will fire
+      // and the redirect-on-auth effect above will route the user.
       playSuccessSound();
       toast.success(t('auth.googleSignInSuccess'));
     } catch (error: unknown) {
       const msg = getErrMsg(error) || t('auth.googleSignInFailed');
-      setOauthStatus({
-        phase: "initiation_error",
-        message: "Google sign-in threw an exception",
-        detail: msg,
-        at: new Date().toISOString(),
-      });
+      console.error("[OAuth] Exception:", error);
       toast.error(msg);
       setIsLoading(false);
     }
   };
 
-  // Diagnostic test for Google OAuth — surfaces the raw error for debugging
-  const handleTestGoogleSignIn = async () => {
-    setOauthTestResult(null);
-    setOauthTesting(true);
-    const started = new Date().toISOString();
-    try {
-      const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin,
-      });
-      if (result.error) {
-        const err = result.error as unknown;
-        const details = {
-          status: "error",
-          startedAt: started,
-          message: getErrMsg(err),
-          name: (err as { name?: string })?.name,
-          stack: (err as { stack?: string })?.stack,
-          raw: typeof err === "object" ? JSON.stringify(err, Object.getOwnPropertyNames(err as object), 2) : String(err),
-        };
-        setOauthTestResult(JSON.stringify(details, null, 2));
-        toast.error(`Google OAuth test failed: ${details.message}`);
-        return;
-      }
-      if (result.redirected) {
-        setOauthTestResult(JSON.stringify({ status: "redirected", startedAt: started, note: "Browser is redirecting to Google. If you land back here without signing in, check the redirect URI in Google Cloud and Lovable Cloud auth settings." }, null, 2));
-        return;
-      }
-      setOauthTestResult(JSON.stringify({ status: "success", startedAt: started, note: "Tokens received and session set." }, null, 2));
-      toast.success("Google OAuth test succeeded");
-    } catch (error: unknown) {
-      const details = {
-        status: "exception",
-        startedAt: started,
-        message: getErrMsg(error),
-        name: (error as { name?: string })?.name,
-        stack: (error as { stack?: string })?.stack,
-        raw: typeof error === "object" ? JSON.stringify(error, Object.getOwnPropertyNames(error as object), 2) : String(error),
-      };
-      setOauthTestResult(JSON.stringify(details, null, 2));
-      toast.error(`Google OAuth test threw: ${details.message}`);
-    } finally {
-      setOauthTesting(false);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -753,70 +698,8 @@ const Auth = () => {
                     {isSignup ? t('auth.signUpWithGoogle') : t('auth.continueWithGoogle')}
                   </Button>
 
-                  {oauthStatus && (() => {
-                    const isError = oauthStatus.phase === "initiation_error" || oauthStatus.phase === "callback_error";
-                    const isPending = oauthStatus.phase === "initiating" || oauthStatus.phase === "redirecting";
-                    const isSuccess = oauthStatus.phase === "callback_success";
-                    const Icon = isError ? XCircle : isSuccess ? CheckCircle2 : isPending ? Loader2 : Info;
-                    return (
-                      <Alert
-                        variant={isError ? "destructive" : "default"}
-                        className="mb-3"
-                        role="status"
-                        aria-live="polite"
-                      >
-                        <Icon className={`h-4 w-4 ${isPending ? "animate-spin" : ""}`} />
-                        <AlertTitle className="flex items-center justify-between gap-2">
-                          <span>OAuth status: {oauthStatus.phase.replace(/_/g, " ")}</span>
-                          <button
-                            type="button"
-                            onClick={() => setOauthStatus(null)}
-                            className="text-xs font-normal text-muted-foreground hover:text-foreground underline"
-                            aria-label="Dismiss OAuth status"
-                          >
-                            dismiss
-                          </button>
-                        </AlertTitle>
-                        <AlertDescription>
-                          <p className="text-sm">{oauthStatus.message}</p>
-                          {oauthStatus.detail && (
-                            <p className="mt-1 text-xs break-words">
-                              <strong>Details:</strong> {oauthStatus.detail}
-                            </p>
-                          )}
-                          <p className="mt-1 text-[10px] text-muted-foreground">
-                            {new Date(oauthStatus.at).toLocaleTimeString()}
-                          </p>
-                        </AlertDescription>
-                      </Alert>
-                    );
-                  })()}
 
-                  {redirectUriMismatch && (
-                    <Alert variant="destructive" className="mb-3">
-                      <AlertTriangle className="h-4 w-4" />
-                      <AlertTitle>Redirect URI mismatch</AlertTitle>
-                      <AlertDescription>
-                        <p className="mb-2">
-                          The current page origin does not match any of the redirect URIs
-                          authorized for Google sign-in. Google will reject the OAuth callback.
-                        </p>
-                        <p className="text-xs">
-                          <strong>Current origin (sent as redirect_uri):</strong>{" "}
-                          <code className="break-all">{sentRedirectUri || "(unknown)"}</code>
-                        </p>
-                        <p className="text-xs mt-1">
-                          <strong>Authorized origins:</strong>{" "}
-                          <code className="break-all">{KNOWN_REDIRECT_ORIGINS.join(", ")}</code>
-                        </p>
-                        <p className="text-xs mt-2">
-                          Open this app from one of the authorized URLs, or add the current
-                          origin to the Authorized redirect URIs in your Google Cloud OAuth
-                          client and to Lovable Cloud auth settings.
-                        </p>
-                      </AlertDescription>
-                    </Alert>
-                  )}
+
 
                   <div className="relative my-6">
                     <div className="absolute inset-0 flex items-center">
