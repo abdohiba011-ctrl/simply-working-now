@@ -367,24 +367,54 @@ const Auth = () => {
 
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
+    setOauthStatus({
+      phase: "initiating",
+      message: "Initiating Google sign-in…",
+      detail: `Sending redirect_uri: ${window.location.origin}`,
+      at: new Date().toISOString(),
+    });
     try {
       const result = await lovable.auth.signInWithOAuth("google", {
         redirect_uri: window.location.origin,
       });
       if (result.error) {
-        toast.error(getErrMsg(result.error) || t('auth.googleSignInFailed'));
+        const msg = getErrMsg(result.error) || t('auth.googleSignInFailed');
+        setOauthStatus({
+          phase: "initiation_error",
+          message: "Failed to initiate Google sign-in",
+          detail: msg,
+          at: new Date().toISOString(),
+        });
+        toast.error(msg);
         setIsLoading(false);
         return;
       }
       if (result.redirected) {
-        // Browser is redirecting to Google
+        setOauthStatus({
+          phase: "redirecting",
+          message: "Redirecting to Google…",
+          detail: "If nothing happens, your browser may have blocked the redirect or the popup. Check the redirect URI in your provider settings.",
+          at: new Date().toISOString(),
+        });
         return;
       }
-      // Tokens received and session set; auth state listener will handle redirect
+      setOauthStatus({
+        phase: "callback_success",
+        message: "Google sign-in succeeded",
+        detail: "Tokens received and session set.",
+        at: new Date().toISOString(),
+      });
       playSuccessSound();
       toast.success(t('auth.googleSignInSuccess'));
     } catch (error: unknown) {
-      toast.error(getErrMsg(error) || t('auth.googleSignInFailed'));
+      const msg = getErrMsg(error) || t('auth.googleSignInFailed');
+      setOauthStatus({
+        phase: "initiation_error",
+        message: "Google sign-in threw an exception",
+        detail: msg,
+        at: new Date().toISOString(),
+      });
+      toast.error(msg);
       setIsLoading(false);
     }
   };
