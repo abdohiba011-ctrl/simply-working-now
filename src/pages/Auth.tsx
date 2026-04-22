@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { signupSchema, loginSchema } from "@/lib/validationSchemas";
 import { z } from "zod";
-import { Eye, EyeOff, AlertTriangle } from "lucide-react";
+import { Eye, EyeOff, AlertTriangle, CheckCircle2, XCircle, Loader2, Info } from "lucide-react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
