@@ -137,15 +137,11 @@ export const HeroSection = memo(() => {
     return () => mq.removeEventListener("change", handler);
   }, []);
 
-  // City rotation
+  // City rotation — only the text changes, the pill stays visible
   useEffect(() => {
     if (reducedMotion || paused) return;
     const interval = setInterval(() => {
-      setPillVisible(false);
-      setTimeout(() => {
-        setCityIndex((prev) => (prev + 1) % rotatingCities.length);
-        setPillVisible(true);
-      }, 300);
+      setCityIndex((prev) => (prev + 1) % rotatingCities.length);
     }, 2000);
     return () => clearInterval(interval);
   }, [reducedMotion, paused]);
