@@ -109,7 +109,12 @@ export const TopCitiesSection = () => {
                 className={`group overflow-hidden hover:shadow-2xl transition-all duration-500 border-2 border-border rounded-xl ${
                   isAvailable ? 'cursor-pointer hover:scale-105 hover:border-primary/50' : 'cursor-not-allowed opacity-90'
                 }`}
-                onClick={() => isAvailable && navigate(`/listings`)}
+                onClick={() =>
+                  isAvailable &&
+                  navigate(
+                    `/listings?city=${encodeURIComponent(city.name)}&cityId=${city.id}`
+                  )
+                }
                 style={{ animationDelay: `${index * 0.1}s` }}
               >
                 <div className="relative aspect-[3/4] overflow-hidden">
