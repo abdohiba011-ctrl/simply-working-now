@@ -152,9 +152,9 @@ export const AdminBusinessApplicationsTab = () => {
       await supabase.from('notifications').insert({
         user_id: userId,
         title: 'Business Application Approved!',
-        message: 'Congratulations! Your business partner application has been approved. You can now access the Business Dashboard.',
+        message: 'Congratulations! Your business partner application has been approved. You can now access the Agency Dashboard.',
         type: 'success',
-        action_url: '/business-dashboard'
+        action_url: '/agency/dashboard'
       });
 
       // Send email notification
