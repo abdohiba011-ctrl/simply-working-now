@@ -15,6 +15,8 @@ interface ImageCropModalProps {
   title?: string;
 }
 
+const CropperComponent = Cropper as any;
+
 export const ImageCropModal = ({
   isOpen,
   onClose,
