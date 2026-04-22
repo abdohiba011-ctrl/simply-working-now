@@ -234,7 +234,7 @@ export const HeroSection = memo(() => {
 
         {/* Explainer */}
         <p className="mt-8 max-w-[600px] text-center text-white/90 text-lg leading-relaxed whitespace-pre-line">
-          Find trusted motorbike and scooter rentals with flexible dates.{"\n\n"}
+          Find trusted motorbike and scooter rentals with flexible dates.{"\n"}
           Rent with Ease, Anywhere in Morocco ☺️
         </p>
 
