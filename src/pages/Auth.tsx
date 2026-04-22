@@ -56,6 +56,10 @@ const Auth = () => {
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
 
+  // OAuth diagnostic test state
+  const [oauthTesting, setOauthTesting] = useState(false);
+  const [oauthTestResult, setOauthTestResult] = useState<string | null>(null);
+
   // Check if user needs phone number after login
   // Only show phone modal if: no phone AND not verified AND not pending verification
   const checkPhoneRequired = async () => {
@@ -318,6 +322,51 @@ const Auth = () => {
     } catch (error: unknown) {
       toast.error(getErrMsg(error) || t('auth.googleSignInFailed'));
       setIsLoading(false);
+    }
+  };
+
+  // Diagnostic test for Google OAuth — surfaces the raw error for debugging
+  const handleTestGoogleSignIn = async () => {
+    setOauthTestResult(null);
+    setOauthTesting(true);
+    const started = new Date().toISOString();
+    try {
+      const result = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: window.location.origin,
+      });
+      if (result.error) {
+        const err = result.error as unknown;
+        const details = {
+          status: "error",
+          startedAt: started,
+          message: getErrMsg(err),
+          name: (err as { name?: string })?.name,
+          stack: (err as { stack?: string })?.stack,
+          raw: typeof err === "object" ? JSON.stringify(err, Object.getOwnPropertyNames(err as object), 2) : String(err),
+        };
+        setOauthTestResult(JSON.stringify(details, null, 2));
+        toast.error(`Google OAuth test failed: ${details.message}`);
+        return;
+      }
+      if (result.redirected) {
+        setOauthTestResult(JSON.stringify({ status: "redirected", startedAt: started, note: "Browser is redirecting to Google. If you land back here without signing in, check the redirect URI in Google Cloud and Lovable Cloud auth settings." }, null, 2));
+        return;
+      }
+      setOauthTestResult(JSON.stringify({ status: "success", startedAt: started, note: "Tokens received and session set." }, null, 2));
+      toast.success("Google OAuth test succeeded");
+    } catch (error: unknown) {
+      const details = {
+        status: "exception",
+        startedAt: started,
+        message: getErrMsg(error),
+        name: (error as { name?: string })?.name,
+        stack: (error as { stack?: string })?.stack,
+        raw: typeof error === "object" ? JSON.stringify(error, Object.getOwnPropertyNames(error as object), 2) : String(error),
+      };
+      setOauthTestResult(JSON.stringify(details, null, 2));
+      toast.error(`Google OAuth test threw: ${details.message}`);
+    } finally {
+      setOauthTesting(false);
     }
   };
 
@@ -633,6 +682,22 @@ const Auth = () => {
                     </svg>
                     {isSignup ? t('auth.signUpWithGoogle') : t('auth.continueWithGoogle')}
                   </Button>
+
+                  {/* Diagnostic: Test Google sign-in */}
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    className="w-full h-10 mt-2"
+                    onClick={handleTestGoogleSignIn}
+                    disabled={oauthTesting}
+                  >
+                    {oauthTesting ? "Testing Google sign-in…" : "Test Google sign-in"}
+                  </Button>
+                  {oauthTestResult && (
+                    <pre className="mt-2 max-h-64 overflow-auto rounded-md border border-border bg-muted p-3 text-xs text-foreground whitespace-pre-wrap break-all">
+{oauthTestResult}
+                    </pre>
+                  )}
 
                   <div className="relative my-6">
                     <div className="absolute inset-0 flex items-center">
