@@ -321,6 +321,51 @@ const Auth = () => {
     }
   };
 
+  // Diagnostic test for Google OAuth — surfaces the raw error for debugging
+  const handleTestGoogleSignIn = async () => {
+    setOauthTestResult(null);
+    setOauthTesting(true);
+    const started = new Date().toISOString();
+    try {
+      const result = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: window.location.origin,
+      });
+      if (result.error) {
+        const err = result.error as unknown;
+        const details = {
+          status: "error",
+          startedAt: started,
+          message: getErrMsg(err),
+          name: (err as { name?: string })?.name,
+          stack: (err as { stack?: string })?.stack,
+          raw: typeof err === "object" ? JSON.stringify(err, Object.getOwnPropertyNames(err as object), 2) : String(err),
+        };
+        setOauthTestResult(JSON.stringify(details, null, 2));
+        toast.error(`Google OAuth test failed: ${details.message}`);
+        return;
+      }
+      if (result.redirected) {
+        setOauthTestResult(JSON.stringify({ status: "redirected", startedAt: started, note: "Browser is redirecting to Google. If you land back here without signing in, check the redirect URI in Google Cloud and Lovable Cloud auth settings." }, null, 2));
+        return;
+      }
+      setOauthTestResult(JSON.stringify({ status: "success", startedAt: started, note: "Tokens received and session set." }, null, 2));
+      toast.success("Google OAuth test succeeded");
+    } catch (error: unknown) {
+      const details = {
+        status: "exception",
+        startedAt: started,
+        message: getErrMsg(error),
+        name: (error as { name?: string })?.name,
+        stack: (error as { stack?: string })?.stack,
+        raw: typeof error === "object" ? JSON.stringify(error, Object.getOwnPropertyNames(error as object), 2) : String(error),
+      };
+      setOauthTestResult(JSON.stringify(details, null, 2));
+      toast.error(`Google OAuth test threw: ${details.message}`);
+    } finally {
+      setOauthTesting(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
