@@ -66,7 +66,7 @@ interface SidebarProps {
 
 export const Sidebar = ({ collapsed, onToggle }: SidebarProps) => {
   const location = useLocation();
-  const { signOut, user } = useAuth();
+  const { logout, user } = useAuth();
   const agency = useAgencyStore();
   const unread = useAgencyStore((s) => s.unreadMessages);
 
@@ -172,7 +172,7 @@ export const Sidebar = ({ collapsed, onToggle }: SidebarProps) => {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => signOut()}
+              onClick={() => logout()}
               className="text-xs text-destructive hover:text-destructive"
               aria-label="Logout"
             >
