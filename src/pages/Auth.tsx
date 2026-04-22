@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { signupSchema, loginSchema } from "@/lib/validationSchemas";
 import { z } from "zod";
-import { Eye, EyeOff, AlertTriangle } from "lucide-react";
+import { Eye, EyeOff, AlertTriangle, CheckCircle2, XCircle, Loader2, Info } from "lucide-react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
@@ -60,6 +60,15 @@ const Auth = () => {
   // OAuth diagnostic test state
   const [oauthTesting, setOauthTesting] = useState(false);
   const [oauthTestResult, setOauthTestResult] = useState<string | null>(null);
+
+  // OAuth status indicator (initiation + callback)
+  type OAuthStatus = {
+    phase: "initiating" | "redirecting" | "callback_success" | "callback_error" | "initiation_error";
+    message: string;
+    detail?: string;
+    at: string;
+  };
+  const [oauthStatus, setOauthStatus] = useState<OAuthStatus | null>(null);
 
   // Redirect URI validation: the value we send to OAuth is window.location.origin.
   // Known-good origins are the preview, published, and custom domain URLs.
@@ -120,6 +129,41 @@ const Auth = () => {
       }
     }
   }, [authLoading, isAuthenticated, hasRole, navigate, returnUrl]);
+
+  // Detect OAuth callback results from URL (query + hash) and surface them on-page.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const url = new URL(window.location.href);
+    const hashParams = new URLSearchParams(
+      window.location.hash.startsWith("#") ? window.location.hash.slice(1) : window.location.hash
+    );
+    const errorCode =
+      url.searchParams.get("error") ||
+      url.searchParams.get("error_code") ||
+      hashParams.get("error") ||
+      hashParams.get("error_code");
+    const errorDescription =
+      url.searchParams.get("error_description") ||
+      hashParams.get("error_description");
+    const code = url.searchParams.get("code");
+    const accessToken = hashParams.get("access_token");
+
+    if (errorCode || errorDescription) {
+      setOauthStatus({
+        phase: "callback_error",
+        message: `OAuth callback failed: ${errorCode || "unknown_error"}`,
+        detail: errorDescription || "No description provided by the provider.",
+        at: new Date().toISOString(),
+      });
+    } else if (code || accessToken) {
+      setOauthStatus({
+        phase: "callback_success",
+        message: "OAuth callback received. Completing sign-in…",
+        detail: code ? "Authorization code present in URL." : "Access token present in URL hash.",
+        at: new Date().toISOString(),
+      });
+    }
+  }, []);
 
   const handleSendEmailOtp = async () => {
     setOtpSending(true);
@@ -323,24 +367,54 @@ const Auth = () => {
 
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
+    setOauthStatus({
+      phase: "initiating",
+      message: "Initiating Google sign-in…",
+      detail: `Sending redirect_uri: ${window.location.origin}`,
+      at: new Date().toISOString(),
+    });
     try {
       const result = await lovable.auth.signInWithOAuth("google", {
         redirect_uri: window.location.origin,
       });
       if (result.error) {
-        toast.error(getErrMsg(result.error) || t('auth.googleSignInFailed'));
+        const msg = getErrMsg(result.error) || t('auth.googleSignInFailed');
+        setOauthStatus({
+          phase: "initiation_error",
+          message: "Failed to initiate Google sign-in",
+          detail: msg,
+          at: new Date().toISOString(),
+        });
+        toast.error(msg);
         setIsLoading(false);
         return;
       }
       if (result.redirected) {
-        // Browser is redirecting to Google
+        setOauthStatus({
+          phase: "redirecting",
+          message: "Redirecting to Google…",
+          detail: "If nothing happens, your browser may have blocked the redirect or the popup. Check the redirect URI in your provider settings.",
+          at: new Date().toISOString(),
+        });
         return;
       }
-      // Tokens received and session set; auth state listener will handle redirect
+      setOauthStatus({
+        phase: "callback_success",
+        message: "Google sign-in succeeded",
+        detail: "Tokens received and session set.",
+        at: new Date().toISOString(),
+      });
       playSuccessSound();
       toast.success(t('auth.googleSignInSuccess'));
     } catch (error: unknown) {
-      toast.error(getErrMsg(error) || t('auth.googleSignInFailed'));
+      const msg = getErrMsg(error) || t('auth.googleSignInFailed');
+      setOauthStatus({
+        phase: "initiation_error",
+        message: "Google sign-in threw an exception",
+        detail: msg,
+        at: new Date().toISOString(),
+      });
+      toast.error(msg);
       setIsLoading(false);
     }
   };
@@ -702,6 +776,45 @@ const Auth = () => {
                     </svg>
                     {isSignup ? t('auth.signUpWithGoogle') : t('auth.continueWithGoogle')}
                   </Button>
+
+                  {oauthStatus && (() => {
+                    const isError = oauthStatus.phase === "initiation_error" || oauthStatus.phase === "callback_error";
+                    const isPending = oauthStatus.phase === "initiating" || oauthStatus.phase === "redirecting";
+                    const isSuccess = oauthStatus.phase === "callback_success";
+                    const Icon = isError ? XCircle : isSuccess ? CheckCircle2 : isPending ? Loader2 : Info;
+                    return (
+                      <Alert
+                        variant={isError ? "destructive" : "default"}
+                        className="mb-3"
+                        role="status"
+                        aria-live="polite"
+                      >
+                        <Icon className={`h-4 w-4 ${isPending ? "animate-spin" : ""}`} />
+                        <AlertTitle className="flex items-center justify-between gap-2">
+                          <span>OAuth status: {oauthStatus.phase.replace(/_/g, " ")}</span>
+                          <button
+                            type="button"
+                            onClick={() => setOauthStatus(null)}
+                            className="text-xs font-normal text-muted-foreground hover:text-foreground underline"
+                            aria-label="Dismiss OAuth status"
+                          >
+                            dismiss
+                          </button>
+                        </AlertTitle>
+                        <AlertDescription>
+                          <p className="text-sm">{oauthStatus.message}</p>
+                          {oauthStatus.detail && (
+                            <p className="mt-1 text-xs break-words">
+                              <strong>Details:</strong> {oauthStatus.detail}
+                            </p>
+                          )}
+                          <p className="mt-1 text-[10px] text-muted-foreground">
+                            {new Date(oauthStatus.at).toLocaleTimeString()}
+                          </p>
+                        </AlertDescription>
+                      </Alert>
+                    );
+                  })()}
 
                   {redirectUriMismatch && (
                     <Alert variant="destructive" className="mb-3">
