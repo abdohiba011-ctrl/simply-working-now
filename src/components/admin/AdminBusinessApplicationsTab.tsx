@@ -406,12 +406,17 @@ export const AdminBusinessApplicationsTab = () => {
                               variant="outline"
                               size="sm"
                               className="text-success border-success hover:bg-success/10"
+                              disabled={isSaving}
                               onClick={() => {
                                 setSelectedApplication(app);
-                                setShowApproveDialog(true);
+                                setTimeout(() => handleApprove(), 0);
                               }}
                             >
-                              <CheckCircle className="h-4 w-4 mr-1" />
+                              {isSaving && selectedApplication?.id === app.id ? (
+                                <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                              ) : (
+                                <CheckCircle className="h-4 w-4 mr-1" />
+                              )}
                               Approve
                             </Button>
                             <Button
