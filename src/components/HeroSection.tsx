@@ -209,7 +209,9 @@ export const HeroSection = memo(() => {
       <div className="relative z-10 container mx-auto px-4 py-16 md:py-24 flex flex-col items-center">
         {/* H1 */}
         <h1 className="text-white font-extrabold text-center tracking-tight text-5xl md:text-7xl max-w-[900px] leading-[1.05]">
-          Rent a Motorbike or Scooter Anywhere in Morocco
+          Rent a Motorbike or Scooter
+          <br />
+          Anywhere in Morocco
         </h1>
 
         {/* Rotating city pill */}
