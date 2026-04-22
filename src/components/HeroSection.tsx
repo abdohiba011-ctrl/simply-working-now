@@ -146,7 +146,7 @@ export const HeroSection = memo(() => {
         setCityIndex((prev) => (prev + 1) % rotatingCities.length);
         setPillVisible(true);
       }, 300);
-    }, 3000);
+    }, 2000);
     return () => clearInterval(interval);
   }, [reducedMotion, paused]);
 
