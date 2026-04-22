@@ -153,15 +153,9 @@ export const TopCitiesSection = () => {
                       <MapPin className="h-5 w-5 text-primary" />
                       {cityName}
                     </h3>
-                    <p className="text-sm text-white/90 mb-3 font-medium">
+                    <p className="text-sm text-white/90 font-medium">
                       {city.bikes_count || 0} {t('cities.bikesAvailable')}
                     </p>
-                    <div className="flex items-center justify-between pt-3 border-t border-white/30">
-                      <span className="text-xs text-white/90 font-semibold">{t('cities.from')}</span>
-                      <span className="text-lg font-black text-foreground bg-primary px-2 py-1 rounded shadow-lg">
-                        {city.price_from || 80} DH/{t('common.currency') === 'DH' ? t('hero.perDay').replace('/', '') : 'day'}
-                      </span>
-                    </div>
                   </div>
                 </div>
               </Card>
