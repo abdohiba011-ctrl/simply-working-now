@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
@@ -61,6 +61,10 @@ const AdminClientDetails = lazy(() => import("./pages/admin/AdminClientDetails")
 const BusinessBookings = lazy(() => import("./pages/business/BusinessBookings"));
 const BusinessBookingDetails = lazy(() => import("./pages/business/BusinessBookingDetails"));
 const BusinessMotorbikes = lazy(() => import("./pages/business/BusinessMotorbikes"));
+const AgencyDashboard = lazy(() => import("./pages/agency/Dashboard"));
+const AgencyBookings = lazy(() => import("./pages/agency/Bookings"));
+const AgencyBookingDetail = lazy(() => import("./pages/agency/BookingDetail"));
+const AgencyPlaceholder = lazy(() => import("./pages/agency/Placeholder"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Verification = lazy(() => import("./pages/Verification"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
@@ -147,6 +151,17 @@ const App = () => (
                   <Route path="/business/bookings" element={<ProtectedRoute requireRole="business"><BusinessBookings /></ProtectedRoute>} />
                   <Route path="/business/booking/:id" element={<ProtectedRoute requireRole="business"><BusinessBookingDetails /></ProtectedRoute>} />
                   <Route path="/business/motorbikes" element={<ProtectedRoute requireRole="business"><BusinessMotorbikes /></ProtectedRoute>} />
+
+                  {/* Agency dashboard (new Wise-inspired UI) */}
+                  <Route path="/agency" element={<Navigate to="/agency/dashboard" replace />} />
+                  <Route path="/agency/dashboard" element={<ProtectedRoute requireRole="business"><AgencyDashboard /></ProtectedRoute>} />
+                  <Route path="/agency/bookings" element={<ProtectedRoute requireRole="business"><AgencyBookings /></ProtectedRoute>} />
+                  <Route path="/agency/bookings/:id" element={<ProtectedRoute requireRole="business"><AgencyBookingDetail /></ProtectedRoute>} />
+                  <Route path="/agency/:slug" element={<ProtectedRoute requireRole="business"><AgencyPlaceholder /></ProtectedRoute>} />
+                  <Route path="/agency/:slug/:sub" element={<ProtectedRoute requireRole="business"><AgencyPlaceholder /></ProtectedRoute>} />
+
+                  {/* Redirects from old /business-* paths */}
+                  <Route path="/business-dashboard" element={<Navigate to="/agency/dashboard" replace />} />
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />
                 </Routes>
