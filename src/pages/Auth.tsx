@@ -328,11 +328,25 @@ const Auth = () => {
   };
 
   const handleGoogleSignIn = async () => {
+    // Lovable's OAuth proxy worker only intercepts `/~oauth/*` on the
+    // published domain (`*.lovable.app`) and active custom domains
+    // (`motonita.ma`). It does NOT run inside the in-IDE sandbox preview
+    // (`*.lovableproject.com`), so the PKCE exchange fails there with
+    // "failed to exchange authorization code". Surface a clear message
+    // instead of letting the user hit that wall.
+    const host = window.location.hostname;
+    const isSandboxPreview = host.endsWith(".lovableproject.com");
+    if (isSandboxPreview) {
+      toast.error(
+        "Google sign-in only works on the live site. Open https://motonita.ma (or the published preview) to test it.",
+        { duration: 7000 }
+      );
+      return;
+    }
+
     setIsLoading(true);
     try {
-      // Standard flow: the Lovable OAuth proxy intercepts `/~oauth/initiate`
-      // on Lovable previews, the published domain, AND properly-provisioned
-      // custom domains. Initiation and callback MUST happen on the same
+      // Standard flow: initiation and callback MUST happen on the same
       // origin — never bounce between hosts, otherwise the broker fails
       // to exchange the authorization code (state cookie is per-host).
       const result = await lovable.auth.signInWithOAuth("google", {
