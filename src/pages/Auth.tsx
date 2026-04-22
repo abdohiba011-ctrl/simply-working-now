@@ -63,36 +63,6 @@ const Auth = () => {
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
 
-  // OAuth diagnostic test state
-  const [oauthTesting, setOauthTesting] = useState(false);
-  const [oauthTestResult, setOauthTestResult] = useState<string | null>(null);
-
-  // OAuth status indicator (initiation + callback)
-  type OAuthStatus = {
-    phase: "initiating" | "redirecting" | "callback_success" | "callback_error" | "initiation_error";
-    message: string;
-    detail?: string;
-    at: string;
-  };
-  const [oauthStatus, setOauthStatus] = useState<OAuthStatus | null>(null);
-
-  // Redirect URI validation: the value we send to OAuth is window.location.origin.
-  // Known-good origins are the preview, published, and custom domain URLs.
-  // If the current origin is not in this list, the Google OAuth callback will
-  // reject the redirect and sign-in will fail.
-  const KNOWN_REDIRECT_ORIGINS = [
-    "https://id-preview--b7e3539e-235c-4d7c-9935-9015e8ff7015.lovable.app",
-    "https://simply-working-now.lovable.app",
-    "https://motonita.ma",
-    "https://www.motonita.ma",
-  ];
-  const currentOrigin = typeof window !== "undefined" ? window.location.origin : "";
-  const sentRedirectUri = currentOrigin;
-  const isKnownOrigin =
-    KNOWN_REDIRECT_ORIGINS.includes(currentOrigin) ||
-    /^https:\/\/[a-z0-9-]+\.lovable\.app$/i.test(currentOrigin) ||
-    /^http:\/\/localhost(:\d+)?$/i.test(currentOrigin);
-  const redirectUriMismatch = !isKnownOrigin && currentOrigin.length > 0;
 
 
   // Check if user needs phone number after login
