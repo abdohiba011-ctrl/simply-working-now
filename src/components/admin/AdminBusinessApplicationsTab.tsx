@@ -152,9 +152,9 @@ export const AdminBusinessApplicationsTab = () => {
       await supabase.from('notifications').insert({
         user_id: userId,
         title: 'Business Application Approved!',
-        message: 'Congratulations! Your business partner application has been approved. You can now access the Business Dashboard.',
+        message: 'Congratulations! Your business partner application has been approved. You can now access the Agency Dashboard.',
         type: 'success',
-        action_url: '/business-dashboard'
+        action_url: '/agency/dashboard'
       });
 
       // Send email notification
@@ -406,12 +406,17 @@ export const AdminBusinessApplicationsTab = () => {
                               variant="outline"
                               size="sm"
                               className="text-success border-success hover:bg-success/10"
+                              disabled={isSaving}
                               onClick={() => {
                                 setSelectedApplication(app);
-                                setShowApproveDialog(true);
+                                setTimeout(() => handleApprove(), 0);
                               }}
                             >
-                              <CheckCircle className="h-4 w-4 mr-1" />
+                              {isSaving && selectedApplication?.id === app.id ? (
+                                <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                              ) : (
+                                <CheckCircle className="h-4 w-4 mr-1" />
+                              )}
                               Approve
                             </Button>
                             <Button
