@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { forwardRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -11,7 +11,7 @@ interface PrivacyTermsModalProps {
   type: "privacy" | "terms";
 }
 
-export const PrivacyTermsModal = ({ isOpen, onClose, onAccept, type }: PrivacyTermsModalProps) => {
+export const PrivacyTermsModal = forwardRef<HTMLDivElement, PrivacyTermsModalProps>(({ isOpen, onClose, onAccept, type }, _ref) => {
   const { t, language } = useLanguage();
 
   const privacyContent = language === 'ar' ? (
@@ -226,4 +226,6 @@ export const PrivacyTermsModal = ({ isOpen, onClose, onAccept, type }: PrivacyTe
       </DialogContent>
     </Dialog>
   );
-};
+});
+
+PrivacyTermsModal.displayName = "PrivacyTermsModal";
