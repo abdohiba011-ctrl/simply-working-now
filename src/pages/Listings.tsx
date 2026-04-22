@@ -56,7 +56,7 @@ const Listings = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const [neighborhoods, setNeighborhoods] = useState<Neighborhood[]>(fallbackNeighborhoods);
-  const [selectedTab, setSelectedTab] = useState<string>(fallbackNeighborhoods[0].id);
+  const [selectedTab, setSelectedTab] = useState<string>("");
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [sortBy, setSortBy] = useState<SortOption>("recommended");
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
