@@ -180,17 +180,23 @@ export const HeroSection = memo(() => {
       className="relative w-full min-h-screen md:min-h-[90vh] flex items-center justify-center overflow-hidden"
       aria-label="Find a motorbike in Morocco"
     >
-      {/* Static background image — only the city pill rotates, not the background */}
+      {/* Background images — one per city, cross-fade in sync with the pill */}
       <div className="absolute inset-0" role="presentation" aria-hidden="true">
-        <img
-          src={cityImages[rotatingCities[0]]}
-          alt=""
-          role="presentation"
-          fetchPriority="high"
-          loading="eager"
-          decoding="async"
-          className="absolute inset-0 w-full h-full object-cover"
-        />
+        {rotatingCities.map((c, i) => (
+          <img
+            key={c}
+            src={cityImages[c]}
+            alt=""
+            role="presentation"
+            fetchPriority={i === 0 ? "high" : "low"}
+            loading={i === 0 ? "eager" : "lazy"}
+            decoding="async"
+            className={cn(
+              "absolute inset-0 w-full h-full object-cover transition-opacity duration-700",
+              i === cityIndex ? "opacity-100" : "opacity-0",
+            )}
+          />
+        ))}
         {/* Dark gradient overlay for readability */}
         <div
           className="absolute inset-0"
