@@ -5,7 +5,11 @@ import {
   ChevronLeft, Star, ExternalLink, Eye, EyeOff, Wrench, Check,
   TrendingUp, Calendar as CalIcon,
 } from "lucide-react";
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import { LineChart, Line, XAxis as XAxisR, YAxis as YAxisR, Tooltip as TooltipR, ResponsiveContainer, CartesianGrid } from "recharts";
+const XAxis = XAxisR as any;
+const YAxis = YAxisR as any;
+const Tooltip = TooltipR as any;
+const RLine = Line as any;
 import { AgencyLayout } from "@/components/agency/AgencyLayout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
