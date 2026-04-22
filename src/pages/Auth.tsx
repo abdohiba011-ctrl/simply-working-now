@@ -56,6 +56,10 @@ const Auth = () => {
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
 
+  // OAuth diagnostic test state
+  const [oauthTesting, setOauthTesting] = useState(false);
+  const [oauthTestResult, setOauthTestResult] = useState<string | null>(null);
+
   // Check if user needs phone number after login
   // Only show phone modal if: no phone AND not verified AND not pending verification
   const checkPhoneRequired = async () => {
@@ -678,6 +682,22 @@ const Auth = () => {
                     </svg>
                     {isSignup ? t('auth.signUpWithGoogle') : t('auth.continueWithGoogle')}
                   </Button>
+
+                  {/* Diagnostic: Test Google sign-in */}
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    className="w-full h-10 mt-2"
+                    onClick={handleTestGoogleSignIn}
+                    disabled={oauthTesting}
+                  >
+                    {oauthTesting ? "Testing Google sign-in…" : "Test Google sign-in"}
+                  </Button>
+                  {oauthTestResult && (
+                    <pre className="mt-2 max-h-64 overflow-auto rounded-md border border-border bg-muted p-3 text-xs text-foreground whitespace-pre-wrap break-all">
+{oauthTestResult}
+                    </pre>
+                  )}
 
                   <div className="relative my-6">
                     <div className="absolute inset-0 flex items-center">
