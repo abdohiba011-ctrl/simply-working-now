@@ -37,17 +37,9 @@ interface Neighborhood {
   name: string;
 }
 
-const fallbackNeighborhoods: Neighborhood[] = [
-  { id: "tet-mellil", name: "Tet Mellil" },
-  { id: "mediouna", name: "Mediouna" },
-  { id: "deroua-berrechid", name: "Deroua - Berrechid" },
-  { id: "maarif", name: "Maarif" },
-  { id: "derb-sultan", name: "Derb Sultan" },
-  { id: "sidi-maarouf", name: "Sidi Maarouf" },
-  { id: "anfa", name: "Anfa" },
-  { id: "ain-diab", name: "Ain Diab" },
-  { id: "bouskoura", name: "Bouskoura" },
-];
+// No fallback neighborhoods — neighborhoods are loaded per selected city from the database
+// to avoid mixing one city's neighborhoods (e.g. Casablanca) into another (e.g. Marrakesh).
+const fallbackNeighborhoods: Neighborhood[] = [];
 
 const bikeQuantities: Record<string, number> = {
   "Sanya R1000": 12,
