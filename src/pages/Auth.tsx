@@ -330,23 +330,13 @@ const Auth = () => {
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
     try {
-      const currentOrigin = window.location.origin;
-
-      // If we're on the custom domain (motonita.ma), the Lovable OAuth
-      // proxy may not intercept `/~oauth/initiate` here. Bounce the user
-      // to the always-working `*.lovable.app` published domain to start
-      // sign-in. After Google returns, the broker will send the user back
-      // to `motonita.ma` with the session tokens in the URL hash, where
-      // supabase-js (`detectSessionInUrl: true`) picks them up.
-      const initiationUrl = getOAuthInitiationUrl(currentOrigin);
-      if (initiationUrl) {
-        window.location.href = initiationUrl;
-        return; // browser is leaving this page
-      }
-
-      // Native flow on Lovable-hosted origins (preview / published).
+      // Standard flow: the Lovable OAuth proxy intercepts `/~oauth/initiate`
+      // on Lovable previews, the published domain, AND properly-provisioned
+      // custom domains. Initiation and callback MUST happen on the same
+      // origin — never bounce between hosts, otherwise the broker fails
+      // to exchange the authorization code (state cookie is per-host).
       const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: resolveOAuthRedirectUri(currentOrigin),
+        redirect_uri: window.location.origin,
       });
 
       if (result.error) {
