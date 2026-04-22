@@ -220,9 +220,6 @@ export const HeroSection = memo(() => {
 
         {/* Rotating city pill */}
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3 text-white">
-          <span className="text-lg md:text-2xl font-medium opacity-90">
-            Available now in
-          </span>
           <span
             aria-live="polite"
             aria-atomic="true"
