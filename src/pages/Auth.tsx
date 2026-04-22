@@ -61,6 +61,15 @@ const Auth = () => {
   const [oauthTesting, setOauthTesting] = useState(false);
   const [oauthTestResult, setOauthTestResult] = useState<string | null>(null);
 
+  // OAuth status indicator (initiation + callback)
+  type OAuthStatus = {
+    phase: "initiating" | "redirecting" | "callback_success" | "callback_error" | "initiation_error";
+    message: string;
+    detail?: string;
+    at: string;
+  };
+  const [oauthStatus, setOauthStatus] = useState<OAuthStatus | null>(null);
+
   // Redirect URI validation: the value we send to OAuth is window.location.origin.
   // Known-good origins are the preview, published, and custom domain URLs.
   // If the current origin is not in this list, the Google OAuth callback will
