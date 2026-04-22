@@ -100,14 +100,10 @@ const Auth = () => {
     }
   }, [authLoading, isAuthenticated, hasRole, navigate, returnUrl]);
 
-  // 1) Force www → apex on the production domain so the OAuth round-trip
-  //    never crosses host boundaries (sessions are scoped per-host).
-  // 2) If we landed on the Lovable published origin with `?startGoogleOAuth=1`,
-  //    immediately kick off Google sign-in. The broker will send the user
-  //    back to `returnOrigin` with tokens in the URL hash.
-  // 3) If we landed back on the auth page with tokens in the hash but the
-  //    auth context hasn't picked them up yet, supabase-js handles it
-  //    automatically thanks to `detectSessionInUrl`.
+  // Canonicalize www → apex so the OAuth round-trip never crosses host
+  // boundaries (the broker's state cookie is scoped per-host). Also
+  // surface a clean error toast if the broker returned an OAuth error in
+  // the URL hash (e.g. `#error=server_error&error_description=...`).
   useEffect(() => {
     if (typeof window === "undefined") return;
 
@@ -118,16 +114,15 @@ const Auth = () => {
       return;
     }
 
-    // (2) Auto-start Google sign-in when bounced from the custom domain
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("startGoogleOAuth") === "1") {
-      const returnOrigin = params.get("returnOrigin") || PRIMARY_PRODUCTION_ORIGIN;
-      // Kick off the broker; the redirect will leave this page.
-      lovable.auth.signInWithOAuth("google", { redirect_uri: returnOrigin })
-        .catch((err) => {
-          console.error("[OAuth] Auto-start failed:", err);
-          toast.error(getErrMsg(err) || t('auth.googleSignInFailed'));
-        });
+    // (2) Surface OAuth errors returned by the broker in the URL hash.
+    if (window.location.hash.includes("error=")) {
+      const hashParams = new URLSearchParams(window.location.hash.slice(1));
+      const errDesc = hashParams.get("error_description") || hashParams.get("error");
+      if (errDesc) {
+        toast.error(decodeURIComponent(errDesc.replace(/\+/g, " ")));
+        // Clean the URL so the toast doesn't fire again on re-render.
+        window.history.replaceState({}, "", window.location.pathname + window.location.search);
+      }
     }
   }, [t]);
 
