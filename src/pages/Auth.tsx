@@ -9,7 +9,8 @@ import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { signupSchema, loginSchema } from "@/lib/validationSchemas";
 import { z } from "zod";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, AlertTriangle } from "lucide-react";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -59,6 +60,25 @@ const Auth = () => {
   // OAuth diagnostic test state
   const [oauthTesting, setOauthTesting] = useState(false);
   const [oauthTestResult, setOauthTestResult] = useState<string | null>(null);
+
+  // Redirect URI validation: the value we send to OAuth is window.location.origin.
+  // Known-good origins are the preview, published, and custom domain URLs.
+  // If the current origin is not in this list, the Google OAuth callback will
+  // reject the redirect and sign-in will fail.
+  const KNOWN_REDIRECT_ORIGINS = [
+    "https://id-preview--b7e3539e-235c-4d7c-9935-9015e8ff7015.lovable.app",
+    "https://simply-working-now.lovable.app",
+    "https://motonita.ma",
+    "https://www.motonita.ma",
+  ];
+  const currentOrigin = typeof window !== "undefined" ? window.location.origin : "";
+  const sentRedirectUri = currentOrigin;
+  const isKnownOrigin =
+    KNOWN_REDIRECT_ORIGINS.includes(currentOrigin) ||
+    /^https:\/\/[a-z0-9-]+\.lovable\.app$/i.test(currentOrigin) ||
+    /^http:\/\/localhost(:\d+)?$/i.test(currentOrigin);
+  const redirectUriMismatch = !isKnownOrigin && currentOrigin.length > 0;
+
 
   // Check if user needs phone number after login
   // Only show phone modal if: no phone AND not verified AND not pending verification
@@ -683,9 +703,36 @@ const Auth = () => {
                     {isSignup ? t('auth.signUpWithGoogle') : t('auth.continueWithGoogle')}
                   </Button>
 
+                  {redirectUriMismatch && (
+                    <Alert variant="destructive" className="mb-3">
+                      <AlertTriangle className="h-4 w-4" />
+                      <AlertTitle>Redirect URI mismatch</AlertTitle>
+                      <AlertDescription>
+                        <p className="mb-2">
+                          The current page origin does not match any of the redirect URIs
+                          authorized for Google sign-in. Google will reject the OAuth callback.
+                        </p>
+                        <p className="text-xs">
+                          <strong>Current origin (sent as redirect_uri):</strong>{" "}
+                          <code className="break-all">{sentRedirectUri || "(unknown)"}</code>
+                        </p>
+                        <p className="text-xs mt-1">
+                          <strong>Authorized origins:</strong>{" "}
+                          <code className="break-all">{KNOWN_REDIRECT_ORIGINS.join(", ")}</code>
+                        </p>
+                        <p className="text-xs mt-2">
+                          Open this app from one of the authorized URLs, or add the current
+                          origin to the Authorized redirect URIs in your Google Cloud OAuth
+                          client and to Lovable Cloud auth settings.
+                        </p>
+                      </AlertDescription>
+                    </Alert>
+                  )}
+
                   {/* Diagnostic: Test Google sign-in */}
                   <Button
                     type="button"
+
                     variant="secondary"
                     className="w-full h-10 mt-2"
                     onClick={handleTestGoogleSignIn}
