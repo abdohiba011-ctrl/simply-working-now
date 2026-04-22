@@ -703,9 +703,36 @@ const Auth = () => {
                     {isSignup ? t('auth.signUpWithGoogle') : t('auth.continueWithGoogle')}
                   </Button>
 
+                  {redirectUriMismatch && (
+                    <Alert variant="destructive" className="mb-3">
+                      <AlertTriangle className="h-4 w-4" />
+                      <AlertTitle>Redirect URI mismatch</AlertTitle>
+                      <AlertDescription>
+                        <p className="mb-2">
+                          The current page origin does not match any of the redirect URIs
+                          authorized for Google sign-in. Google will reject the OAuth callback.
+                        </p>
+                        <p className="text-xs">
+                          <strong>Current origin (sent as redirect_uri):</strong>{" "}
+                          <code className="break-all">{sentRedirectUri || "(unknown)"}</code>
+                        </p>
+                        <p className="text-xs mt-1">
+                          <strong>Authorized origins:</strong>{" "}
+                          <code className="break-all">{KNOWN_REDIRECT_ORIGINS.join(", ")}</code>
+                        </p>
+                        <p className="text-xs mt-2">
+                          Open this app from one of the authorized URLs, or add the current
+                          origin to the Authorized redirect URIs in your Google Cloud OAuth
+                          client and to Lovable Cloud auth settings.
+                        </p>
+                      </AlertDescription>
+                    </Alert>
+                  )}
+
                   {/* Diagnostic: Test Google sign-in */}
                   <Button
                     type="button"
+
                     variant="secondary"
                     className="w-full h-10 mt-2"
                     onClick={handleTestGoogleSignIn}
