@@ -37,17 +37,9 @@ interface Neighborhood {
   name: string;
 }
 
-const fallbackNeighborhoods: Neighborhood[] = [
-  { id: "tet-mellil", name: "Tet Mellil" },
-  { id: "mediouna", name: "Mediouna" },
-  { id: "deroua-berrechid", name: "Deroua - Berrechid" },
-  { id: "maarif", name: "Maarif" },
-  { id: "derb-sultan", name: "Derb Sultan" },
-  { id: "sidi-maarouf", name: "Sidi Maarouf" },
-  { id: "anfa", name: "Anfa" },
-  { id: "ain-diab", name: "Ain Diab" },
-  { id: "bouskoura", name: "Bouskoura" },
-];
+// No fallback neighborhoods — neighborhoods are loaded per selected city from the database
+// to avoid mixing one city's neighborhoods (e.g. Casablanca) into another (e.g. Marrakesh).
+const fallbackNeighborhoods: Neighborhood[] = [];
 
 const bikeQuantities: Record<string, number> = {
   "Sanya R1000": 12,
@@ -64,7 +56,7 @@ const Listings = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const [neighborhoods, setNeighborhoods] = useState<Neighborhood[]>(fallbackNeighborhoods);
-  const [selectedTab, setSelectedTab] = useState<string>(fallbackNeighborhoods[0].id);
+  const [selectedTab, setSelectedTab] = useState<string>("");
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [sortBy, setSortBy] = useState<SortOption>("recommended");
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
@@ -76,6 +68,8 @@ const Listings = () => {
   const location = searchParams.get("location") || "";
   const pickupDate = searchParams.get("pickup") || "";
   const endDate = searchParams.get("end") || "";
+  const cityName = searchParams.get("city") || "";
+  const cityId = searchParams.get("cityId") || "";
 
   // Load favorites from localStorage
   useEffect(() => {
@@ -109,40 +103,55 @@ const Listings = () => {
     [t]
   );
 
-  // Fetch service locations
+  // Fetch service locations (neighborhoods) ONLY for the selected city
   useEffect(() => {
     const fetchLocations = async () => {
       try {
+        // Resolve the city id: either passed via ?cityId, or look it up from ?city name
+        let resolvedCityId = cityId;
+        if (!resolvedCityId && cityName) {
+          const { data: cityRow } = await supabase
+            .from("service_cities")
+            .select("id")
+            .ilike("name", cityName)
+            .maybeSingle();
+          resolvedCityId = cityRow?.id || "";
+        }
+
+        // Without a city we cannot show neighborhoods (avoid mixing all cities together)
+        if (!resolvedCityId) {
+          setNeighborhoods([]);
+          return;
+        }
+
         const { data, error } = await supabase
           .from("service_locations")
           .select("id, name, city_id, service_cities!inner(is_available)")
           .eq("is_active", true)
+          .eq("city_id", resolvedCityId)
+          .order("display_order", { ascending: true })
           .order("name");
 
         if (error) throw error;
 
-        if (data && data.length > 0) {
-          type LocRow = {
-            id: string;
-            name: string;
-            service_cities?: { is_available?: boolean } | null;
-          };
-          const availableLocations = (data as LocRow[]).filter(
-            (loc) => loc.service_cities?.is_available === true
-          );
-          if (availableLocations.length > 0) {
-            const mapped = availableLocations.map((loc) => ({ id: loc.id, name: loc.name }));
-            setNeighborhoods(mapped);
-            if (!location) setSelectedTab(mapped[0].id);
-          }
-        }
+        type LocRow = {
+          id: string;
+          name: string;
+          service_cities?: { is_available?: boolean } | null;
+        };
+        const availableLocations = ((data as LocRow[]) || []).filter(
+          (loc) => loc.service_cities?.is_available === true
+        );
+        const mapped = availableLocations.map((loc) => ({ id: loc.id, name: loc.name }));
+        setNeighborhoods(mapped);
+        if (mapped.length > 0 && !location) setSelectedTab(mapped[0].id);
       } catch (e) {
         console.error("Failed to fetch locations:", e);
       }
     };
     fetchLocations();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [cityId, cityName]);
 
   useEffect(() => {
     if (pickupDate && endDate) {
