@@ -235,14 +235,11 @@ const Calendar = () => {
                         return (
                           <div
                             key={i}
-                            style={{ width: colWidthPx }}
+                            style={{ width: colWidthPx, height: 56 }}
                             onMouseDown={() => onCellMouseDown(bike.id, i)}
                             onMouseEnter={() => onCellMouseEnter(bike.id, i)}
                             className={cn("shrink-0 cursor-pointer border-r border-border/60", today && "bg-primary/5", inDrag && "bg-primary/20")}
-                            style2={{ height: 56 }}
-                          >
-                            <div style={{ height: 56 }} />
-                          </div>
+                          />
                         );
                       })}
                       {/* booking spans overlay */}
