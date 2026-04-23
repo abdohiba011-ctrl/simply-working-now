@@ -2463,5 +2463,22 @@
     "refreshPage": "Refresh Page",
     "goToHome": "Go to Home",
     "persistsMessage": "If this problem persists, please contact support."
+  },
+  "mockAuth": {
+    "welcome_back": "Welcome back",
+    "login_continue": "Log in to continue to Motonita",
+    "email_or_phone": "Email or phone",
+    "password": "Password",
+    "remember_me": "Remember me for 30 days",
+    "forgot_password": "Forgot password?",
+    "login": "Log in",
+    "logging_in": "Logging in...",
+    "no_account": "Don't have an account?",
+    "signup": "Sign up",
+    "welcome_toast": "Welcome back, {{name}}!",
+    "resend_verification": "Resend verification email",
+    "verification_sent": "Verification email sent",
+    "sending": "Sending...",
+    "try_again_in": "Try again in"
   }
 }
