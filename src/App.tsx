@@ -93,7 +93,9 @@ const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const TermsConditions = lazy(() => import("./pages/TermsConditions"));
 const CookiesPolicy = lazy(() => import("./pages/CookiesPolicy"));
 const MockLogin = lazy(() => import("./pages/auth/Login"));
+const AgencyLogin = lazy(() => import("./pages/auth/AgencyLogin"));
 const MockSignup = lazy(() => import("./pages/auth/Signup"));
+const AgencySignup = lazy(() => import("./pages/auth/AgencySignup"));
 const MockVerifyEmail = lazy(() => import("./pages/auth/VerifyEmail"));
 const RentPlaceholder = lazy(() => import("./pages/auth/RentPlaceholder"));
 const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword"));
@@ -146,7 +148,9 @@ const App = () => (
                   <Route path="/gps-tracking" element={<GPSTracking />} />
                   <Route path="/auth" element={<Auth />} />
                   <Route path="/login" element={<MockLogin />} />
+                  <Route path="/agency/login" element={<AgencyLogin />} />
                   <Route path="/signup" element={<MockSignup />} />
+                  <Route path="/agency/signup" element={<AgencySignup />} />
                   <Route path="/rent" element={<RentPlaceholder />} />
                   <Route path="/verify-email" element={<MockVerifyEmail />} />
                   <Route path="/forgot-password" element={<ForgotPassword />} />
