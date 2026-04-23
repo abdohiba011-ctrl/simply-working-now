@@ -5,7 +5,7 @@ export type VerificationStatus = "unverified" | "partial" | "verified";
 interface AgencyState {
   id: string;
   name: string;
-  plan: "free" | "pro" | "enterprise";
+  plan: "free" | "pro" | "business";
   verificationStatus: VerificationStatus;
   verificationStepsCompleted: number;
   verificationStepsTotal: number;
