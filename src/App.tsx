@@ -82,6 +82,9 @@ const AgencyPreferences = lazy(() => import("./pages/agency/Preferences"));
 const AgencyNotificationSettings = lazy(() => import("./pages/agency/NotificationSettings"));
 const AgencyIntegrations = lazy(() => import("./pages/agency/Integrations"));
 const AgencyHelp = lazy(() => import("./pages/agency/Help"));
+const AgencyFinance = lazy(() => import("./pages/agency/Finance"));
+const AgencyAgencyCenter = lazy(() => import("./pages/agency/AgencyCenter"));
+const AgencySettingsHub = lazy(() => import("./pages/agency/SettingsHub"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Verification = lazy(() => import("./pages/Verification"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
@@ -169,34 +172,44 @@ const App = () => (
                   <Route path="/business/booking/:id" element={<ProtectedRoute requireRole="business"><BusinessBookingDetails /></ProtectedRoute>} />
                   <Route path="/business/motorbikes" element={<ProtectedRoute requireRole="business"><BusinessMotorbikes /></ProtectedRoute>} />
 
-                  {/* Agency dashboard (new Wise-inspired UI) */}
-                  <Route path="/agency" element={<Navigate to="/agency/dashboard" replace />} />
-                  <Route path="/agency/dashboard" element={<ProtectedRoute requireRole="business"><AgencyDashboard /></ProtectedRoute>} />
-                  <Route path="/agency/bookings" element={<ProtectedRoute requireRole="business"><AgencyBookings /></ProtectedRoute>} />
-                  <Route path="/agency/bookings/:id" element={<ProtectedRoute requireRole="business"><AgencyBookingDetail /></ProtectedRoute>} />
-                  <Route path="/agency/motorbikes" element={<ProtectedRoute requireRole="business"><AgencyMotorbikes /></ProtectedRoute>} />
-                  <Route path="/agency/motorbikes/new" element={<ProtectedRoute requireRole="business"><AgencyMotorbikeWizard /></ProtectedRoute>} />
-                  <Route path="/agency/motorbikes/:id/edit" element={<ProtectedRoute requireRole="business"><AgencyMotorbikeWizard /></ProtectedRoute>} />
-                  <Route path="/agency/motorbikes/:id" element={<ProtectedRoute requireRole="business"><AgencyMotorbikeDetail /></ProtectedRoute>} />
-                  <Route path="/agency/messages" element={<ProtectedRoute requireRole="business"><AgencyMessages /></ProtectedRoute>} />
-                  <Route path="/agency/calendar" element={<ProtectedRoute requireRole="business"><AgencyCalendar /></ProtectedRoute>} />
-                  <Route path="/agency/wallet" element={<ProtectedRoute requireRole="business"><AgencyWallet /></ProtectedRoute>} />
-                  <Route path="/agency/transactions" element={<ProtectedRoute requireRole="business"><AgencyTransactions /></ProtectedRoute>} />
-                  <Route path="/agency/subscription" element={<ProtectedRoute requireRole="business"><AgencySubscription /></ProtectedRoute>} />
-                  <Route path="/agency/invoices" element={<ProtectedRoute requireRole="business"><AgencyInvoices /></ProtectedRoute>} />
-                  <Route path="/agency/profile" element={<ProtectedRoute requireRole="business"><AgencyProfile /></ProtectedRoute>} />
-                  <Route path="/agency/team" element={<ProtectedRoute requireRole="business"><AgencyTeam /></ProtectedRoute>} />
-                  <Route path="/agency/verification" element={<ProtectedRoute requireRole="business"><AgencyVerification /></ProtectedRoute>} />
-                  <Route path="/agency/analytics" element={<ProtectedRoute requireRole="business"><AgencyAnalytics /></ProtectedRoute>} />
-                  <Route path="/agency/preferences" element={<ProtectedRoute requireRole="business"><AgencyPreferences /></ProtectedRoute>} />
-                  <Route path="/agency/notifications" element={<ProtectedRoute requireRole="business"><AgencyNotificationSettings /></ProtectedRoute>} />
-                  <Route path="/agency/settings/preferences" element={<ProtectedRoute requireRole="business"><AgencyPreferences /></ProtectedRoute>} />
-                  <Route path="/agency/settings/notifications" element={<ProtectedRoute requireRole="business"><AgencyNotificationSettings /></ProtectedRoute>} />
-                  <Route path="/agency/settings/integrations" element={<ProtectedRoute requireRole="business"><AgencyIntegrations /></ProtectedRoute>} />
-                  <Route path="/agency/integrations" element={<ProtectedRoute requireRole="business"><AgencyIntegrations /></ProtectedRoute>} />
-                  <Route path="/agency/help" element={<ProtectedRoute requireRole="business"><AgencyHelp /></ProtectedRoute>} />
-                  <Route path="/agency/:slug" element={<ProtectedRoute requireRole="business"><AgencyPlaceholder /></ProtectedRoute>} />
-                  <Route path="/agency/:slug/:sub" element={<ProtectedRoute requireRole="business"><AgencyPlaceholder /></ProtectedRoute>} />
+                  {/* Agency dashboard (new Wise-inspired UI) — shared shell so sidebar/header persist */}
+                  <Route path="/agency" element={<ProtectedRoute requireRole="business"><AgencyShell /></ProtectedRoute>}>
+                    <Route index element={<Navigate to="/agency/dashboard" replace />} />
+                    <Route path="dashboard" element={<AgencyDashboard />} />
+                    <Route path="bookings" element={<AgencyBookings />} />
+                    <Route path="bookings/:id" element={<AgencyBookingDetail />} />
+                    <Route path="motorbikes" element={<AgencyMotorbikes />} />
+                    <Route path="motorbikes/new" element={<AgencyMotorbikeWizard />} />
+                    <Route path="motorbikes/:id/edit" element={<AgencyMotorbikeWizard />} />
+                    <Route path="motorbikes/:id" element={<AgencyMotorbikeDetail />} />
+                    <Route path="messages" element={<AgencyMessages />} />
+                    <Route path="calendar" element={<AgencyCalendar />} />
+
+                    {/* New consolidated hub pages */}
+                    <Route path="finance" element={<AgencyFinance />} />
+                    <Route path="agency-center" element={<AgencyAgencyCenter />} />
+                    <Route path="settings" element={<AgencySettingsHub />} />
+
+                    {/* Legacy direct routes (still navigable, redirect-friendly) */}
+                    <Route path="wallet" element={<Navigate to="/agency/finance#wallet" replace />} />
+                    <Route path="transactions" element={<Navigate to="/agency/finance#transactions" replace />} />
+                    <Route path="subscription" element={<Navigate to="/agency/finance#subscription" replace />} />
+                    <Route path="invoices" element={<Navigate to="/agency/finance#invoices" replace />} />
+                    <Route path="profile" element={<Navigate to="/agency/agency-center#profile" replace />} />
+                    <Route path="team" element={<Navigate to="/agency/agency-center#team" replace />} />
+                    <Route path="verification" element={<Navigate to="/agency/agency-center#verification" replace />} />
+                    <Route path="analytics" element={<Navigate to="/agency/agency-center#analytics" replace />} />
+                    <Route path="preferences" element={<Navigate to="/agency/settings#preferences" replace />} />
+                    <Route path="notifications" element={<Navigate to="/agency/settings#notifications" replace />} />
+                    <Route path="integrations" element={<Navigate to="/agency/settings#integrations" replace />} />
+                    <Route path="help" element={<Navigate to="/agency/settings#help" replace />} />
+                    <Route path="settings/preferences" element={<Navigate to="/agency/settings#preferences" replace />} />
+                    <Route path="settings/notifications" element={<Navigate to="/agency/settings#notifications" replace />} />
+                    <Route path="settings/integrations" element={<Navigate to="/agency/settings#integrations" replace />} />
+
+                    <Route path=":slug" element={<AgencyPlaceholder />} />
+                    <Route path=":slug/:sub" element={<AgencyPlaceholder />} />
+                  </Route>
 
                   {/* Redirects from old /business-* paths */}
                   <Route path="/business-dashboard" element={<Navigate to="/agency/dashboard" replace />} />
