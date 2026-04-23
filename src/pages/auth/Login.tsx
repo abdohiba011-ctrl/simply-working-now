@@ -1,0 +1,328 @@
+import { useEffect, useMemo, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { toast } from "sonner";
+import { Eye, EyeOff, Mail, Phone, AlertCircle, Loader2 } from "lucide-react";
+
+import { AuthLayout } from "@/components/auth/AuthLayout";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useAuthStore } from "@/stores/useAuthStore";
+import {
+  detectIdentifierType,
+  getLockoutRemainingMs,
+  mockResendVerification,
+  type AuthError,
+} from "@/lib/mockAuth";
+import { cn } from "@/lib/utils";
+
+const PHONE_REGEX = /^(\+212|00212|0)[67]\d{8}$/;
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const loginSchema = z.object({
+  identifier: z
+    .string()
+    .min(1, "Required")
+    .refine(
+      (v) => EMAIL_REGEX.test(v.trim()) || PHONE_REGEX.test(v.replace(/\s+/g, "")),
+      { message: "Enter a valid email or Moroccan phone number" },
+    ),
+  password: z.string().min(1, "Password is required"),
+  rememberMe: z.boolean().default(false),
+});
+
+type LoginValues = z.infer<typeof loginSchema>;
+
+function formatRemaining(ms: number): string {
+  const totalSeconds = Math.ceil(ms / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  if (minutes <= 0) return `${seconds}s`;
+  return `${minutes}m ${seconds.toString().padStart(2, "0")}s`;
+}
+
+export default function Login() {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const login = useAuthStore((s) => s.login);
+  const isLoading = useAuthStore((s) => s.isLoading);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const user = useAuthStore((s) => s.user);
+  const error = useAuthStore((s) => s.error);
+  const needsVerification = useAuthStore((s) => s.needsVerification);
+  const clearError = useAuthStore((s) => s.clearError);
+
+  const [showPassword, setShowPassword] = useState(false);
+  const [resendingVerification, setResendingVerification] = useState(false);
+  const [lockoutMs, setLockoutMs] = useState(0);
+
+  const form = useForm<LoginValues>({
+    resolver: zodResolver(loginSchema),
+    mode: "onBlur",
+    defaultValues: { identifier: "", password: "", rememberMe: false },
+  });
+
+  const identifierValue = form.watch("identifier");
+  const idType = useMemo(() => detectIdentifierType(identifierValue ?? ""), [identifierValue]);
+
+  // If already authenticated, send them home
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      routeAfterLogin();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated]);
+
+  // Lockout countdown ticker
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      const ident = form.getValues("identifier");
+      if (!ident) {
+        setLockoutMs(0);
+        return;
+      }
+      setLockoutMs(getLockoutRemainingMs(ident));
+    }, 1000);
+    return () => window.clearInterval(id);
+  }, [form]);
+
+  function routeAfterLogin() {
+    const u = useAuthStore.getState().user;
+    if (!u) return;
+
+    if (!u.email_verified) {
+      navigate("/verify-email", { replace: true });
+      return;
+    }
+
+    const hasRenter = u.roles.renter.active;
+    const hasAgency = u.roles.agency.active;
+
+    if (hasRenter && !hasAgency) {
+      navigate("/rent", { replace: true });
+    } else if (hasAgency && !hasRenter) {
+      navigate(u.roles.agency.verified ? "/agency/dashboard" : "/agency/verification", {
+        replace: true,
+      });
+    } else if (hasRenter && hasAgency) {
+      const persistent = localStorage.getItem("motonita_auth_persistent") === "true";
+      if (u.last_active_role === "renter" && persistent) {
+        navigate("/rent", { replace: true });
+      } else {
+        navigate(u.roles.agency.verified ? "/agency/dashboard" : "/agency/verification", {
+          replace: true,
+        });
+      }
+    } else {
+      navigate("/rent", { replace: true });
+    }
+  }
+
+  const onSubmit = async (values: LoginValues) => {
+    clearError();
+    try {
+      const loggedIn = await login(values.identifier, values.password, values.rememberMe);
+      toast.success(
+        t("mockAuth.welcome_toast", { name: loggedIn.name, defaultValue: `Welcome back, ${loggedIn.name}!` }),
+      );
+      routeAfterLogin();
+    } catch (err) {
+      const e = err as AuthError;
+      if (e.code === "ACCOUNT_LOCKED") {
+        setLockoutMs(e.retryAfterMs ?? 0);
+      }
+      // error message already in store
+    }
+  };
+
+  const handleResend = async () => {
+    setResendingVerification(true);
+    try {
+      await mockResendVerification(form.getValues("identifier"));
+      toast.success(
+        t("mockAuth.verification_sent", { defaultValue: "Verification email sent" }),
+      );
+    } finally {
+      setResendingVerification(false);
+    }
+  };
+
+  const submitDisabled = isLoading || lockoutMs > 0;
+
+  return (
+    <AuthLayout>
+      <div className="space-y-6">
+        <div className="space-y-1.5">
+          <h1
+            className="text-2xl font-bold tracking-tight"
+            style={{ color: "#163300" }}
+          >
+            {t("mockAuth.welcome_back", { defaultValue: "Welcome back" })}
+          </h1>
+          <p className="text-sm" style={{ color: "rgba(22,51,0,0.7)" }}>
+            {t("mockAuth.login_continue", {
+              defaultValue: "Log in to continue to Motonita",
+            })}
+          </p>
+        </div>
+
+        {/* Error banner */}
+        {error ? (
+          <div
+            role="alert"
+            className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+          >
+            <div className="flex items-start gap-2">
+              <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
+              <div className="flex-1 space-y-2">
+                <p>{typeof error === "string" ? error : error.message}</p>
+
+                {needsVerification ? (
+                  <button
+                    type="button"
+                    onClick={handleResend}
+                    disabled={resendingVerification}
+                    className="text-sm font-medium underline underline-offset-2 hover:no-underline disabled:opacity-60"
+                  >
+                    {resendingVerification
+                      ? t("mockAuth.sending", { defaultValue: "Sending..." })
+                      : t("mockAuth.resend_verification", {
+                          defaultValue: "Resend verification email",
+                        })}
+                  </button>
+                ) : null}
+
+                {lockoutMs > 0 ? (
+                  <p className="text-xs">
+                    {t("mockAuth.try_again_in", { defaultValue: "Try again in" })}{" "}
+                    <span className="font-semibold">{formatRemaining(lockoutMs)}</span>
+                  </p>
+                ) : null}
+              </div>
+            </div>
+          </div>
+        ) : null}
+
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" noValidate>
+          {/* Identifier */}
+          <div className="space-y-1.5">
+            <Label htmlFor="identifier" className="text-sm" style={{ color: "#163300" }}>
+              {t("mockAuth.email_or_phone", { defaultValue: "Email or phone" })}
+            </Label>
+            <div className="relative">
+              <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-muted-foreground">
+                {idType === "phone" ? (
+                  <Phone className="h-4 w-4" />
+                ) : (
+                  <Mail className="h-4 w-4" />
+                )}
+              </span>
+              <Input
+                id="identifier"
+                type="text"
+                autoComplete="username"
+                placeholder="you@example.com or +212 6..."
+                className={cn(
+                  "h-10 rounded-md pl-9 text-sm",
+                  form.formState.errors.identifier && "border-red-300 focus-visible:ring-red-200",
+                )}
+                {...form.register("identifier")}
+              />
+            </div>
+            {form.formState.errors.identifier ? (
+              <p className="text-xs text-red-600 mt-1">
+                {form.formState.errors.identifier.message}
+              </p>
+            ) : null}
+          </div>
+
+          {/* Password */}
+          <div className="space-y-1.5">
+            <Label htmlFor="password" className="text-sm" style={{ color: "#163300" }}>
+              {t("mockAuth.password", { defaultValue: "Password" })}
+            </Label>
+            <div className="relative">
+              <Input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                autoComplete="current-password"
+                className={cn(
+                  "h-10 rounded-md pr-10 text-sm",
+                  form.formState.errors.password && "border-red-300 focus-visible:ring-red-200",
+                )}
+                {...form.register("password")}
+              />
+              <button
+                type="button"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                onClick={() => setShowPassword((v) => !v)}
+                className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-foreground"
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
+            {form.formState.errors.password ? (
+              <p className="text-xs text-red-600 mt-1">
+                {form.formState.errors.password.message}
+              </p>
+            ) : null}
+          </div>
+
+          {/* Remember me + Forgot */}
+          <div className="flex items-center justify-between">
+            <label className="flex items-center gap-2 cursor-pointer select-none">
+              <Checkbox
+                checked={form.watch("rememberMe")}
+                onCheckedChange={(v) => form.setValue("rememberMe", Boolean(v))}
+              />
+              <span className="text-sm" style={{ color: "#163300" }}>
+                {t("mockAuth.remember_me", { defaultValue: "Remember me for 30 days" })}
+              </span>
+            </label>
+            <Link
+              to="/forgot-password"
+              className="text-sm hover:underline"
+              style={{ color: "#163300" }}
+            >
+              {t("mockAuth.forgot_password", { defaultValue: "Forgot password?" })}
+            </Link>
+          </div>
+
+          {/* Submit */}
+          <Button
+            type="submit"
+            disabled={submitDisabled || !form.formState.isValid}
+            className="w-full h-10 rounded-md text-sm font-semibold"
+            style={{ backgroundColor: "#9FE870", color: "#163300" }}
+          >
+            {isLoading ? (
+              <span className="inline-flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                {t("mockAuth.logging_in", { defaultValue: "Logging in..." })}
+              </span>
+            ) : (
+              t("mockAuth.login", { defaultValue: "Log in" })
+            )}
+          </Button>
+
+          {/* Signup */}
+          <p className="text-center text-sm" style={{ color: "rgba(22,51,0,0.75)" }}>
+            {t("mockAuth.no_account", { defaultValue: "Don't have an account?" })}{" "}
+            <Link
+              to="/signup"
+              className="font-medium hover:underline"
+              style={{ color: "#163300" }}
+            >
+              {t("mockAuth.signup", { defaultValue: "Sign up" })}
+            </Link>
+          </p>
+        </form>
+      </div>
+    </AuthLayout>
+  );
+}
