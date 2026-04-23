@@ -88,8 +88,9 @@ export const Sidebar = ({ collapsed, onToggle }: SidebarProps) => {
       {/* Logo */}
       <div className="flex h-16 items-center justify-between border-b border-border px-4">
         {!collapsed ? (
-          <div className="flex items-center gap-2">
-            <span className="text-xl font-bold tracking-tight text-primary">Motonita</span>
+          <div className="flex items-center gap-2 min-w-0">
+            <img src={logoLight} alt="Motonita" className="h-6 w-auto dark:hidden" />
+            <img src={logoDark} alt="Motonita" className="hidden h-6 w-auto dark:block" />
             <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
               Agency
             </span>
