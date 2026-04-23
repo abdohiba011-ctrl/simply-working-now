@@ -214,7 +214,7 @@ export default function ResetPasswordNew() {
   };
 
   const submitDisabled =
-    isLoading || !allRulesOk || !passwordsMatch || !form.formState.isValid;
+    isLoading || !isReady || !hasRecoverySession || !allRulesOk || !passwordsMatch || !form.formState.isValid;
 
   return (
     <AuthLayout>
