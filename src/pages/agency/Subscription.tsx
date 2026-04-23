@@ -4,12 +4,12 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Check, Download, Sparkles } from "lucide-react";
-import { agencyInvoices } from "@/data/agencyFinanceMock";
-import { useAgencyStore } from "@/stores/useAgencyStore";
-import { format, addDays } from "date-fns";
+import { Check, Sparkles } from "lucide-react";
+import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useAgencySubscription } from "@/hooks/useAgencyData";
 
 interface Plan {
   key: "free" | "pro" | "business";
@@ -21,15 +21,54 @@ interface Plan {
 }
 
 const PLANS: Plan[] = [
-  { key: "free", name: "Free", monthly: 0, yearly: 0, features: ["Up to 3 bikes", "Basic dashboard", "Verified badge", "50 MAD per confirmed booking"] },
-  { key: "pro", name: "Pro", monthly: 99, yearly: 950, popular: true, features: ["Unlimited bikes", "Full analytics", "Featured placement", "Priority support", "50 MAD per confirmed booking"] },
-  { key: "business", name: "Business", monthly: 299, yearly: 2870, features: ["Everything in Pro", "Multi-location", "API access", "Dedicated manager", "Custom listing branding", "50 MAD per confirmed booking"] },
+  { key: "free", name: "Free", monthly: 0, yearly: 0, features: ["Up to 3 motorbikes", "Basic dashboard", "Verified badge"] },
+  { key: "pro", name: "Pro", monthly: 99, yearly: 950, popular: true, features: ["Unlimited motorbikes", "Full analytics", "Featured placement", "Priority support"] },
+  { key: "business", name: "Business", monthly: 299, yearly: 2870, features: ["Everything in Pro", "Multi-location", "API access", "Dedicated manager"] },
 ];
 
 const Subscription = () => {
-  const agency = useAgencyStore();
+  const { subscription, loading, refresh } = useAgencySubscription();
   const [yearly, setYearly] = useState(false);
-  const current = agency.plan;
+  const [processing, setProcessing] = useState<string | null>(null);
+  const current = subscription?.plan || "free";
+
+  const handleSelect = async (plan: Plan) => {
+    if (plan.key === current) return;
+    if (plan.key === "free") {
+      // Downgrade is direct
+      try {
+        const { data: u } = await supabase.auth.getUser();
+        if (!u.user) return;
+        const { error } = await supabase
+          .from("agency_subscriptions")
+          .update({ plan: "free", status: "active" })
+          .eq("user_id", u.user.id);
+        if (error) throw error;
+        toast.success("Switched to Free plan");
+        refresh();
+      } catch (e: any) {
+        toast.error(e.message || "Failed");
+      }
+      return;
+    }
+    setProcessing(plan.key);
+    try {
+      const amount = yearly ? plan.yearly : plan.monthly;
+      const { data, error } = await supabase.functions.invoke("youcanpay-create-token", {
+        body: { purpose: "subscription", amount, currency: "MAD", plan: plan.key, yearly },
+      });
+      if (error) throw error;
+      if (data?.payment_url) {
+        window.location.href = data.payment_url;
+        return;
+      }
+      toast.error("Could not initialize payment");
+    } catch (e: any) {
+      toast.error(e.message || "Failed");
+    } finally {
+      setProcessing(null);
+    }
+  };
 
   return (
     <AgencyLayout>
@@ -44,14 +83,15 @@ const Subscription = () => {
             <div>
               <p className="text-xs uppercase tracking-wider text-muted-foreground">Current plan</p>
               <div className="mt-1 flex items-center gap-2">
-                <h2 className="text-2xl font-bold capitalize">{current}</h2>
+                <h2 className="text-2xl font-bold capitalize">{loading ? "…" : current}</h2>
                 {current !== "free" && <Badge>Active</Badge>}
               </div>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {current === "free" ? "No billing cycle" : `Renews on ${format(addDays(new Date(), 18), "dd MMM yyyy")}`}
-              </p>
+              {subscription?.current_period_end && (
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Renews on {format(new Date(subscription.current_period_end), "dd MMM yyyy")}
+                </p>
+              )}
             </div>
-            <Button variant="outline">Manage plan</Button>
           </div>
         </Card>
 
@@ -86,43 +126,15 @@ const Subscription = () => {
                 <Button
                   className="mt-6 w-full"
                   variant={isCurrent ? "outline" : "default"}
-                  disabled={isCurrent}
-                  onClick={() => { agency.setAgency({ plan: p.key }); toast.success(`Switched to ${p.name}`); }}
+                  disabled={isCurrent || processing === p.key}
+                  onClick={() => handleSelect(p)}
                 >
-                  {isCurrent ? "Current plan" : p.key === "free" ? "Downgrade" : "Upgrade"}
+                  {isCurrent ? "Current plan" : processing === p.key ? "Redirecting…" : p.key === "free" ? "Downgrade" : "Upgrade"}
                 </Button>
               </Card>
             );
           })}
         </div>
-
-        <Card className="overflow-hidden">
-          <div className="border-b border-border p-4">
-            <h2 className="font-semibold">Billing history</h2>
-          </div>
-          <table className="w-full text-sm">
-            <thead className="border-b border-border bg-muted/40 text-xs uppercase tracking-wider text-muted-foreground">
-              <tr>
-                <th className="px-4 py-3 text-left font-medium">Invoice</th>
-                <th className="px-4 py-3 text-left font-medium">Date</th>
-                <th className="px-4 py-3 text-left font-medium">Description</th>
-                <th className="px-4 py-3 text-right font-medium">Amount</th>
-                <th className="px-4 py-3" />
-              </tr>
-            </thead>
-            <tbody>
-              {agencyInvoices.filter((i) => i.type === "subscription").map((inv) => (
-                <tr key={inv.id} className="border-b border-border/60">
-                  <td className="px-4 py-3 font-medium">{inv.number}</td>
-                  <td className="px-4 py-3 text-muted-foreground">{format(new Date(inv.date), "dd MMM yyyy")}</td>
-                  <td className="px-4 py-3">{inv.description}</td>
-                  <td className="px-4 py-3 text-right tabular-nums">{inv.total.toFixed(2)} MAD</td>
-                  <td className="px-4 py-3 text-right"><Button size="sm" variant="ghost" className="gap-1"><Download className="h-3.5 w-3.5" /> PDF</Button></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </Card>
       </div>
     </AgencyLayout>
   );
