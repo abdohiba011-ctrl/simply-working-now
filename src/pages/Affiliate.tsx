@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef } from "react";
-import { Helmet } from "react-helmet-async";
 import { useNavigate } from "react-router-dom";
 import { Link as LinkIcon, Send, Gift, Wallet, Zap, ShieldCheck, Calendar, Check, X } from "lucide-react";
 
@@ -28,11 +27,35 @@ const Affiliate = () => {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const referralRef = useRef<HTMLDivElement | null>(null);
 
-  // Set <html lang> per current language (also handled by LanguageContext,
-  // but we keep this here as a defensive override for SEO crawlers).
+  // Set document <title>, meta description, <html lang>, and inject the
+  // FAQ JSON-LD schema. Done via direct DOM access (no react-helmet in
+  // this project).
   useEffect(() => {
     document.documentElement.lang = language;
-  }, [language]);
+    const prevTitle = document.title;
+    document.title = t("referPage.meta_title");
+
+    const setMeta = (name: string, content: string) => {
+      let tag = document.querySelector<HTMLMetaElement>(`meta[name="${name}"]`);
+      if (!tag) {
+        tag = document.createElement("meta");
+        tag.setAttribute("name", name);
+        document.head.appendChild(tag);
+      }
+      const prev = tag.getAttribute("content") ?? "";
+      tag.setAttribute("content", content);
+      return () => {
+        if (prev) tag!.setAttribute("content", prev);
+        else tag!.remove();
+      };
+    };
+    const restoreDesc = setMeta("description", t("referPage.meta_desc"));
+
+    return () => {
+      document.title = prevTitle;
+      restoreDesc();
+    };
+  }, [language, t]);
 
   const faqItems = useMemo(
     () => [
