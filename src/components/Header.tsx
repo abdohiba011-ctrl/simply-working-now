@@ -10,6 +10,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { LogoutConfirmDialog } from "@/components/LogoutConfirmDialog";
+import { AnnouncementBanner } from "@/components/AnnouncementBanner";
 import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
@@ -207,27 +208,8 @@ export const Header = memo(() => {
 
   return (
     <>
-      {/* Marketing Banner - scrolls with page (NOT sticky) */}
-      <Link to="/listings" className="block relative bg-primary text-primary-foreground py-2 overflow-hidden cursor-pointer hover:bg-primary/90 transition-colors">
-        <div className="animate-marquee whitespace-nowrap inline-block">
-          <span className="text-sm font-medium mx-8 flex items-center gap-2 inline-flex">
-            <Bike className="h-4 w-4" />
-            {t('marketingBanner.message')} <span className="font-bold bg-primary-foreground text-primary px-2 py-0.5 rounded" translate="no">59 DH/{t('hero.perDay').replace('/', '')}</span> • {t('marketingBanner.total')} <span className="font-bold" translate="no">1,770 DH</span>
-          </span>
-          <span className="text-sm font-medium mx-8 flex items-center gap-2 inline-flex">
-            <Bike className="h-4 w-4" />
-            {t('marketingBanner.message')} <span className="font-bold bg-primary-foreground text-primary px-2 py-0.5 rounded" translate="no">59 DH/{t('hero.perDay').replace('/', '')}</span> • {t('marketingBanner.total')} <span className="font-bold" translate="no">1,770 DH</span>
-          </span>
-          <span className="text-sm font-medium mx-8 flex items-center gap-2 inline-flex">
-            <Bike className="h-4 w-4" />
-            {t('marketingBanner.message')} <span className="font-bold bg-primary-foreground text-primary px-2 py-0.5 rounded" translate="no">59 DH/{t('hero.perDay').replace('/', '')}</span> • {t('marketingBanner.total')} <span className="font-bold" translate="no">1,770 DH</span>
-          </span>
-          <span className="text-sm font-medium mx-8 flex items-center gap-2 inline-flex">
-            <Bike className="h-4 w-4" />
-            {t('marketingBanner.message')} <span className="font-bold bg-primary-foreground text-primary px-2 py-0.5 rounded" translate="no">59 DH/{t('hero.perDay').replace('/', '')}</span> • {t('marketingBanner.total')} <span className="font-bold" translate="no">1,770 DH</span>
-          </span>
-        </div>
-      </Link>
+      {/* Sticky trilingual announcement banner (replaces the old marketing banner) */}
+      <AnnouncementBanner />
 
       {/* Header - sticky independently */}
       <header className="sticky top-0 z-[100] w-full bg-card/95 backdrop-blur-sm border-b shadow-sm">
