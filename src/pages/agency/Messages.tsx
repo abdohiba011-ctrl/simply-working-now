@@ -149,7 +149,7 @@ const Messages = () => {
                 ))}
               </div>
             </div>
-            <div className="flex-1 overflow-y-auto">
+            <div className="scrollbar-hide flex-1 overflow-y-auto">
               {filtered.length === 0 ? (
                 <EmptyState icon={MessageCircle} title="No conversations" description="Try a different filter or wait for new messages." />
               ) : filtered.map((c) => {
