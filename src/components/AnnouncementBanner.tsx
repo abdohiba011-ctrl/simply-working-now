@@ -147,7 +147,7 @@ export const AnnouncementBanner = () => {
 
   return (
     <div
-      className="sticky top-0 z-[110] w-full"
+      className="relative z-[110] w-full"
       style={{ backgroundColor: LIME, height: 40 }}
       role="region"
       aria-label="Site announcement"
