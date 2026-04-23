@@ -22,9 +22,6 @@ type Segment = ReactNode;
 function buildSegments(language: "en" | "fr" | "ar"): Segment[] {
   if (language === "fr") {
     return [
-      <span key="emoji" className="mr-2" aria-hidden>
-        🏍️
-      </span>,
       <span key="title" className="font-bold" style={{ color: FOREST }}>
         Location de moto et scooter au Maroc
       </span>,
@@ -59,9 +56,6 @@ function buildSegments(language: "en" | "fr" | "ar"): Segment[] {
   }
   if (language === "ar") {
     return [
-      <span key="emoji" className="ml-2" aria-hidden>
-        🏍️
-      </span>,
       <span key="title" className="font-bold" style={{ color: FOREST }}>
         كراء الدراجات النارية والسكوتر في المغرب
       </span>,
@@ -96,9 +90,6 @@ function buildSegments(language: "en" | "fr" | "ar"): Segment[] {
   }
   // default: English
   return [
-    <span key="emoji" className="mr-2" aria-hidden>
-      🏍️
-    </span>,
     <span key="title" className="font-bold" style={{ color: FOREST }}>
       Motorbike & scooter rental in Morocco
     </span>,
