@@ -95,7 +95,9 @@ const MockLogin = lazy(() => import("./pages/auth/Login"));
 const MockSignup = lazy(() => import("./pages/auth/Signup"));
 const MockVerifyEmail = lazy(() => import("./pages/auth/VerifyEmail"));
 const RentPlaceholder = lazy(() => import("./pages/auth/RentPlaceholder"));
-const ForgotPasswordPlaceholder = lazy(() => import("./pages/auth/ForgotPasswordPlaceholder"));
+const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword"));
+const ResetPasswordVerify = lazy(() => import("./pages/auth/ResetPasswordVerify"));
+const ResetPasswordNew = lazy(() => import("./pages/auth/ResetPasswordNew"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -145,7 +147,9 @@ const App = () => (
                   <Route path="/signup" element={<MockSignup />} />
                   <Route path="/rent" element={<RentPlaceholder />} />
                   <Route path="/verify-email" element={<MockVerifyEmail />} />
-                  <Route path="/forgot-password" element={<ForgotPasswordPlaceholder />} />
+                  <Route path="/forgot-password" element={<ForgotPassword />} />
+                  <Route path="/reset-password/verify" element={<ResetPasswordVerify />} />
+                  <Route path="/reset-password/new" element={<ResetPasswordNew />} />
                   <Route path="/become-business" element={<BecomeBusiness />} />
                   <Route path="/verification" element={<ProtectedRoute><Verification /></ProtectedRoute>} />
                   <Route path="/privacy-policy" element={<PrivacyPolicy />} />
