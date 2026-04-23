@@ -108,15 +108,20 @@ const Affiliate = () => {
     { Icon: Calendar, title: t("referPage.b4_title"), desc: t("referPage.b4_desc") },
   ];
 
+  // Inject FAQ JSON-LD as a managed <script> tag in <head>
+  useEffect(() => {
+    const script = document.createElement("script");
+    script.type = "application/ld+json";
+    script.text = JSON.stringify(faqJsonLd);
+    script.setAttribute("data-page", "refer-a-friend");
+    document.head.appendChild(script);
+    return () => {
+      script.remove();
+    };
+  }, [faqJsonLd]);
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <Helmet>
-        <title>{t("referPage.meta_title")}</title>
-        <meta name="description" content={t("referPage.meta_desc")} />
-        <html lang={language} />
-        <script type="application/ld+json">{JSON.stringify(faqJsonLd)}</script>
-      </Helmet>
-
       <Header />
 
       <main className="flex-1">
