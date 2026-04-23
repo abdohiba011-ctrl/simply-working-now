@@ -39,10 +39,17 @@ export interface AuthError extends Error {
     | "ACCOUNT_LOCKED"
     | "ACCOUNT_SUSPENDED"
     | "RATE_LIMITED"
+    | "EMAIL_TAKEN"
+    | "WEAK_PASSWORD"
+    | "INVALID_CODE"
+    | "CODE_EXPIRED"
+    | "RESEND_COOLDOWN"
+    | "USER_NOT_FOUND"
     | "NETWORK";
   needsVerification?: boolean;
   lockedUntil?: string;
   retryAfterMs?: number;
+  attemptsLeft?: number;
 }
 
 const RATE_WINDOW_MS = 15 * 60 * 1000;
@@ -253,9 +260,214 @@ export async function mockLogin(emailOrPhone: string, password: string): Promise
   return { ...user, roles: { ...user.roles } };
 }
 
-export async function mockResendVerification(emailOrPhone: string): Promise<void> {
+// =====================================================================
+// SIGNUP + EMAIL VERIFICATION
+// =====================================================================
+
+const CODE_TTL_MS = 15 * 60 * 1000;
+const MAX_CODE_ATTEMPTS = 3;
+const RESEND_COOLDOWN_MS = 60 * 1000;
+
+interface VerificationEntry {
+  userId: string;
+  code: string;
+  expiresAt: number;
+  attemptsLeft: number;
+  lastSentAt: number;
+}
+
+const verificationCodes = new Map<string, VerificationEntry>(); // keyed by userId
+const verificationByEmail = new Map<string, string>(); // email -> userId
+
+function generateCode(): string {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+function issueCode(user: MockUser): VerificationEntry {
+  const code = generateCode();
+  const entry: VerificationEntry = {
+    userId: user.id,
+    code,
+    expiresAt: Date.now() + CODE_TTL_MS,
+    attemptsLeft: MAX_CODE_ATTEMPTS,
+    lastSentAt: Date.now(),
+  };
+  verificationCodes.set(user.id, entry);
+  verificationByEmail.set(user.email.toLowerCase(), user.id);
+  // eslint-disable-next-line no-console
+  console.log(
+    `[mockAuth] 📧 Verification code for ${user.email}: ${code} (expires in 15 min)`,
+  );
+  return entry;
+}
+
+export interface SignupFormData {
+  name: string;
+  email: string;
+  phone?: string;
+  password: string;
+  // business-only
+  businessName?: string;
+  businessType?: string;
+  city?: string;
+  numBikes?: string;
+  // marketing
+  marketingOptIn?: boolean;
+}
+
+export async function mockSignup(
+  formData: SignupFormData,
+  role: AppRole,
+): Promise<MockUser> {
+  await delay();
+  const email = formData.email.trim().toLowerCase();
+
+  if (users.has(email)) {
+    throw makeError(
+      "EMAIL_TAKEN",
+      "This email is already registered. Try logging in instead.",
+    );
+  }
+
+  const phone = formData.phone ? normalizePhone(formData.phone) : null;
+
+  const newUser: MockUser = {
+    id: `user_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    email,
+    phone,
+    password_hash: formData.password,
+    created_at: new Date().toISOString(),
+    email_verified: false,
+    phone_verified: false,
+    name: formData.name.trim(),
+    roles: {
+      renter: {
+        active: role === "renter",
+        profile: role === "renter" ? { displayName: formData.name } : null,
+      },
+      agency: {
+        active: role === "agency",
+        verified: false,
+        profile:
+          role === "agency"
+            ? {
+                agencyName: formData.businessName,
+                businessType: formData.businessType,
+                city: formData.city,
+                numBikes: formData.numBikes,
+              }
+            : null,
+      },
+    },
+    default_role: role,
+    last_active_role: role,
+    failed_login_attempts: 0,
+    locked_until: null,
+  };
+
+  users.set(email, newUser);
+  issueCode(newUser);
+
+  return { ...newUser };
+}
+
+export interface ResendResult {
+  cooldownMs: number;
+}
+
+export async function mockResendVerification(
+  emailOrUserId: string,
+): Promise<ResendResult> {
   await delay(300, 800);
-  // No-op for mock; in real life would trigger an email
+
+  const key = emailOrUserId.trim().toLowerCase();
+  let user: MockUser | undefined;
+  if (users.has(key)) user = users.get(key);
+  else {
+    // try by id
+    for (const u of users.values()) if (u.id === emailOrUserId) user = u;
+  }
+  if (!user) {
+    throw makeError("USER_NOT_FOUND", "We couldn't find that account.");
+  }
+
+  const existing = verificationCodes.get(user.id);
+  if (existing) {
+    const since = Date.now() - existing.lastSentAt;
+    if (since < RESEND_COOLDOWN_MS) {
+      throw makeError(
+        "RESEND_COOLDOWN",
+        `Please wait ${Math.ceil((RESEND_COOLDOWN_MS - since) / 1000)}s before requesting a new code.`,
+        { retryAfterMs: RESEND_COOLDOWN_MS - since },
+      );
+    }
+  }
+
+  issueCode(user);
+  return { cooldownMs: RESEND_COOLDOWN_MS };
+}
+
+export interface VerifyCodeResult {
+  user: MockUser;
+}
+
+export async function mockVerifyEmailCode(
+  emailOrUserId: string,
+  code: string,
+): Promise<VerifyCodeResult> {
+  await delay(400, 900);
+
+  const key = emailOrUserId.trim().toLowerCase();
+  let user: MockUser | undefined;
+  if (users.has(key)) user = users.get(key);
+  else for (const u of users.values()) if (u.id === emailOrUserId) user = u;
+  if (!user) throw makeError("USER_NOT_FOUND", "We couldn't find that account.");
+
+  const entry = verificationCodes.get(user.id);
+  if (!entry) {
+    // Auto-issue and bail
+    issueCode(user);
+    throw makeError("CODE_EXPIRED", "This code has expired. We've sent you a new one.");
+  }
+
+  if (Date.now() > entry.expiresAt) {
+    issueCode(user);
+    throw makeError("CODE_EXPIRED", "This code has expired. We've sent you a new one.");
+  }
+
+  if (entry.code !== code.trim()) {
+    entry.attemptsLeft -= 1;
+    if (entry.attemptsLeft <= 0) {
+      issueCode(user);
+      throw makeError(
+        "INVALID_CODE",
+        "Too many wrong attempts. We've sent you a new code.",
+        { attemptsLeft: 0 },
+      );
+    }
+    throw makeError(
+      "INVALID_CODE",
+      `Incorrect code. ${entry.attemptsLeft} attempt${entry.attemptsLeft === 1 ? "" : "s"} remaining.`,
+      { attemptsLeft: entry.attemptsLeft },
+    );
+  }
+
+  // Success — mark verified and clear code
+  user.email_verified = true;
+  verificationCodes.delete(user.id);
+  verificationByEmail.delete(user.email.toLowerCase());
+  return { user: { ...user } };
+}
+
+export function getResendCooldownMs(emailOrUserId: string): number {
+  const key = emailOrUserId.trim().toLowerCase();
+  let user: MockUser | undefined;
+  if (users.has(key)) user = users.get(key);
+  else for (const u of users.values()) if (u.id === emailOrUserId) user = u;
+  if (!user) return 0;
+  const entry = verificationCodes.get(user.id);
+  if (!entry) return 0;
+  return Math.max(0, RESEND_COOLDOWN_MS - (Date.now() - entry.lastSentAt));
 }
 
 export function getLockoutRemainingMs(identifier: string): number {
@@ -263,3 +475,15 @@ export function getLockoutRemainingMs(identifier: string): number {
   if (!entry?.lockedUntil) return 0;
   return Math.max(0, entry.lockedUntil - Date.now());
 }
+
+// Common-passwords blacklist used by the signup form
+export const COMMON_PASSWORDS = new Set([
+  "password",
+  "password123",
+  "qwerty",
+  "12345678",
+  "motonita123",
+  "123456789",
+  "azerty123",
+]);
+
