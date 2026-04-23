@@ -21,7 +21,7 @@ export const Footer = memo(() => {
             </p>
             <div className="flex gap-4">
               <a
-                href="https://web.facebook.com/profile.php?id=61567150860181"
+                href="https://web.facebook.com/Motonita.ma"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-10 h-10 rounded-full bg-primary/20 hover:bg-primary flex items-center justify-center transition-colors"
@@ -30,7 +30,7 @@ export const Footer = memo(() => {
                 <Facebook className="h-5 w-5" />
               </a>
               <a
-                href="https://www.instagram.com/motonita.maroc/"
+                href="https://www.instagram.com/motonita.ma/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-10 h-10 rounded-full bg-primary/20 hover:bg-primary flex items-center justify-center transition-colors"
