@@ -132,8 +132,8 @@ const Messages = () => {
 
   return (
     <AgencyLayout>
-      <div className="mx-auto -mx-4 lg:-mx-8">
-        <Card className="overflow-hidden h-[calc(100vh-7rem)] grid grid-cols-1 lg:grid-cols-[minmax(320px,30%)_1fr]">
+      <div className="-mx-4 -mt-4 lg:-mx-8">
+        <Card className="overflow-hidden h-[calc(100vh-4rem)] grid grid-cols-1 rounded-none border-x-0 border-t-0 lg:grid-cols-[minmax(320px,30%)_1fr]">
           {/* LEFT: list */}
           <div className={cn("flex h-full min-w-0 flex-col border-r border-border", activeId && "hidden lg:flex")}>
             <div className="border-b border-border p-3">
