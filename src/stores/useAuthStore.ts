@@ -522,9 +522,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     // Update profile with phone + business fields if applicable.
     // The handle_new_user trigger created the basic profile row; we
     // augment it now.
-    const profileUpdates: Record<string, unknown> = {
-      name: formData.name,
+    type ProfileUpdate = {
+      name?: string;
+      phone?: string;
+      user_type?: string;
+      business_name?: string;
+      business_type?: string;
+      business_address?: string;
     };
+    const profileUpdates: ProfileUpdate = { name: formData.name };
     if (phone) profileUpdates.phone = phone;
     if (role === "agency") {
       profileUpdates.user_type = "business";
