@@ -1,1 +1,7 @@
 project_id = "impgemzhqvbxitsxxczm"
+
+[functions.youcanpay-create-token]
+verify_jwt = true
+
+[functions.youcanpay-webhook]
+verify_jwt = false
