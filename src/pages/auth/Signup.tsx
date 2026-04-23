@@ -31,6 +31,7 @@ import {
 import { useAuthStore } from "@/stores/useAuthStore";
 import { COMMON_PASSWORDS } from "@/lib/mockAuth";
 import { cn } from "@/lib/utils";
+import { navigateAfterAuth } from "@/lib/routeAfterAuth";
 
 const PHONE_REGEX = /^(\+212|00212|0)[67]\d{8}$/;
 
@@ -245,16 +246,32 @@ function passwordStrength(pw: string): { score: 0 | 1 | 2 | 3; label: string; co
   return { score: 2, label: "Medium", color: "#f59e0b" };
 }
 
-export default function Signup() {
+interface SignupProps {
+  defaultRole?: "renter" | "agency";
+}
+
+export default function Signup({ defaultRole }: SignupProps = {}) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const signup = useAuthStore((s) => s.signup);
   const isLoading = useAuthStore((s) => s.isLoading);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const authedUser = useAuthStore((s) => s.user);
 
-  const [role, setRole] = useState<"renter" | "agency" | null>(null);
+  const [role, setRole] = useState<"renter" | "agency" | null>(
+    defaultRole ?? null,
+  );
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
+
+  // Already logged in? send them to their dashboard.
+  useEffect(() => {
+    if (isAuthenticated && authedUser) {
+      navigateAfterAuth(navigate, authedUser, defaultRole);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated]);
 
   const schema = useMemo(() => buildSchema(role ?? "renter"), [role]);
 

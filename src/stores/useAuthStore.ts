@@ -79,6 +79,7 @@ interface AuthState {
     emailOrPhone: string,
     password: string,
     rememberMe?: boolean,
+    context?: AppRole,
   ) => Promise<MockUser>;
   signup: (formData: SignupFormData, role: AppRole) => Promise<MockUser>;
   verifyEmail: (code: string, emailOverride?: string) => Promise<MockUser>;
@@ -104,24 +105,28 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   needsVerification: false,
   pendingEmail: null,
 
-  login: async (emailOrPhone, password, rememberMe = false) => {
+  login: async (emailOrPhone, password, rememberMe = false, context) => {
     set({ isLoading: true, error: null, needsVerification: false });
     try {
       const user = await mockLogin(emailOrPhone, password);
 
       // Determine the initial active role on login.
-      // Priority: agency (if active) > renter > default_role
+      // Login context (which "door" they used) wins for dual-role users.
       let currentRole: AppRole = user.default_role;
       if (user.roles.agency.active && user.roles.renter.active) {
-        currentRole = user.last_active_role;
+        if (context === "agency") currentRole = "agency";
+        else if (context === "renter") currentRole = "renter";
+        else currentRole = user.last_active_role;
       } else if (user.roles.agency.active) {
         currentRole = "agency";
       } else if (user.roles.renter.active) {
         currentRole = "renter";
       }
 
+      const userWithRole: MockUser = { ...user, last_active_role: currentRole };
+
       const session: PersistedSession = {
-        user,
+        user: userWithRole,
         currentRole,
         rememberMe,
         savedAt: Date.now(),
@@ -129,14 +134,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       writeSession(session);
 
       set({
-        user,
+        user: userWithRole,
         currentRole,
         isAuthenticated: true,
         isLoading: false,
         error: null,
         needsVerification: false,
       });
-      return user;
+      return userWithRole;
     } catch (err) {
       const authErr = err as AuthError;
       set({

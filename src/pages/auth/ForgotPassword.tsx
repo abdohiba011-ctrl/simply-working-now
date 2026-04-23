@@ -15,6 +15,7 @@ import {
   getResetRequestLockoutMs,
   type AuthError,
 } from "@/lib/mockAuth";
+import { navigateAfterAuth } from "@/lib/routeAfterAuth";
 
 const schema = z.object({
   email: z.string().trim().email("Enter a valid email").max(255),
@@ -35,6 +36,16 @@ export default function ForgotPassword() {
   const navigate = useNavigate();
   const requestPasswordReset = useAuthStore((s) => s.requestPasswordReset);
   const isLoading = useAuthStore((s) => s.isLoading);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const authedUser = useAuthStore((s) => s.user);
+
+  // Already logged in? send them to their dashboard — no point resetting.
+  useEffect(() => {
+    if (isAuthenticated && authedUser) {
+      navigateAfterAuth(navigate, authedUser);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated]);
 
   const [serverError, setServerError] = useState<string | null>(null);
   const [lockoutMs, setLockoutMs] = useState(0);

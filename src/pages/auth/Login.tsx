@@ -20,6 +20,11 @@ import {
   type AuthError,
 } from "@/lib/mockAuth";
 import { cn } from "@/lib/utils";
+import {
+  navigateAfterAuth,
+  queueBecomeBusinessPrompt,
+  type LoginContext,
+} from "@/lib/routeAfterAuth";
 
 const PHONE_REGEX = /^(\+212|00212|0)[67]\d{8}$/;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -46,7 +51,11 @@ function formatRemaining(ms: number): string {
   return `${minutes}m ${seconds.toString().padStart(2, "0")}s`;
 }
 
-export default function Login() {
+interface LoginProps {
+  context?: LoginContext;
+}
+
+export default function Login({ context = "renter" }: LoginProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const login = useAuthStore((s) => s.login);
@@ -70,10 +79,10 @@ export default function Login() {
   const identifierValue = form.watch("identifier");
   const idType = useMemo(() => detectIdentifierType(identifierValue ?? ""), [identifierValue]);
 
-  // If already authenticated, send them home
+  // If already authenticated, send them to the right place
   useEffect(() => {
     if (isAuthenticated && user) {
-      routeAfterLogin();
+      navigateAfterAuth(navigate, user, context);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated]);
@@ -91,46 +100,38 @@ export default function Login() {
     return () => window.clearInterval(id);
   }, [form]);
 
-  function routeAfterLogin() {
-    const u = useAuthStore.getState().user;
-    if (!u) return;
-
-    if (!u.email_verified) {
-      navigate("/verify-email", { replace: true });
-      return;
-    }
-
-    const hasRenter = u.roles.renter.active;
-    const hasAgency = u.roles.agency.active;
-
-    if (hasRenter && !hasAgency) {
-      navigate("/rent", { replace: true });
-    } else if (hasAgency && !hasRenter) {
-      navigate(u.roles.agency.verified ? "/agency/dashboard" : "/agency/verification", {
-        replace: true,
-      });
-    } else if (hasRenter && hasAgency) {
-      const persistent = localStorage.getItem("motonita_auth_persistent") === "true";
-      if (u.last_active_role === "renter" && persistent) {
-        navigate("/rent", { replace: true });
-      } else {
-        navigate(u.roles.agency.verified ? "/agency/dashboard" : "/agency/verification", {
-          replace: true,
-        });
-      }
-    } else {
-      navigate("/rent", { replace: true });
-    }
-  }
-
   const onSubmit = async (values: LoginValues) => {
     clearError();
     try {
-      const loggedIn = await login(values.identifier, values.password, values.rememberMe);
-      toast.success(
-        t("mockAuth.welcome_toast", { name: loggedIn.name, defaultValue: `Welcome back, ${loggedIn.name}!` }),
+      const loggedIn = await login(
+        values.identifier,
+        values.password,
+        values.rememberMe,
+        context,
       );
-      routeAfterLogin();
+      toast.success(
+        t("mockAuth.welcome_toast", {
+          name: loggedIn.name,
+          defaultValue: `Welcome back, ${loggedIn.name}!`,
+        }),
+      );
+
+      // Cross-door message: renter-only user logged in via /agency/login
+      if (
+        context === "agency" &&
+        !loggedIn.roles.agency.active &&
+        loggedIn.roles.renter.active
+      ) {
+        queueBecomeBusinessPrompt();
+        toast.message(
+          t("mockAuth.logged_in_as_renter", {
+            defaultValue:
+              "You're logged in as a renter. Want to become a business?",
+          }),
+        );
+      }
+
+      navigateAfterAuth(navigate, loggedIn, context);
     } catch (err) {
       const e = err as AuthError;
       if (e.code === "ACCOUNT_LOCKED") {
@@ -162,12 +163,20 @@ export default function Login() {
             className="text-2xl font-bold tracking-tight"
             style={{ color: "#163300" }}
           >
-            {t("mockAuth.welcome_back", { defaultValue: "Welcome back" })}
+            {context === "agency"
+              ? t("mockAuth.welcome_business", {
+                  defaultValue: "Welcome back, business partner",
+                })
+              : t("mockAuth.welcome_back", { defaultValue: "Welcome back" })}
           </h1>
           <p className="text-sm" style={{ color: "rgba(22,51,0,0.7)" }}>
-            {t("mockAuth.login_continue", {
-              defaultValue: "Log in to continue to Motonita",
-            })}
+            {context === "agency"
+              ? t("mockAuth.login_continue_business", {
+                  defaultValue: "Log in to manage your fleet and bookings",
+                })
+              : t("mockAuth.login_continue_renter", {
+                  defaultValue: "Log in to find your next ride",
+                })}
           </p>
         </div>
 
@@ -312,14 +321,49 @@ export default function Login() {
 
           {/* Signup */}
           <p className="text-center text-sm" style={{ color: "rgba(22,51,0,0.75)" }}>
-            {t("mockAuth.no_account", { defaultValue: "Don't have an account?" })}{" "}
+            {context === "agency"
+              ? t("mockAuth.no_business_account", {
+                  defaultValue: "Don't have a business account?",
+                })
+              : t("mockAuth.no_account", { defaultValue: "Don't have an account?" })}{" "}
             <Link
-              to="/signup"
+              to={context === "agency" ? "/agency/signup" : "/signup"}
               className="font-medium hover:underline"
               style={{ color: "#163300" }}
             >
               {t("mockAuth.signup", { defaultValue: "Sign up" })}
             </Link>
+          </p>
+
+          {/* Cross-door link */}
+          <p className="text-center text-xs" style={{ color: "rgba(22,51,0,0.6)" }}>
+            {context === "agency" ? (
+              <>
+                {t("mockAuth.are_you_renter", {
+                  defaultValue: "Are you a renter?",
+                })}{" "}
+                <Link
+                  to="/login"
+                  className="hover:underline font-medium"
+                  style={{ color: "#163300" }}
+                >
+                  {t("mockAuth.login_here", { defaultValue: "Log in here" })}
+                </Link>
+              </>
+            ) : (
+              <>
+                {t("mockAuth.are_you_business", {
+                  defaultValue: "Are you a business?",
+                })}{" "}
+                <Link
+                  to="/agency/login"
+                  className="hover:underline font-medium"
+                  style={{ color: "#163300" }}
+                >
+                  {t("mockAuth.login_here", { defaultValue: "Log in here" })}
+                </Link>
+              </>
+            )}
           </p>
         </form>
       </div>
