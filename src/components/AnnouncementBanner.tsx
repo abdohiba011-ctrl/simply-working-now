@@ -1,23 +1,21 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { X } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
 
 /**
  * Sticky announcement banner that scrolls trilingual marketing copy.
  *
- * - Background: deep forest (#163300)
+ * - Background: brand lime (#9FE870)
  * - Height: 40px
  * - Sticky to top of page (sits above the main Header)
- * - Dismissable per-session (sessionStorage)
+ * - Always visible (no dismiss)
  * - Marquee: ~30s right-to-left pass, pauses on hover
  * - Respects `prefers-reduced-motion` → static, centered content
  * - RTL-aware (Arabic): scroll direction flips
  */
 
-const FOREST = "#163300";
 const LIME = "#9FE870";
-const SESSION_KEY = "motonita_announcement_banner_dismissed";
+const FOREST = "#163300";
 
 type Segment = ReactNode;
 
@@ -27,34 +25,34 @@ function buildSegments(language: "en" | "fr" | "ar"): Segment[] {
       <span key="emoji" className="mr-2" aria-hidden>
         🏍️
       </span>,
-      <span key="title" className="font-bold text-white">
+      <span key="title" className="font-bold" style={{ color: FOREST }}>
         Location de moto et scooter au Maroc
       </span>,
-      <span key="d1" className="mx-3" style={{ color: LIME }}>
+      <span key="d1" className="mx-3" style={{ color: FOREST }}>
         ·
       </span>,
-      <span key="cities" className="text-white">
+      <span key="cities" style={{ color: FOREST }}>
         Casablanca · Marrakech · Agadir · Rabat · Tangier · Fes
       </span>,
-      <span key="more" className="mx-2 italic" style={{ color: LIME }}>
+      <span key="more" className="mx-2 italic" style={{ color: FOREST }}>
         — et d'autres villes bientôt
       </span>,
-      <span key="d2" className="mx-3" style={{ color: LIME }}>
+      <span key="d2" className="mx-3" style={{ color: FOREST }}>
         ·
       </span>,
-      <span key="f1" className="font-semibold text-white">
+      <span key="f1" className="font-semibold" style={{ color: FOREST }}>
         ✓ Agences vérifiées
       </span>,
-      <span key="d3" className="mx-3" style={{ color: LIME }}>
+      <span key="d3" className="mx-3" style={{ color: FOREST }}>
         ·
       </span>,
-      <span key="f2" className="font-semibold text-white">
+      <span key="f2" className="font-semibold" style={{ color: FOREST }}>
         ✓ Réservé en 60 secondes
       </span>,
-      <span key="d4" className="mx-3" style={{ color: LIME }}>
+      <span key="d4" className="mx-3" style={{ color: FOREST }}>
         ·
       </span>,
-      <span key="f3" className="font-semibold text-white">
+      <span key="f3" className="font-semibold" style={{ color: FOREST }}>
         ✓ Cash Plus accepté
       </span>,
     ];
@@ -64,34 +62,34 @@ function buildSegments(language: "en" | "fr" | "ar"): Segment[] {
       <span key="emoji" className="ml-2" aria-hidden>
         🏍️
       </span>,
-      <span key="title" className="font-bold text-white">
+      <span key="title" className="font-bold" style={{ color: FOREST }}>
         كراء الدراجات النارية والسكوتر في المغرب
       </span>,
-      <span key="d1" className="mx-3" style={{ color: LIME }}>
+      <span key="d1" className="mx-3" style={{ color: FOREST }}>
         ·
       </span>,
-      <span key="cities" className="text-white">
+      <span key="cities" style={{ color: FOREST }}>
         الدار البيضاء · مراكش · أكادير · الرباط · طنجة · فاس
       </span>,
-      <span key="more" className="mx-2 italic" style={{ color: LIME }}>
+      <span key="more" className="mx-2 italic" style={{ color: FOREST }}>
         — ومدن أخرى قريباً
       </span>,
-      <span key="d2" className="mx-3" style={{ color: LIME }}>
+      <span key="d2" className="mx-3" style={{ color: FOREST }}>
         ·
       </span>,
-      <span key="f1" className="font-semibold text-white">
+      <span key="f1" className="font-semibold" style={{ color: FOREST }}>
         ✓ وكالات موثقة
       </span>,
-      <span key="d3" className="mx-3" style={{ color: LIME }}>
+      <span key="d3" className="mx-3" style={{ color: FOREST }}>
         ·
       </span>,
-      <span key="f2" className="font-semibold text-white">
+      <span key="f2" className="font-semibold" style={{ color: FOREST }}>
         ✓ احجز في 60 ثانية
       </span>,
-      <span key="d4" className="mx-3" style={{ color: LIME }}>
+      <span key="d4" className="mx-3" style={{ color: FOREST }}>
         ·
       </span>,
-      <span key="f3" className="font-semibold text-white">
+      <span key="f3" className="font-semibold" style={{ color: FOREST }}>
         ✓ نقبل كاش بلوس
       </span>,
     ];
@@ -101,34 +99,34 @@ function buildSegments(language: "en" | "fr" | "ar"): Segment[] {
     <span key="emoji" className="mr-2" aria-hidden>
       🏍️
     </span>,
-    <span key="title" className="font-bold text-white">
+    <span key="title" className="font-bold" style={{ color: FOREST }}>
       Motorbike & scooter rental in Morocco
     </span>,
-    <span key="d1" className="mx-3" style={{ color: LIME }}>
+    <span key="d1" className="mx-3" style={{ color: FOREST }}>
       ·
     </span>,
-    <span key="cities" className="text-white">
+    <span key="cities" style={{ color: FOREST }}>
       Casablanca · Marrakech · Agadir · Rabat · Tangier · Fes
     </span>,
-    <span key="more" className="mx-2 italic" style={{ color: LIME }}>
+    <span key="more" className="mx-2 italic" style={{ color: FOREST }}>
       — and more cities coming soon
     </span>,
-    <span key="d2" className="mx-3" style={{ color: LIME }}>
+    <span key="d2" className="mx-3" style={{ color: FOREST }}>
       ·
     </span>,
-    <span key="f1" className="font-semibold text-white">
+    <span key="f1" className="font-semibold" style={{ color: FOREST }}>
       ✓ Verified agencies
     </span>,
-    <span key="d3" className="mx-3" style={{ color: LIME }}>
+    <span key="d3" className="mx-3" style={{ color: FOREST }}>
       ·
     </span>,
-    <span key="f2" className="font-semibold text-white">
+    <span key="f2" className="font-semibold" style={{ color: FOREST }}>
       ✓ Booked in 60 seconds
     </span>,
-    <span key="d4" className="mx-3" style={{ color: LIME }}>
+    <span key="d4" className="mx-3" style={{ color: FOREST }}>
       ·
     </span>,
-    <span key="f3" className="font-semibold text-white">
+    <span key="f3" className="font-semibold" style={{ color: FOREST }}>
       ✓ Cash Plus accepted
     </span>,
   ];
@@ -136,14 +134,6 @@ function buildSegments(language: "en" | "fr" | "ar"): Segment[] {
 
 export const AnnouncementBanner = () => {
   const { language, isRTL } = useLanguage();
-  const [dismissed, setDismissed] = useState<boolean>(() => {
-    if (typeof window === "undefined") return false;
-    try {
-      return sessionStorage.getItem(SESSION_KEY) === "1";
-    } catch {
-      return false;
-    }
-  });
   const [reducedMotion, setReducedMotion] = useState(false);
 
   useEffect(() => {
@@ -155,8 +145,6 @@ export const AnnouncementBanner = () => {
     return () => mql.removeEventListener?.("change", apply);
   }, []);
 
-  if (dismissed) return null;
-
   const segments = buildSegments(language as "en" | "fr" | "ar");
 
   // Single content block (we duplicate it for the seamless marquee loop)
@@ -166,30 +154,19 @@ export const AnnouncementBanner = () => {
     </span>
   );
 
-  const handleDismiss = () => {
-    try {
-      sessionStorage.setItem(SESSION_KEY, "1");
-    } catch {
-      // ignore
-    }
-    setDismissed(true);
-  };
-
   return (
     <div
       className="sticky top-0 z-[110] w-full"
-      style={{ backgroundColor: FOREST, height: 40 }}
+      style={{ backgroundColor: LIME, height: 40 }}
       role="region"
       aria-label="Site announcement"
     >
       <div className="relative flex h-10 items-center overflow-hidden">
         {reducedMotion ? (
-          // Reduced motion: static, centered, no scroll
           <div className="flex h-10 w-full items-center justify-center px-12">
             {content}
           </div>
         ) : (
-          // Marquee: 30s, pauses on hover, RTL flips direction
           <div
             className={cn(
               "marquee-track group flex h-10 min-w-full items-center",
@@ -205,19 +182,6 @@ export const AnnouncementBanner = () => {
             </div>
           </div>
         )}
-
-        {/* Dismiss button — fixed to inline-end edge */}
-        <button
-          type="button"
-          onClick={handleDismiss}
-          aria-label="Dismiss announcement"
-          className={cn(
-            "absolute inset-y-0 my-auto flex h-7 w-7 items-center justify-center rounded text-white/80 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40",
-            isRTL ? "left-2" : "right-2",
-          )}
-        >
-          <X className="h-4 w-4" />
-        </button>
       </div>
     </div>
   );
