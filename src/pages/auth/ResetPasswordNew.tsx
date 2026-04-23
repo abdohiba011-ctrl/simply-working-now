@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { COMMON_PASSWORDS, isResetTokenValid, type AuthError } from "@/lib/mockAuth";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
 const schema = z
   .object({
@@ -99,6 +100,8 @@ export default function ResetPasswordNew() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
+  const [isReady, setIsReady] = useState(false);
+  const [hasRecoverySession, setHasRecoverySession] = useState(false);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -106,16 +109,52 @@ export default function ResetPasswordNew() {
     defaultValues: { password: "", confirmPassword: "" },
   });
 
-  // Validate token on mount
+  // Detect Supabase recovery session (from email link hash) OR a valid OTP-issued token
   useEffect(() => {
-    if (!token || !isResetTokenValid(token)) {
-      toast.error(
-        t("mockAuth.reset_link_expired", {
-          defaultValue: "Your reset link expired. Please request a new one.",
-        }),
-      );
-      navigate("/forgot-password", { replace: true });
-    }
+    let cancelled = false;
+
+    const init = async () => {
+      // 1) Email-link flow: Supabase puts tokens in the URL hash.
+      const hash = window.location.hash || "";
+      if (hash.includes("access_token") || hash.includes("type=recovery")) {
+        // supabase-js auto-detects the session from the hash on load.
+        // Give it a tick, then check.
+        await new Promise((r) => setTimeout(r, 50));
+        const { data } = await supabase.auth.getSession();
+        if (!cancelled && data.session) {
+          // Clean the hash from the URL bar
+          window.history.replaceState(null, "", window.location.pathname);
+          setHasRecoverySession(true);
+          setIsReady(true);
+          return;
+        }
+      }
+
+      // 2) OTP-code flow: verifyResetCode already created a session and gave us a token.
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (sessionData.session && token && isResetTokenValid(token)) {
+        if (!cancelled) {
+          setHasRecoverySession(true);
+          setIsReady(true);
+        }
+        return;
+      }
+
+      // Nothing valid → bounce back.
+      if (!cancelled) {
+        toast.error(
+          t("mockAuth.reset_link_expired", {
+            defaultValue: "Your reset link expired. Please request a new one.",
+          }),
+        );
+        navigate("/forgot-password", { replace: true });
+      }
+    };
+
+    init();
+    return () => {
+      cancelled = true;
+    };
   }, [token, navigate, t]);
 
   const pwValue = form.watch("password");
@@ -146,23 +185,31 @@ export default function ResetPasswordNew() {
   const onSubmit = async (values: FormValues) => {
     setServerError(null);
     try {
-      await setNewPassword(token, values.password);
+      // We have a recovery session (either from email link or OTP verify).
+      // Use Supabase directly so we don't depend on a custom token.
+      const { error } = await supabase.auth.updateUser({
+        password: values.password,
+      });
+      if (error) {
+        if (/session|jwt|expired|invalid/i.test(error.message)) {
+          toast.error(
+            t("mockAuth.reset_link_expired", {
+              defaultValue: "Your reset link expired. Please request a new one.",
+            }),
+          );
+          navigate("/forgot-password", { replace: true });
+          return;
+        }
+        setServerError(error.message);
+        return;
+      }
       toast.success(
         t("mockAuth.password_updated", { defaultValue: "Password updated!" }),
       );
       routeAfterReset();
     } catch (err) {
       const e = err as AuthError;
-      if (e.code === "TOKEN_EXPIRED" || e.code === "INVALID_TOKEN") {
-        toast.error(
-          t("mockAuth.reset_link_expired", {
-            defaultValue: "Your reset link expired. Please request a new one.",
-          }),
-        );
-        navigate("/forgot-password", { replace: true });
-        return;
-      }
-      setServerError(e.message);
+      setServerError(e.message ?? "Something went wrong");
     }
   };
 
