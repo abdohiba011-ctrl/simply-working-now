@@ -162,6 +162,12 @@ const App = () => (
                   <Route path="/agency/dashboard" element={<ProtectedRoute requireRole="business"><AgencyDashboard /></ProtectedRoute>} />
                   <Route path="/agency/bookings" element={<ProtectedRoute requireRole="business"><AgencyBookings /></ProtectedRoute>} />
                   <Route path="/agency/bookings/:id" element={<ProtectedRoute requireRole="business"><AgencyBookingDetail /></ProtectedRoute>} />
+                  <Route path="/agency/motorbikes" element={<ProtectedRoute requireRole="business"><AgencyMotorbikes /></ProtectedRoute>} />
+                  <Route path="/agency/motorbikes/new" element={<ProtectedRoute requireRole="business"><AgencyMotorbikeWizard /></ProtectedRoute>} />
+                  <Route path="/agency/motorbikes/:id/edit" element={<ProtectedRoute requireRole="business"><AgencyMotorbikeWizard /></ProtectedRoute>} />
+                  <Route path="/agency/motorbikes/:id" element={<ProtectedRoute requireRole="business"><AgencyMotorbikeDetail /></ProtectedRoute>} />
+                  <Route path="/agency/messages" element={<ProtectedRoute requireRole="business"><AgencyMessages /></ProtectedRoute>} />
+                  <Route path="/agency/calendar" element={<ProtectedRoute requireRole="business"><AgencyCalendar /></ProtectedRoute>} />
                   <Route path="/agency/:slug" element={<ProtectedRoute requireRole="business"><AgencyPlaceholder /></ProtectedRoute>} />
                   <Route path="/agency/:slug/:sub" element={<ProtectedRoute requireRole="business"><AgencyPlaceholder /></ProtectedRoute>} />
 
