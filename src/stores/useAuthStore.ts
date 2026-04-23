@@ -1,5 +1,14 @@
 import { create } from "zustand";
-import { mockLogin, type AppRole, type AuthError, type MockUser } from "@/lib/mockAuth";
+import {
+  mockLogin,
+  mockSignup,
+  mockVerifyEmailCode,
+  mockResendVerification,
+  type AppRole,
+  type AuthError,
+  type MockUser,
+  type SignupFormData,
+} from "@/lib/mockAuth";
 
 const SESSION_KEY = "motonita_auth_session";
 const PERSIST_FLAG_KEY = "motonita_auth_persistent";
@@ -58,16 +67,21 @@ interface AuthState {
   isLoading: boolean;
   error: AuthError | string | null;
   needsVerification: boolean;
+  pendingEmail: string | null; // email awaiting code verification
 
   login: (
     emailOrPhone: string,
     password: string,
     rememberMe?: boolean,
   ) => Promise<MockUser>;
+  signup: (formData: SignupFormData, role: AppRole) => Promise<MockUser>;
+  verifyEmail: (code: string, emailOverride?: string) => Promise<MockUser>;
+  resendVerificationCode: (emailOverride?: string) => Promise<void>;
   logout: () => void;
   switchRole: (newRole: AppRole) => void;
   checkAuth: () => Promise<void>;
   clearError: () => void;
+  setPendingEmail: (email: string | null) => void;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -77,6 +91,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   isLoading: false,
   error: null,
   needsVerification: false,
+  pendingEmail: null,
 
   login: async (emailOrPhone, password, rememberMe = false) => {
     set({ isLoading: true, error: null, needsVerification: false });
