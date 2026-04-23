@@ -10,6 +10,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { LogoutConfirmDialog } from "@/components/LogoutConfirmDialog";
+import { AnnouncementBanner } from "@/components/AnnouncementBanner";
 import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
