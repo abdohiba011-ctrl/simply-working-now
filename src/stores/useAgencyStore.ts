@@ -1,35 +1,17 @@
+// Lightweight client-side UI store for agency dashboard.
+// Real data (wallet balance, plan, bookings, transactions, etc.) now
+// comes from Supabase via the hooks in `src/hooks/useAgencyData.ts`.
+// This store only holds transient UI state.
+
 import { create } from "zustand";
 
-export type VerificationStatus = "unverified" | "partial" | "verified";
-
-interface AgencyState {
-  id: string;
-  name: string;
-  plan: "free" | "pro" | "business";
-  verificationStatus: VerificationStatus;
-  verificationStepsCompleted: number;
-  verificationStepsTotal: number;
-  walletBalance: number;
+interface AgencyUiState {
+  // UI-only counters used for badges; they are refreshed by pages from Supabase.
   unreadMessages: number;
-  pendingBookings: number;
-  setWalletBalance: (n: number) => void;
   setUnreadMessages: (n: number) => void;
-  setPendingBookings: (n: number) => void;
-  setAgency: (data: Partial<AgencyState>) => void;
 }
 
-export const useAgencyStore = create<AgencyState>((set) => ({
-  id: "agency-casa-moto",
-  name: "Casa Moto Rent",
-  plan: "free",
-  verificationStatus: "partial",
-  verificationStepsCompleted: 3,
-  verificationStepsTotal: 5,
-  walletBalance: 245,
-  unreadMessages: 3,
-  pendingBookings: 4,
-  setWalletBalance: (n) => set({ walletBalance: n }),
+export const useAgencyStore = create<AgencyUiState>((set) => ({
+  unreadMessages: 0,
   setUnreadMessages: (n) => set({ unreadMessages: n }),
-  setPendingBookings: (n) => set({ pendingBookings: n }),
-  setAgency: (data) => set((s) => ({ ...s, ...data })),
 }));
