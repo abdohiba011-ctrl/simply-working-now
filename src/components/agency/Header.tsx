@@ -11,6 +11,7 @@ import {
   CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList,
 } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
+import { UserMenu } from "@/components/auth/UserMenu";
 
 interface HeaderProps {
   onMobileMenu: () => void;
@@ -133,6 +134,9 @@ export const Header = ({ onMobileMenu }: HeaderProps) => {
         <Button variant="ghost" size="icon" aria-label="Help" onClick={() => navigate("/agency/help")}>
           <HelpCircle className="h-5 w-5" />
         </Button>
+
+        {/* User menu */}
+        <UserMenu />
       </header>
 
       {/* Command palette */}
