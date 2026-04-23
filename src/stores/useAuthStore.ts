@@ -4,6 +4,9 @@ import {
   mockSignup,
   mockVerifyEmailCode,
   mockResendVerification,
+  mockRequestPasswordReset,
+  mockVerifyResetCode,
+  mockSetNewPassword,
   type AppRole,
   type AuthError,
   type MockUser,
@@ -77,6 +80,9 @@ interface AuthState {
   signup: (formData: SignupFormData, role: AppRole) => Promise<MockUser>;
   verifyEmail: (code: string, emailOverride?: string) => Promise<MockUser>;
   resendVerificationCode: (emailOverride?: string) => Promise<void>;
+  requestPasswordReset: (email: string) => Promise<void>;
+  verifyResetCode: (email: string, code: string) => Promise<string>;
+  setNewPassword: (resetToken: string, newPassword: string) => Promise<MockUser>;
   logout: () => void;
   switchRole: (newRole: AppRole) => void;
   checkAuth: () => Promise<void>;
@@ -243,6 +249,64 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     } catch (err) {
       const e = err as AuthError;
       set({ error: e.message || "Could not resend code" });
+      throw err;
+    }
+  },
+
+  requestPasswordReset: async (email) => {
+    set({ isLoading: true, error: null });
+    try {
+      await mockRequestPasswordReset(email);
+      set({ isLoading: false });
+    } catch (err) {
+      const e = err as AuthError;
+      set({ isLoading: false, error: e.message || "Could not send reset code" });
+      throw err;
+    }
+  },
+
+  verifyResetCode: async (email, code) => {
+    set({ isLoading: true, error: null });
+    try {
+      const { resetToken } = await mockVerifyResetCode(email, code);
+      set({ isLoading: false });
+      return resetToken;
+    } catch (err) {
+      const e = err as AuthError;
+      set({ isLoading: false, error: e.message || "Verification failed" });
+      throw err;
+    }
+  },
+
+  setNewPassword: async (resetToken, newPassword) => {
+    set({ isLoading: true, error: null });
+    try {
+      const { user } = await mockSetNewPassword(resetToken, newPassword);
+
+      // Auto-login: pick role same as login flow
+      let currentRole: AppRole = user.default_role;
+      if (user.roles.agency.active && user.roles.renter.active) {
+        currentRole = user.last_active_role;
+      } else if (user.roles.agency.active) {
+        currentRole = "agency";
+      } else if (user.roles.renter.active) {
+        currentRole = "renter";
+      }
+
+      writeSession({ user, currentRole, rememberMe: false, savedAt: Date.now() });
+      set({
+        user,
+        currentRole,
+        isAuthenticated: true,
+        isLoading: false,
+        pendingEmail: null,
+        needsVerification: false,
+        error: null,
+      });
+      return user;
+    } catch (err) {
+      const e = err as AuthError;
+      set({ isLoading: false, error: e.message || "Could not update password" });
       throw err;
     }
   },
