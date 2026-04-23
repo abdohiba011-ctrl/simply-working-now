@@ -3,8 +3,8 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useAgencyStore } from "@/stores/useAgencyStore";
-import { useAuth } from "@/contexts/AuthContext";
-import { LogoutConfirmDialog } from "@/components/LogoutConfirmDialog";
+import { useAuthStore } from "@/stores/useAuthStore";
+import { LogoutConfirmDialog } from "@/components/auth/LogoutConfirmDialog";
 import {
   Home, Calendar, Bike, MessageCircle, CalendarDays,
   Wallet, Building, Settings,
@@ -37,7 +37,7 @@ interface SidebarProps {
 
 export const Sidebar = ({ collapsed, onToggle }: SidebarProps) => {
   const location = useLocation();
-  const { logout, user } = useAuth();
+  const user = useAuthStore((s) => s.user);
   const agency = useAgencyStore();
   const unread = useAgencyStore((s) => s.unreadMessages);
   const [logoutOpen, setLogoutOpen] = useState(false);
@@ -153,14 +153,7 @@ export const Sidebar = ({ collapsed, onToggle }: SidebarProps) => {
         )}
       </div>
 
-      <LogoutConfirmDialog
-        isOpen={logoutOpen}
-        onClose={() => setLogoutOpen(false)}
-        onConfirm={() => {
-          setLogoutOpen(false);
-          logout();
-        }}
-      />
+      <LogoutConfirmDialog open={logoutOpen} onOpenChange={setLogoutOpen} />
     </aside>
   );
 };
