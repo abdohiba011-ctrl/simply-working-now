@@ -7,10 +7,13 @@ import {
   mockRequestPasswordReset,
   mockVerifyResetCode,
   mockSetNewPassword,
+  mockActivateRenterRole,
+  mockActivateAgencyRole,
   type AppRole,
   type AuthError,
   type MockUser,
   type SignupFormData,
+  type AgencyExtraData,
 } from "@/lib/mockAuth";
 
 const SESSION_KEY = "motonita_auth_session";
@@ -85,6 +88,8 @@ interface AuthState {
   setNewPassword: (resetToken: string, newPassword: string) => Promise<MockUser>;
   logout: () => void;
   switchRole: (newRole: AppRole) => void;
+  activateRenterRole: () => Promise<MockUser>;
+  activateAgencyRole: (data: AgencyExtraData) => Promise<MockUser>;
   checkAuth: () => Promise<void>;
   clearError: () => void;
   setPendingEmail: (email: string | null) => void;
@@ -168,6 +173,52 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       savedAt: Date.now(),
     });
     set({ user: updated, currentRole: newRole });
+  },
+
+  activateRenterRole: async () => {
+    const { user } = get();
+    if (!user) throw new Error("Not authenticated");
+    set({ isLoading: true, error: null });
+    try {
+      const updated = await mockActivateRenterRole(user.id);
+      const persistent = localStorage.getItem(PERSIST_FLAG_KEY) === "true";
+      const next: MockUser = { ...updated, last_active_role: "renter" };
+      writeSession({
+        user: next,
+        currentRole: "renter",
+        rememberMe: persistent,
+        savedAt: Date.now(),
+      });
+      set({ user: next, currentRole: "renter", isLoading: false });
+      return next;
+    } catch (err) {
+      const e = err as AuthError;
+      set({ isLoading: false, error: e.message || "Activation failed" });
+      throw err;
+    }
+  },
+
+  activateAgencyRole: async (data) => {
+    const { user } = get();
+    if (!user) throw new Error("Not authenticated");
+    set({ isLoading: true, error: null });
+    try {
+      const updated = await mockActivateAgencyRole(user.id, data);
+      const persistent = localStorage.getItem(PERSIST_FLAG_KEY) === "true";
+      const next: MockUser = { ...updated, last_active_role: "agency" };
+      writeSession({
+        user: next,
+        currentRole: "agency",
+        rememberMe: persistent,
+        savedAt: Date.now(),
+      });
+      set({ user: next, currentRole: "agency", isLoading: false });
+      return next;
+    } catch (err) {
+      const e = err as AuthError;
+      set({ isLoading: false, error: e.message || "Activation failed" });
+      throw err;
+    }
   },
 
   checkAuth: async () => {
