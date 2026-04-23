@@ -44,6 +44,171 @@ export type Database = {
         }
         Relationships: []
       }
+      agency_subscriptions: {
+        Row: {
+          cancel_at_period_end: boolean | null
+          created_at: string
+          current_period_end: string | null
+          current_period_start: string | null
+          id: string
+          last_payment_id: string | null
+          plan: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cancel_at_period_end?: boolean | null
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          last_payment_id?: string | null
+          plan?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cancel_at_period_end?: boolean | null
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          last_payment_id?: string | null
+          plan?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      agency_wallet_transactions: {
+        Row: {
+          amount: number
+          balance_after: number | null
+          created_at: string
+          currency: string
+          description: string | null
+          id: string
+          metadata: Json | null
+          method: string | null
+          reference: string | null
+          related_booking_id: string | null
+          related_payment_id: string | null
+          status: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          balance_after?: number | null
+          created_at?: string
+          currency?: string
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          method?: string | null
+          reference?: string | null
+          related_booking_id?: string | null
+          related_payment_id?: string | null
+          status?: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          balance_after?: number | null
+          created_at?: string
+          currency?: string
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          method?: string | null
+          reference?: string | null
+          related_booking_id?: string | null
+          related_payment_id?: string | null
+          status?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      agency_wallets: {
+        Row: {
+          balance: number
+          created_at: string
+          currency: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          balance?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          balance?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      agency_withdrawal_requests: {
+        Row: {
+          amount: number
+          bank_account_label: string | null
+          bank_iban: string | null
+          created_at: string
+          currency: string
+          id: string
+          notes: string | null
+          rejection_reason: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          bank_account_label?: string | null
+          bank_iban?: string | null
+          created_at?: string
+          currency?: string
+          id?: string
+          notes?: string | null
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          bank_account_label?: string | null
+          bank_iban?: string | null
+          created_at?: string
+          currency?: string
+          id?: string
+          notes?: string | null
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       audit_logs: {
         Row: {
           action: string
@@ -1022,6 +1187,7 @@ export type Database = {
           phone_verified: boolean | null
           rejection_reason: string | null
           selfie_with_id_url: string | null
+          subscription_plan: string | null
           trust_score: number | null
           updated_at: string
           user_type: string | null
@@ -1057,6 +1223,7 @@ export type Database = {
           phone_verified?: boolean | null
           rejection_reason?: string | null
           selfie_with_id_url?: string | null
+          subscription_plan?: string | null
           trust_score?: number | null
           updated_at?: string
           user_type?: string | null
@@ -1092,6 +1259,7 @@ export type Database = {
           phone_verified?: boolean | null
           rejection_reason?: string | null
           selfie_with_id_url?: string | null
+          subscription_plan?: string | null
           trust_score?: number | null
           updated_at?: string
           user_type?: string | null
@@ -1287,6 +1455,66 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      youcanpay_payments: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          customer_email: string | null
+          customer_name: string | null
+          id: string
+          paid_at: string | null
+          purpose: string
+          raw_response: Json | null
+          related_booking_id: string | null
+          related_subscription_id: string | null
+          related_wallet_user_id: string | null
+          status: string
+          token_id: string | null
+          transaction_id: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          id?: string
+          paid_at?: string | null
+          purpose: string
+          raw_response?: Json | null
+          related_booking_id?: string | null
+          related_subscription_id?: string | null
+          related_wallet_user_id?: string | null
+          status?: string
+          token_id?: string | null
+          transaction_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          id?: string
+          paid_at?: string | null
+          purpose?: string
+          raw_response?: Json | null
+          related_booking_id?: string | null
+          related_subscription_id?: string | null
+          related_wallet_user_id?: string | null
+          status?: string
+          token_id?: string | null
+          transaction_id?: string | null
+          updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
