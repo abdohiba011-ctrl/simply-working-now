@@ -11,6 +11,8 @@ import {
   Settings, Bell, Plug, LifeBuoy,
   ChevronLeft, ChevronRight, LogOut, Repeat,
 } from "lucide-react";
+import logoLight from "@/assets/motonita-logo.svg";
+import logoDark from "@/assets/motonita-logo-dark.svg";
 
 interface NavItem {
   to: string;
