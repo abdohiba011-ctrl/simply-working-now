@@ -579,6 +579,13 @@ export type Database = {
             referencedRelation: "bookings"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "booking_events_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "business_bookings_view"
+            referencedColumns: ["id"]
+          },
         ]
       }
       booking_notes: {
@@ -615,6 +622,13 @@ export type Database = {
             columns: ["booking_id"]
             isOneToOne: false
             referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_notes_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "business_bookings_view"
             referencedColumns: ["id"]
           },
         ]
@@ -686,6 +700,13 @@ export type Database = {
             columns: ["booking_id"]
             isOneToOne: false
             referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_payments_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "business_bookings_view"
             referencedColumns: ["id"]
           },
         ]
@@ -1520,7 +1541,128 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      business_bookings_view: {
+        Row: {
+          admin_status: string | null
+          amount_paid: number | null
+          assigned_at: string | null
+          assigned_to_business: string | null
+          bike_id: string | null
+          booking_status: string | null
+          cancelled_at: string | null
+          confirmed_at: string | null
+          contract_status: string | null
+          contract_url: string | null
+          created_at: string | null
+          customer_email: string | null
+          customer_name: string | null
+          customer_phone: string | null
+          delivery_fee: number | null
+          delivery_location: string | null
+          delivery_method: string | null
+          helmet_included: boolean | null
+          id: string | null
+          insurance_included: boolean | null
+          payment_method: string | null
+          payment_status: string | null
+          pickup_date: string | null
+          pickup_location: string | null
+          pickup_time: string | null
+          return_date: string | null
+          return_location: string | null
+          return_time: string | null
+          signed_contract_url: string | null
+          source: string | null
+          special_requests: string | null
+          total_days: number | null
+          total_price: number | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          admin_status?: string | null
+          amount_paid?: number | null
+          assigned_at?: string | null
+          assigned_to_business?: string | null
+          bike_id?: string | null
+          booking_status?: string | null
+          cancelled_at?: string | null
+          confirmed_at?: string | null
+          contract_status?: string | null
+          contract_url?: string | null
+          created_at?: string | null
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          delivery_fee?: number | null
+          delivery_location?: string | null
+          delivery_method?: string | null
+          helmet_included?: boolean | null
+          id?: string | null
+          insurance_included?: boolean | null
+          payment_method?: string | null
+          payment_status?: string | null
+          pickup_date?: string | null
+          pickup_location?: string | null
+          pickup_time?: string | null
+          return_date?: string | null
+          return_location?: string | null
+          return_time?: string | null
+          signed_contract_url?: string | null
+          source?: string | null
+          special_requests?: string | null
+          total_days?: number | null
+          total_price?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          admin_status?: string | null
+          amount_paid?: number | null
+          assigned_at?: string | null
+          assigned_to_business?: string | null
+          bike_id?: string | null
+          booking_status?: string | null
+          cancelled_at?: string | null
+          confirmed_at?: string | null
+          contract_status?: string | null
+          contract_url?: string | null
+          created_at?: string | null
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          delivery_fee?: number | null
+          delivery_location?: string | null
+          delivery_method?: string | null
+          helmet_included?: boolean | null
+          id?: string | null
+          insurance_included?: boolean | null
+          payment_method?: string | null
+          payment_status?: string | null
+          pickup_date?: string | null
+          pickup_location?: string | null
+          pickup_time?: string | null
+          return_date?: string | null
+          return_location?: string | null
+          return_time?: string | null
+          signed_contract_url?: string | null
+          source?: string | null
+          special_requests?: string | null
+          total_days?: number | null
+          total_price?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_bike_id_fkey"
+            columns: ["bike_id"]
+            isOneToOne: false
+            referencedRelation: "bikes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       has_role: {
