@@ -65,6 +65,11 @@ const AgencyDashboard = lazy(() => import("./pages/agency/Dashboard"));
 const AgencyBookings = lazy(() => import("./pages/agency/Bookings"));
 const AgencyBookingDetail = lazy(() => import("./pages/agency/BookingDetail"));
 const AgencyPlaceholder = lazy(() => import("./pages/agency/Placeholder"));
+const AgencyMotorbikes = lazy(() => import("./pages/agency/Motorbikes"));
+const AgencyMotorbikeDetail = lazy(() => import("./pages/agency/MotorbikeDetail"));
+const AgencyMotorbikeWizard = lazy(() => import("./pages/agency/MotorbikeWizard"));
+const AgencyMessages = lazy(() => import("./pages/agency/Messages"));
+const AgencyCalendar = lazy(() => import("./pages/agency/Calendar"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Verification = lazy(() => import("./pages/Verification"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
@@ -157,6 +162,12 @@ const App = () => (
                   <Route path="/agency/dashboard" element={<ProtectedRoute requireRole="business"><AgencyDashboard /></ProtectedRoute>} />
                   <Route path="/agency/bookings" element={<ProtectedRoute requireRole="business"><AgencyBookings /></ProtectedRoute>} />
                   <Route path="/agency/bookings/:id" element={<ProtectedRoute requireRole="business"><AgencyBookingDetail /></ProtectedRoute>} />
+                  <Route path="/agency/motorbikes" element={<ProtectedRoute requireRole="business"><AgencyMotorbikes /></ProtectedRoute>} />
+                  <Route path="/agency/motorbikes/new" element={<ProtectedRoute requireRole="business"><AgencyMotorbikeWizard /></ProtectedRoute>} />
+                  <Route path="/agency/motorbikes/:id/edit" element={<ProtectedRoute requireRole="business"><AgencyMotorbikeWizard /></ProtectedRoute>} />
+                  <Route path="/agency/motorbikes/:id" element={<ProtectedRoute requireRole="business"><AgencyMotorbikeDetail /></ProtectedRoute>} />
+                  <Route path="/agency/messages" element={<ProtectedRoute requireRole="business"><AgencyMessages /></ProtectedRoute>} />
+                  <Route path="/agency/calendar" element={<ProtectedRoute requireRole="business"><AgencyCalendar /></ProtectedRoute>} />
                   <Route path="/agency/:slug" element={<ProtectedRoute requireRole="business"><AgencyPlaceholder /></ProtectedRoute>} />
                   <Route path="/agency/:slug/:sub" element={<ProtectedRoute requireRole="business"><AgencyPlaceholder /></ProtectedRoute>} />
 
