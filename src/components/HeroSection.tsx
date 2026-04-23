@@ -233,7 +233,7 @@ export const HeroSection = memo(() => {
 
         {/* Explainer */}
         <p className="mt-8 max-w-[600px] text-center text-white/90 text-lg leading-relaxed whitespace-pre-line">
-          Find trusted motorbike and scooter rentals in less than 3 minutes{"\n"}
+          Find trusted motorbike and scooter rentals in less than 60 seconds{"\n"}
           Rent with Ease, Anywhere in Morocco
         </p>
 
