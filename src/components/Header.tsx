@@ -277,7 +277,7 @@ export const Header = memo(() => {
               {t('header.home')}
             </Link>
             <Link to="/affiliate" className="text-foreground hover:text-primary transition-colors font-medium">
-              {t('header.affiliate')}
+              {t('header.affiliate', { defaultValue: 'Refer & Earn' })}
             </Link>
             <Link to="/#faq" className="text-foreground hover:text-primary transition-colors font-medium">
               {t('header.faq')}
@@ -566,7 +566,7 @@ export const Header = memo(() => {
                 className="text-foreground transition-colors font-medium py-3 px-4 text-base rounded hover:bg-muted min-h-[44px] flex items-center"
                 onClick={() => setIsMenuOpen(false)}
               >
-                {t('header.affiliate')}
+                {t('header.affiliate', { defaultValue: 'Refer & Earn' })}
               </Link>
               
               <Link 
