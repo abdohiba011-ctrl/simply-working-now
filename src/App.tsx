@@ -95,7 +95,6 @@ const MockLogin = lazy(() => import("./pages/auth/Login"));
 const MockSignup = lazy(() => import("./pages/auth/Signup"));
 const MockVerifyEmail = lazy(() => import("./pages/auth/VerifyEmail"));
 const RentPlaceholder = lazy(() => import("./pages/auth/RentPlaceholder"));
-const VerifyEmailPlaceholder = lazy(() => import("./pages/auth/VerifyEmailPlaceholder"));
 const ForgotPasswordPlaceholder = lazy(() => import("./pages/auth/ForgotPasswordPlaceholder"));
 
 const queryClient = new QueryClient({
