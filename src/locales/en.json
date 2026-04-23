@@ -8,7 +8,11 @@
       "browse": "Browse Bikes",
       "details": "Booking Details"
     },
-    "steps": { "choose": "Choose Bike", "review": "Review", "pay": "Pay" },
+    "steps": {
+      "choose": "Choose Bike",
+      "review": "Review",
+      "pay": "Pay"
+    },
     "bike": {
       "manual": "Manual",
       "automatic": "Automatic",
@@ -121,16 +125,29 @@
     "tag": "Help & Information",
     "title": "Understanding the 10 DH Booking Fee",
     "subtitle": "Everything you need to know about how our reservation fee works.",
-    "breadcrumb": { "home": "Home", "help": "Help", "fee": "Booking Fee" },
+    "breadcrumb": {
+      "home": "Home",
+      "help": "Help",
+      "fee": "Booking Fee"
+    },
     "hero": {
       "headline": "When you book a bike with us, you pay a small 10 DH reservation fee to lock in your booking.",
       "support": "It's quick, transparent, and helps both you and the rental agency."
     },
     "covers": {
       "title": "What does the 10 DH fee cover?",
-      "reserve": { "title": "Reserves your bike", "body": "Your chosen bike is locked just for you and removed from availability for other renters." },
-      "confirm": { "title": "Confirms your booking with the agency", "body": "The agency receives your booking instantly and prepares your bike for pickup." },
-      "protect": { "title": "Protects the agency's time", "body": "Agencies trust the booking is real and won't be a no-show, so they can plan their day." }
+      "reserve": {
+        "title": "Reserves your bike",
+        "body": "Your chosen bike is locked just for you and removed from availability for other renters."
+      },
+      "confirm": {
+        "title": "Confirms your booking with the agency",
+        "body": "The agency receives your booking instantly and prepares your bike for pickup."
+      },
+      "protect": {
+        "title": "Protects the agency's time",
+        "body": "Agencies trust the booking is real and won't be a no-show, so they can plan their day."
+      }
     },
     "isNot": {
       "title": "What the fee is NOT",
@@ -190,21 +207,42 @@
     }
   },
   "common": {
-    "all": "All",
-    "refresh": "Refresh",
     "loading": "Loading...",
     "save": "Save",
     "cancel": "Cancel",
+    "confirm": "Confirm",
     "delete": "Delete",
     "edit": "Edit",
     "view": "View",
+    "close": "Close",
+    "next": "Next",
+    "previous": "Previous",
     "search": "Search",
     "filter": "Filter",
-    "close": "Close",
-    "confirm": "Confirm",
-    "back": "Back",
-    "next": "Next",
-    "days": "days"
+    "sort": "Sort",
+    "all": "All",
+    "yes": "Yes",
+    "no": "No",
+    "ok": "OK",
+    "error": "Error",
+    "success": "Success",
+    "warning": "Warning",
+    "info": "Info",
+    "required": "Required",
+    "optional": "Optional",
+    "or": "or",
+    "and": "and",
+    "from": "From",
+    "to": "To",
+    "date": "Date",
+    "time": "Time",
+    "status": "Status",
+    "actions": "Actions",
+    "details": "Details",
+    "total": "Total",
+    "price": "Price",
+    "free": "Free",
+    "currency": "DH"
   },
   "confirmationPage": {
     "title": "Booking Confirmed!",
@@ -819,12 +857,7 @@
   },
   "admin": {
     "pricing": "Pricing",
-    "status": {
-      "new": "New",
-      "reviewed": "Reviewed",
-      "confirmed": "Confirmed",
-      "rejected": "Rejected"
-    },
+    "status": "Status",
     "panel": "Admin Panel",
     "clients": "Clients",
     "individualOwners": "Individual Owners",
@@ -871,7 +904,6 @@
     "noClientsFound": "No clients found",
     "user": "User",
     "contact": "Contact",
-    "status": "Status",
     "joined": "Joined",
     "noName": "No name",
     "clientDetails": "Client Details",
@@ -1008,7 +1040,7 @@
     "transparentPricing": "Transparent Pricing",
     "simpleCommission": "Simple Commission Structure",
     "simpleCommissionDesc": "We only earn when you earn. Longer rentals = lower commission.",
-    "verificationRequired": "Verification Required",
+    "verificationRequired": "You need to verify your identity before applying as a business partner.",
     "verificationRequiredDesc": "To become a business partner, you must first verify your identity. This helps us maintain a trusted network of partners.",
     "verifyMyAccount": "Verify My Account",
     "ourGoal": "Our goal is to help you get long-term, high-value bookings and grow your business.",
@@ -1024,7 +1056,6 @@
     "shopReq3": "Physical shop location",
     "selectType": "Select",
     "completeVerificationFirst": "Complete Verification First",
-    "verificationRequired": "You need to verify your identity before applying as a business partner.",
     "goToVerification": "Go to Verification",
     "applyAs": "Apply as",
     "businessName": "Business Name",
@@ -1177,44 +1208,6 @@
     "fes": "Fes",
     "essaouira": "Essaouira",
     "chefchaouen": "Chefchaouen"
-  },
-  "common": {
-    "loading": "Loading...",
-    "save": "Save",
-    "cancel": "Cancel",
-    "confirm": "Confirm",
-    "delete": "Delete",
-    "edit": "Edit",
-    "view": "View",
-    "close": "Close",
-    "next": "Next",
-    "previous": "Previous",
-    "search": "Search",
-    "filter": "Filter",
-    "sort": "Sort",
-    "all": "All",
-    "yes": "Yes",
-    "no": "No",
-    "ok": "OK",
-    "error": "Error",
-    "success": "Success",
-    "warning": "Warning",
-    "info": "Info",
-    "required": "Required",
-    "optional": "Optional",
-    "or": "or",
-    "and": "and",
-    "from": "From",
-    "to": "To",
-    "date": "Date",
-    "time": "Time",
-    "status": "Status",
-    "actions": "Actions",
-    "details": "Details",
-    "total": "Total",
-    "price": "Price",
-    "free": "Free",
-    "currency": "DH"
   },
   "errors": {
     "generic": "An error occurred. Please try again.",
@@ -1634,8 +1627,15 @@
       "rating": "Highest rated",
       "price": "Lowest price"
     },
-    "view": { "grid": "Grid", "map": "Map" },
-    "status": { "open": "Open now", "closed": "Closed", "opensAt": "Opens at" },
+    "view": {
+      "grid": "Grid",
+      "map": "Map"
+    },
+    "status": {
+      "open": "Open now",
+      "closed": "Closed",
+      "opensAt": "Opens at"
+    },
     "empty": {
       "title": "No fixers match your filters",
       "subtitle": "Try widening your search or selecting a different specialty.",
@@ -2033,17 +2033,26 @@
     },
     "found": "found",
     "contract": {
+      "title": "Contract",
+      "status": "Contract Status",
       "notGenerated": "Not Generated",
       "generated": "Generated",
       "sent": "Sent",
-      "signed": "Signed"
+      "signed": "Signed",
+      "generate": "Generate Contract",
+      "regenerate": "Regenerate",
+      "regenerateWarning": "This will replace the existing contract.",
+      "view": "View",
+      "download": "Download",
+      "send": "Send to Customer"
     },
     "booking": {
-      "title": "Booking",
+      "title": "Booking Details",
       "pickup": "Pickup",
       "return": "Return",
       "duration": "Duration",
-      "delivery": "Delivery"
+      "delivery": "Delivery",
+      "deliveryLocation": "Delivery Location"
     },
     "bike": {
       "title": "Motorbike",
@@ -2077,6 +2086,7 @@
       "contractStatus": "Contract Status",
       "contract": "Contract",
       "assignment": "Assignment",
+      "status": "Status",
       "adminStatus": "Admin Status",
       "actions": "Actions"
     },
@@ -2250,44 +2260,12 @@
       "original": "Original Contract",
       "signed": "Signed Contract"
     },
-    "booking": {
-      "title": "Booking Details",
-      "pickup": "Pickup",
-      "return": "Return",
-      "duration": "Duration",
-      "delivery": "Delivery",
-      "deliveryLocation": "Delivery Location"
-    },
     "errors": {
       "loadFailed": "Failed to load bookings"
     },
     "pagination": {
       "rowsPerPage": "Rows",
       "page": "Page"
-    },
-    "table": {
-      "image": "Image",
-      "booking": "Booking",
-      "bookingId": "Booking ID",
-      "created": "Created",
-      "customer": "Customer",
-      "bike": "Bike",
-      "motorbike": "Motorbike",
-      "location": "Location",
-      "dates": "Dates",
-      "duration": "Duration",
-      "days": "days",
-      "price": "Price",
-      "totalPrice": "Total Price",
-      "bookingStatus": "Booking Status",
-      "paymentStatus": "Payment Status",
-      "payment": "Payment",
-      "contractStatus": "Contract Status",
-      "contract": "Contract",
-      "assignment": "Assignment",
-      "status": "Status",
-      "adminStatus": "Admin Status",
-      "actions": "Actions"
     },
     "actions": {
       "title": "Actions",
@@ -2427,20 +2405,6 @@
       "editNote": "Edit",
       "deleteNote": "Delete"
     },
-    "contract": {
-      "title": "Contract",
-      "status": "Contract Status",
-      "notGenerated": "Not Generated",
-      "generated": "Generated",
-      "sent": "Sent",
-      "signed": "Signed",
-      "generate": "Generate Contract",
-      "regenerate": "Regenerate",
-      "regenerateWarning": "This will replace the existing contract.",
-      "view": "View",
-      "download": "Download",
-      "send": "Send to Customer"
-    },
     "toasts": {
       "confirmSuccess": "Booking confirmed successfully",
       "confirmError": "Failed to confirm booking",
@@ -2519,7 +2483,6 @@
     "reset_password": "Reset your password",
     "reset_password_sub": "Enter your email and we'll send you a code to reset your password.",
     "send_reset_code": "Send reset code",
-    "sending": "Sending...",
     "back_to_login": "Back to login",
     "enter_reset_code": "Enter reset code",
     "reset_code_sent": "We sent a 6-digit code to",
@@ -2582,6 +2545,14 @@
     "logout_success": "Logged out successfully",
     "no_access": "You don't have access to that area",
     "profile_link": "Profile",
-    "settings_link": "Settings"
+    "settings_link": "Settings",
+    "login_continue_renter": "Log in to find your next ride",
+    "login_continue_business": "Log in to manage your fleet and bookings",
+    "welcome_business": "Welcome back, business partner",
+    "are_you_business": "Are you a business?",
+    "are_you_renter": "Are you a renter?",
+    "login_here": "Log in here",
+    "no_business_account": "Don't have a business account?",
+    "logged_in_as_renter": "You're logged in as a renter. Want to become a business?"
   }
 }

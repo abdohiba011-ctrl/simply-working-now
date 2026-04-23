@@ -8,7 +8,11 @@
       "browse": "Parcourir les motos",
       "details": "Détails de la réservation"
     },
-    "steps": { "choose": "Choisir la moto", "review": "Vérifier", "pay": "Payer" },
+    "steps": {
+      "choose": "Choisir la moto",
+      "review": "Vérifier",
+      "pay": "Payer"
+    },
     "bike": {
       "manual": "Manuelle",
       "automatic": "Automatique",
@@ -84,8 +88,7 @@
       "dates": "Les dates et heures de prise et retour sont correctes",
       "location": "Le lieu de prise vous convient",
       "license": "Vous possédez la catégorie de permis requise",
-      "phone": "Votre numéro de téléphone est joignable"
-    ,
+      "phone": "Votre numéro de téléphone est joignable",
       "note": "Les erreurs dans les détails de réservation sont traitées comme une annulation client — les 10 DH ne seront pas remboursés."
     },
     "faq": {
@@ -122,16 +125,29 @@
     "tag": "Aide & Informations",
     "title": "Comprendre les frais de réservation de 10 DH",
     "subtitle": "Tout ce que vous devez savoir sur le fonctionnement de nos frais de réservation.",
-    "breadcrumb": { "home": "Accueil", "help": "Aide", "fee": "Frais de réservation" },
+    "breadcrumb": {
+      "home": "Accueil",
+      "help": "Aide",
+      "fee": "Frais de réservation"
+    },
     "hero": {
       "headline": "Lorsque vous réservez une moto chez nous, vous payez de petits frais de réservation de 10 DH pour bloquer votre réservation.",
       "support": "C'est rapide, transparent, et utile à la fois pour vous et pour l'agence de location."
     },
     "covers": {
       "title": "Que couvrent les 10 DH ?",
-      "reserve": { "title": "Réserve votre moto", "body": "La moto choisie vous est verrouillée et retirée de la disponibilité pour les autres locataires." },
-      "confirm": { "title": "Confirme votre réservation auprès de l'agence", "body": "L'agence reçoit votre réservation instantanément et prépare votre moto pour la prise en charge." },
-      "protect": { "title": "Protège le temps de l'agence", "body": "Les agences savent que la réservation est sérieuse et qu'il n'y aura pas d'absence, donc elles peuvent organiser leur journée." }
+      "reserve": {
+        "title": "Réserve votre moto",
+        "body": "La moto choisie vous est verrouillée et retirée de la disponibilité pour les autres locataires."
+      },
+      "confirm": {
+        "title": "Confirme votre réservation auprès de l'agence",
+        "body": "L'agence reçoit votre réservation instantanément et prépare votre moto pour la prise en charge."
+      },
+      "protect": {
+        "title": "Protège le temps de l'agence",
+        "body": "Les agences savent que la réservation est sérieuse et qu'il n'y aura pas d'absence, donc elles peuvent organiser leur journée."
+      }
     },
     "isNot": {
       "title": "Ce que les frais ne sont PAS",
@@ -191,21 +207,42 @@
     }
   },
   "common": {
-    "all": "Tous",
-    "refresh": "Actualiser",
     "loading": "Chargement...",
-    "save": "Enregistrer",
+    "save": "Sauvegarder",
     "cancel": "Annuler",
+    "confirm": "Confirmer",
     "delete": "Supprimer",
     "edit": "Modifier",
     "view": "Voir",
+    "close": "Fermer",
+    "next": "Suivant",
+    "previous": "Précédent",
     "search": "Rechercher",
     "filter": "Filtrer",
-    "close": "Fermer",
-    "confirm": "Confirmer",
-    "back": "Retour",
-    "next": "Suivant",
-    "days": "jours"
+    "sort": "Trier",
+    "all": "Tous",
+    "yes": "Oui",
+    "no": "Non",
+    "ok": "OK",
+    "error": "Erreur",
+    "success": "Succès",
+    "warning": "Avertissement",
+    "info": "Info",
+    "required": "Requis",
+    "optional": "Optionnel",
+    "or": "ou",
+    "and": "et",
+    "from": "De",
+    "to": "À",
+    "date": "Date",
+    "time": "Heure",
+    "status": "Statut",
+    "actions": "Actions",
+    "details": "Détails",
+    "total": "Total",
+    "price": "Prix",
+    "free": "Gratuit",
+    "currency": "DH"
   },
   "confirmationPage": {
     "title": "Réservation Confirmée !",
@@ -820,12 +857,7 @@
   },
   "admin": {
     "pricing": "Tarification",
-    "status": {
-      "new": "Nouveau",
-      "reviewed": "Examiné",
-      "confirmed": "Confirmé",
-      "rejected": "Rejeté"
-    },
+    "status": "Statut",
     "panel": "Panneau d'Administration",
     "clients": "Clients",
     "individualOwners": "Propriétaires Individuels",
@@ -872,7 +904,6 @@
     "noClientsFound": "Aucun client trouvé",
     "user": "Utilisateur",
     "contact": "Contact",
-    "status": "Statut",
     "joined": "Inscrit",
     "noName": "Sans nom",
     "clientDetails": "Détails du Client",
@@ -1009,7 +1040,7 @@
     "transparentPricing": "Tarification Transparente",
     "simpleCommission": "Structure de Commission Simple",
     "simpleCommissionDesc": "Nous gagnons seulement quand vous gagnez. Locations plus longues = commission plus basse.",
-    "verificationRequired": "Vérification Requise",
+    "verificationRequired": "Vous devez vérifier votre identité avant de postuler en tant que partenaire commercial.",
     "verificationRequiredDesc": "Pour devenir partenaire commercial, vous devez d'abord vérifier votre identité. Cela nous aide à maintenir un réseau de partenaires de confiance.",
     "verifyMyAccount": "Vérifier Mon Compte",
     "ourGoal": "Notre objectif est de vous aider à obtenir des réservations à long terme et de grande valeur et de développer votre entreprise.",
@@ -1025,7 +1056,6 @@
     "shopReq3": "Emplacement physique du magasin",
     "selectType": "Sélectionner",
     "completeVerificationFirst": "Complétez d'Abord la Vérification",
-    "verificationRequired": "Vous devez vérifier votre identité avant de postuler en tant que partenaire commercial.",
     "goToVerification": "Aller à la Vérification",
     "applyAs": "Postuler en tant que",
     "businessName": "Nom de l'Entreprise",
@@ -1178,44 +1208,6 @@
     "fes": "Fès",
     "essaouira": "Essaouira",
     "chefchaouen": "Chefchaouen"
-  },
-  "common": {
-    "loading": "Chargement...",
-    "save": "Sauvegarder",
-    "cancel": "Annuler",
-    "confirm": "Confirmer",
-    "delete": "Supprimer",
-    "edit": "Modifier",
-    "view": "Voir",
-    "close": "Fermer",
-    "next": "Suivant",
-    "previous": "Précédent",
-    "search": "Rechercher",
-    "filter": "Filtrer",
-    "sort": "Trier",
-    "all": "Tous",
-    "yes": "Oui",
-    "no": "Non",
-    "ok": "OK",
-    "error": "Erreur",
-    "success": "Succès",
-    "warning": "Avertissement",
-    "info": "Info",
-    "required": "Requis",
-    "optional": "Optionnel",
-    "or": "ou",
-    "and": "et",
-    "from": "De",
-    "to": "À",
-    "date": "Date",
-    "time": "Heure",
-    "status": "Statut",
-    "actions": "Actions",
-    "details": "Détails",
-    "total": "Total",
-    "price": "Prix",
-    "free": "Gratuit",
-    "currency": "DH"
   },
   "errors": {
     "generic": "Une erreur s'est produite. Veuillez réessayer.",
@@ -1635,8 +1627,15 @@
       "rating": "Meilleure note",
       "price": "Prix bas"
     },
-    "view": { "grid": "Grille", "map": "Carte" },
-    "status": { "open": "Ouvert", "closed": "Fermé", "opensAt": "Ouvre à" },
+    "view": {
+      "grid": "Grille",
+      "map": "Carte"
+    },
+    "status": {
+      "open": "Ouvert",
+      "closed": "Fermé",
+      "opensAt": "Ouvre à"
+    },
     "empty": {
       "title": "Aucun réparateur trouvé",
       "subtitle": "Essayez d'élargir votre recherche ou changez de spécialité.",
@@ -1926,10 +1925,6 @@
     "dropoffAfterPickup": "L'heure de retour doit être après l'heure de prise en charge",
     "invalidTimeSelection": "Veuillez sélectionner des heures de prise en charge et de retour valides"
   },
-  "marketingBanner": {
-    "message": "Louez une moto pour 1 mois à",
-    "total": "Total seulement"
-  },
   "pricingPage": {
     "badge": "Tarifs Transparents",
     "title": "Tarification Simple et Transparente",
@@ -2038,17 +2033,26 @@
     },
     "found": "trouvé(s)",
     "contract": {
+      "title": "Contrat",
+      "status": "Statut du Contrat",
       "notGenerated": "Non Généré",
       "generated": "Généré",
       "sent": "Envoyé",
-      "signed": "Signé"
+      "signed": "Signé",
+      "generate": "Générer le Contrat",
+      "regenerate": "Regénérer",
+      "regenerateWarning": "Ceci remplacera le contrat existant.",
+      "view": "Voir",
+      "download": "Télécharger",
+      "send": "Envoyer au Client"
     },
     "booking": {
-      "title": "Réservation",
+      "title": "Détails de la Réservation",
       "pickup": "Retrait",
       "return": "Retour",
       "duration": "Durée",
-      "delivery": "Livraison"
+      "delivery": "Livraison",
+      "deliveryLocation": "Lieu de Livraison"
     },
     "bike": {
       "title": "Moto",
@@ -2270,14 +2274,6 @@
       "original": "Contrat Original",
       "signed": "Contrat Signé"
     },
-    "booking": {
-      "title": "Détails de la Réservation",
-      "pickup": "Retrait",
-      "return": "Retour",
-      "duration": "Durée",
-      "delivery": "Livraison",
-      "deliveryLocation": "Lieu de Livraison"
-    },
     "errors": {
       "loadFailed": "Échec du chargement des réservations"
     },
@@ -2408,20 +2404,6 @@
       "editNote": "Modifier",
       "deleteNote": "Supprimer"
     },
-    "contract": {
-      "title": "Contrat",
-      "status": "Statut du Contrat",
-      "notGenerated": "Non Généré",
-      "generated": "Généré",
-      "sent": "Envoyé",
-      "signed": "Signé",
-      "generate": "Générer le Contrat",
-      "regenerate": "Regénérer",
-      "regenerateWarning": "Ceci remplacera le contrat existant.",
-      "view": "Voir",
-      "download": "Télécharger",
-      "send": "Envoyer au Client"
-    },
     "toasts": {
       "confirmSuccess": "Réservation confirmée avec succès",
       "confirmError": "Échec de la confirmation de la réservation",
@@ -2500,7 +2482,6 @@
     "reset_password": "Réinitialisez votre mot de passe",
     "reset_password_sub": "Entrez votre email et nous vous enverrons un code pour réinitialiser votre mot de passe.",
     "send_reset_code": "Envoyer le code",
-    "sending": "Envoi...",
     "back_to_login": "Retour à la connexion",
     "enter_reset_code": "Entrez le code de réinitialisation",
     "reset_code_sent": "Nous avons envoyé un code à 6 chiffres à",
@@ -2563,6 +2544,14 @@
     "logout_success": "Déconnexion réussie",
     "no_access": "Vous n'avez pas accès à cette zone",
     "profile_link": "Profil",
-    "settings_link": "Paramètres"
+    "settings_link": "Paramètres",
+    "login_continue_renter": "Connectez-vous pour trouver votre prochaine moto",
+    "login_continue_business": "Connectez-vous pour gérer votre flotte et vos réservations",
+    "welcome_business": "Bon retour, partenaire pro",
+    "are_you_business": "Vous êtes une entreprise ?",
+    "are_you_renter": "Vous êtes locataire ?",
+    "login_here": "Connectez-vous ici",
+    "no_business_account": "Pas de compte professionnel ?",
+    "logged_in_as_renter": "Vous êtes connecté en tant que locataire. Devenir une entreprise ?"
   }
 }

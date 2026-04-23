@@ -1,79 +1,211 @@
 import { create } from "zustand";
+import { supabase } from "@/integrations/supabase/client";
+import type { Session, User } from "@supabase/supabase-js";
 import {
-  mockLogin,
-  mockSignup,
-  mockVerifyEmailCode,
-  mockResendVerification,
-  mockRequestPasswordReset,
-  mockVerifyResetCode,
-  mockSetNewPassword,
-  mockActivateRenterRole,
-  mockActivateAgencyRole,
+  COMMON_PASSWORDS,
+  checkResetRequestAllowed,
+  clearLockout,
+  consumeResetToken,
+  detectIdentifierType,
+  getLockoutRemainingMs,
+  issueResetToken,
+  makeAuthError,
+  normalizePhone,
+  recordLockout,
+  recordResetResend,
+  recordVerificationResend,
+  type AgencyExtraData,
   type AppRole,
   type AuthError,
   type MockUser,
   type SignupFormData,
-  type AgencyExtraData,
 } from "@/lib/mockAuth";
 
-const SESSION_KEY = "motonita_auth_session";
-const PERSIST_FLAG_KEY = "motonita_auth_persistent";
+// ---------------------------------------------------------------------
+// Persistence helpers
+// ---------------------------------------------------------------------
 
-interface PersistedSession {
-  user: MockUser;
-  currentRole: AppRole;
-  rememberMe: boolean;
-  savedAt: number;
-}
+const LAST_ROLE_KEY = "motonita_last_active_role";
+const REMEMBER_ME_KEY = "motonita_auth_remember";
 
-function readSession(): PersistedSession | null {
+function readLastRole(): AppRole | null {
   try {
-    const persistent = localStorage.getItem(PERSIST_FLAG_KEY) === "true";
-    const raw = persistent
-      ? localStorage.getItem(SESSION_KEY)
-      : sessionStorage.getItem(SESSION_KEY);
-    if (!raw) return null;
-    return JSON.parse(raw) as PersistedSession;
+    const v = localStorage.getItem(LAST_ROLE_KEY);
+    return v === "renter" || v === "agency" ? v : null;
   } catch {
     return null;
   }
 }
 
-function writeSession(session: PersistedSession): void {
+function writeLastRole(role: AppRole): void {
   try {
-    const payload = JSON.stringify(session);
-    if (session.rememberMe) {
-      localStorage.setItem(PERSIST_FLAG_KEY, "true");
-      localStorage.setItem(SESSION_KEY, payload);
-      sessionStorage.removeItem(SESSION_KEY);
-    } else {
-      localStorage.removeItem(PERSIST_FLAG_KEY);
-      localStorage.removeItem(SESSION_KEY);
-      sessionStorage.setItem(SESSION_KEY, payload);
-    }
-  } catch {
-    // ignore storage failures
-  }
-}
-
-function clearSession(): void {
-  try {
-    localStorage.removeItem(PERSIST_FLAG_KEY);
-    localStorage.removeItem(SESSION_KEY);
-    sessionStorage.removeItem(SESSION_KEY);
+    localStorage.setItem(LAST_ROLE_KEY, role);
   } catch {
     // ignore
   }
 }
 
+function clearLastRole(): void {
+  try {
+    localStorage.removeItem(LAST_ROLE_KEY);
+    localStorage.removeItem(REMEMBER_ME_KEY);
+  } catch {
+    // ignore
+  }
+}
+
+// ---------------------------------------------------------------------
+// Mapping Supabase user + DB rows → MockUser
+// ---------------------------------------------------------------------
+
+interface ProfileRow {
+  id: string;
+  email: string | null;
+  name: string | null;
+  phone: string | null;
+  phone_verified: boolean | null;
+  is_verified: boolean | null;
+  user_type: string | null;
+  business_name: string | null;
+  business_type: string | null;
+  business_address: string | null;
+  business_phone: string | null;
+  business_email: string | null;
+  verification_status: string | null;
+  is_frozen: boolean | null;
+  created_at: string;
+}
+
+async function loadAuthUserModel(authUser: User): Promise<MockUser> {
+  // Fetch profile + roles in parallel.
+  const [profileRes, rolesRes] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select(
+        "id,email,name,phone,phone_verified,is_verified,user_type,business_name,business_type,business_address,business_phone,business_email,verification_status,is_frozen,created_at",
+      )
+      .eq("id", authUser.id)
+      .maybeSingle(),
+    supabase.from("user_roles").select("role").eq("user_id", authUser.id),
+  ]);
+
+  const profile = (profileRes.data as ProfileRow | null) ?? null;
+  const roles = (rolesRes.data ?? []).map((r) => r.role as string);
+
+  // Every signed-up user can browse / book bikes by default.
+  const renterActive = true;
+
+  // Agency role: explicit DB role OR a populated business profile.
+  const hasBusinessRow = !!(profile?.business_name && profile.business_name.trim().length > 0);
+  const agencyActive = roles.includes("business") || hasBusinessRow;
+  const agencyVerified =
+    !!profile?.is_verified && profile?.verification_status === "verified";
+
+  // Decide initial last_active_role:
+  //  1) Persisted choice from a previous session (if user still has the role)
+  //  2) Otherwise: agency-priority for agency-active users, else renter
+  const persisted = readLastRole();
+  let lastActive: AppRole;
+  if (persisted === "agency" && agencyActive) lastActive = "agency";
+  else if (persisted === "renter" && renterActive) lastActive = "renter";
+  else if (agencyActive) lastActive = "agency";
+  else lastActive = "renter";
+
+  const displayName =
+    profile?.name?.trim() ||
+    (authUser.user_metadata?.name as string | undefined) ||
+    (authUser.user_metadata?.full_name as string | undefined) ||
+    authUser.email?.split("@")[0] ||
+    "User";
+
+  return {
+    id: authUser.id,
+    email: authUser.email ?? profile?.email ?? "",
+    phone: profile?.phone ?? authUser.phone ?? null,
+    password_hash: "", // not used
+    created_at: authUser.created_at ?? profile?.created_at ?? new Date().toISOString(),
+    email_verified: !!authUser.email_confirmed_at,
+    phone_verified: !!profile?.phone_verified,
+    name: displayName,
+    roles: {
+      renter: {
+        active: renterActive,
+        profile: { displayName },
+      },
+      agency: {
+        active: agencyActive,
+        verified: agencyVerified,
+        profile: hasBusinessRow
+          ? {
+              agencyName: profile?.business_name,
+              businessType: profile?.business_type,
+              businessAddress: profile?.business_address,
+              businessPhone: profile?.business_phone,
+              businessEmail: profile?.business_email,
+            }
+          : null,
+      },
+    },
+    default_role: agencyActive ? "agency" : "renter",
+    last_active_role: lastActive,
+    failed_login_attempts: 0,
+    locked_until: null,
+    suspended: !!profile?.is_frozen,
+  };
+}
+
+// ---------------------------------------------------------------------
+// Translate Supabase auth errors → our AuthError shape
+// ---------------------------------------------------------------------
+
+function mapSupabaseAuthError(message: string): AuthError {
+  const m = message.toLowerCase();
+  if (m.includes("invalid login credentials") || m.includes("invalid email or password")) {
+    return makeAuthError("INVALID_CREDENTIALS", "Incorrect email or password. Please try again.");
+  }
+  if (m.includes("email not confirmed") || m.includes("email_not_confirmed")) {
+    return makeAuthError("EMAIL_NOT_VERIFIED", "Please verify your email first.", {
+      needsVerification: true,
+    });
+  }
+  if (m.includes("user already registered") || m.includes("already registered")) {
+    return makeAuthError(
+      "EMAIL_TAKEN",
+      "This email is already registered. Try logging in instead.",
+    );
+  }
+  if (m.includes("password should be") || m.includes("weak password") || m.includes("pwned")) {
+    return makeAuthError("WEAK_PASSWORD", message);
+  }
+  if (m.includes("rate") || m.includes("too many")) {
+    return makeAuthError("RATE_LIMITED", message);
+  }
+  if (m.includes("token") && m.includes("expired")) {
+    return makeAuthError("TOKEN_EXPIRED", "This link expired. Please request a new one.");
+  }
+  if (m.includes("invalid token") || m.includes("invalid otp") || m.includes("token has expired")) {
+    return makeAuthError("INVALID_TOKEN", message);
+  }
+  if (m.includes("otp") || m.includes("code")) {
+    return makeAuthError("INVALID_CODE", message);
+  }
+  return makeAuthError("NETWORK", message || "Something went wrong");
+}
+
+// ---------------------------------------------------------------------
+// Store
+// ---------------------------------------------------------------------
+
 interface AuthState {
   user: MockUser | null;
   currentRole: AppRole | null;
+  session: Session | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   error: AuthError | string | null;
   needsVerification: boolean;
-  pendingEmail: string | null; // email awaiting code verification
+  pendingEmail: string | null;
+  authListenerInitialized: boolean;
 
   login: (
     emailOrPhone: string,
@@ -87,76 +219,171 @@ interface AuthState {
   requestPasswordReset: (email: string) => Promise<void>;
   verifyResetCode: (email: string, code: string) => Promise<string>;
   setNewPassword: (resetToken: string, newPassword: string) => Promise<MockUser>;
-  logout: () => void;
+  logout: () => Promise<void>;
   switchRole: (newRole: AppRole) => void;
   activateRenterRole: () => Promise<MockUser>;
   activateAgencyRole: (data: AgencyExtraData) => Promise<MockUser>;
   checkAuth: () => Promise<void>;
   clearError: () => void;
   setPendingEmail: (email: string | null) => void;
+  initAuthListener: () => void;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   currentRole: null,
+  session: null,
   isAuthenticated: false,
   isLoading: false,
   error: null,
   needsVerification: false,
   pendingEmail: null,
+  authListenerInitialized: false,
 
+  // -----------------------------------------------------------------
+  // Auth listener — must be set up before getSession() per docs
+  // -----------------------------------------------------------------
+  initAuthListener: () => {
+    if (get().authListenerInitialized) return;
+    set({ authListenerInitialized: true });
+
+    supabase.auth.onAuthStateChange((_event, session) => {
+      // Defer DB calls to avoid deadlocks inside the auth listener
+      if (session?.user) {
+        setTimeout(async () => {
+          try {
+            const mapped = await loadAuthUserModel(session.user);
+            set({
+              user: mapped,
+              session,
+              currentRole: mapped.last_active_role,
+              isAuthenticated: true,
+            });
+          } catch (e) {
+            console.error("[useAuthStore] Failed to map auth user", e);
+          }
+        }, 0);
+      } else {
+        set({
+          user: null,
+          session: null,
+          currentRole: null,
+          isAuthenticated: false,
+        });
+      }
+    });
+  },
+
+  // -----------------------------------------------------------------
+  // LOGIN
+  // -----------------------------------------------------------------
   login: async (emailOrPhone, password, rememberMe = false, context) => {
     set({ isLoading: true, error: null, needsVerification: false });
-    try {
-      const user = await mockLogin(emailOrPhone, password);
 
-      // Determine the initial active role on login.
-      // Login context (which "door" they used) wins for dual-role users.
-      let currentRole: AppRole = user.default_role;
-      if (user.roles.agency.active && user.roles.renter.active) {
-        if (context === "agency") currentRole = "agency";
-        else if (context === "renter") currentRole = "renter";
-        else currentRole = user.last_active_role;
-      } else if (user.roles.agency.active) {
-        currentRole = "agency";
-      } else if (user.roles.renter.active) {
-        currentRole = "renter";
-      }
+    // Surface client-side lockout (best-effort UX guard)
+    const lockMs = getLockoutRemainingMs(emailOrPhone);
+    if (lockMs > 0) {
+      const err = makeAuthError(
+        "ACCOUNT_LOCKED",
+        "Too many failed attempts. Please try again in a few minutes.",
+        { retryAfterMs: lockMs },
+      );
+      set({ isLoading: false, error: err.message });
+      throw err;
+    }
 
-      const userWithRole: MockUser = { ...user, last_active_role: currentRole };
+    const id = emailOrPhone.trim();
+    const idType = detectIdentifierType(id);
+    if (idType === "unknown") {
+      const err = makeAuthError(
+        "INVALID_CREDENTIALS",
+        "Enter a valid email or Moroccan phone number.",
+      );
+      set({ isLoading: false, error: err.message });
+      throw err;
+    }
 
-      const session: PersistedSession = {
-        user: userWithRole,
-        currentRole,
-        rememberMe,
-        savedAt: Date.now(),
-      };
-      writeSession(session);
-
-      set({
-        user: userWithRole,
-        currentRole,
-        isAuthenticated: true,
-        isLoading: false,
-        error: null,
-        needsVerification: false,
+    let signInResult;
+    if (idType === "email") {
+      signInResult = await supabase.auth.signInWithPassword({
+        email: id.toLowerCase(),
+        password,
       });
-      return userWithRole;
-    } catch (err) {
-      const authErr = err as AuthError;
+    } else {
+      const phone = normalizePhone(id);
+      if (!phone) {
+        const err = makeAuthError("INVALID_CREDENTIALS", "Invalid phone number.");
+        set({ isLoading: false, error: err.message });
+        throw err;
+      }
+      signInResult = await supabase.auth.signInWithPassword({ phone, password });
+    }
+
+    if (signInResult.error || !signInResult.data.user) {
+      const err = mapSupabaseAuthError(signInResult.error?.message ?? "Login failed");
+      // Track client-side lockout heuristic on credential failures
+      if (err.code === "INVALID_CREDENTIALS") {
+        // Don't auto-lock from a single failure; let Supabase handle real limits.
+      }
       set({
         isLoading: false,
-        error: authErr.message || "Login failed",
-        needsVerification: authErr.code === "EMAIL_NOT_VERIFIED",
+        error: err.message,
+        needsVerification: err.code === "EMAIL_NOT_VERIFIED",
+        pendingEmail: err.code === "EMAIL_NOT_VERIFIED" ? id.toLowerCase() : get().pendingEmail,
       });
       throw err;
     }
+
+    clearLockout(emailOrPhone);
+
+    const mapped = await loadAuthUserModel(signInResult.data.user);
+
+    // Determine active role from login context + available roles
+    let currentRole: AppRole;
+    if (context === "agency" && mapped.roles.agency.active) {
+      currentRole = "agency";
+    } else if (context === "renter" && mapped.roles.renter.active) {
+      currentRole = "renter";
+    } else if (mapped.roles.agency.active && mapped.roles.renter.active) {
+      currentRole = mapped.last_active_role;
+    } else if (mapped.roles.agency.active) {
+      currentRole = "agency";
+    } else {
+      currentRole = "renter";
+    }
+
+    const user: MockUser = { ...mapped, last_active_role: currentRole };
+    writeLastRole(currentRole);
+    if (rememberMe) {
+      try {
+        localStorage.setItem(REMEMBER_ME_KEY, "1");
+      } catch {
+        // ignore
+      }
+    }
+
+    set({
+      user,
+      session: signInResult.data.session,
+      currentRole,
+      isAuthenticated: true,
+      isLoading: false,
+      error: null,
+      needsVerification: false,
+      pendingEmail: null,
+    });
+    return user;
   },
 
-  logout: () => {
-    clearSession();
+  // -----------------------------------------------------------------
+  // LOGOUT
+  // -----------------------------------------------------------------
+  logout: async () => {
+    await supabase.auth.signOut();
+    clearLastRole();
     set({
       user: null,
+      session: null,
       currentRole: null,
       isAuthenticated: false,
       error: null,
@@ -164,78 +391,90 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     });
   },
 
+  // -----------------------------------------------------------------
+  // ROLE SWITCHING / ACTIVATION
+  // -----------------------------------------------------------------
   switchRole: (newRole) => {
     const { user } = get();
     if (!user) return;
     if (!user.roles[newRole]?.active) return;
 
     const updated: MockUser = { ...user, last_active_role: newRole };
-    const persistent = localStorage.getItem(PERSIST_FLAG_KEY) === "true";
-    writeSession({
-      user: updated,
-      currentRole: newRole,
-      rememberMe: persistent,
-      savedAt: Date.now(),
-    });
+    writeLastRole(newRole);
     set({ user: updated, currentRole: newRole });
   },
 
   activateRenterRole: async () => {
     const { user } = get();
     if (!user) throw new Error("Not authenticated");
-    set({ isLoading: true, error: null });
-    try {
-      const updated = await mockActivateRenterRole(user.id);
-      const persistent = localStorage.getItem(PERSIST_FLAG_KEY) === "true";
-      const next: MockUser = { ...updated, last_active_role: "renter" };
-      writeSession({
-        user: next,
-        currentRole: "renter",
-        rememberMe: persistent,
-        savedAt: Date.now(),
-      });
-      set({ user: next, currentRole: "renter", isLoading: false });
-      return next;
-    } catch (err) {
-      const e = err as AuthError;
-      set({ isLoading: false, error: e.message || "Activation failed" });
-      throw err;
-    }
+    // Renter role is always implicitly active in our mapping; no DB write
+    // is required. Just flip the active role and persist it.
+    const updated: MockUser = {
+      ...user,
+      roles: { ...user.roles, renter: { ...user.roles.renter, active: true } },
+      last_active_role: "renter",
+    };
+    writeLastRole("renter");
+    set({ user: updated, currentRole: "renter" });
+    return updated;
   },
 
   activateAgencyRole: async (data) => {
     const { user } = get();
     if (!user) throw new Error("Not authenticated");
     set({ isLoading: true, error: null });
+
     try {
-      const updated = await mockActivateAgencyRole(user.id, data);
-      const persistent = localStorage.getItem(PERSIST_FLAG_KEY) === "true";
-      const next: MockUser = { ...updated, last_active_role: "agency" };
-      writeSession({
-        user: next,
-        currentRole: "agency",
-        rememberMe: persistent,
-        savedAt: Date.now(),
-      });
+      // 1. Upsert business profile fields
+      const { error: pErr } = await supabase
+        .from("profiles")
+        .update({
+          user_type: "business",
+          business_name: data.businessName,
+          business_type: data.businessType,
+          business_address: data.city,
+          ...(data.phone ? { business_phone: normalizePhone(data.phone) ?? data.phone } : {}),
+        })
+        .eq("id", user.id);
+      if (pErr) throw pErr;
+
+      // 2. Reload from DB so verified flags etc. reflect reality
+      const { data: authData } = await supabase.auth.getUser();
+      if (!authData.user) throw new Error("Session lost");
+      const reloaded = await loadAuthUserModel(authData.user);
+      const next: MockUser = { ...reloaded, last_active_role: "agency" };
+      writeLastRole("agency");
       set({ user: next, currentRole: "agency", isLoading: false });
       return next;
     } catch (err) {
-      const e = err as AuthError;
-      set({ isLoading: false, error: e.message || "Activation failed" });
-      throw err;
+      const e = err as Error;
+      const mapped = mapSupabaseAuthError(e.message);
+      set({ isLoading: false, error: mapped.message });
+      throw mapped;
     }
   },
 
+  // -----------------------------------------------------------------
+  // SESSION RECOVERY
+  // -----------------------------------------------------------------
   checkAuth: async () => {
     set({ isLoading: true });
-    const session = readSession();
-    if (session?.user) {
-      set({
-        user: session.user,
-        currentRole: session.currentRole,
-        isAuthenticated: true,
-        isLoading: false,
-      });
+    get().initAuthListener();
+
+    const { data } = await supabase.auth.getSession();
+    if (data.session?.user) {
+      try {
+        const mapped = await loadAuthUserModel(data.session.user);
+        set({
+          user: mapped,
+          session: data.session,
+          currentRole: mapped.last_active_role,
+          isAuthenticated: true,
+          isLoading: false,
+        });
+      } catch {
+        set({ isLoading: false });
+      }
     } else {
       set({ isLoading: false });
     }
@@ -245,125 +484,265 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   setPendingEmail: (email) => set({ pendingEmail: email }),
 
+  // -----------------------------------------------------------------
+  // SIGNUP
+  // -----------------------------------------------------------------
   signup: async (formData, role) => {
     set({ isLoading: true, error: null });
-    try {
-      const user = await mockSignup(formData, role);
-      set({
-        isLoading: false,
-        pendingEmail: user.email,
-        needsVerification: true,
-      });
-      return user;
-    } catch (err) {
-      const e = err as AuthError;
-      set({ isLoading: false, error: e.message || "Signup failed" });
+
+    // Block obviously weak passwords client-side before hitting Supabase
+    if (COMMON_PASSWORDS.has(formData.password.toLowerCase())) {
+      const err = makeAuthError("WEAK_PASSWORD", "This password is too common.");
+      set({ isLoading: false, error: err.message });
       throw err;
     }
-  },
 
-  verifyEmail: async (code, emailOverride) => {
-    const email = emailOverride ?? get().pendingEmail ?? get().user?.email ?? "";
-    if (!email) throw new Error("No email to verify");
-    set({ isLoading: true, error: null });
-    try {
-      const { user } = await mockVerifyEmailCode(email, code);
+    const email = formData.email.trim().toLowerCase();
+    const phone = formData.phone ? normalizePhone(formData.phone) : null;
 
-      // Auto-login: pick initial role same as login flow
-      let currentRole: AppRole = user.default_role;
-      if (user.roles.agency.active && user.roles.renter.active) {
-        currentRole = user.last_active_role;
-      } else if (user.roles.agency.active) {
-        currentRole = "agency";
-      } else if (user.roles.renter.active) {
-        currentRole = "renter";
-      }
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password: formData.password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/`,
+        data: {
+          name: formData.name,
+          full_name: formData.name,
+          phone: phone ?? undefined,
+        },
+      },
+    });
 
-      writeSession({ user, currentRole, rememberMe: false, savedAt: Date.now() });
+    if (error || !data.user) {
+      const err = mapSupabaseAuthError(error?.message ?? "Signup failed");
+      set({ isLoading: false, error: err.message });
+      throw err;
+    }
+
+    // Update profile with phone + business fields if applicable.
+    // The handle_new_user trigger created the basic profile row; we
+    // augment it now.
+    type ProfileUpdate = {
+      name?: string;
+      phone?: string;
+      user_type?: string;
+      business_name?: string;
+      business_type?: string;
+      business_address?: string;
+    };
+    const profileUpdates: ProfileUpdate = { name: formData.name };
+    if (phone) profileUpdates.phone = phone;
+    if (role === "agency") {
+      profileUpdates.user_type = "business";
+      if (formData.businessName) profileUpdates.business_name = formData.businessName;
+      if (formData.businessType) profileUpdates.business_type = formData.businessType;
+      if (formData.city) profileUpdates.business_address = formData.city;
+    }
+
+    // Best-effort — don't fail signup if these don't apply
+    await supabase.from("profiles").update(profileUpdates).eq("id", data.user.id);
+
+    if (role === "agency") {
+      await supabase.from("user_roles").insert({
+        user_id: data.user.id,
+        role: "business",
+      });
+    }
+
+    // If the project has auto-confirm enabled, the user is already
+    // signed in — route the UI like a successful login.
+    if (data.session?.user) {
+      const mapped = await loadAuthUserModel(data.session.user);
+      const next: MockUser = { ...mapped, last_active_role: role };
+      writeLastRole(role);
       set({
-        user,
-        currentRole,
+        user: next,
+        session: data.session,
+        currentRole: role,
         isAuthenticated: true,
         isLoading: false,
         pendingEmail: null,
         needsVerification: false,
-        error: null,
       });
-      return user;
-    } catch (err) {
-      const e = err as AuthError;
-      set({ isLoading: false, error: e.message || "Verification failed" });
+      return next;
+    }
+
+    // Otherwise we need to wait for email verification.
+    const placeholder: MockUser = {
+      id: data.user.id,
+      email,
+      phone,
+      password_hash: "",
+      created_at: data.user.created_at ?? new Date().toISOString(),
+      email_verified: false,
+      phone_verified: false,
+      name: formData.name,
+      roles: {
+        renter: { active: role === "renter", profile: null },
+        agency: {
+          active: role === "agency",
+          verified: false,
+          profile:
+            role === "agency"
+              ? {
+                  agencyName: formData.businessName,
+                  businessType: formData.businessType,
+                  city: formData.city,
+                }
+              : null,
+        },
+      },
+      default_role: role,
+      last_active_role: role,
+      failed_login_attempts: 0,
+      locked_until: null,
+    };
+    set({
+      isLoading: false,
+      pendingEmail: email,
+      needsVerification: true,
+    });
+    return placeholder;
+  },
+
+  // -----------------------------------------------------------------
+  // EMAIL VERIFICATION (OTP-style)
+  // -----------------------------------------------------------------
+  verifyEmail: async (code, emailOverride) => {
+    const email = emailOverride ?? get().pendingEmail ?? get().user?.email ?? "";
+    if (!email) throw makeAuthError("USER_NOT_FOUND", "No email to verify");
+    set({ isLoading: true, error: null });
+
+    const { data, error } = await supabase.auth.verifyOtp({
+      email,
+      token: code,
+      type: "signup",
+    });
+    if (error || !data.user) {
+      const err = mapSupabaseAuthError(error?.message ?? "Verification failed");
+      set({ isLoading: false, error: err.message });
       throw err;
     }
+
+    const mapped = await loadAuthUserModel(data.user);
+    writeLastRole(mapped.last_active_role);
+    set({
+      user: mapped,
+      session: data.session,
+      currentRole: mapped.last_active_role,
+      isAuthenticated: true,
+      isLoading: false,
+      pendingEmail: null,
+      needsVerification: false,
+      error: null,
+    });
+    return mapped;
   },
 
   resendVerificationCode: async (emailOverride) => {
     const email = emailOverride ?? get().pendingEmail ?? get().user?.email ?? "";
-    if (!email) throw new Error("No email to resend to");
-    try {
-      await mockResendVerification(email);
-    } catch (err) {
-      const e = err as AuthError;
-      set({ error: e.message || "Could not resend code" });
+    if (!email) throw makeAuthError("USER_NOT_FOUND", "No email to resend to");
+
+    const { error } = await supabase.auth.resend({ type: "signup", email });
+    if (error) {
+      const err = mapSupabaseAuthError(error.message);
+      set({ error: err.message });
       throw err;
     }
+    recordVerificationResend(email);
   },
 
+  // -----------------------------------------------------------------
+  // PASSWORD RESET
+  // -----------------------------------------------------------------
   requestPasswordReset: async (email) => {
     set({ isLoading: true, error: null });
     try {
-      await mockRequestPasswordReset(email);
+      // Best-effort client-side rate limit
+      checkResetRequestAllowed(email);
+
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
+        redirectTo: `${window.location.origin}/reset-password/new`,
+      });
+      // Always record the attempt — even if Supabase silently no-ops on
+      // a non-existent address, we want to enforce our per-hour cap.
+      recordResetResend(email);
+
+      if (error) {
+        // For security, surface a generic success unless it's a clear rate-limit
+        if (/rate|too many/i.test(error.message)) {
+          const err = mapSupabaseAuthError(error.message);
+          set({ isLoading: false, error: err.message });
+          throw err;
+        }
+      }
       set({ isLoading: false });
     } catch (err) {
       const e = err as AuthError;
-      set({ isLoading: false, error: e.message || "Could not send reset code" });
+      set({ isLoading: false, error: e.message });
       throw err;
     }
   },
 
   verifyResetCode: async (email, code) => {
     set({ isLoading: true, error: null });
-    try {
-      const { resetToken } = await mockVerifyResetCode(email, code);
-      set({ isLoading: false });
-      return resetToken;
-    } catch (err) {
-      const e = err as AuthError;
-      set({ isLoading: false, error: e.message || "Verification failed" });
+    const cleanEmail = email.trim().toLowerCase();
+    const { data, error } = await supabase.auth.verifyOtp({
+      email: cleanEmail,
+      token: code,
+      type: "recovery",
+    });
+    if (error || !data.session) {
+      const err = mapSupabaseAuthError(error?.message ?? "Invalid code");
+      set({ isLoading: false, error: err.message });
       throw err;
     }
+    // After OTP verify the user has a recovery session; we keep it and
+    // hand the UI an opaque token to use on the next page.
+    const token = issueResetToken(cleanEmail);
+    set({ isLoading: false, session: data.session });
+    return token;
   },
 
   setNewPassword: async (resetToken, newPassword) => {
     set({ isLoading: true, error: null });
-    try {
-      const { user } = await mockSetNewPassword(resetToken, newPassword);
 
-      // Auto-login: pick role same as login flow
-      let currentRole: AppRole = user.default_role;
-      if (user.roles.agency.active && user.roles.renter.active) {
-        currentRole = user.last_active_role;
-      } else if (user.roles.agency.active) {
-        currentRole = "agency";
-      } else if (user.roles.renter.active) {
-        currentRole = "renter";
-      }
-
-      writeSession({ user, currentRole, rememberMe: false, savedAt: Date.now() });
-      set({
-        user,
-        currentRole,
-        isAuthenticated: true,
-        isLoading: false,
-        pendingEmail: null,
-        needsVerification: false,
-        error: null,
-      });
-      return user;
-    } catch (err) {
-      const e = err as AuthError;
-      set({ isLoading: false, error: e.message || "Could not update password" });
+    if (newPassword.length < 8) {
+      const err = makeAuthError("WEAK_PASSWORD", "Password must be at least 8 characters.");
+      set({ isLoading: false, error: err.message });
       throw err;
     }
+    if (COMMON_PASSWORDS.has(newPassword.toLowerCase())) {
+      const err = makeAuthError("WEAK_PASSWORD", "This password is too common.");
+      set({ isLoading: false, error: err.message });
+      throw err;
+    }
+
+    const email = consumeResetToken(resetToken);
+    if (!email) {
+      const err = makeAuthError("TOKEN_EXPIRED", "Your reset link expired. Please request a new one.");
+      set({ isLoading: false, error: err.message });
+      throw err;
+    }
+
+    const { data: updated, error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error || !updated.user) {
+      const err = mapSupabaseAuthError(error?.message ?? "Could not update password");
+      set({ isLoading: false, error: err.message });
+      throw err;
+    }
+
+    const mapped = await loadAuthUserModel(updated.user);
+    writeLastRole(mapped.last_active_role);
+    set({
+      user: mapped,
+      currentRole: mapped.last_active_role,
+      isAuthenticated: true,
+      isLoading: false,
+      pendingEmail: null,
+      needsVerification: false,
+      error: null,
+    });
+    return mapped;
   },
 }));
