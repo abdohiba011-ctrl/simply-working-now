@@ -180,4 +180,70 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   clearError: () => set({ error: null, needsVerification: false }),
+
+  setPendingEmail: (email) => set({ pendingEmail: email }),
+
+  signup: async (formData, role) => {
+    set({ isLoading: true, error: null });
+    try {
+      const user = await mockSignup(formData, role);
+      set({
+        isLoading: false,
+        pendingEmail: user.email,
+        needsVerification: true,
+      });
+      return user;
+    } catch (err) {
+      const e = err as AuthError;
+      set({ isLoading: false, error: e.message || "Signup failed" });
+      throw err;
+    }
+  },
+
+  verifyEmail: async (code, emailOverride) => {
+    const email = emailOverride ?? get().pendingEmail ?? get().user?.email ?? "";
+    if (!email) throw new Error("No email to verify");
+    set({ isLoading: true, error: null });
+    try {
+      const { user } = await mockVerifyEmailCode(email, code);
+
+      // Auto-login: pick initial role same as login flow
+      let currentRole: AppRole = user.default_role;
+      if (user.roles.agency.active && user.roles.renter.active) {
+        currentRole = user.last_active_role;
+      } else if (user.roles.agency.active) {
+        currentRole = "agency";
+      } else if (user.roles.renter.active) {
+        currentRole = "renter";
+      }
+
+      writeSession({ user, currentRole, rememberMe: false, savedAt: Date.now() });
+      set({
+        user,
+        currentRole,
+        isAuthenticated: true,
+        isLoading: false,
+        pendingEmail: null,
+        needsVerification: false,
+        error: null,
+      });
+      return user;
+    } catch (err) {
+      const e = err as AuthError;
+      set({ isLoading: false, error: e.message || "Verification failed" });
+      throw err;
+    }
+  },
+
+  resendVerificationCode: async (emailOverride) => {
+    const email = emailOverride ?? get().pendingEmail ?? get().user?.email ?? "";
+    if (!email) throw new Error("No email to resend to");
+    try {
+      await mockResendVerification(email);
+    } catch (err) {
+      const e = err as AuthError;
+      set({ error: e.message || "Could not resend code" });
+      throw err;
+    }
+  },
 }));
