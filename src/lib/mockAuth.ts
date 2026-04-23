@@ -793,3 +793,52 @@ export function isResetTokenValid(token: string): boolean {
   return false;
 }
 
+
+// =====================================================================
+// ROLE ACTIVATION
+// =====================================================================
+
+export interface AgencyExtraData {
+  businessName: string;
+  businessType: string;
+  city: string;
+  numBikes: string;
+  phone?: string;
+}
+
+export async function mockActivateRenterRole(userId: string): Promise<MockUser> {
+  await delay(400, 800);
+  let target: MockUser | undefined;
+  for (const u of users.values()) if (u.id === userId) { target = u; break; }
+  if (!target) throw makeError("USER_NOT_FOUND", "We couldn't find that account.");
+  target.roles.renter = {
+    active: true,
+    profile: target.roles.renter.profile ?? { displayName: target.name },
+  };
+  return { ...target, roles: { ...target.roles } };
+}
+
+export async function mockActivateAgencyRole(
+  userId: string,
+  data: AgencyExtraData,
+): Promise<MockUser> {
+  await delay(500, 1000);
+  let target: MockUser | undefined;
+  for (const u of users.values()) if (u.id === userId) { target = u; break; }
+  if (!target) throw makeError("USER_NOT_FOUND", "We couldn't find that account.");
+  target.roles.agency = {
+    active: true,
+    verified: false,
+    profile: {
+      agencyName: data.businessName,
+      businessType: data.businessType,
+      city: data.city,
+      numBikes: data.numBikes,
+    },
+  };
+  if (data.phone && !target.phone) {
+    const norm = normalizePhone(data.phone);
+    if (norm) target.phone = norm;
+  }
+  return { ...target, roles: { ...target.roles } };
+}
