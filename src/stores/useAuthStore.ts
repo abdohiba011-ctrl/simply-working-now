@@ -1,5 +1,14 @@
 import { create } from "zustand";
-import { mockLogin, type AppRole, type AuthError, type MockUser } from "@/lib/mockAuth";
+import {
+  mockLogin,
+  mockSignup,
+  mockVerifyEmailCode,
+  mockResendVerification,
+  type AppRole,
+  type AuthError,
+  type MockUser,
+  type SignupFormData,
+} from "@/lib/mockAuth";
 
 const SESSION_KEY = "motonita_auth_session";
 const PERSIST_FLAG_KEY = "motonita_auth_persistent";
@@ -58,16 +67,21 @@ interface AuthState {
   isLoading: boolean;
   error: AuthError | string | null;
   needsVerification: boolean;
+  pendingEmail: string | null; // email awaiting code verification
 
   login: (
     emailOrPhone: string,
     password: string,
     rememberMe?: boolean,
   ) => Promise<MockUser>;
+  signup: (formData: SignupFormData, role: AppRole) => Promise<MockUser>;
+  verifyEmail: (code: string, emailOverride?: string) => Promise<MockUser>;
+  resendVerificationCode: (emailOverride?: string) => Promise<void>;
   logout: () => void;
   switchRole: (newRole: AppRole) => void;
   checkAuth: () => Promise<void>;
   clearError: () => void;
+  setPendingEmail: (email: string | null) => void;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -77,6 +91,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   isLoading: false,
   error: null,
   needsVerification: false,
+  pendingEmail: null,
 
   login: async (emailOrPhone, password, rememberMe = false) => {
     set({ isLoading: true, error: null, needsVerification: false });
@@ -165,4 +180,70 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   clearError: () => set({ error: null, needsVerification: false }),
+
+  setPendingEmail: (email) => set({ pendingEmail: email }),
+
+  signup: async (formData, role) => {
+    set({ isLoading: true, error: null });
+    try {
+      const user = await mockSignup(formData, role);
+      set({
+        isLoading: false,
+        pendingEmail: user.email,
+        needsVerification: true,
+      });
+      return user;
+    } catch (err) {
+      const e = err as AuthError;
+      set({ isLoading: false, error: e.message || "Signup failed" });
+      throw err;
+    }
+  },
+
+  verifyEmail: async (code, emailOverride) => {
+    const email = emailOverride ?? get().pendingEmail ?? get().user?.email ?? "";
+    if (!email) throw new Error("No email to verify");
+    set({ isLoading: true, error: null });
+    try {
+      const { user } = await mockVerifyEmailCode(email, code);
+
+      // Auto-login: pick initial role same as login flow
+      let currentRole: AppRole = user.default_role;
+      if (user.roles.agency.active && user.roles.renter.active) {
+        currentRole = user.last_active_role;
+      } else if (user.roles.agency.active) {
+        currentRole = "agency";
+      } else if (user.roles.renter.active) {
+        currentRole = "renter";
+      }
+
+      writeSession({ user, currentRole, rememberMe: false, savedAt: Date.now() });
+      set({
+        user,
+        currentRole,
+        isAuthenticated: true,
+        isLoading: false,
+        pendingEmail: null,
+        needsVerification: false,
+        error: null,
+      });
+      return user;
+    } catch (err) {
+      const e = err as AuthError;
+      set({ isLoading: false, error: e.message || "Verification failed" });
+      throw err;
+    }
+  },
+
+  resendVerificationCode: async (emailOverride) => {
+    const email = emailOverride ?? get().pendingEmail ?? get().user?.email ?? "";
+    if (!email) throw new Error("No email to resend to");
+    try {
+      await mockResendVerification(email);
+    } catch (err) {
+      const e = err as AuthError;
+      set({ error: e.message || "Could not resend code" });
+      throw err;
+    }
+  },
 }));
