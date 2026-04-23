@@ -163,12 +163,20 @@ export default function Login({ context = "renter" }: LoginProps) {
             className="text-2xl font-bold tracking-tight"
             style={{ color: "#163300" }}
           >
-            {t("mockAuth.welcome_back", { defaultValue: "Welcome back" })}
+            {context === "agency"
+              ? t("mockAuth.welcome_business", {
+                  defaultValue: "Welcome back, business partner",
+                })
+              : t("mockAuth.welcome_back", { defaultValue: "Welcome back" })}
           </h1>
           <p className="text-sm" style={{ color: "rgba(22,51,0,0.7)" }}>
-            {t("mockAuth.login_continue", {
-              defaultValue: "Log in to continue to Motonita",
-            })}
+            {context === "agency"
+              ? t("mockAuth.login_continue_business", {
+                  defaultValue: "Log in to manage your fleet and bookings",
+                })
+              : t("mockAuth.login_continue_renter", {
+                  defaultValue: "Log in to find your next ride",
+                })}
           </p>
         </div>
 
@@ -313,14 +321,49 @@ export default function Login({ context = "renter" }: LoginProps) {
 
           {/* Signup */}
           <p className="text-center text-sm" style={{ color: "rgba(22,51,0,0.75)" }}>
-            {t("mockAuth.no_account", { defaultValue: "Don't have an account?" })}{" "}
+            {context === "agency"
+              ? t("mockAuth.no_business_account", {
+                  defaultValue: "Don't have a business account?",
+                })
+              : t("mockAuth.no_account", { defaultValue: "Don't have an account?" })}{" "}
             <Link
-              to="/signup"
+              to={context === "agency" ? "/agency/signup" : "/signup"}
               className="font-medium hover:underline"
               style={{ color: "#163300" }}
             >
               {t("mockAuth.signup", { defaultValue: "Sign up" })}
             </Link>
+          </p>
+
+          {/* Cross-door link */}
+          <p className="text-center text-xs" style={{ color: "rgba(22,51,0,0.6)" }}>
+            {context === "agency" ? (
+              <>
+                {t("mockAuth.are_you_renter", {
+                  defaultValue: "Are you a renter?",
+                })}{" "}
+                <Link
+                  to="/login"
+                  className="hover:underline font-medium"
+                  style={{ color: "#163300" }}
+                >
+                  {t("mockAuth.login_here", { defaultValue: "Log in here" })}
+                </Link>
+              </>
+            ) : (
+              <>
+                {t("mockAuth.are_you_business", {
+                  defaultValue: "Are you a business?",
+                })}{" "}
+                <Link
+                  to="/agency/login"
+                  className="hover:underline font-medium"
+                  style={{ color: "#163300" }}
+                >
+                  {t("mockAuth.login_here", { defaultValue: "Log in here" })}
+                </Link>
+              </>
+            )}
           </p>
         </form>
       </div>
