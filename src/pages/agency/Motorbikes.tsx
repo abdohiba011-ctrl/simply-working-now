@@ -52,11 +52,9 @@ const Motorbikes = () => {
               title={bikes.length === 0 ? "No motorbikes yet" : "No matches"}
               description={bikes.length === 0 ? "Add your first motorbike to start receiving bookings." : "Try a different search."}
               action={
-                bikes.length === 0 ? (
-                  <Button onClick={() => navigate("/agency/motorbikes/new")}>
-                    <Plus className="mr-2 h-4 w-4" /> Add motorbike
-                  </Button>
-                ) : undefined
+                bikes.length === 0
+                  ? { label: "Add motorbike", onClick: () => navigate("/agency/motorbikes/new") }
+                  : undefined
               }
             />
           </Card>
