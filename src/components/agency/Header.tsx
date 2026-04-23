@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { Search, Bell, HelpCircle, Wallet, Menu, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAgencyStore } from "@/stores/useAgencyStore";
+import { useAgencyWallet } from "@/hooks/useAgencyData";
 import { useLanguageStore, Language } from "@/stores/useLanguageStore";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
@@ -46,7 +47,8 @@ const LANGS: { code: Language; flag: string; label: string }[] = [
 export const Header = ({ onMobileMenu }: HeaderProps) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const balance = useAgencyStore((s) => s.walletBalance);
+  const { wallet } = useAgencyWallet();
+  const balance = Number(wallet?.balance || 0);
   const { language, setLanguage } = useLanguageStore();
   const [cmdOpen, setCmdOpen] = useState(false);
 
@@ -117,10 +119,10 @@ export const Header = ({ onMobileMenu }: HeaderProps) => {
           variant="outline"
           size="sm"
           className="gap-2 border-primary/30 hover:bg-primary/10"
-          onClick={() => navigate("/agency/wallet")}
+          onClick={() => navigate("/agency/finance#wallet")}
         >
           <Wallet className="h-4 w-4 text-primary" />
-          <span className="font-semibold">{balance} MAD</span>
+          <span className="font-semibold">{balance.toLocaleString()} MAD</span>
           <span className="hidden text-xs text-muted-foreground sm:inline">Top up</span>
         </Button>
 
