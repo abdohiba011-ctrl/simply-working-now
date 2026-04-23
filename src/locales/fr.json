@@ -2444,5 +2444,22 @@
     "refreshPage": "Actualiser la page",
     "goToHome": "Aller à l'accueil",
     "persistsMessage": "Si ce problème persiste, veuillez contacter le support."
+  },
+  "mockAuth": {
+    "welcome_back": "Bon retour",
+    "login_continue": "Connectez-vous pour continuer sur Motonita",
+    "email_or_phone": "Email ou téléphone",
+    "password": "Mot de passe",
+    "remember_me": "Se souvenir de moi pendant 30 jours",
+    "forgot_password": "Mot de passe oublié ?",
+    "login": "Se connecter",
+    "logging_in": "Connexion...",
+    "no_account": "Pas de compte ?",
+    "signup": "S'inscrire",
+    "welcome_toast": "Content de vous revoir, {{name}} !",
+    "resend_verification": "Renvoyer l'email de vérification",
+    "verification_sent": "Email de vérification envoyé",
+    "sending": "Envoi...",
+    "try_again_in": "Réessayez dans"
   }
 }

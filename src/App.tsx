@@ -91,6 +91,10 @@ const Verification = lazy(() => import("./pages/Verification"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const TermsConditions = lazy(() => import("./pages/TermsConditions"));
 const CookiesPolicy = lazy(() => import("./pages/CookiesPolicy"));
+const MockLogin = lazy(() => import("./pages/auth/Login"));
+const RentPlaceholder = lazy(() => import("./pages/auth/RentPlaceholder"));
+const VerifyEmailPlaceholder = lazy(() => import("./pages/auth/VerifyEmailPlaceholder"));
+const ForgotPasswordPlaceholder = lazy(() => import("./pages/auth/ForgotPasswordPlaceholder"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -136,8 +140,11 @@ const App = () => (
                   <Route path="/quarterly" element={<Quarterly />} />
                   <Route path="/gps-tracking" element={<GPSTracking />} />
                   <Route path="/auth" element={<Auth />} />
-                  <Route path="/login" element={<Auth />} />
+                  <Route path="/login" element={<MockLogin />} />
                   <Route path="/signup" element={<Auth />} />
+                  <Route path="/rent" element={<RentPlaceholder />} />
+                  <Route path="/verify-email" element={<VerifyEmailPlaceholder />} />
+                  <Route path="/forgot-password" element={<ForgotPasswordPlaceholder />} />
                   <Route path="/become-business" element={<BecomeBusiness />} />
                   <Route path="/verification" element={<ProtectedRoute><Verification /></ProtectedRoute>} />
                   <Route path="/privacy-policy" element={<PrivacyPolicy />} />
