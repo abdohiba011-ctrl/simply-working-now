@@ -20,6 +20,11 @@ import {
   type AuthError,
 } from "@/lib/mockAuth";
 import { cn } from "@/lib/utils";
+import {
+  navigateAfterAuth,
+  queueBecomeBusinessPrompt,
+  type LoginContext,
+} from "@/lib/routeAfterAuth";
 
 const PHONE_REGEX = /^(\+212|00212|0)[67]\d{8}$/;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -46,7 +51,11 @@ function formatRemaining(ms: number): string {
   return `${minutes}m ${seconds.toString().padStart(2, "0")}s`;
 }
 
-export default function Login() {
+interface LoginProps {
+  context?: LoginContext;
+}
+
+export default function Login({ context = "renter" }: LoginProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const login = useAuthStore((s) => s.login);
@@ -70,10 +79,10 @@ export default function Login() {
   const identifierValue = form.watch("identifier");
   const idType = useMemo(() => detectIdentifierType(identifierValue ?? ""), [identifierValue]);
 
-  // If already authenticated, send them home
+  // If already authenticated, send them to the right place
   useEffect(() => {
     if (isAuthenticated && user) {
-      routeAfterLogin();
+      navigateAfterAuth(navigate, user, context);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated]);
@@ -91,46 +100,38 @@ export default function Login() {
     return () => window.clearInterval(id);
   }, [form]);
 
-  function routeAfterLogin() {
-    const u = useAuthStore.getState().user;
-    if (!u) return;
-
-    if (!u.email_verified) {
-      navigate("/verify-email", { replace: true });
-      return;
-    }
-
-    const hasRenter = u.roles.renter.active;
-    const hasAgency = u.roles.agency.active;
-
-    if (hasRenter && !hasAgency) {
-      navigate("/rent", { replace: true });
-    } else if (hasAgency && !hasRenter) {
-      navigate(u.roles.agency.verified ? "/agency/dashboard" : "/agency/verification", {
-        replace: true,
-      });
-    } else if (hasRenter && hasAgency) {
-      const persistent = localStorage.getItem("motonita_auth_persistent") === "true";
-      if (u.last_active_role === "renter" && persistent) {
-        navigate("/rent", { replace: true });
-      } else {
-        navigate(u.roles.agency.verified ? "/agency/dashboard" : "/agency/verification", {
-          replace: true,
-        });
-      }
-    } else {
-      navigate("/rent", { replace: true });
-    }
-  }
-
   const onSubmit = async (values: LoginValues) => {
     clearError();
     try {
-      const loggedIn = await login(values.identifier, values.password, values.rememberMe);
-      toast.success(
-        t("mockAuth.welcome_toast", { name: loggedIn.name, defaultValue: `Welcome back, ${loggedIn.name}!` }),
+      const loggedIn = await login(
+        values.identifier,
+        values.password,
+        values.rememberMe,
+        context,
       );
-      routeAfterLogin();
+      toast.success(
+        t("mockAuth.welcome_toast", {
+          name: loggedIn.name,
+          defaultValue: `Welcome back, ${loggedIn.name}!`,
+        }),
+      );
+
+      // Cross-door message: renter-only user logged in via /agency/login
+      if (
+        context === "agency" &&
+        !loggedIn.roles.agency.active &&
+        loggedIn.roles.renter.active
+      ) {
+        queueBecomeBusinessPrompt();
+        toast.message(
+          t("mockAuth.logged_in_as_renter", {
+            defaultValue:
+              "You're logged in as a renter. Want to become a business?",
+          }),
+        );
+      }
+
+      navigateAfterAuth(navigate, loggedIn, context);
     } catch (err) {
       const e = err as AuthError;
       if (e.code === "ACCOUNT_LOCKED") {
