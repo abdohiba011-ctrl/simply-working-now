@@ -81,15 +81,15 @@ export const useAdminPermissions = () => {
         .single();
 
       if (error) {
-        // If no record found, they might be a new admin - grant full access
-        if (error.code === 'PGRST116') {
-          setIsFullAdmin(true);
-          setEmployeeRole('full_admin');
-          setPermissions(FULL_PERMISSIONS);
-        } else {
+        // SECURITY: Fail closed. Missing admin_employees record => no permissions.
+        // A user must have an explicit admin_employees record to receive any access.
+        if (error.code !== 'PGRST116') {
           console.error('Error fetching admin permissions:', error);
-          setPermissions(DEFAULT_PERMISSIONS);
         }
+        setIsFullAdmin(false);
+        setIsSuperAdmin(false);
+        setEmployeeRole(null);
+        setPermissions(DEFAULT_PERMISSIONS);
         setIsLoading(false);
         return;
       }
