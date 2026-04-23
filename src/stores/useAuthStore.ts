@@ -80,6 +80,9 @@ interface AuthState {
   signup: (formData: SignupFormData, role: AppRole) => Promise<MockUser>;
   verifyEmail: (code: string, emailOverride?: string) => Promise<MockUser>;
   resendVerificationCode: (emailOverride?: string) => Promise<void>;
+  requestPasswordReset: (email: string) => Promise<void>;
+  verifyResetCode: (email: string, code: string) => Promise<string>;
+  setNewPassword: (resetToken: string, newPassword: string) => Promise<MockUser>;
   logout: () => void;
   switchRole: (newRole: AppRole) => void;
   checkAuth: () => Promise<void>;
