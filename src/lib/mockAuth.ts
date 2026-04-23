@@ -490,3 +490,306 @@ export const COMMON_PASSWORDS = new Set([
   "azerty123",
 ]);
 
+// =====================================================================
+// PASSWORD RESET FLOW
+// =====================================================================
+
+const RESET_CODE_TTL_MS = 15 * 60 * 1000;
+const RESET_TOKEN_TTL_MS = 10 * 60 * 1000;
+const RESET_MAX_CODE_ATTEMPTS = 3;
+const RESET_RESEND_COOLDOWN_MS = 60 * 1000;
+const RESET_REQUEST_WINDOW_MS = 60 * 60 * 1000;
+const RESET_MAX_REQUESTS_PER_WINDOW = 3;
+
+interface ResetRequestEntry {
+  email: string;
+  code: string | null; // null until first issued
+  codeExpiresAt: number;
+  attemptsLeft: number;
+  lastSentAt: number;
+  resetToken: string | null;
+  tokenExpiresAt: number;
+  // request rate limiting
+  requestTimestamps: number[];
+}
+
+const resetRequests = new Map<string, ResetRequestEntry>(); // keyed by email
+
+function getOrInitResetEntry(email: string): ResetRequestEntry {
+  const key = email.toLowerCase();
+  let entry = resetRequests.get(key);
+  if (!entry) {
+    entry = {
+      email: key,
+      code: null,
+      codeExpiresAt: 0,
+      attemptsLeft: RESET_MAX_CODE_ATTEMPTS,
+      lastSentAt: 0,
+      resetToken: null,
+      tokenExpiresAt: 0,
+      requestTimestamps: [],
+    };
+    resetRequests.set(key, entry);
+  }
+  return entry;
+}
+
+function pruneRequestWindow(entry: ResetRequestEntry): void {
+  const now = Date.now();
+  entry.requestTimestamps = entry.requestTimestamps.filter(
+    (t) => now - t < RESET_REQUEST_WINDOW_MS,
+  );
+}
+
+function generateResetCode(): string {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+function generateResetToken(): string {
+  // 32-char hex-ish token
+  const arr = new Uint8Array(16);
+  if (typeof crypto !== "undefined" && crypto.getRandomValues) {
+    crypto.getRandomValues(arr);
+  } else {
+    for (let i = 0; i < arr.length; i++) arr[i] = Math.floor(Math.random() * 256);
+  }
+  return Array.from(arr)
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+export async function mockRequestPasswordReset(email: string): Promise<void> {
+  // Constant-ish latency so attackers can't time-detect existing accounts
+  await delay(700, 1100);
+
+  const key = email.trim().toLowerCase();
+  const entry = getOrInitResetEntry(key);
+  pruneRequestWindow(entry);
+
+  // Rate-limit BEFORE silently doing nothing — this one we DO surface.
+  if (entry.requestTimestamps.length >= RESET_MAX_REQUESTS_PER_WINDOW) {
+    const oldest = entry.requestTimestamps[0];
+    const retryAfterMs = RESET_REQUEST_WINDOW_MS - (Date.now() - oldest);
+    throw makeError(
+      "RESET_RATE_LIMITED",
+      "Too many reset requests. Please try again later.",
+      { retryAfterMs },
+    );
+  }
+
+  // Always record the request attempt to enforce the per-hour cap
+  entry.requestTimestamps.push(Date.now());
+
+  const user = users.get(key);
+  if (!user) {
+    // Silent success — do not reveal whether the email exists
+    return;
+  }
+
+  // Issue / re-issue a code
+  const code = generateResetCode();
+  entry.code = code;
+  entry.codeExpiresAt = Date.now() + RESET_CODE_TTL_MS;
+  entry.attemptsLeft = RESET_MAX_CODE_ATTEMPTS;
+  entry.lastSentAt = Date.now();
+  // Clear any previously issued reset token
+  entry.resetToken = null;
+  entry.tokenExpiresAt = 0;
+
+  // eslint-disable-next-line no-console
+  console.log(
+    `[mockAuth] 🔑 Password reset code for ${key}: ${code} (expires in 15 min)`,
+  );
+}
+
+export async function mockVerifyResetCode(
+  email: string,
+  code: string,
+): Promise<{ resetToken: string }> {
+  await delay(400, 900);
+  const key = email.trim().toLowerCase();
+  const entry = resetRequests.get(key);
+
+  if (!entry || !entry.code) {
+    throw makeError(
+      "CODE_EXPIRED",
+      "This code has expired. Request a new one.",
+    );
+  }
+
+  if (Date.now() > entry.codeExpiresAt) {
+    entry.code = null;
+    throw makeError(
+      "CODE_EXPIRED",
+      "This code has expired. Request a new one.",
+    );
+  }
+
+  if (entry.code !== code.trim()) {
+    entry.attemptsLeft -= 1;
+    if (entry.attemptsLeft <= 0) {
+      // Auto-issue a new code (if user exists)
+      const user = users.get(key);
+      if (user) {
+        const newCode = generateResetCode();
+        entry.code = newCode;
+        entry.codeExpiresAt = Date.now() + RESET_CODE_TTL_MS;
+        entry.attemptsLeft = RESET_MAX_CODE_ATTEMPTS;
+        entry.lastSentAt = Date.now();
+        // eslint-disable-next-line no-console
+        console.log(
+          `[mockAuth] 🔑 New password reset code for ${key}: ${newCode} (expires in 15 min)`,
+        );
+      } else {
+        entry.code = null;
+      }
+      throw makeError(
+        "INVALID_CODE",
+        "Too many wrong attempts. We've sent you a new code.",
+        { attemptsLeft: 0 },
+      );
+    }
+    throw makeError(
+      "INVALID_CODE",
+      `Incorrect code. ${entry.attemptsLeft} attempt${entry.attemptsLeft === 1 ? "" : "s"} remaining.`,
+      { attemptsLeft: entry.attemptsLeft },
+    );
+  }
+
+  // Success — issue reset token, clear code
+  const token = generateResetToken();
+  entry.resetToken = token;
+  entry.tokenExpiresAt = Date.now() + RESET_TOKEN_TTL_MS;
+  entry.code = null;
+  return { resetToken: token };
+}
+
+export async function mockResendResetCode(email: string): Promise<void> {
+  await delay(300, 700);
+  const key = email.trim().toLowerCase();
+  const entry = resetRequests.get(key);
+  if (!entry) {
+    // Treat as a fresh request (silent success path)
+    return mockRequestPasswordReset(email);
+  }
+
+  const since = Date.now() - entry.lastSentAt;
+  if (entry.lastSentAt && since < RESET_RESEND_COOLDOWN_MS) {
+    throw makeError(
+      "RESEND_COOLDOWN",
+      `Please wait ${Math.ceil((RESET_RESEND_COOLDOWN_MS - since) / 1000)}s before requesting a new code.`,
+      { retryAfterMs: RESET_RESEND_COOLDOWN_MS - since },
+    );
+  }
+
+  // Defer to mockRequestPasswordReset for rate-limit + issuance logic
+  return mockRequestPasswordReset(email);
+}
+
+export interface SetNewPasswordResult {
+  user: MockUser;
+}
+
+export async function mockSetNewPassword(
+  resetToken: string,
+  newPassword: string,
+): Promise<SetNewPasswordResult> {
+  await delay(500, 1000);
+
+  // Find the entry that owns this token
+  let entry: ResetRequestEntry | undefined;
+  for (const e of resetRequests.values()) {
+    if (e.resetToken && e.resetToken === resetToken) {
+      entry = e;
+      break;
+    }
+  }
+  if (!entry) {
+    throw makeError("INVALID_TOKEN", "This reset link is invalid.");
+  }
+  if (Date.now() > entry.tokenExpiresAt) {
+    entry.resetToken = null;
+    throw makeError(
+      "TOKEN_EXPIRED",
+      "Your reset link expired. Please request a new one.",
+    );
+  }
+
+  // Basic password policy (mirrors signup)
+  if (newPassword.length < 8) {
+    throw makeError("WEAK_PASSWORD", "Password must be at least 8 characters.");
+  }
+  if (
+    !/[A-Z]/.test(newPassword) ||
+    !/[a-z]/.test(newPassword) ||
+    !/\d/.test(newPassword)
+  ) {
+    throw makeError(
+      "WEAK_PASSWORD",
+      "Password must include upper, lower, and a number.",
+    );
+  }
+  if (COMMON_PASSWORDS.has(newPassword.toLowerCase())) {
+    throw makeError("WEAK_PASSWORD", "This password is too common.");
+  }
+
+  const user = users.get(entry.email);
+  if (!user) {
+    throw makeError("USER_NOT_FOUND", "We couldn't find that account.");
+  }
+
+  user.password_hash = newPassword;
+  // Single-use: invalidate the token immediately
+  entry.resetToken = null;
+  entry.tokenExpiresAt = 0;
+  // Reset login lockouts on this account
+  clearAttempts(user.email);
+
+  // Simulated security email
+  // eslint-disable-next-line no-console
+  console.log(
+    [
+      "",
+      "===== 📧 Mock security email =====",
+      "FROM: security@motonita.ma",
+      `TO: ${user.email}`,
+      "SUBJECT: Your Motonita password was changed",
+      "",
+      `Your password was changed on ${new Date().toLocaleString()}.`,
+      `IP: 196.${Math.floor(Math.random() * 255)}.${Math.floor(
+        Math.random() * 255,
+      )}.${Math.floor(Math.random() * 255)}`,
+      `Device: ${typeof navigator !== "undefined" ? navigator.userAgent : "unknown"}`,
+      "If this wasn't you, contact support immediately at support@motonita.ma",
+      "==================================",
+      "",
+    ].join("\n"),
+  );
+
+  return { user: { ...user, roles: { ...user.roles } } };
+}
+
+export function getResetResendCooldownMs(email: string): number {
+  const entry = resetRequests.get(email.trim().toLowerCase());
+  if (!entry || !entry.lastSentAt) return 0;
+  return Math.max(0, RESET_RESEND_COOLDOWN_MS - (Date.now() - entry.lastSentAt));
+}
+
+export function getResetRequestLockoutMs(email: string): number {
+  const entry = resetRequests.get(email.trim().toLowerCase());
+  if (!entry) return 0;
+  pruneRequestWindow(entry);
+  if (entry.requestTimestamps.length < RESET_MAX_REQUESTS_PER_WINDOW) return 0;
+  const oldest = entry.requestTimestamps[0];
+  return Math.max(0, RESET_REQUEST_WINDOW_MS - (Date.now() - oldest));
+}
+
+export function isResetTokenValid(token: string): boolean {
+  for (const entry of resetRequests.values()) {
+    if (entry.resetToken === token && Date.now() <= entry.tokenExpiresAt) {
+      return true;
+    }
+  }
+  return false;
+}
+
