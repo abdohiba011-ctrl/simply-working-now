@@ -212,7 +212,7 @@ export const Header = memo(() => {
       <AnnouncementBanner />
 
       {/* Header - sticky independently */}
-      <header className="sticky top-10 z-[100] w-full bg-card/95 backdrop-blur-sm border-b shadow-sm">
+      <header className="sticky top-0 z-[100] w-full bg-card/95 backdrop-blur-sm border-b shadow-sm">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo with crossfade transition */}
