@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { format, parseISO, subDays } from "date-fns";
-import { Search, Download, ArrowUpDown, Inbox, Phone } from "lucide-react";
+import { Search, Download, ArrowUpDown, Inbox, Phone, Filter as FilterIcon, X, ChevronDown } from "lucide-react";
 import { AgencyLayout } from "@/components/agency/AgencyLayout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -43,9 +43,13 @@ const Bookings = () => {
 
   const [status, setStatus] = useState<StatusFilter>(initialStatus);
   const [search, setSearch] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [sort, setSort] = useState<SortKey>("newest");
   const [page, setPage] = useState(1);
   const [dateFrom] = useState(subDays(new Date(), 30));
+
+  const activeFilterCount = (status !== "all" ? 1 : 0) + (sort !== "newest" ? 1 : 0);
 
   const pendingCount = agencyBookings.filter((b) => b.status === "pending").length;
 
@@ -104,66 +108,149 @@ const Bookings = () => {
 
   return (
     <AgencyLayout>
-      <div className="mx-auto max-w-7xl space-y-6">
-        <div className="flex flex-wrap items-end justify-between gap-3">
+      <div className="mx-auto max-w-7xl space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Bookings</h1>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <h1 className="text-2xl font-bold tracking-tight">Bookings</h1>
+            <p className="mt-0.5 text-xs text-muted-foreground">
               {filtered.length} {filtered.length === 1 ? "booking" : "bookings"} · {format(dateFrom, "MMM d")}–{format(new Date(), "MMM d, yyyy")}
             </p>
           </div>
-          <Button variant="outline" size="sm" className="gap-2" onClick={exportCSV}>
-            <Download className="h-4 w-4" /> Export CSV
-          </Button>
-        </div>
-
-        {/* Status filter pills */}
-        <div className="flex flex-wrap gap-2">
-          {STATUS_FILTERS.map((f) => (
-            <button
-              key={f.key}
-              onClick={() => updateStatus(f.key)}
-              className={cn(
-                "inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium transition-all",
-                status === f.key
-                  ? "border-primary bg-primary/15 text-foreground"
-                  : "border-border bg-card text-muted-foreground hover:bg-muted",
-              )}
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2"
+              onClick={() => setSearchOpen((v) => !v)}
+              aria-label="Search"
             >
-              {f.label}
-              {f.key === "pending" && pendingCount > 0 && (
-                <span className="rounded-full bg-warning/20 px-1.5 py-0 text-[10px] font-semibold text-warning">
-                  {pendingCount}
+              <Search className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2"
+              onClick={() => setFiltersOpen((v) => !v)}
+            >
+              <FilterIcon className="h-4 w-4" />
+              Filter
+              {activeFilterCount > 0 && (
+                <span className="rounded-full bg-primary/20 px-1.5 text-[10px] font-semibold text-foreground">
+                  {activeFilterCount}
                 </span>
               )}
-            </button>
-          ))}
+              <ChevronDown className={cn("h-3 w-3 transition-transform", filtersOpen && "rotate-180")} />
+            </Button>
+            <Button variant="outline" size="sm" className="gap-2" onClick={exportCSV}>
+              <Download className="h-4 w-4" /> Export
+            </Button>
+          </div>
         </div>
 
-        {/* Search + sort */}
-        <div className="flex flex-wrap gap-3">
-          <div className="relative flex-1 min-w-[240px]">
+        {searchOpen && (
+          <div className="relative">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
+              autoFocus
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1); }}
               placeholder="Search by ID, customer, phone, bike…"
-              className="pl-9"
+              className="h-9 pl-9"
             />
           </div>
-          <Select value={sort} onValueChange={(v) => setSort(v as SortKey)}>
-            <SelectTrigger className="w-44">
-              <ArrowUpDown className="mr-2 h-4 w-4" />
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="newest">Newest first</SelectItem>
-              <SelectItem value="oldest">Oldest first</SelectItem>
-              <SelectItem value="value">Highest value</SelectItem>
-              <SelectItem value="pickup">By pickup date</SelectItem>
-            </SelectContent>
-          </Select>
+        )}
+
+        {/* Collapsible filter panel */}
+        <div
+          className={cn(
+            "grid overflow-hidden transition-all duration-200 ease-out",
+            filtersOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0",
+          )}
+        >
+          <div className="min-h-0">
+            <Card className="space-y-4 rounded-lg p-4 shadow-sm">
+              <div>
+                <p className="mb-2 text-xs font-medium text-muted-foreground">Status</p>
+                <div className="flex flex-wrap gap-2">
+                  {STATUS_FILTERS.map((f) => (
+                    <button
+                      key={f.key}
+                      onClick={() => updateStatus(f.key)}
+                      className={cn(
+                        "inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium transition-all",
+                        status === f.key
+                          ? "border-primary bg-primary/15 text-foreground"
+                          : "border-border bg-card text-muted-foreground hover:bg-muted",
+                      )}
+                    >
+                      {f.label}
+                      {f.key === "pending" && pendingCount > 0 && (
+                        <span className="rounded-full bg-warning/20 px-1.5 py-0 text-[10px] font-semibold text-warning">
+                          {pendingCount}
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <p className="mb-2 text-xs font-medium text-muted-foreground">Sort by</p>
+                <Select value={sort} onValueChange={(v) => setSort(v as SortKey)}>
+                  <SelectTrigger className="h-9 w-44">
+                    <ArrowUpDown className="mr-2 h-4 w-4" />
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="newest">Newest first</SelectItem>
+                    <SelectItem value="oldest">Oldest first</SelectItem>
+                    <SelectItem value="value">Highest value</SelectItem>
+                    <SelectItem value="pickup">By pickup date</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex justify-end gap-2 border-t border-border pt-3">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => { updateStatus("all"); setSort("newest"); }}
+                >
+                  Clear all
+                </Button>
+                <Button size="sm" onClick={() => setFiltersOpen(false)}>
+                  Apply
+                </Button>
+              </div>
+            </Card>
+          </div>
         </div>
+
+        {/* Active filter chips (when panel collapsed) */}
+        {!filtersOpen && activeFilterCount > 0 && (
+          <div className="flex flex-wrap items-center gap-2">
+            {status !== "all" && (
+              <span className="inline-flex items-center gap-1.5 rounded-md border border-border bg-muted px-2.5 py-1 text-xs">
+                Status: {STATUS_FILTERS.find((s) => s.key === status)?.label}
+                <button onClick={() => updateStatus("all")} aria-label="Remove">
+                  <X className="h-3 w-3" />
+                </button>
+              </span>
+            )}
+            {sort !== "newest" && (
+              <span className="inline-flex items-center gap-1.5 rounded-md border border-border bg-muted px-2.5 py-1 text-xs">
+                Sort: {sort}
+                <button onClick={() => setSort("newest")} aria-label="Remove">
+                  <X className="h-3 w-3" />
+                </button>
+              </span>
+            )}
+            <button
+              onClick={() => { updateStatus("all"); setSort("newest"); }}
+              className="text-xs text-muted-foreground hover:text-foreground underline-offset-4 hover:underline"
+            >
+              Clear all
+            </button>
+          </div>
+        )}
 
         {/* Desktop table */}
         <Card className="hidden overflow-hidden rounded-xl shadow-sm md:block">
