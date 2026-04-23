@@ -45,6 +45,9 @@ export interface AuthError extends Error {
     | "CODE_EXPIRED"
     | "RESEND_COOLDOWN"
     | "USER_NOT_FOUND"
+    | "INVALID_TOKEN"
+    | "TOKEN_EXPIRED"
+    | "RESET_RATE_LIMITED"
     | "NETWORK";
   needsVerification?: boolean;
   lockedUntil?: string;
