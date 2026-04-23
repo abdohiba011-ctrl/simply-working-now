@@ -45,14 +45,9 @@ try {
       },
       // Return empty string for missing keys in production to show fallback
       returnEmptyString: false,
-      // Parse missing key handler
-      parseMissingKeyHandler: (key) => {
-        if (import.meta.env.DEV) {
-          // Show visual indicator in dev mode
-          return `[MISSING: ${key}]`;
-        }
-        return key;
-      }
+      // Don't override defaultValue with a [MISSING: ...] marker — let the
+      // calling site's `defaultValue` render. We still log warnings above.
+      parseMissingKeyHandler: (key) => key,
     });
 } catch (error) {
   console.error('[i18n] Failed to initialize:', error);
