@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { MockProtectedRoute } from "@/components/auth/MockProtectedRoute";
 import { PageLoadingSkeleton, BookingHistorySkeleton, ProfileSkeleton, BikeDetailsSkeleton } from "@/components/ui/loading-skeleton";
 import { AffiliateSkeleton } from "@/components/ui/affiliate-skeleton";
 import { ScrollToTop } from "./components/ScrollToTop";
@@ -98,6 +99,7 @@ const RentPlaceholder = lazy(() => import("./pages/auth/RentPlaceholder"));
 const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword"));
 const ResetPasswordVerify = lazy(() => import("./pages/auth/ResetPasswordVerify"));
 const ResetPasswordNew = lazy(() => import("./pages/auth/ResetPasswordNew"));
+const SignupExtra = lazy(() => import("./pages/auth/SignupExtra"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -150,6 +152,7 @@ const App = () => (
                   <Route path="/forgot-password" element={<ForgotPassword />} />
                   <Route path="/reset-password/verify" element={<ResetPasswordVerify />} />
                   <Route path="/reset-password/new" element={<ResetPasswordNew />} />
+                  <Route path="/agency/signup-extra" element={<SignupExtra />} />
                   <Route path="/become-business" element={<BecomeBusiness />} />
                   <Route path="/verification" element={<ProtectedRoute><Verification /></ProtectedRoute>} />
                   <Route path="/privacy-policy" element={<PrivacyPolicy />} />
@@ -186,7 +189,7 @@ const App = () => (
                   <Route path="/business/motorbikes" element={<ProtectedRoute requireRole="business"><BusinessMotorbikes /></ProtectedRoute>} />
 
                   {/* Agency dashboard (new Wise-inspired UI) — shared shell so sidebar/header persist */}
-                  <Route path="/agency" element={<ProtectedRoute requireRole="business"><AgencyShell /></ProtectedRoute>}>
+                  <Route path="/agency" element={<MockProtectedRoute role="agency"><AgencyShell /></MockProtectedRoute>}>
                     <Route index element={<Navigate to="/agency/dashboard" replace />} />
                     <Route path="dashboard" element={<AgencyDashboard />} />
                     <Route path="bookings" element={<AgencyBookings />} />
