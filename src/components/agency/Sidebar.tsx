@@ -93,7 +93,12 @@ export const Sidebar = ({ collapsed, onToggle }: SidebarProps) => {
                     collapsed && "justify-center px-0",
                   )}
                 >
-                  <item.icon className={cn("h-4 w-4 shrink-0", active && "text-primary")} />
+                  <item.icon
+                    className={cn(
+                      "h-4 w-4 shrink-0 transition-all",
+                      active ? "text-primary fill-primary/30 stroke-[2.25]" : "stroke-[1.75]",
+                    )}
+                  />
                   {!collapsed && <span className="flex-1 truncate">{item.label}</span>}
                   {!collapsed && badge !== undefined && badge > 0 && (
                     <span className="ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-[10px] font-semibold text-primary-foreground">
