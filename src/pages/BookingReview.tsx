@@ -45,44 +45,10 @@ const BookingReview = () => {
   const location = searchParams.get("location") || savedBooking?.location || "Casablanca";
   const dailyPrice = parseInt(searchParams.get("dailyPrice") || String(savedBooking?.dailyPrice) || "99");
 
-  const [isVerified, setIsVerified] = useState(false);
-  const [hasPhone, setHasPhone] = useState(false);
-  const [isCheckingProfile, setIsCheckingProfile] = useState(true);
-
   // Scroll to top on page load
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
-
-  // Check verification and phone status
-  useEffect(() => {
-    if (isAuthenticated && user) {
-      checkProfileStatus();
-    } else {
-      setIsCheckingProfile(false);
-    }
-  }, [isAuthenticated, user]);
-
-  const checkProfileStatus = async () => {
-    if (!user) return;
-    
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('is_verified, phone')
-        .eq('id', user.id)
-        .single();
-
-      if (!error && data) {
-        setIsVerified(data.is_verified || false);
-        setHasPhone(!!data.phone && data.phone.trim().length > 0);
-      }
-    } catch (error) {
-      console.error('Error checking profile:', error);
-    } finally {
-      setIsCheckingProfile(false);
-    }
-  };
 
   // Calculate days and total
   const days = pickup && end 
