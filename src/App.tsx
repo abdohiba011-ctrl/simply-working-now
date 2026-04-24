@@ -166,7 +166,7 @@ const App = () => (
                   <Route path="/profile" element={<ProtectedRoute><Suspense fallback={<ProfileSkeleton />}><Profile /></Suspense></ProtectedRoute>} />
                   <Route path="/bike/:id" element={<Suspense fallback={<BikeDetailsSkeleton />}><BikeDetails /></Suspense>} />
                   <Route path="/booking-review" element={<BookingReview />} />
-                  <Route path="/payment-selection" element={<ProtectedRoute><PaymentSelection /></ProtectedRoute>} />
+                  <Route path="/payment-selection" element={<Navigate to="/booking-review" replace />} />
                   <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
                   <Route path="/confirmation" element={<ProtectedRoute><Confirmation /></ProtectedRoute>} />
                   <Route path="/business-dashboard" element={<Navigate to="/agency/dashboard" replace />} />
