@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { Eye, EyeOff, Mail, Phone, AlertCircle, Loader2 } from "lucide-react";
 
 import { AuthLayout } from "@/components/auth/AuthLayout";
+import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,7 +17,6 @@ import { useAuthStore } from "@/stores/useAuthStore";
 import {
   detectIdentifierType,
   getLockoutRemainingMs,
-  mockResendVerification,
   type AuthError,
 } from "@/lib/mockAuth";
 import { cn } from "@/lib/utils";
@@ -65,6 +65,7 @@ export default function Login({ context = "renter" }: LoginProps) {
   const error = useAuthStore((s) => s.error);
   const needsVerification = useAuthStore((s) => s.needsVerification);
   const clearError = useAuthStore((s) => s.clearError);
+  const resendVerificationCode = useAuthStore((s) => s.resendVerificationCode);
 
   const [showPassword, setShowPassword] = useState(false);
   const [resendingVerification, setResendingVerification] = useState(false);
@@ -144,9 +145,15 @@ export default function Login({ context = "renter" }: LoginProps) {
   const handleResend = async () => {
     setResendingVerification(true);
     try {
-      await mockResendVerification(form.getValues("identifier"));
+      await resendVerificationCode(form.getValues("identifier"));
       toast.success(
         t("mockAuth.verification_sent", { defaultValue: "Verification email sent" }),
+      );
+    } catch {
+      toast.error(
+        t("mockAuth.verification_send_failed", {
+          defaultValue: "Couldn't send the email. Try again in a moment.",
+        }),
       );
     } finally {
       setResendingVerification(false);
