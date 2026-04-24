@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAgencySubscription } from "@/hooks/useAgencyData";
+import { openHostedPayment, preOpenPaymentWindow } from "@/lib/openHostedPayment";
 
 interface Plan {
   key: "free" | "pro" | "business";
@@ -52,6 +53,7 @@ const Subscription = () => {
       return;
     }
     setProcessing(plan.key);
+    const preOpened = preOpenPaymentWindow();
     try {
       const amount = yearly ? plan.yearly : plan.monthly;
       const { data, error } = await supabase.functions.invoke("youcanpay-create-token", {
@@ -59,11 +61,18 @@ const Subscription = () => {
       });
       if (error) throw error;
       if (data?.payment_url) {
-        window.location.href = data.payment_url;
+        const result = openHostedPayment(data.payment_url, preOpened);
+        if (!result.ok) {
+          toast.error("Your browser blocked the payment window. Please allow popups.");
+        } else if (result.method === "new-tab" || result.method === "pre-opened") {
+          toast.success("Payment opened in a new tab.");
+        }
         return;
       }
+      if (preOpened && !preOpened.closed) preOpened.close();
       toast.error("Could not initialize payment");
     } catch (e: any) {
+      if (preOpened && !preOpened.closed) preOpened.close();
       toast.error(e.message || "Failed");
     } finally {
       setProcessing(null);
