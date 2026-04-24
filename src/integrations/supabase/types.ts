@@ -281,6 +281,36 @@ export type Database = {
         }
         Relationships: []
       }
+      bike_holds: {
+        Row: {
+          bike_id: string
+          created_at: string
+          expires_at: string
+          id: string
+          pickup_date: string
+          return_date: string
+          user_id: string
+        }
+        Insert: {
+          bike_id: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          pickup_date: string
+          return_date: string
+          user_id: string
+        }
+        Update: {
+          bike_id?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          pickup_date?: string
+          return_date?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       bike_inventory: {
         Row: {
           available_count: number | null
@@ -345,6 +375,36 @@ export type Database = {
           },
         ]
       }
+      bike_reviews: {
+        Row: {
+          bike_type_id: string
+          comment: string | null
+          created_at: string
+          id: string
+          rating: number
+          reviewer_name: string
+          user_id: string | null
+        }
+        Insert: {
+          bike_type_id: string
+          comment?: string | null
+          created_at?: string
+          id?: string
+          rating: number
+          reviewer_name: string
+          user_id?: string | null
+        }
+        Update: {
+          bike_type_id?: string
+          comment?: string | null
+          created_at?: string
+          id?: string
+          rating?: number
+          reviewer_name?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       bike_type_images: {
         Row: {
           bike_type_id: string
@@ -382,9 +442,12 @@ export type Database = {
           approval_status: string | null
           availability_status: string | null
           business_status: string | null
+          category: string | null
           city_id: string | null
+          color: string | null
           created_at: string
           daily_price: number | null
+          deposit_amount: number | null
           description: string | null
           engine_cc: number | null
           features: string[] | null
@@ -393,8 +456,14 @@ export type Database = {
           id: string
           is_approved: boolean | null
           is_original: boolean | null
+          license_required: string | null
           main_image_url: string | null
+          mileage_km: number | null
+          min_age: number | null
+          min_experience_years: number | null
+          monthly_price: number | null
           name: string
+          neighborhood: string | null
           owner_id: string | null
           rating: number | null
           review_count: number | null
@@ -402,15 +471,20 @@ export type Database = {
           top_speed: string | null
           transmission: string | null
           updated_at: string
+          weekly_price: number | null
           weight: string | null
+          year: number | null
         }
         Insert: {
           approval_status?: string | null
           availability_status?: string | null
           business_status?: string | null
+          category?: string | null
           city_id?: string | null
+          color?: string | null
           created_at?: string
           daily_price?: number | null
+          deposit_amount?: number | null
           description?: string | null
           engine_cc?: number | null
           features?: string[] | null
@@ -419,8 +493,14 @@ export type Database = {
           id?: string
           is_approved?: boolean | null
           is_original?: boolean | null
+          license_required?: string | null
           main_image_url?: string | null
+          mileage_km?: number | null
+          min_age?: number | null
+          min_experience_years?: number | null
+          monthly_price?: number | null
           name: string
+          neighborhood?: string | null
           owner_id?: string | null
           rating?: number | null
           review_count?: number | null
@@ -428,15 +508,20 @@ export type Database = {
           top_speed?: string | null
           transmission?: string | null
           updated_at?: string
+          weekly_price?: number | null
           weight?: string | null
+          year?: number | null
         }
         Update: {
           approval_status?: string | null
           availability_status?: string | null
           business_status?: string | null
+          category?: string | null
           city_id?: string | null
+          color?: string | null
           created_at?: string
           daily_price?: number | null
+          deposit_amount?: number | null
           description?: string | null
           engine_cc?: number | null
           features?: string[] | null
@@ -445,8 +530,14 @@ export type Database = {
           id?: string
           is_approved?: boolean | null
           is_original?: boolean | null
+          license_required?: string | null
           main_image_url?: string | null
+          mileage_km?: number | null
+          min_age?: number | null
+          min_experience_years?: number | null
+          monthly_price?: number | null
           name?: string
+          neighborhood?: string | null
           owner_id?: string | null
           rating?: number | null
           review_count?: number | null
@@ -454,7 +545,9 @@ export type Database = {
           top_speed?: string | null
           transmission?: string | null
           updated_at?: string
+          weekly_price?: number | null
           weight?: string | null
+          year?: number | null
         }
         Relationships: [
           {
@@ -579,7 +672,44 @@ export type Database = {
             referencedRelation: "bookings"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "booking_events_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "business_bookings_view"
+            referencedColumns: ["id"]
+          },
         ]
+      }
+      booking_messages: {
+        Row: {
+          body: string
+          booking_id: string
+          created_at: string
+          id: string
+          read_at: string | null
+          sender_id: string | null
+          sender_role: string
+        }
+        Insert: {
+          body: string
+          booking_id: string
+          created_at?: string
+          id?: string
+          read_at?: string | null
+          sender_id?: string | null
+          sender_role: string
+        }
+        Update: {
+          body?: string
+          booking_id?: string
+          created_at?: string
+          id?: string
+          read_at?: string | null
+          sender_id?: string | null
+          sender_role?: string
+        }
+        Relationships: []
       }
       booking_notes: {
         Row: {
@@ -615,6 +745,13 @@ export type Database = {
             columns: ["booking_id"]
             isOneToOne: false
             referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_notes_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "business_bookings_view"
             referencedColumns: ["id"]
           },
         ]
@@ -686,6 +823,13 @@ export type Database = {
             columns: ["booking_id"]
             isOneToOne: false
             referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_payments_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "business_bookings_view"
             referencedColumns: ["id"]
           },
         ]
@@ -1520,9 +1664,137 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      business_bookings_view: {
+        Row: {
+          admin_status: string | null
+          amount_paid: number | null
+          assigned_at: string | null
+          assigned_to_business: string | null
+          bike_id: string | null
+          booking_status: string | null
+          cancelled_at: string | null
+          confirmed_at: string | null
+          contract_status: string | null
+          contract_url: string | null
+          created_at: string | null
+          customer_email: string | null
+          customer_name: string | null
+          customer_phone: string | null
+          delivery_fee: number | null
+          delivery_location: string | null
+          delivery_method: string | null
+          helmet_included: boolean | null
+          id: string | null
+          insurance_included: boolean | null
+          payment_method: string | null
+          payment_status: string | null
+          pickup_date: string | null
+          pickup_location: string | null
+          pickup_time: string | null
+          return_date: string | null
+          return_location: string | null
+          return_time: string | null
+          signed_contract_url: string | null
+          source: string | null
+          special_requests: string | null
+          total_days: number | null
+          total_price: number | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          admin_status?: string | null
+          amount_paid?: number | null
+          assigned_at?: string | null
+          assigned_to_business?: string | null
+          bike_id?: string | null
+          booking_status?: string | null
+          cancelled_at?: string | null
+          confirmed_at?: string | null
+          contract_status?: string | null
+          contract_url?: string | null
+          created_at?: string | null
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          delivery_fee?: number | null
+          delivery_location?: string | null
+          delivery_method?: string | null
+          helmet_included?: boolean | null
+          id?: string | null
+          insurance_included?: boolean | null
+          payment_method?: string | null
+          payment_status?: string | null
+          pickup_date?: string | null
+          pickup_location?: string | null
+          pickup_time?: string | null
+          return_date?: string | null
+          return_location?: string | null
+          return_time?: string | null
+          signed_contract_url?: string | null
+          source?: string | null
+          special_requests?: string | null
+          total_days?: number | null
+          total_price?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          admin_status?: string | null
+          amount_paid?: number | null
+          assigned_at?: string | null
+          assigned_to_business?: string | null
+          bike_id?: string | null
+          booking_status?: string | null
+          cancelled_at?: string | null
+          confirmed_at?: string | null
+          contract_status?: string | null
+          contract_url?: string | null
+          created_at?: string | null
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          delivery_fee?: number | null
+          delivery_location?: string | null
+          delivery_method?: string | null
+          helmet_included?: boolean | null
+          id?: string | null
+          insurance_included?: boolean | null
+          payment_method?: string | null
+          payment_status?: string | null
+          pickup_date?: string | null
+          pickup_location?: string | null
+          pickup_time?: string | null
+          return_date?: string | null
+          return_location?: string | null
+          return_time?: string | null
+          signed_contract_url?: string | null
+          source?: string | null
+          special_requests?: string | null
+          total_days?: number | null
+          total_price?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_bike_id_fkey"
+            columns: ["bike_id"]
+            isOneToOne: false
+            referencedRelation: "bikes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
+      create_bike_hold: {
+        Args: { _bike_id: string; _pickup: string; _return: string }
+        Returns: {
+          expires_at: string
+          hold_id: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1537,6 +1809,17 @@ export type Database = {
           _details?: Json
           _record_id?: string
           _table_name?: string
+        }
+        Returns: string
+      }
+      promote_hold_to_booking: {
+        Args: {
+          _customer_email: string
+          _customer_name: string
+          _customer_phone: string
+          _delivery_method?: string
+          _hold_id: string
+          _pickup_location?: string
         }
         Returns: string
       }
