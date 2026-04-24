@@ -32,6 +32,14 @@ const Checkout = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [profile, setProfile] = useState<{ name: string; email: string; phone: string; is_verified: boolean } | null>(null);
+  // Pending payment state — drives the "open in new tab" fallback UI and polling.
+  const [pendingPayment, setPendingPayment] = useState<{
+    paymentUrl: string;
+    paymentId: string;
+    bookingId: string;
+    needsVerification: string;
+  } | null>(null);
+  const [paymentWindow, setPaymentWindow] = useState<Window | null>(null);
 
   useEffect(() => {
     const fetchUserProfile = async () => {
