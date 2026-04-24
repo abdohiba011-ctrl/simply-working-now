@@ -805,59 +805,6 @@ const BikeDetails = () => {
               </CardContent>
             </Card>
 
-            {/* Customer Reviews */}
-            <Card className="min-w-0">
-              <CardContent className="p-3 sm:p-4 md:p-6">
-                <h2 className="font-semibold text-lg sm:text-xl md:text-2xl mb-4 sm:mb-6 text-foreground">Customer Reviews</h2>
-                
-                <div className="space-y-4 sm:space-y-6">
-                  {!bikeReviews || bikeReviews.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">No reviews yet.</p>
-                  ) : (
-                    bikeReviews.map((review, idx) => (
-                      <div
-                        key={review.id}
-                        className={cn(idx < bikeReviews.length - 1 && "border-b pb-4")}
-                      >
-                        <div className="flex items-start gap-3 mb-2">
-                          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                            <span className="text-sm font-semibold text-primary">
-                              {review.reviewer_name.charAt(0).toUpperCase()}
-                            </span>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between mb-1 gap-2">
-                              <p className="font-semibold text-sm sm:text-base text-foreground truncate">
-                                {review.reviewer_name}
-                              </p>
-                              <div className="flex gap-0.5 flex-shrink-0">
-                                {[...Array(5)].map((_, i) => (
-                                  <Star
-                                    key={i}
-                                    className={cn(
-                                      "h-3.5 w-3.5",
-                                      i < review.rating
-                                        ? "text-primary fill-primary"
-                                        : "text-muted-foreground"
-                                    )}
-                                  />
-                                ))}
-                              </div>
-                            </div>
-                            <p className="text-xs text-muted-foreground mb-2">
-                              {formatDistanceToNow(new Date(review.created_at), { addSuffix: true })}
-                            </p>
-                            {review.comment && (
-                              <p className="text-sm text-muted-foreground">{review.comment}</p>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </CardContent>
-            </Card>
           </div>
 
           {/* Sidebar - Hidden on mobile, visible on desktop */}
