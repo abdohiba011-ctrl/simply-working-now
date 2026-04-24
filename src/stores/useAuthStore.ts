@@ -549,6 +549,30 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     const { data } = await supabase.auth.getSession();
     if (data.session?.user) {
+      // Strict "Remember Me": if the user did NOT check Remember Me on their
+      // last login, the SESSION_ALIVE flag (sessionStorage) is cleared whenever
+      // the browser is fully closed. If the flag is missing AND remember-me is
+      // off, sign them out — they must log in again.
+      if (!isRememberMe() && !isSessionAliveFlagSet()) {
+        await supabase.auth.signOut();
+        clearLastRole();
+        set({
+          user: null,
+          session: null,
+          currentRole: null,
+          isAuthenticated: false,
+          isLoading: false,
+        });
+        return;
+      }
+
+      // Tab is alive — keep the flag set so a refresh stays logged in.
+      try {
+        sessionStorage.setItem(SESSION_ALIVE_KEY, "1");
+      } catch {
+        // ignore
+      }
+
       try {
         const mapped = await loadAuthUserModel(data.session.user);
         set({
