@@ -297,12 +297,39 @@ export const HeroSection = memo(() => {
                 >
                   <SelectValue placeholder="Select a city" />
                 </SelectTrigger>
-                <SelectContent className="bg-white max-h-[300px]">
-                  {allCities.map((c) => (
-                    <SelectItem key={c} value={c}>
-                      {c}
-                    </SelectItem>
-                  ))}
+                <SelectContent className="bg-white max-h-[320px]">
+                  <SelectGroup>
+                    <SelectLabel className="text-xs uppercase tracking-wide text-muted-foreground">
+                      Available now
+                    </SelectLabel>
+                    {(availableCities.length ? availableCities : allCities).map((c) => (
+                      <SelectItem key={c} value={c}>
+                        {c}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                  {comingSoonCities.length > 0 && (
+                    <SelectGroup>
+                      <SelectLabel className="mt-2 text-xs uppercase tracking-wide text-muted-foreground">
+                        Coming soon
+                      </SelectLabel>
+                      {comingSoonCities.map((c) => (
+                        <SelectItem
+                          key={c}
+                          value={c}
+                          disabled
+                          className="opacity-60"
+                        >
+                          <span className="flex items-center justify-between gap-2 w-full">
+                            <span>{c}</span>
+                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                              <Clock className="h-3 w-3" /> Soon
+                            </span>
+                          </span>
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  )}
                 </SelectContent>
               </Select>
             </div>
