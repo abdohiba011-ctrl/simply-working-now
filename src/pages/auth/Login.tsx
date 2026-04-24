@@ -335,36 +335,21 @@ export default function Login({ context = "renter" }: LoginProps) {
             </Link>
           </p>
 
-          {/* Cross-door link */}
-          <p className="text-center text-xs" style={{ color: "rgba(22,51,0,0.6)" }}>
-            {context === "agency" ? (
-              <>
-                {t("mockAuth.are_you_renter", {
-                  defaultValue: "Are you a renter?",
-                })}{" "}
-                <Link
-                  to="/login"
-                  className="hover:underline font-medium"
-                  style={{ color: "#163300" }}
-                >
-                  {t("mockAuth.login_here", { defaultValue: "Log in here" })}
-                </Link>
-              </>
-            ) : (
-              <>
-                {t("mockAuth.are_you_business", {
-                  defaultValue: "Are you a business?",
-                })}{" "}
-                <Link
-                  to="/agency/login"
-                  className="hover:underline font-medium"
-                  style={{ color: "#163300" }}
-                >
-                  {t("mockAuth.login_here", { defaultValue: "Log in here" })}
-                </Link>
-              </>
-            )}
-          </p>
+          {/* Cross-door link — only on agency login (renters reach agency auth via /agencies) */}
+          {context === "agency" ? (
+            <p className="text-center text-xs" style={{ color: "rgba(22,51,0,0.6)" }}>
+              {t("mockAuth.are_you_renter", {
+                defaultValue: "Are you a renter?",
+              })}{" "}
+              <Link
+                to="/login"
+                className="hover:underline font-medium"
+                style={{ color: "#163300" }}
+              >
+                {t("mockAuth.login_here", { defaultValue: "Log in here" })}
+              </Link>
+            </p>
+          ) : null}
         </form>
       </div>
     </AuthLayout>
