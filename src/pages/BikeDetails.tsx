@@ -470,11 +470,19 @@ const BikeDetails = () => {
                     <span className="text-muted-foreground text-xs sm:text-sm">(0)</span>
                   </div>
                 </div>
+                <Button
+                  variant="hero"
+                  size="lg"
+                  className="w-full mt-2"
+                  onClick={() => document.getElementById('booking-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                >
+                  {t('hero.bookNow')}
+                </Button>
               </CardContent>
             </Card>
 
             {/* Booking Section - Desktop & Mobile */}
-            <Card className="border-2 border-primary/20 bg-card shadow-lg relative overflow-hidden">
+            <Card id="booking-form" className="border-2 border-primary/20 bg-card shadow-lg relative overflow-hidden">
               <CardContent className="p-4 sm:p-6">
                 <div className="mb-4 sm:mb-6">
                   <span className="text-xs sm:text-sm text-muted-foreground font-medium">
@@ -878,6 +886,24 @@ const BikeDetails = () => {
           </div>
         </div>
         </main>
+
+        {/* Sticky mobile booking bar */}
+        <div className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-background border-t border-border shadow-lg p-3 flex items-center justify-between gap-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
+          <div className="min-w-0">
+            <p className="text-xs text-muted-foreground">From</p>
+            <p className="text-lg font-bold text-foreground leading-tight">
+              {getDailyPriceForDuration(pricingTiers, 30)} DH<span className="text-xs font-normal text-muted-foreground">/day</span>
+            </p>
+          </div>
+          <Button
+            variant="hero"
+            size="lg"
+            className="flex-1 max-w-[220px]"
+            onClick={() => document.getElementById('booking-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+          >
+            {t('hero.bookNow')}
+          </Button>
+        </div>
       </div>
     </>
   );
