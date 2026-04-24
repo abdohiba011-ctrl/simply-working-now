@@ -462,9 +462,10 @@ export default function RentCity() {
             </div>
           </AccordionContent>
         </AccordionItem>
-      </Accordion>
+        </Accordion>
+      </div>
 
-      <div className="border-t border-border pt-4 mt-4 space-y-3 bg-background">
+      <div className="border-t border-border pt-4 mt-3 space-y-3 bg-background shrink-0">
         <div className="flex items-center justify-between">
           <button
             onClick={clearAll}
