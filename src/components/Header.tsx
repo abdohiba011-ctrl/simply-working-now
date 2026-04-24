@@ -389,10 +389,10 @@ export const Header = memo(() => {
               </DropdownMenu>
             ) : (
               <>
-                <Button variant="outline" onClick={() => navigate("/login")}>
+                <Button variant="outline" onClick={() => navigate("/auth")}>
                   {t('header.login')}
                 </Button>
-                <Button variant="hero" onClick={() => navigate("/signup")}>
+                <Button variant="hero" onClick={() => navigate("/auth?mode=signup")}>
                   {t('header.signup')}
                 </Button>
               </>
@@ -530,10 +530,10 @@ export const Header = memo(() => {
                 </>
               ) : (
                 <div className="flex flex-col gap-2 px-2">
-                  <Button variant="outline" size="lg" className="text-base min-h-[48px] font-semibold" onClick={() => { navigate("/login"); setIsMenuOpen(false); }}>
+                  <Button variant="outline" size="lg" className="text-base min-h-[48px] font-semibold" onClick={() => { navigate("/auth"); setIsMenuOpen(false); }}>
                     {t('header.login')}
                   </Button>
-                  <Button variant="hero" size="lg" className="text-base min-h-[48px] font-semibold" onClick={() => { navigate("/signup"); setIsMenuOpen(false); }}>
+                  <Button variant="hero" size="lg" className="text-base min-h-[48px] font-semibold" onClick={() => { navigate("/auth?mode=signup"); setIsMenuOpen(false); }}>
                     {t('header.signup')}
                   </Button>
                 </div>

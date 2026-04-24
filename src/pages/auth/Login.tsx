@@ -8,7 +8,6 @@ import { toast } from "sonner";
 import { Eye, EyeOff, Mail, Phone, AlertCircle, Loader2 } from "lucide-react";
 
 import { AuthLayout } from "@/components/auth/AuthLayout";
-import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,6 +16,7 @@ import { useAuthStore } from "@/stores/useAuthStore";
 import {
   detectIdentifierType,
   getLockoutRemainingMs,
+  mockResendVerification,
   type AuthError,
 } from "@/lib/mockAuth";
 import { cn } from "@/lib/utils";
@@ -65,7 +65,6 @@ export default function Login({ context = "renter" }: LoginProps) {
   const error = useAuthStore((s) => s.error);
   const needsVerification = useAuthStore((s) => s.needsVerification);
   const clearError = useAuthStore((s) => s.clearError);
-  const resendVerificationCode = useAuthStore((s) => s.resendVerificationCode);
 
   const [showPassword, setShowPassword] = useState(false);
   const [resendingVerification, setResendingVerification] = useState(false);
@@ -145,15 +144,9 @@ export default function Login({ context = "renter" }: LoginProps) {
   const handleResend = async () => {
     setResendingVerification(true);
     try {
-      await resendVerificationCode(form.getValues("identifier"));
+      await mockResendVerification(form.getValues("identifier"));
       toast.success(
         t("mockAuth.verification_sent", { defaultValue: "Verification email sent" }),
-      );
-    } catch {
-      toast.error(
-        t("mockAuth.verification_send_failed", {
-          defaultValue: "Couldn't send the email. Try again in a moment.",
-        }),
       );
     } finally {
       setResendingVerification(false);
@@ -224,17 +217,6 @@ export default function Login({ context = "renter" }: LoginProps) {
           </div>
         ) : null}
 
-        <div className="space-y-3">
-          <GoogleSignInButton label={t("mockAuth.continue_with_google", { defaultValue: "Continue with Google" })} />
-          <div className="flex items-center gap-3">
-            <div className="flex-1 h-px bg-[#163300]/10" />
-            <span className="text-xs uppercase tracking-wider" style={{ color: "rgba(22,51,0,0.5)" }}>
-              {t("mockAuth.or", { defaultValue: "or" })}
-            </span>
-            <div className="flex-1 h-px bg-[#163300]/10" />
-          </div>
-        </div>
-
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" noValidate>
           {/* Identifier */}
           <div className="space-y-1.5">
@@ -258,11 +240,7 @@ export default function Login({ context = "renter" }: LoginProps) {
                   "h-10 rounded-md pl-9 text-sm",
                   form.formState.errors.identifier && "border-red-300 focus-visible:ring-red-200",
                 )}
-                {...form.register("identifier", {
-                  onChange: () => {
-                    if (error) clearError();
-                  },
-                })}
+                {...form.register("identifier")}
               />
             </div>
             {form.formState.errors.identifier ? (
@@ -286,11 +264,7 @@ export default function Login({ context = "renter" }: LoginProps) {
                   "h-10 rounded-md pr-10 text-sm",
                   form.formState.errors.password && "border-red-300 focus-visible:ring-red-200",
                 )}
-                {...form.register("password", {
-                  onChange: () => {
-                    if (error) clearError();
-                  },
-                })}
+                {...form.register("password")}
               />
               <button
                 type="button"
@@ -331,7 +305,7 @@ export default function Login({ context = "renter" }: LoginProps) {
           {/* Submit */}
           <Button
             type="submit"
-            disabled={submitDisabled}
+            disabled={submitDisabled || !form.formState.isValid}
             className="w-full h-10 rounded-md text-sm font-semibold"
             style={{ backgroundColor: "#9FE870", color: "#163300" }}
           >

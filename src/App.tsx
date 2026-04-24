@@ -8,7 +8,6 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { MockProtectedRoute } from "@/components/auth/MockProtectedRoute";
-import { AuthBootstrap } from "@/components/auth/AuthBootstrap";
 import { PageLoadingSkeleton, BookingHistorySkeleton, ProfileSkeleton, BikeDetailsSkeleton } from "@/components/ui/loading-skeleton";
 import { AffiliateSkeleton } from "@/components/ui/affiliate-skeleton";
 import { ScrollToTop } from "./components/ScrollToTop";
@@ -21,10 +20,6 @@ import { AgencyShell } from "./components/agency/AgencyShell";
 import Index from "./pages/Index";
 import Listings from "./pages/Listings";
 import Auth from "./pages/Auth";
-import Login from "./pages/auth/Login";
-import Signup from "./pages/auth/Signup";
-import AgencyLoginPage from "./pages/auth/AgencyLogin";
-import AgencySignupPage from "./pages/auth/AgencySignup";
 
 // Lazy load all other page components
 const BecomeSeller = lazy(() => import("./pages/BecomeSeller"));
@@ -107,11 +102,6 @@ const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword"));
 const ResetPasswordVerify = lazy(() => import("./pages/auth/ResetPasswordVerify"));
 const ResetPasswordNew = lazy(() => import("./pages/auth/ResetPasswordNew"));
 const SignupExtra = lazy(() => import("./pages/auth/SignupExtra"));
-const CityListings = lazy(() => import("./pages/rent/CityListings"));
-const BookingReviewNew = lazy(() => import("./pages/rent/BookingReviewNew"));
-const MockCheckout = lazy(() => import("./pages/rent/MockCheckout"));
-const BookingSuccess = lazy(() => import("./pages/rent/BookingSuccess"));
-const BookingChat = lazy(() => import("./pages/rent/BookingChat"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -137,7 +127,6 @@ const App = () => (
             <Sonner />
             <LanguageSuggestionBanner />
             <BrowserRouter>
-              <AuthBootstrap />
               <ScrollToTop />
               <ScrollToTopButton />
               <Suspense fallback={<PageLoadingSkeleton />}>
@@ -158,16 +147,11 @@ const App = () => (
                   <Route path="/quarterly" element={<Quarterly />} />
                   <Route path="/gps-tracking" element={<GPSTracking />} />
                   <Route path="/auth" element={<Auth />} />
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/agency/login" element={<AgencyLoginPage />} />
-                  <Route path="/signup" element={<Signup />} />
-                  <Route path="/agency/signup" element={<AgencySignupPage />} />
+                  <Route path="/login" element={<MockLogin />} />
+                  <Route path="/agency/login" element={<AgencyLogin />} />
+                  <Route path="/signup" element={<MockSignup />} />
+                  <Route path="/agency/signup" element={<AgencySignup />} />
                   <Route path="/rent" element={<RentPlaceholder />} />
-                  <Route path="/rent/:city" element={<CityListings />} />
-                  <Route path="/rent/review" element={<BookingReviewNew />} />
-                  <Route path="/rent/checkout" element={<ProtectedRoute><MockCheckout /></ProtectedRoute>} />
-                  <Route path="/rent/booking/:id/success" element={<ProtectedRoute><BookingSuccess /></ProtectedRoute>} />
-                  <Route path="/messages/:id" element={<ProtectedRoute><BookingChat /></ProtectedRoute>} />
                   <Route path="/verify-email" element={<MockVerifyEmail />} />
                   <Route path="/forgot-password" element={<ForgotPassword />} />
                   <Route path="/reset-password/verify" element={<ResetPasswordVerify />} />

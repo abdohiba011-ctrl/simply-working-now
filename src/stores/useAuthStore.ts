@@ -26,12 +26,7 @@ import {
 // ---------------------------------------------------------------------
 
 const LAST_ROLE_KEY = "motonita_last_active_role";
-const REMEMBER_ME_KEY = "motonita_auth_remember"; // localStorage flag — survives browser close
-const SESSION_ALIVE_KEY = "motonita_auth_session_alive"; // sessionStorage flag — cleared on browser close
-const FAILED_ATTEMPTS_PREFIX = "motonita_failed_attempts:"; // per-identifier failure counter
-
-const MAX_FAILED_ATTEMPTS = 5;
-const LOCKOUT_DURATION_MS = 15 * 60 * 1000; // 15 minutes
+const REMEMBER_ME_KEY = "motonita_auth_remember";
 
 function readLastRole(): AppRole | null {
   try {
@@ -54,71 +49,6 @@ function clearLastRole(): void {
   try {
     localStorage.removeItem(LAST_ROLE_KEY);
     localStorage.removeItem(REMEMBER_ME_KEY);
-    sessionStorage.removeItem(SESSION_ALIVE_KEY);
-  } catch {
-    // ignore
-  }
-}
-
-function markRememberMe(remember: boolean): void {
-  try {
-    if (remember) {
-      localStorage.setItem(REMEMBER_ME_KEY, "1");
-    } else {
-      localStorage.removeItem(REMEMBER_ME_KEY);
-    }
-    // Always mark this tab/window as "alive" so a refresh keeps the user logged in,
-    // but a full browser close will clear sessionStorage and we'll sign out on next boot.
-    sessionStorage.setItem(SESSION_ALIVE_KEY, "1");
-  } catch {
-    // ignore
-  }
-}
-
-function isRememberMe(): boolean {
-  try {
-    return localStorage.getItem(REMEMBER_ME_KEY) === "1";
-  } catch {
-    return false;
-  }
-}
-
-function isSessionAliveFlagSet(): boolean {
-  try {
-    return sessionStorage.getItem(SESSION_ALIVE_KEY) === "1";
-  } catch {
-    return false;
-  }
-}
-
-// ---------------------------------------------------------------------
-// Failed-attempt tracking (client-side; Supabase enforces server limits too)
-// ---------------------------------------------------------------------
-
-function getFailedAttempts(identifier: string): number {
-  try {
-    const raw = localStorage.getItem(FAILED_ATTEMPTS_PREFIX + identifier.toLowerCase().trim());
-    if (!raw) return 0;
-    const n = parseInt(raw, 10);
-    return Number.isFinite(n) ? n : 0;
-  } catch {
-    return 0;
-  }
-}
-
-function bumpFailedAttempts(identifier: string): number {
-  const next = getFailedAttempts(identifier) + 1;
-  try {
-    localStorage.setItem(FAILED_ATTEMPTS_PREFIX + identifier.toLowerCase().trim(), String(next));
-  } catch {
-    // ignore
-  }
-  return next;
-}
-
-function clearFailedAttempts(identifier: string): void {
-  try {
-    localStorage.removeItem(FAILED_ATTEMPTS_PREFIX + identifier.toLowerCase().trim());
   } catch {
     // ignore
   }
@@ -391,31 +321,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     if (signInResult.error || !signInResult.data.user) {
       const err = mapSupabaseAuthError(signInResult.error?.message ?? "Login failed");
-
-      // Track client-side lockout: 5 wrong creds → 15 min cooldown.
+      // Track client-side lockout heuristic on credential failures
       if (err.code === "INVALID_CREDENTIALS") {
-        const attempts = bumpFailedAttempts(emailOrPhone);
-        const remaining = Math.max(0, MAX_FAILED_ATTEMPTS - attempts);
-        if (attempts >= MAX_FAILED_ATTEMPTS) {
-          recordLockout(emailOrPhone, LOCKOUT_DURATION_MS);
-          clearFailedAttempts(emailOrPhone);
-          const lockedErr = makeAuthError(
-            "ACCOUNT_LOCKED",
-            "Too many failed attempts. Please try again in 15 minutes.",
-            { retryAfterMs: LOCKOUT_DURATION_MS },
-          );
-          set({ isLoading: false, error: lockedErr.message });
-          throw lockedErr;
-        }
-        // Annotate the error with attempts left so the UI can show it.
-        err.attemptsLeft = remaining;
-        if (remaining <= 2) {
-          err.message = `Incorrect email or password. ${remaining} ${
-            remaining === 1 ? "attempt" : "attempts"
-          } left before lockout.`;
-        }
+        // Don't auto-lock from a single failure; let Supabase handle real limits.
       }
-
       set({
         isLoading: false,
         error: err.message,
@@ -426,7 +335,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
 
     clearLockout(emailOrPhone);
-    clearFailedAttempts(emailOrPhone);
 
     const mapped = await loadAuthUserModel(signInResult.data.user);
 
@@ -446,7 +354,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     const user: MockUser = { ...mapped, last_active_role: currentRole };
     writeLastRole(currentRole);
-    markRememberMe(rememberMe);
+    if (rememberMe) {
+      try {
+        localStorage.setItem(REMEMBER_ME_KEY, "1");
+      } catch {
+        // ignore
+      }
+    }
 
     set({
       user,
@@ -549,30 +463,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     const { data } = await supabase.auth.getSession();
     if (data.session?.user) {
-      // Strict "Remember Me": if the user did NOT check Remember Me on their
-      // last login, the SESSION_ALIVE flag (sessionStorage) is cleared whenever
-      // the browser is fully closed. If the flag is missing AND remember-me is
-      // off, sign them out — they must log in again.
-      if (!isRememberMe() && !isSessionAliveFlagSet()) {
-        await supabase.auth.signOut();
-        clearLastRole();
-        set({
-          user: null,
-          session: null,
-          currentRole: null,
-          isAuthenticated: false,
-          isLoading: false,
-        });
-        return;
-      }
-
-      // Tab is alive — keep the flag set so a refresh stays logged in.
-      try {
-        sessionStorage.setItem(SESSION_ALIVE_KEY, "1");
-      } catch {
-        // ignore
-      }
-
       try {
         const mapped = await loadAuthUserModel(data.session.user);
         set({
