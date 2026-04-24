@@ -256,17 +256,12 @@ const BookingReview = () => {
             variant="hero"
             className="w-full"
             onClick={handleContinue}
-            disabled={isCheckingProfile || isProcessing}
+            disabled={isProcessing}
           >
             {isProcessing ? (
               <>
                 <Loader2 className={`h-4 w-4 animate-spin ${isRTL ? 'ml-2' : 'mr-2'}`} />
                 {t('booking.processing')}
-              </>
-            ) : isCheckingProfile ? (
-              <>
-                <Loader2 className={`h-4 w-4 animate-spin ${isRTL ? 'ml-2' : 'mr-2'}`} />
-                {t('common.loading')}
               </>
             ) : (
               <>Continue to payment — 10 MAD</>
