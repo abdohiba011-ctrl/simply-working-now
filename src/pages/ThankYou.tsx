@@ -55,7 +55,8 @@ const ThankYou = () => {
         description: t("thankYouPage.verification.description"),
         details: null,
         verificationInfo: true,
-        businessInfo: false
+        businessInfo: false,
+        bookingInfo: false,
       };
     }
     if (type === "business") {
@@ -64,7 +65,8 @@ const ThankYou = () => {
         description: t("thankYouPage.business.description"),
         details: t("thankYouPage.business.details"),
         verificationInfo: false,
-        businessInfo: true
+        businessInfo: true,
+        bookingInfo: false,
       };
     }
     if (type === "affiliate") {
@@ -73,7 +75,18 @@ const ThankYou = () => {
         description: t("thankYouPage.affiliate.description"),
         details: t("thankYouPage.affiliate.details"),
         verificationInfo: false,
-        businessInfo: false
+        businessInfo: false,
+        bookingInfo: false,
+      };
+    }
+    if (type === "booking") {
+      return {
+        title: "Booking request sent! 🎉",
+        description: "Your 10 MAD booking fee was received. The agency has been notified and will reach out within 24 hours to confirm pickup details.",
+        details: "You can track your booking and chat with the agency from your bookings page.",
+        verificationInfo: false,
+        businessInfo: false,
+        bookingInfo: true,
       };
     }
     return {
@@ -81,7 +94,8 @@ const ThankYou = () => {
       description: t("thankYouPage.contact.description"),
       details: t("thankYouPage.contact.details"),
       verificationInfo: false,
-      businessInfo: false
+      businessInfo: false,
+      bookingInfo: false,
     };
   };
 
