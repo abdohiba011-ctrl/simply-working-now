@@ -26,7 +26,12 @@ import {
 // ---------------------------------------------------------------------
 
 const LAST_ROLE_KEY = "motonita_last_active_role";
-const REMEMBER_ME_KEY = "motonita_auth_remember";
+const REMEMBER_ME_KEY = "motonita_auth_remember"; // localStorage flag — survives browser close
+const SESSION_ALIVE_KEY = "motonita_auth_session_alive"; // sessionStorage flag — cleared on browser close
+const FAILED_ATTEMPTS_PREFIX = "motonita_failed_attempts:"; // per-identifier failure counter
+
+const MAX_FAILED_ATTEMPTS = 5;
+const LOCKOUT_DURATION_MS = 15 * 60 * 1000; // 15 minutes
 
 function readLastRole(): AppRole | null {
   try {
@@ -49,6 +54,71 @@ function clearLastRole(): void {
   try {
     localStorage.removeItem(LAST_ROLE_KEY);
     localStorage.removeItem(REMEMBER_ME_KEY);
+    sessionStorage.removeItem(SESSION_ALIVE_KEY);
+  } catch {
+    // ignore
+  }
+}
+
+function markRememberMe(remember: boolean): void {
+  try {
+    if (remember) {
+      localStorage.setItem(REMEMBER_ME_KEY, "1");
+    } else {
+      localStorage.removeItem(REMEMBER_ME_KEY);
+    }
+    // Always mark this tab/window as "alive" so a refresh keeps the user logged in,
+    // but a full browser close will clear sessionStorage and we'll sign out on next boot.
+    sessionStorage.setItem(SESSION_ALIVE_KEY, "1");
+  } catch {
+    // ignore
+  }
+}
+
+function isRememberMe(): boolean {
+  try {
+    return localStorage.getItem(REMEMBER_ME_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function isSessionAliveFlagSet(): boolean {
+  try {
+    return sessionStorage.getItem(SESSION_ALIVE_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+// ---------------------------------------------------------------------
+// Failed-attempt tracking (client-side; Supabase enforces server limits too)
+// ---------------------------------------------------------------------
+
+function getFailedAttempts(identifier: string): number {
+  try {
+    const raw = localStorage.getItem(FAILED_ATTEMPTS_PREFIX + identifier.toLowerCase().trim());
+    if (!raw) return 0;
+    const n = parseInt(raw, 10);
+    return Number.isFinite(n) ? n : 0;
+  } catch {
+    return 0;
+  }
+}
+
+function bumpFailedAttempts(identifier: string): number {
+  const next = getFailedAttempts(identifier) + 1;
+  try {
+    localStorage.setItem(FAILED_ATTEMPTS_PREFIX + identifier.toLowerCase().trim(), String(next));
+  } catch {
+    // ignore
+  }
+  return next;
+}
+
+function clearFailedAttempts(identifier: string): void {
+  try {
+    localStorage.removeItem(FAILED_ATTEMPTS_PREFIX + identifier.toLowerCase().trim());
   } catch {
     // ignore
   }
