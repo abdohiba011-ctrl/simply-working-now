@@ -16,6 +16,7 @@ import { AdminFleetTab } from "@/components/admin/AdminFleetTab";
 import { AdminLocationsTab } from "@/components/admin/AdminLocationsTab";
 import { AdminCitiesTab } from "@/components/admin/AdminCitiesTab";
 import { AdminPricingTab } from "@/components/admin/AdminPricingTab";
+import { AdminEmailTestTab } from "@/components/admin/AdminEmailTestTab";
 import { TabErrorBoundary } from "@/components/TabErrorBoundary";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
