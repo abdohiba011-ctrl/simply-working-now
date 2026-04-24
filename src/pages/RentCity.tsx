@@ -44,20 +44,27 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
-const CASA_NEIGHBORHOODS = [
-  "All Casablanca",
-  "Anfa",
-  "Maârif",
-  "Derb Sultan",
-  "Sidi Maârouf",
-  "Aïn Diab",
-  "Gauthier",
-  "Bourgogne",
-  "Hay Hassani",
-  "Sidi Bernoussi",
-  "Ain Sebaa",
-  "Bouskoura",
-];
+const NEIGHBORHOODS_BY_CITY: Record<string, string[]> = {
+  casablanca: [
+    "Anfa", "Maârif", "Derb Sultan", "Sidi Maârouf", "Aïn Diab",
+    "Gauthier", "Bourgogne", "Hay Hassani", "Sidi Bernoussi", "Ain Sebaa", "Bouskoura",
+  ],
+  marrakesh: ["Guéliz", "Médina", "Hivernage", "Palmeraie", "Daoudiate", "Agdal"],
+  marrakech: ["Guéliz", "Médina", "Hivernage", "Palmeraie", "Daoudiate", "Agdal"],
+  rabat: ["Agdal", "Hassan", "Souissi", "Médina", "Hay Riad"],
+  tangier: ["Malabata", "Centre-Ville", "Marshan", "Iberia", "Playa"],
+  agadir: ["Centre-Ville", "Founty", "Talborjt"],
+  fes: ["Médina (Fes el-Bali)", "Ville Nouvelle", "Fes el-Jdid", "Aïn Chkef"],
+  essaouira: ["Médina", "Centre-Ville", "Borj"],
+  chefchaouen: ["Médina", "Ras El Maa", "Centre-Ville"],
+};
+
+const getNeighborhoodsForCity = (citySlug: string): string[] => {
+  const key = citySlug.toLowerCase();
+  const list = NEIGHBORHOODS_BY_CITY[key] || [];
+  const cityLabel = key.charAt(0).toUpperCase() + key.slice(1);
+  return [`All ${cityLabel}`, ...list];
+};
 
 const BIKE_TYPES = [
   { id: "scooter", label: "Scooter (50-125cc)" },
