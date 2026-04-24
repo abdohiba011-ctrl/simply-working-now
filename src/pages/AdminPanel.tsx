@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { AlertTriangle, Users, Building2, Store, UserCog, Clock, CheckCircle, XCircle, UserX, Calendar, Bike, BarChart3, MapPin, Map, Tag } from "lucide-react";
+import { AlertTriangle, Users, Building2, Store, UserCog, Clock, CheckCircle, XCircle, UserX, Calendar, Bike, BarChart3, MapPin, Map, Tag, Mail } from "lucide-react";
 import { useAdminNotifications } from "@/hooks/useAdminNotifications";
 import { useAdminPermissions, AdminTabPermission } from "@/hooks/useAdminPermissions";
 import { AdminUnifiedClientsTab } from "@/components/admin/AdminUnifiedClientsTab";
@@ -16,6 +16,7 @@ import { AdminFleetTab } from "@/components/admin/AdminFleetTab";
 import { AdminLocationsTab } from "@/components/admin/AdminLocationsTab";
 import { AdminCitiesTab } from "@/components/admin/AdminCitiesTab";
 import { AdminPricingTab } from "@/components/admin/AdminPricingTab";
+import { AdminEmailTestTab } from "@/components/admin/AdminEmailTestTab";
 import { TabErrorBoundary } from "@/components/TabErrorBoundary";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,7 +26,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 // Lazy load analytics tab to avoid loading recharts on initial load
 const AdminAnalyticsTab = lazy(() => import("@/components/admin/AdminAnalyticsTab").then(m => ({ default: m.AdminAnalyticsTab })));
 
-type TabValue = "clients" | "individual-owners" | "rental-shops" | "employees" | "bookings" | "fleet" | "analytics" | "locations" | "cities" | "pricing";
+type TabValue = "clients" | "individual-owners" | "rental-shops" | "employees" | "bookings" | "fleet" | "analytics" | "locations" | "cities" | "pricing" | "email";
 type FilterValue = "all" | "pending" | "verified" | "not_verified" | "blocked";
 
 // Map tab values to permission keys
@@ -40,6 +41,7 @@ const TAB_PERMISSION_MAP: Record<TabValue, AdminTabPermission | null> = {
   employees: null, // Employees tab is always visible for admins
   analytics: "analytics",
   pricing: null, // Pricing tab is always visible for admins
+  email: null, // Email test tab is always visible for admins
 };
 
 interface StatusCounts {
@@ -82,6 +84,7 @@ const AdminPanel = () => {
     { value: "rental-shops" as TabValue, label: t('admin.rentalShops'), icon: Store },
     { value: "employees" as TabValue, label: t('admin.employees'), icon: UserCog },
     { value: "analytics" as TabValue, label: t('admin.analytics'), icon: BarChart3 },
+    { value: "email" as TabValue, label: "Email", icon: Mail },
   ];
 
   // Filter tabs based on user permissions
@@ -280,6 +283,11 @@ const AdminPanel = () => {
         {activeTab === "employees" && (
           <TabErrorBoundary key={`employees-${retryKey}`} tabName="Employees" onRetry={handleTabRetry}>
             <AdminEmployeesTab />
+          </TabErrorBoundary>
+        )}
+        {activeTab === "email" && (
+          <TabErrorBoundary key={`email-${retryKey}`} tabName="Email" onRetry={handleTabRetry}>
+            <AdminEmailTestTab />
           </TabErrorBoundary>
         )}
       </div>
