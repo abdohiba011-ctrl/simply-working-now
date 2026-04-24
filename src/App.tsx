@@ -8,6 +8,7 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { MockProtectedRoute } from "@/components/auth/MockProtectedRoute";
+import { AuthBootstrap } from "@/components/auth/AuthBootstrap";
 import { PageLoadingSkeleton, BookingHistorySkeleton, ProfileSkeleton, BikeDetailsSkeleton } from "@/components/ui/loading-skeleton";
 import { AffiliateSkeleton } from "@/components/ui/affiliate-skeleton";
 import { ScrollToTop } from "./components/ScrollToTop";
@@ -127,6 +128,7 @@ const App = () => (
             <Sonner />
             <LanguageSuggestionBanner />
             <BrowserRouter>
+              <AuthBootstrap />
               <ScrollToTop />
               <ScrollToTopButton />
               <Suspense fallback={<PageLoadingSkeleton />}>
