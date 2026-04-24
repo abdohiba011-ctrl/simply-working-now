@@ -688,8 +688,8 @@ function BikeCard({
           />
         </button>
 
-        <div className="absolute inset-x-3 bottom-3 opacity-0 group-hover:opacity-100 transition-opacity">
-          <Button variant="hero" size="sm" className="w-full">
+        <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+          <Button variant="hero" size="sm" className="h-7 px-3 text-xs rounded-md">
             View details
           </Button>
         </div>
