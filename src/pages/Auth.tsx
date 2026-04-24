@@ -242,16 +242,17 @@ const Auth = () => {
   const handleSendOTP = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
+
     try {
-      const { error } = await supabase.functions.invoke('send-password-otp', {
-        body: { email: resetEmail, action: 'send' }
+      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+        redirectTo: `${window.location.origin}/reset-password`,
       });
-      
+
       if (error) throw error;
-      
+
       toast.success(t('auth.codeSentSuccess'));
-      setResetStep("otp");
+      // Show a "check your email" confirmation step instead of OTP entry.
+      setResetStep("password");
     } catch (error: unknown) {
       toast.error(getErrMsg(error) || t('auth.failedToSendCode'));
     } finally {
@@ -259,72 +260,14 @@ const Auth = () => {
     }
   };
 
-  const handleVerifyOTP = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    
-    try {
-      const { data, error } = await supabase.functions.invoke('send-password-otp', {
-        body: { email: resetEmail, otp: otpCode, action: 'verify' }
-      });
-      
-      if (error) {
-        throw error;
-      }
-      
-      if (!data?.success) {
-        throw new Error(t('auth.invalidOrExpiredCode'));
-      }
-      
-      toast.success(t('auth.codeVerifiedSuccess'));
-      setResetStep("password");
-    } catch (error: unknown) {
-      console.error('OTP verification error:', error);
-      toast.error(getErrMsg(error) || t('auth.invalidOrExpiredCode'));
-    } finally {
-      setIsLoading(false);
-    }
+  const handleVerifyOTP = async (_e: React.FormEvent) => {
+    // No-op: kept for backward compatibility with old UI references.
+    // The reset flow now uses an email link instead of an OTP code.
   };
 
-  const handleResetPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (newPassword !== confirmNewPassword) {
-      toast.error(t('auth.passwordsDoNotMatch'));
-      return;
-    }
-
-    if (newPassword.length < 8) {
-      toast.error(t('auth.passwordMin8'));
-      return;
-    }
-
-    setIsLoading(true);
-    
-    try {
-      const { error } = await supabase.functions.invoke('send-password-otp', {
-        body: { 
-          email: resetEmail, 
-          otp: otpCode, 
-          newPassword,
-          action: 'reset' 
-        }
-      });
-      
-      if (error) throw error;
-      
-      toast.success(t('auth.passwordResetSuccess'));
-      setShowForgotPassword(false);
-      setResetStep("email");
-      setResetEmail("");
-      setOtpCode("");
-      setNewPassword("");
-      setConfirmNewPassword("");
-    } catch (error: unknown) {
-      toast.error(getErrMsg(error) || t('auth.passwordResetFailed'));
-    } finally {
-      setIsLoading(false);
-    }
+  const handleResetPassword = async (_e: React.FormEvent) => {
+    // No-op: password is set on the dedicated /reset-password page after
+    // the user clicks the email link.
   };
 
   const handleGoogleSignIn = async () => {
@@ -499,74 +442,26 @@ const Auth = () => {
                   {resetStep === "password" && (
                     <>
                       <h1 className="text-3xl font-bold text-center mb-2 text-foreground">
-                        {t('auth.createNewPassword')}
+                        {t('auth.checkYourEmail') || 'Check your email'}
                       </h1>
                       <p className="text-center text-muted-foreground mb-6">
-                        {t('auth.enterNewPassword')}
+                        {(t('auth.resetLinkSentTo') || "We've sent a password reset link to")} <strong>{resetEmail}</strong>.
+                        {' '}
+                        {t('auth.clickLinkToReset') || 'Click the link in the email to set a new password.'}
                       </p>
-                      
-                      <form onSubmit={handleResetPassword} className="space-y-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="new-password">{t('auth.newPassword')}</Label>
-                          <div className="relative">
-                            <Input
-                              id="new-password"
-                              type={showNewPassword ? "text" : "password"}
-                              value={newPassword}
-                              onChange={(e) => setNewPassword(e.target.value)}
-                              required
-                              placeholder={t('auth.enterNewPasswordPlaceholder')}
-                              className="pr-10"
-                              autoComplete="new-password"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => setShowNewPassword(!showNewPassword)}
-                              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                            >
-                              {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                            </button>
-                          </div>
-                          <PasswordStrengthIndicator password={newPassword} />
-                        </div>
 
-                        <div className="space-y-2">
-                          <Label htmlFor="confirm-new-password">{t('auth.confirmNewPassword')}</Label>
-                          <div className="relative">
-                            <Input
-                              id="confirm-new-password"
-                              type={showConfirmNewPassword ? "text" : "password"}
-                              value={confirmNewPassword}
-                              onChange={(e) => setConfirmNewPassword(e.target.value)}
-                              required
-                              placeholder={t('auth.confirmNewPasswordPlaceholder')}
-                              className="pr-10"
-                              autoComplete="new-password"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => setShowConfirmNewPassword(!showConfirmNewPassword)}
-                              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                            >
-                              {showConfirmNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                            </button>
-                          </div>
-                          {confirmNewPassword && newPassword !== confirmNewPassword && (
-                            <p className="text-xs text-destructive">{t('auth.passwordsDoNotMatch')}</p>
-                          )}
-                          {confirmNewPassword && newPassword === confirmNewPassword && (
-                            <p className="text-xs text-green-600">{t('auth.passwordsMatch')}</p>
-                          )}
-                        </div>
-                        
-                        <Button 
-                          type="submit" 
-                          className="w-full" 
-                          disabled={isLoading}
-                        >
-                          {isLoading ? t('auth.resetting') : t('auth.resetPasswordBtn')}
-                        </Button>
-                      </form>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="w-full"
+                        onClick={() => {
+                          setShowForgotPassword(false);
+                          setResetStep("email");
+                          setResetEmail("");
+                        }}
+                      >
+                        {t('auth.backToLogin') || 'Back to login'}
+                      </Button>
                     </>
                   )}
                 </CardContent>
