@@ -587,6 +587,16 @@ const Verification = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {/* Post-payment banner — user just paid the 10 MAD booking fee */}
+            {postPaymentBookingId && (
+              <Alert className="mb-6 bg-green-50 border-green-300 dark:bg-green-950/30 dark:border-green-700">
+                <CheckCircle2 className="h-4 w-4 text-green-600" />
+                <AlertDescription className="text-green-800 dark:text-green-200">
+                  <strong>Payment received ✅</strong> One last step — verify your ID and phone so the agency can confirm your booking.
+                </AlertDescription>
+              </Alert>
+            )}
+
             {/* Re-verification Reason Banner */}
             {rejectionReason && (
               <Alert className="mb-6 bg-amber-50 border-amber-300 dark:bg-amber-950/30 dark:border-amber-700">
