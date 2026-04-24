@@ -52,6 +52,7 @@ const ChangePassword = lazy(() => import("./pages/ChangePassword"));
 const BookingHistory = lazy(() => import("./pages/BookingHistory"));
 const BookingDetails = lazy(() => import("./pages/BookingDetails"));
 const Notifications = lazy(() => import("./pages/Notifications"));
+const Inbox = lazy(() => import("./pages/Inbox"));
 const AdminVerifications = lazy(() => import("./pages/AdminVerifications"));
 const AdminPanel = lazy(() => import("./pages/AdminPanel"));
 const AdminBookings = lazy(() => import("./pages/admin/AdminBookings"));
@@ -181,6 +182,7 @@ const App = () => (
                   <Route path="/booking-history" element={<ProtectedRoute><Suspense fallback={<BookingHistorySkeleton />}><BookingHistory /></Suspense></ProtectedRoute>} />
                   <Route path="/booking/:id" element={<ProtectedRoute><BookingDetails /></ProtectedRoute>} />
                   <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
+                  <Route path="/inbox" element={<ProtectedRoute><Inbox /></ProtectedRoute>} />
                   <Route path="/admin/verifications" element={<ProtectedRoute requireRole="admin"><AdminVerifications /></ProtectedRoute>} />
                   <Route path="/admin" element={<ProtectedRoute requireRole="admin"><AdminPanel /></ProtectedRoute>} />
                   <Route path="/admin/panel" element={<ProtectedRoute requireRole="admin"><AdminPanel /></ProtectedRoute>} />
