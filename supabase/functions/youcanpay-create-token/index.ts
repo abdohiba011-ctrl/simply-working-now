@@ -15,6 +15,8 @@ interface Body {
   plan?: "free" | "pro" | "business";
   customer_email?: string;
   customer_name?: string;
+  success_path?: string;
+  error_path?: string;
 }
 
 const APP_URL =
@@ -77,8 +79,15 @@ Deno.serve(async (req) => {
 
     // Call YouCanPay sandbox tokenize endpoint
     const orderId = payment.id;
-    const successUrl = `${APP_URL}/agency/finance#wallet?yc=success&pid=${orderId}`;
-    const errorUrl = `${APP_URL}/agency/finance#wallet?yc=error&pid=${orderId}`;
+    const defaultSuccess = `${APP_URL}/agency/finance#wallet?yc=success&pid=${orderId}`;
+    const defaultError = `${APP_URL}/agency/finance#wallet?yc=error&pid=${orderId}`;
+    const buildUrl = (p?: string, fallback?: string) => {
+      if (!p) return fallback!;
+      const sep = p.includes("?") ? "&" : "?";
+      return `${APP_URL}${p}${sep}pid=${orderId}`;
+    };
+    const successUrl = buildUrl(body.success_path, defaultSuccess);
+    const errorUrl = buildUrl(body.error_path, defaultError);
     const webhookUrl = `${SUPABASE_URL}/functions/v1/youcanpay-webhook`;
 
     const ycPayload = {

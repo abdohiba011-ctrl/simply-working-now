@@ -182,6 +182,14 @@ const BikeDetails = () => {
     const end = format(dateRange.to, "yyyy-MM-dd");
     const realBikeId = bike?.id;
     const { data: authData } = await supabase.auth.getUser();
+
+    // If not authenticated, send to login first. Hold is created after they return.
+    if (!authData?.user) {
+      const reviewUrl = `/booking-review?bikeId=${realBikeId}&bikeName=${encodeURIComponent(bikeType.name)}&pickup=${pickup}&end=${end}&pickupTime=${pickupTime}&dropoffTime=${dropoffTime}&deliveryMethod=${deliveryMethod}&location=${encodeURIComponent(bike.location || '')}&dailyPrice=${dailyPrice}`;
+      navigate(`/auth?mode=login&returnUrl=${encodeURIComponent(reviewUrl)}`);
+      return;
+    }
+
     let holdParams = "";
     if (authData?.user && realBikeId) {
       const { data: holdData, error: holdError } = await supabase.rpc("create_bike_hold", {

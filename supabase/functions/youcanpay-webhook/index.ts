@@ -102,18 +102,18 @@ Deno.serve(async (req) => {
         { onConflict: "user_id" },
       );
     } else if (payment.purpose === "booking_payment" && payment.related_booking_id) {
+      // Mark booking platform fee as paid. The 10 MAD platform fee is tracked
+      // separately from the rental price (which is paid off-platform to the agency).
       const { data: booking } = await admin
         .from("bookings")
-        .select("amount_paid, total_price")
+        .select("user_id, assigned_to_business, customer_name, bike_id")
         .eq("id", payment.related_booking_id)
         .maybeSingle();
-      const newPaid = Number(booking?.amount_paid || 0) + Number(payment.amount);
-      const total = Number(booking?.total_price || 0);
+
       await admin
         .from("bookings")
         .update({
-          amount_paid: newPaid,
-          payment_status: newPaid >= total && total > 0 ? "paid" : "partial",
+          payment_status: "paid",
         })
         .eq("id", payment.related_booking_id);
 
@@ -123,10 +123,23 @@ Deno.serve(async (req) => {
         currency: payment.currency,
         provider: "youcanpay",
         method: "card",
+        payment_type: "platform_fee",
         status: "completed",
         paid_at: new Date().toISOString(),
         external_reference: transactionId,
       });
+
+      // Notify the agency (if assigned).
+      if (booking?.assigned_to_business) {
+        await admin.from("notifications").insert({
+          user_id: booking.assigned_to_business,
+          title: "New booking request",
+          message: `${booking.customer_name || "A customer"} just paid the booking fee. Please contact them within 24 hours to confirm.`,
+          type: "booking",
+          link: `/agency/bookings/${payment.related_booking_id}`,
+          action_url: `/agency/bookings/${payment.related_booking_id}`,
+        });
+      }
     }
 
     return new Response(JSON.stringify({ ok: true }), {
