@@ -60,7 +60,7 @@ export const Footer = memo(() => {
                 </Link>
               </li>
               <li>
-                <Link to="/listings" className="text-background/80 hover:text-primary transition-colors">
+                <Link to="/rent/casablanca" className="text-background/80 hover:text-primary transition-colors">
                   {t('footer.browseBikes')}
                 </Link>
               </li>
@@ -84,7 +84,7 @@ export const Footer = memo(() => {
             <h4 className="text-lg font-semibold mb-4 text-primary">{t('footer.popularCities')}</h4>
             <ul className="space-y-2">
               <li>
-                <Link to="/listings?location=Casablanca" className="text-background/80 hover:text-primary transition-colors flex items-center gap-2">
+                <Link to="/rent/casablanca" className="text-background/80 hover:text-primary transition-colors flex items-center gap-2">
                   {t('cityNames.casablanca')}
                   <Badge variant="default" className="bg-green-800 text-white text-[10px] px-1.5 py-0">{t('footer.nowLive')}</Badge>
                 </Link>
