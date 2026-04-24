@@ -91,10 +91,11 @@ export default function ResetPasswordNew() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [params] = useSearchParams();
-  const setNewPassword = useAuthStore((s) => s.setNewPassword);
   const isLoading = useAuthStore((s) => s.isLoading);
 
-  const token = params.get("token") ?? "";
+  // Token from our internal OTP flow (legacy). If absent, we rely on the
+  // recovery session that Supabase set up when the user clicked the email link.
+  const internalToken = params.get("token") ?? "";
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -106,9 +107,11 @@ export default function ResetPasswordNew() {
     defaultValues: { password: "", confirmPassword: "" },
   });
 
-  // Validate token on mount
+  // For the legacy internal-token flow: validate token on mount.
+  // For the email-link flow, Supabase auto-establishes a recovery session
+  // from the URL hash, so no validation is needed here.
   useEffect(() => {
-    if (!token || !isResetTokenValid(token)) {
+    if (internalToken && !isResetTokenValid(internalToken)) {
       toast.error(
         t("mockAuth.reset_link_expired", {
           defaultValue: "Your reset link expired. Please request a new one.",
@@ -116,7 +119,7 @@ export default function ResetPasswordNew() {
       );
       navigate("/forgot-password", { replace: true });
     }
-  }, [token, navigate, t]);
+  }, [internalToken, navigate, t]);
 
   const pwValue = form.watch("password");
   const confirmValue = form.watch("confirmPassword");
@@ -146,14 +149,35 @@ export default function ResetPasswordNew() {
   const onSubmit = async (values: FormValues) => {
     setServerError(null);
     try {
-      await setNewPassword(token, values.password);
+      if (internalToken) {
+        const setNewPassword = useAuthStore.getState().setNewPassword;
+        await setNewPassword(internalToken, values.password);
+      } else {
+        // Email-link recovery flow: Supabase already established a session.
+        const { error } = await supabase.auth.updateUser({
+          password: values.password,
+        });
+        if (error) {
+          if (/auth session missing|jwt|expired/i.test(error.message)) {
+            toast.error(
+              t("mockAuth.reset_link_expired", {
+                defaultValue:
+                  "Your reset link expired. Please request a new one.",
+              }),
+            );
+            navigate("/forgot-password", { replace: true });
+            return;
+          }
+          throw error;
+        }
+      }
       toast.success(
         t("mockAuth.password_updated", { defaultValue: "Password updated!" }),
       );
       routeAfterReset();
     } catch (err) {
-      const e = err as AuthError;
-      if (e.code === "TOKEN_EXPIRED" || e.code === "INVALID_TOKEN") {
+      const e = err as AuthError & { message?: string };
+      if (e?.code === "TOKEN_EXPIRED" || e?.code === "INVALID_TOKEN") {
         toast.error(
           t("mockAuth.reset_link_expired", {
             defaultValue: "Your reset link expired. Please request a new one.",
@@ -162,7 +186,7 @@ export default function ResetPasswordNew() {
         navigate("/forgot-password", { replace: true });
         return;
       }
-      setServerError(e.message);
+      setServerError(e?.message ?? "Could not update password");
     }
   };
 
