@@ -158,15 +158,8 @@ export function UserMenu({ align = "end" }: Props) {
               {t("activate_renter")}
             </DropdownMenuItem>
           )}
-          {hasRenter && !hasAgency && (
-            <DropdownMenuItem
-              onClick={() => setActivationModal("activate-agency")}
-              className="text-muted-foreground"
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              {t("become_business")}
-            </DropdownMenuItem>
-          )}
+          {/* Renter-only users no longer see a "become a business" CTA here.
+              Agency activation flow lives on the public Agencies landing page. */}
 
           <DropdownMenuSeparator />
 
