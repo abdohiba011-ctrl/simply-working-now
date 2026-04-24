@@ -84,19 +84,7 @@ const BookingReview = () => {
       return;
     }
 
-    if (!isVerified) {
-      toast.error(t('bookingReviewPage.verifyIdError'));
-      setIsProcessing(false);
-      navigate('/verification');
-      return;
-    }
-
-    if (!hasPhone) {
-      toast.error(t('bookingReviewPage.addPhoneError'));
-      setIsProcessing(false);
-      navigate('/verification');
-      return;
-    }
+    // Verification is now collected AFTER payment — go straight to checkout.
 
     // Always card payment for the 10 MAD platform fee.
     setIsProcessing(false);
@@ -125,51 +113,6 @@ const BookingReview = () => {
         </div>
 
         <div className="max-w-2xl mx-auto space-y-6">
-          {/* Skeleton Loading State */}
-          {isAuthenticated && isCheckingProfile && (
-            <Card className="border-muted">
-              <CardContent className="p-4 space-y-3">
-                <div className="flex items-center gap-2">
-                  <Skeleton className="h-5 w-5 rounded" />
-                  <Skeleton className="h-5 w-48" />
-                </div>
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-9 w-full" />
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Verification / Phone Warning */}
-          {isAuthenticated && !isCheckingProfile && (!isVerified || !hasPhone) && (
-            <Card className="border-yellow-500/50 bg-yellow-500/10">
-              <CardContent className="p-4 space-y-3">
-                <div className="flex items-center gap-2 text-yellow-700 dark:text-yellow-400">
-                  <AlertTriangle className="h-5 w-5" />
-                  <span className="font-semibold">{t('bookingReviewPage.actionRequired')}</span>
-                </div>
-                {!isVerified && (
-                  <div className="flex items-center gap-2 text-sm text-yellow-700 dark:text-yellow-300">
-                    <Shield className="h-4 w-4" />
-                    <span>{t('bookingReviewPage.needVerifyId')}</span>
-                  </div>
-                )}
-                {!hasPhone && (
-                  <div className="flex items-center gap-2 text-sm text-yellow-700 dark:text-yellow-300">
-                    <Phone className="h-4 w-4" />
-                    <span>{t('bookingReviewPage.needAddPhone')}</span>
-                  </div>
-                )}
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => navigate('/verification')}
-                  className="w-full"
-                >
-                  {t('bookingReviewPage.goToVerification')}
-                </Button>
-              </CardContent>
-            </Card>
-          )}
 
           {/* Bike Info */}
           <Card>
