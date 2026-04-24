@@ -223,14 +223,28 @@ const ThankYou = () => {
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-8">
             {type === "booking" ? (
-              <>
-                <Button size="lg" onClick={() => navigate("/booking-history")} className="min-w-[200px]">
-                  View my booking
+              needsVerification && bookingId ? (
+                <Button
+                  size="lg"
+                  onClick={() => navigate(`/verification?bookingId=${bookingId}&next=${encodeURIComponent(`/confirmation?bookingId=${bookingId}`)}`)}
+                  className="min-w-[200px]"
+                >
+                  Verify now
                 </Button>
-                <Button size="lg" variant="outline" onClick={() => navigate("/")} className="min-w-[200px]">
-                  {t("thankYouPage.backToHome")}
-                </Button>
-              </>
+              ) : (
+                <>
+                  <Button
+                    size="lg"
+                    onClick={() => navigate(bookingId ? `/confirmation?bookingId=${bookingId}` : "/booking-history")}
+                    className="min-w-[200px]"
+                  >
+                    Open my booking
+                  </Button>
+                  <Button size="lg" variant="outline" onClick={() => navigate("/")} className="min-w-[200px]">
+                    {t("thankYouPage.backToHome")}
+                  </Button>
+                </>
+              )
             ) : type === "verification" ? (
               <>
                 <Button size="lg" onClick={() => navigate("/booking-history")} className="min-w-[200px]">
