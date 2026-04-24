@@ -44,20 +44,27 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
-const CASA_NEIGHBORHOODS = [
-  "All Casablanca",
-  "Anfa",
-  "Maârif",
-  "Derb Sultan",
-  "Sidi Maârouf",
-  "Aïn Diab",
-  "Gauthier",
-  "Bourgogne",
-  "Hay Hassani",
-  "Sidi Bernoussi",
-  "Ain Sebaa",
-  "Bouskoura",
-];
+const NEIGHBORHOODS_BY_CITY: Record<string, string[]> = {
+  casablanca: [
+    "Anfa", "Maârif", "Derb Sultan", "Sidi Maârouf", "Aïn Diab",
+    "Gauthier", "Bourgogne", "Hay Hassani", "Sidi Bernoussi", "Ain Sebaa", "Bouskoura",
+  ],
+  marrakesh: ["Guéliz", "Médina", "Hivernage", "Palmeraie", "Daoudiate", "Agdal"],
+  marrakech: ["Guéliz", "Médina", "Hivernage", "Palmeraie", "Daoudiate", "Agdal"],
+  rabat: ["Agdal", "Hassan", "Souissi", "Médina", "Hay Riad"],
+  tangier: ["Malabata", "Centre-Ville", "Marshan", "Iberia", "Playa"],
+  agadir: ["Centre-Ville", "Founty", "Talborjt"],
+  fes: ["Médina (Fes el-Bali)", "Ville Nouvelle", "Fes el-Jdid", "Aïn Chkef"],
+  essaouira: ["Médina", "Centre-Ville", "Borj"],
+  chefchaouen: ["Médina", "Ras El Maa", "Centre-Ville"],
+};
+
+const getNeighborhoodsForCity = (citySlug: string): string[] => {
+  const key = citySlug.toLowerCase();
+  const list = NEIGHBORHOODS_BY_CITY[key] || [];
+  const cityLabel = key.charAt(0).toUpperCase() + key.slice(1);
+  return [`All ${cityLabel}`, ...list];
+};
 
 const BIKE_TYPES = [
   { id: "scooter", label: "Scooter (50-125cc)" },
@@ -118,9 +125,12 @@ export default function RentCity() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
+  const neighborhoodOptions = useMemo(() => getNeighborhoodsForCity(city), [city]);
+  const allCityLabel = neighborhoodOptions[0]; // e.g. allCityLabel
+
   // Filter state (initialized from URL)
   const [neighborhood, setNeighborhood] = useState<string>(
-    searchParams.get("neighborhood") || "Bouskoura"
+    searchParams.get("neighborhood") || allCityLabel
   );
   const [duration, setDuration] = useState<string>(
     searchParams.get("duration") || "1"
@@ -149,7 +159,7 @@ export default function RentCity() {
   useEffect(() => {
     const t = setTimeout(() => {
       const params = new URLSearchParams();
-      if (neighborhood !== "All Casablanca") params.set("neighborhood", neighborhood);
+      if (neighborhood !== allCityLabel) params.set("neighborhood", neighborhood);
       if (duration !== "1") params.set("duration", duration);
       if (priceRange[0] !== 50) params.set("minPrice", String(priceRange[0]));
       if (priceRange[1] !== 1000) params.set("maxPrice", String(priceRange[1]));
@@ -163,6 +173,14 @@ export default function RentCity() {
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [neighborhood, duration, priceRange, selectedTypes, fuel, licenses, features, sortBy]);
+
+  // Reset neighborhood when city changes (avoid carrying over a Casablanca neighborhood to Marrakesh, etc.)
+  useEffect(() => {
+    if (!neighborhoodOptions.includes(neighborhood)) {
+      setNeighborhood(allCityLabel);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [city]);
 
   // Load favorites from localStorage
   useEffect(() => {
@@ -201,7 +219,7 @@ export default function RentCity() {
   const filtered = useMemo(() => {
     let list = bikes.filter((b) => {
       // Neighborhood
-      if (neighborhood !== "All Casablanca" && b.neighborhood !== neighborhood) return false;
+      if (neighborhood !== allCityLabel && b.neighborhood !== neighborhood) return false;
       // Price
       const price = Number(b.daily_price) || 0;
       if (price < priceRange[0] || price > priceRange[1]) return false;
@@ -248,7 +266,7 @@ export default function RentCity() {
   }, [bikes, neighborhood, priceRange, selectedTypes, fuel, licenses, features, sortBy]);
 
   const activeFilterCount =
-    (neighborhood !== "All Casablanca" ? 1 : 0) +
+    (neighborhood !== allCityLabel ? 1 : 0) +
     (duration !== "1" ? 1 : 0) +
     (priceRange[0] !== 50 || priceRange[1] !== 1000 ? 1 : 0) +
     selectedTypes.length +
@@ -274,7 +292,7 @@ export default function RentCity() {
   };
 
   const clearAll = () => {
-    setNeighborhood("All Casablanca");
+    setNeighborhood(allCityLabel);
     setDuration("1");
     setPriceRange([50, 1000]);
     setSelectedTypes([]);
@@ -290,27 +308,25 @@ export default function RentCity() {
   const totalDays = DURATION_OPTIONS.find((d) => d.id === duration)?.days ?? 1;
 
   const filterPanel = (
-    <div className="flex flex-col h-full">
-      <Accordion
-        type="multiple"
-        defaultValue={[
-          "neighborhood",
-          "duration",
-          "price",
-          "type",
-          "fuel",
-          "license",
-          "features",
-        ]}
-        className="flex-1 overflow-y-auto pr-2 -mr-2 space-y-2"
-      >
+    <div className="flex flex-col h-full min-h-0">
+      <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain pr-3 [scrollbar-width:thin]">
+        <Accordion
+          type="multiple"
+          defaultValue={[
+            "neighborhood",
+            "duration",
+            "price",
+            "type",
+          ]}
+          className="space-y-1"
+        >
         <AccordionItem value="neighborhood" className="border-border">
           <AccordionTrigger className="text-sm font-semibold">
             Neighborhood
           </AccordionTrigger>
           <AccordionContent>
             <RadioGroup value={neighborhood} onValueChange={setNeighborhood} className="space-y-2">
-              {CASA_NEIGHBORHOODS.map((n) => (
+              {neighborhoodOptions.map((n) => (
                 <div key={n} className="flex items-center gap-2">
                   <RadioGroupItem value={n} id={`n-${n}`} />
                   <Label htmlFor={`n-${n}`} className="text-sm font-normal cursor-pointer">
@@ -446,9 +462,10 @@ export default function RentCity() {
             </div>
           </AccordionContent>
         </AccordionItem>
-      </Accordion>
+        </Accordion>
+      </div>
 
-      <div className="border-t border-border pt-4 mt-4 space-y-3 bg-background">
+      <div className="border-t border-border pt-4 mt-3 space-y-3 bg-background shrink-0">
         <div className="flex items-center justify-between">
           <button
             onClick={clearAll}
@@ -497,7 +514,7 @@ export default function RentCity() {
               Motorbike Rental in {cityName}
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
-              {bikes.length} verified bike{bikes.length !== 1 ? "s" : ""} across {CASA_NEIGHBORHOODS.length - 1} neighborhoods
+              {bikes.length} verified bike{bikes.length !== 1 ? "s" : ""} across {neighborhoodOptions.length - 1} neighborhoods
             </p>
           </div>
 
@@ -552,7 +569,7 @@ export default function RentCity() {
             <div className="text-sm text-muted-foreground mb-3">
               Showing <span className="font-semibold text-foreground">{filtered.length}</span>{" "}
               of {bikes.length} bikes
-              {neighborhood !== "All Casablanca" && (
+              {neighborhood !== allCityLabel && (
                 <> in <span className="font-semibold text-foreground">{neighborhood}</span></>
               )}
             </div>
