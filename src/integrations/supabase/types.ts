@@ -50,10 +50,14 @@ export type Database = {
           created_at: string
           current_period_end: string | null
           current_period_start: string | null
+          grace_period_ends_at: string | null
           id: string
           last_payment_id: string | null
+          locked_at: string | null
           plan: string
           status: string
+          trial_ends_at: string | null
+          trial_reminder_sent_at: string | null
           updated_at: string
           user_id: string
         }
@@ -62,10 +66,14 @@ export type Database = {
           created_at?: string
           current_period_end?: string | null
           current_period_start?: string | null
+          grace_period_ends_at?: string | null
           id?: string
           last_payment_id?: string | null
+          locked_at?: string | null
           plan?: string
           status?: string
+          trial_ends_at?: string | null
+          trial_reminder_sent_at?: string | null
           updated_at?: string
           user_id: string
         }
@@ -74,10 +82,14 @@ export type Database = {
           created_at?: string
           current_period_end?: string | null
           current_period_start?: string | null
+          grace_period_ends_at?: string | null
           id?: string
           last_payment_id?: string | null
+          locked_at?: string | null
           plan?: string
           status?: string
+          trial_ends_at?: string | null
+          trial_reminder_sent_at?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -1909,6 +1921,14 @@ export type Database = {
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
+      }
+      enforce_subscription_lifecycle: {
+        Args: never
+        Returns: {
+          reminders_due: number
+          transitioned_to_locked: number
+          transitioned_to_past_due: number
+        }[]
       }
       enqueue_email: {
         Args: { payload: Json; queue_name: string }
