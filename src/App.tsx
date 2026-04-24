@@ -128,6 +128,7 @@ const App = () => (
             <Sonner />
             <LanguageSuggestionBanner />
             <BrowserRouter>
+              <AuthBootstrap />
               <ScrollToTop />
               <ScrollToTopButton />
               <Suspense fallback={<PageLoadingSkeleton />}>
