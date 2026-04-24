@@ -224,6 +224,17 @@ export default function Login({ context = "renter" }: LoginProps) {
           </div>
         ) : null}
 
+        <div className="space-y-3">
+          <GoogleSignInButton label={t("mockAuth.continue_with_google", { defaultValue: "Continue with Google" })} />
+          <div className="flex items-center gap-3">
+            <div className="flex-1 h-px bg-[#163300]/10" />
+            <span className="text-xs uppercase tracking-wider" style={{ color: "rgba(22,51,0,0.5)" }}>
+              {t("mockAuth.or", { defaultValue: "or" })}
+            </span>
+            <div className="flex-1 h-px bg-[#163300]/10" />
+          </div>
+        </div>
+
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" noValidate>
           {/* Identifier */}
           <div className="space-y-1.5">
@@ -247,7 +258,11 @@ export default function Login({ context = "renter" }: LoginProps) {
                   "h-10 rounded-md pl-9 text-sm",
                   form.formState.errors.identifier && "border-red-300 focus-visible:ring-red-200",
                 )}
-                {...form.register("identifier")}
+                {...form.register("identifier", {
+                  onChange: () => {
+                    if (error) clearError();
+                  },
+                })}
               />
             </div>
             {form.formState.errors.identifier ? (
