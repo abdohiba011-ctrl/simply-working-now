@@ -75,13 +75,13 @@ export default function ForgotPassword() {
     [lockoutMs],
   );
 
+  const [sent, setSent] = useState(false);
+
   const onSubmit = async (values: FormValues) => {
     setServerError(null);
     try {
       await requestPasswordReset(values.email);
-      navigate(
-        `/reset-password/verify?email=${encodeURIComponent(values.email)}`,
-      );
+      setSent(true);
     } catch (err) {
       const e = err as AuthError;
       if (e.code === "RESET_RATE_LIMITED") {
