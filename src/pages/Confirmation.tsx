@@ -17,6 +17,7 @@ const Confirmation = () => {
   const { t, isRTL } = useLanguage();
   const [isGeneratingContract, setIsGeneratingContract] = useState(false);
   const [contractHtml, setContractHtml] = useState<string | null>(null);
+  const [verificationStatus, setVerificationStatus] = useState<string | null>(null);
 
   const bookingId = searchParams.get("bookingId");
   const bikeName = searchParams.get("bikeName") || t("confirmationPage.motorbike");
