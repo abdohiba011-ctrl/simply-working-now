@@ -286,7 +286,11 @@ export default function Login({ context = "renter" }: LoginProps) {
                   "h-10 rounded-md pr-10 text-sm",
                   form.formState.errors.password && "border-red-300 focus-visible:ring-red-200",
                 )}
-                {...form.register("password")}
+                {...form.register("password", {
+                  onChange: () => {
+                    if (error) clearError();
+                  },
+                })}
               />
               <button
                 type="button"
@@ -327,7 +331,7 @@ export default function Login({ context = "renter" }: LoginProps) {
           {/* Submit */}
           <Button
             type="submit"
-            disabled={submitDisabled || !form.formState.isValid}
+            disabled={submitDisabled}
             className="w-full h-10 rounded-md text-sm font-semibold"
             style={{ backgroundColor: "#9FE870", color: "#163300" }}
           >
