@@ -174,6 +174,14 @@ export default function RentCity() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [neighborhood, duration, priceRange, selectedTypes, fuel, licenses, features, sortBy]);
 
+  // Reset neighborhood when city changes (avoid carrying over a Casablanca neighborhood to Marrakesh, etc.)
+  useEffect(() => {
+    if (!neighborhoodOptions.includes(neighborhood)) {
+      setNeighborhood(allCityLabel);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [city]);
+
   // Load favorites from localStorage
   useEffect(() => {
     try {
