@@ -139,3 +139,29 @@ export const useBike = (bikeId: string) => {
     enabled: !!bikeId && isValidUUID(bikeId),
   });
 };
+
+export interface BikeReview {
+  id: string;
+  bike_type_id: string;
+  rating: number;
+  reviewer_name: string;
+  comment: string | null;
+  created_at: string;
+}
+
+export const useBikeReviews = (bikeTypeId: string) => {
+  return useQuery({
+    queryKey: ["bike-reviews", bikeTypeId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("bike_reviews")
+        .select("*")
+        .eq("bike_type_id", bikeTypeId)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data || []) as BikeReview[];
+    },
+    enabled: !!bikeTypeId && isValidUUID(bikeTypeId),
+  });
+};
+
