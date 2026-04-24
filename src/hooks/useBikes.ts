@@ -113,18 +113,28 @@ export const useBike = (bikeId: string) => {
       if (!isValidUUID(bikeId)) {
         throw new Error("Invalid bike ID format");
       }
-      const { data, error } = await supabase
+
+      // Try direct bikes.id lookup first
+      const direct = await supabase
         .from("bikes")
-        .select(`
-          *,
-          bike_type:bike_types(*)
-        `)
+        .select(`*, bike_type:bike_types(*)`)
         .eq("id", bikeId)
         .maybeSingle();
-      
-      if (error) throw error;
-      if (!data) throw new Error("Bike not found");
-      return data as Bike;
+
+      if (direct.error) throw direct.error;
+      if (direct.data) return direct.data as Bike;
+
+      // Fallback: id may be a bike_type_id coming from listings cards
+      const viaType = await supabase
+        .from("bikes")
+        .select(`*, bike_type:bike_types(*)`)
+        .eq("bike_type_id", bikeId)
+        .limit(1)
+        .maybeSingle();
+
+      if (viaType.error) throw viaType.error;
+      if (!viaType.data) throw new Error("Bike not found");
+      return viaType.data as Bike;
     },
     enabled: !!bikeId && isValidUUID(bikeId),
   });
