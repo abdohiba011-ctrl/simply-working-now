@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, memo } from "react";
-import { MapPin, Building2, Calendar as CalendarIcon, Bike } from "lucide-react";
+import { MapPin, Building2, Calendar as CalendarIcon, Bike, Clock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { DateRange } from "react-day-picker";
@@ -10,11 +10,14 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
 import { cityToSlug } from "@/lib/citySlug";
+import { supabase } from "@/integrations/supabase/client";
 
 import casablancaImg from "@/assets/city-casablanca.avif";
 import marrakechImg from "@/assets/city-marrakesh.avif";
@@ -119,6 +122,35 @@ export const HeroSection = memo(() => {
   const [neighborhood, setNeighborhood] = useState<string>(ALL_NEIGHBORHOODS);
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [calendarOpen, setCalendarOpen] = useState(false);
+
+  // Cities loaded from DB so the dropdown reflects real availability.
+  const [availableCities, setAvailableCities] = useState<string[]>([]);
+  const [comingSoonCities, setComingSoonCities] = useState<string[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("service_cities")
+        .select("name, is_available, is_coming_soon")
+        .order("display_order", { ascending: true })
+        .order("name", { ascending: true });
+      if (cancelled || !data) return;
+      const avail: string[] = [];
+      const soon: string[] = [];
+      for (const row of data) {
+        // Coming-soon takes precedence over is_available so back-office can
+        // park a city as "coming soon" without flipping availability semantics.
+        if (row.is_coming_soon) soon.push(row.name);
+        else if (row.is_available) avail.push(row.name);
+      }
+      setAvailableCities(avail);
+      setComingSoonCities(soon);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // Preload images on mount
   useEffect(() => {
@@ -265,12 +297,39 @@ export const HeroSection = memo(() => {
                 >
                   <SelectValue placeholder="Select a city" />
                 </SelectTrigger>
-                <SelectContent className="bg-white max-h-[300px]">
-                  {allCities.map((c) => (
-                    <SelectItem key={c} value={c}>
-                      {c}
-                    </SelectItem>
-                  ))}
+                <SelectContent className="bg-white max-h-[320px]">
+                  <SelectGroup>
+                    <SelectLabel className="text-xs uppercase tracking-wide text-muted-foreground">
+                      Available now
+                    </SelectLabel>
+                    {(availableCities.length ? availableCities : allCities).map((c) => (
+                      <SelectItem key={c} value={c}>
+                        {c}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                  {comingSoonCities.length > 0 && (
+                    <SelectGroup>
+                      <SelectLabel className="mt-2 text-xs uppercase tracking-wide text-muted-foreground">
+                        Coming soon
+                      </SelectLabel>
+                      {comingSoonCities.map((c) => (
+                        <SelectItem
+                          key={c}
+                          value={c}
+                          disabled
+                          className="opacity-60"
+                        >
+                          <span className="flex items-center justify-between gap-2 w-full">
+                            <span>{c}</span>
+                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                              <Clock className="h-3 w-3" /> Soon
+                            </span>
+                          </span>
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  )}
                 </SelectContent>
               </Select>
             </div>

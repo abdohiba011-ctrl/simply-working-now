@@ -551,23 +551,6 @@ const Profile = () => {
                 </Card>
               </div>
 
-              {/* Become a Renter CTA */}
-              <Card className="bg-primary/5 border-primary/20">
-                <CardContent className="py-6">
-                  <div className={`flex flex-col md:flex-row items-center justify-between gap-4 ${isRTL ? 'md:flex-row-reverse' : ''}`}>
-                    <div className={isRTL ? 'text-right' : ''}>
-                      <h3 className="text-lg font-semibold text-foreground">{t('profilePage.wantToRent')}</h3>
-                      <p className="text-sm text-muted-foreground">{t('profilePage.joinAsPartner')}</p>
-                    </div>
-                    <Button 
-                      variant="hero" 
-                      onClick={() => navigate('/become-business')}
-                    >
-                      {t('profilePage.becomePartner')}
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
             </div>
           )}
         </div>

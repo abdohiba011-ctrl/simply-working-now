@@ -162,22 +162,19 @@ const Settings = () => {
               </Card>
             </div>
 
-            {/* Business Account */}
-            <Card>
-              <CardHeader>
-                <CardTitle className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
-                  <Building2 className="h-5 w-5 text-primary" />
-                  {t('settings.businessAccount')}
-                </CardTitle>
-                <CardDescription>
-                  {isBusiness 
-                    ? t('settings.businessAccountDesc')
-                    : t('profile.becomePartnerDesc')
-                  }
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {isBusiness ? (
+            {/* Business Account — only shown to existing business users */}
+            {isBusiness && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                    <Building2 className="h-5 w-5 text-primary" />
+                    {t('settings.businessAccount')}
+                  </CardTitle>
+                  <CardDescription>
+                    {t('settings.businessAccountDesc')}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
                   <Button
                     variant="outline"
                     onClick={() => navigate('/business-dashboard')}
@@ -185,23 +182,9 @@ const Settings = () => {
                   >
                     {t('header.businessDashboard')}
                   </Button>
-                ) : (
-                  <div className="space-y-3">
-                    <p className="text-sm text-muted-foreground">
-                      {t('profilePage.wantToRent')} {t('profilePage.joinAsPartner')}
-                    </p>
-                    <Button
-                      variant="hero"
-                      onClick={() => navigate('/become-business')}
-                      className="w-full gap-2"
-                    >
-                      <Building2 className="h-4 w-4" />
-                      {t('profilePage.becomePartner')}
-                    </Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
       </main>
