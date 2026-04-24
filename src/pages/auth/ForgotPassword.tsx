@@ -168,7 +168,7 @@ export default function ForgotPassword() {
 
           <Button
             type="submit"
-            disabled={submitDisabled || !form.formState.isValid}
+            disabled={submitDisabled}
             className="w-full h-10 rounded-md text-sm font-semibold"
             style={{ backgroundColor: "#9FE870", color: "#163300" }}
           >
