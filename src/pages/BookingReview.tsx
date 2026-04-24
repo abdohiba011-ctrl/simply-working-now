@@ -364,12 +364,12 @@ const BookingReview = () => {
           </Card>
 
           {/* Continue Button */}
-          <Button 
-            size="lg" 
+          <Button
+            size="lg"
             variant="hero"
             className="w-full"
             onClick={handleContinue}
-            disabled={!selectedPayment || isCheckingProfile || isProcessing}
+            disabled={isCheckingProfile || isProcessing}
           >
             {isProcessing ? (
               <>
@@ -382,7 +382,7 @@ const BookingReview = () => {
                 {t('common.loading')}
               </>
             ) : (
-              t('hero.bookNow')
+              <>Continue to payment — 10 MAD</>
             )}
           </Button>
         </div>
