@@ -41,6 +41,7 @@ const TAB_PERMISSION_MAP: Record<TabValue, AdminTabPermission | null> = {
   employees: null, // Employees tab is always visible for admins
   analytics: "analytics",
   pricing: null, // Pricing tab is always visible for admins
+  email: null, // Email test tab is always visible for admins
 };
 
 interface StatusCounts {
