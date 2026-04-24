@@ -54,11 +54,15 @@ describe("openHostedPayment", () => {
     const selfSpy = vi.spyOn(window, "self", "get").mockImplementation(() => {
       throw new Error("cross-origin");
     });
+    const topSpy = vi.spyOn(window, "top", "get").mockImplementation(() => {
+      throw new Error("cross-origin");
+    });
     const openSpy = vi.spyOn(window, "open").mockReturnValue(null);
     const result = openHostedPayment("https://youcanpay.com/sandbox/abc");
     expect(result.ok).toBe(false);
     expect(result.method).toBe("blocked");
     selfSpy.mockRestore();
+    topSpy.mockRestore();
     openSpy.mockRestore();
   });
 });
