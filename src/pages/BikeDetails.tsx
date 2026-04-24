@@ -18,7 +18,6 @@ import {
   Fuel,
   Truck,
   Edit2,
-  Tag,
   AlertTriangle,
   Cog,
   Gauge,
@@ -69,10 +68,6 @@ const BikeDetails = () => {
   const [deliveryMethod, setDeliveryMethod] = useState<string>("pickup");
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isEditingDates, setIsEditingDates] = useState(false);
-  const [promoCode, setPromoCode] = useState("");
-  const [appliedPromo, setAppliedPromo] = useState("");
-  const [promoError, setPromoError] = useState("");
-  const [showPromoField, setShowPromoField] = useState(false);
   const [deliveryAddress, setDeliveryAddress] = useState("");
 
   const pickupParam = searchParams.get("pickup");
@@ -102,9 +97,8 @@ const BikeDetails = () => {
   const baselineSubtotal = days * baseDailyPrice;
   const tierDiscount = Math.max(0, baselineSubtotal - subtotal);
   const deliveryFee = deliveryMethod === "delivery" ? 25 : 0;
-  const promoDiscount = appliedPromo === "Motonita25" && days >= 3 ? 25 : 0;
   const bookingFee = 10;
-  const dueAtPickup = subtotal + deliveryFee - promoDiscount;
+  const dueAtPickup = subtotal + deliveryFee;
   const totalUpfront = bookingFee;
   const deposit = (bike?.bike_type as any)?.deposit_amount ? Number((bike?.bike_type as any).deposit_amount) : 0;
 
@@ -217,21 +211,6 @@ const BikeDetails = () => {
     }
 
     navigate(`/booking-review?bikeId=${realBikeId}&bikeName=${encodeURIComponent(bikeType.name)}&pickup=${pickup}&end=${end}&pickupTime=${pickupTime}&dropoffTime=${dropoffTime}&deliveryMethod=${deliveryMethod}&location=${encodeURIComponent(bike.location)}&dailyPrice=${dailyPrice}${holdParams}`);
-  };
-
-  const handleApplyPromo = () => {
-    if (!promoCode.trim()) {
-      setAppliedPromo(""); setPromoError(""); return;
-    }
-    if (promoCode.toLowerCase() === "motonita25") {
-      if (days >= 3) {
-        setAppliedPromo("Motonita25"); setPromoError("");
-      } else {
-        setPromoError("Need 3+ days for this code"); setAppliedPromo("");
-      }
-    } else {
-      setPromoError("Invalid code"); setAppliedPromo("");
-    }
   };
 
   const specs = [
@@ -404,12 +383,6 @@ const BikeDetails = () => {
                 <span>+{deliveryFee} MAD</span>
               </div>
             )}
-            {promoDiscount > 0 && (
-              <div className="flex justify-between text-sm text-primary">
-                <span>Promo (Motonita25)</span>
-                <span>−{promoDiscount} MAD</span>
-              </div>
-            )}
             <div className="flex justify-between text-sm text-muted-foreground">
               <span>Motonita booking fee</span>
               <span>{bookingFee} MAD</span>
@@ -423,38 +396,6 @@ const BikeDetails = () => {
             </p>
           </div>
         )}
-
-        {/* Promo */}
-        <div className="border-t border-border/60 pt-3">
-          {appliedPromo ? (
-            <div className="flex items-center gap-2 text-primary text-sm">
-              <Tag className="h-4 w-4" />
-              <span className="font-medium">Promo applied: {appliedPromo}</span>
-            </div>
-          ) : showPromoField ? (
-            <div className="space-y-2">
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Enter code"
-                  value={promoCode}
-                  onChange={(e) => { setPromoCode(e.target.value); setPromoError(""); }}
-                  className="flex-1 h-10 text-sm"
-                  autoFocus
-                />
-                <Button variant="outline" size="sm" onClick={handleApplyPromo} className="h-10 px-4">Apply</Button>
-              </div>
-              {promoError && <p className="text-xs text-destructive">{promoError}</p>}
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setShowPromoField(true)}
-              className="text-sm text-muted-foreground hover:text-foreground inline-flex items-center gap-2"
-            >
-              <Tag className="h-4 w-4" /> Have a promo code?
-            </button>
-          )}
-        </div>
 
         {/* CTA */}
         <Button
