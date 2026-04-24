@@ -10,6 +10,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { openHostedPayment, preOpenPaymentWindow } from "@/lib/openHostedPayment";
 
 const PLATFORM_FEE_MAD = 10;
 
@@ -83,6 +84,9 @@ const Checkout = () => {
     }
 
     setIsSubmitting(true);
+    // Pre-open a blank tab synchronously from the click so popup blockers
+    // don't kick in later when we have the payment URL.
+    const preOpened = preOpenPaymentWindow();
     try {
       // 1. Promote hold → real (pending) booking
       const { data: bookingId, error: bookingErr } = await supabase.rpc('promote_hold_to_booking', {
@@ -127,15 +131,26 @@ const Checkout = () => {
       if (tokenErr || !tokenResp?.payment_url) {
         console.error('Token error:', tokenErr, tokenResp);
         toast.error("Could not start payment. Please try again.");
+        if (preOpened && !preOpened.closed) preOpened.close();
         setIsSubmitting(false);
         return;
       }
 
-      // 3. Redirect to YouCanPay hosted page.
-      window.location.href = tokenResp.payment_url;
+      // 3. Open YouCanPay hosted page (iframe-safe).
+      const result = openHostedPayment(tokenResp.payment_url, preOpened);
+      if (!result.ok) {
+        toast.error("Your browser blocked the payment window. Please allow popups and try again.");
+        setIsSubmitting(false);
+        return;
+      }
+      if (result.method === "new-tab" || result.method === "pre-opened") {
+        toast.success("Payment opened in a new tab. Complete it there to continue.");
+        setIsSubmitting(false);
+      }
     } catch (error: unknown) {
       console.error("Error initiating payment:", error);
       toast.error(t('checkoutPage.bookingFailed'));
+      if (preOpened && !preOpened.closed) preOpened.close();
       setIsSubmitting(false);
     }
   };

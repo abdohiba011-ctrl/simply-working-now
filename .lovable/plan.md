@@ -1,43 +1,56 @@
-## Move verification gate to AFTER payment
+## Plan: Fix checkout payment redirect
 
-**Goal:** Renter flow becomes Book → Pay 10 MAD → (if unverified) Verify ID + phone → Confirmation/Chat. Verified renters skip the verification step entirely.
+The checkout page is failing because the app is redirecting the current preview iframe to the hosted YouCan Pay page, and YouCan Pay refuses to be embedded inside an iframe. That is why the preview shows `youcanpay.com refused to connect`.
 
-### 1. `src/pages/BookingReview.tsx`
-- Remove `isVerified` / `hasPhone` state, `checkProfileStatus()`, and the `useEffect` that calls it.
-- Remove the two pre-payment gates in `handleContinue` (the `!isVerified` and `!hasPhone` blocks that redirect to `/verification`).
-- Remove the yellow "Verify your identity" warning card from the JSX.
-- Remove the loading skeleton tied to `isCheckingProfile`.
-- Result: authenticated users go straight to `/checkout`. Unauthenticated users still get bounced to `/auth` first (unchanged).
+### What I will change
 
-### 2. `src/pages/Checkout.tsx`
-- In `handlePay`, drop the `if (!profile?.name || !profile?.phone)` block that currently redirects to `/verification` before paying. Only `name` + `email` are needed for `promote_hold_to_booking`; pass `profile.phone || null` (the RPC accepts null).
-- Update the YouCanPay `success_path` so the thank-you page knows whether to route to verification next:
-  `/thank-you?type=booking&bookingId=${bookingId}&needsVerification=${profile.is_verified ? '0' : '1'}`
-- Also fetch `is_verified` in the existing profile query (line ~30-50) so we can pass that flag.
+1. **Add a shared hosted-payment redirect helper**
+   - Create a small utility for payment redirects that handles both:
+     - normal live-site navigation
+     - preview/iframe-safe navigation
+   - The helper will use a popup/new-tab flow for embedded preview contexts instead of navigating the iframe itself.
 
-### 3. `src/pages/ThankYou.tsx` (post-payment landing)
-- Read `needsVerification` and `bookingId` from URL.
-- If `needsVerification === '1'` → after a brief "Payment received ✅" message, auto-redirect (or CTA) to `/verification?bookingId=${bookingId}&next=/confirmation/${bookingId}`.
-- If `0` → CTA goes to `/confirmation/${bookingId}` as today.
+2. **Fix `src/pages/Checkout.tsx`**
+   - Replace `window.location.href = tokenResp.payment_url` with the shared redirect helper.
+   - Preserve the current booking creation + payment token flow.
+   - Add a clear fallback if the browser blocks the popup/new tab.
 
-### 4. `src/pages/Verification.tsx`
-- Read `bookingId` and `next` from `useSearchParams`.
-- If `bookingId` present, render a green banner at the top: *"Payment received ✅ — One last step to unlock your booking and chat with the agency."*
-- Phone field is already present (line 68) and required — no change needed.
-- On successful submission, if `next` query param is present, `navigate(next)` instead of the current `/` redirect.
-- Keep the "already verified" early redirect, but if `next` is set, send them to `next` instead of `/`.
+3. **Apply the same fix to other payment entry points**
+   - `src/pages/agency/Wallet.tsx`
+   - `src/pages/agency/Subscription.tsx`
+   - These pages use the same direct redirect pattern and can fail the same way in preview.
 
-### 5. `src/pages/Confirmation.tsx`
-- After fetching booking + profile, if `profile.verification_status === 'pending_review'`, show a soft amber banner above the chat: *"Your ID is under review. You can chat with the agency now; they'll confirm pickup once verification completes."*
-- Chat remains unlocked regardless (no logic change to BookingChat).
+4. **Add better user feedback**
+   - If the payment page must open in a new tab, show a short message/toast so the behavior is clear.
+   - If popup opening fails, show a recovery action instead of silently breaking.
 
-### 6. No DB / no migration
-- Booking is already created with `payment_status='paid'` before verification.
-- Agency RLS already allows them to see/chat with paid bookings via `assigned_to_business`.
-- Verification status is independent of booking status — agency can choose to wait or proceed.
+5. **Verify the flow after the fix**
+   - Checkout: click pay, confirm hosted payment opens correctly.
+   - Wallet top-up: confirm hosted payment opens correctly.
+   - Subscription upgrade: confirm hosted payment opens correctly.
+   - Confirm live-site behavior still navigates normally.
 
-### Outcomes
-- ✅ Verified renter: Book → Pay → ThankYou → Confirmation+Chat (no verification prompt).
-- ✅ New renter: Book → Pay 10 MAD → ThankYou → Verification (phone + ID, with success banner) → Confirmation+Chat.
-- ✅ Payment is never blocked by missing verification or phone.
-- ✅ Existing chat, inbox, off-platform protection, and agency wallet flow are untouched.
+### Technical details
+
+Recommended implementation pattern:
+
+```text
+User clicks Pay
+  -> open blank window synchronously if app is embedded
+  -> request payment token from backend
+  -> set popup/new-tab location to hosted payment URL
+  -> fallback to normal location redirect when not embedded
+```
+
+Why this approach:
+- `window.location.href` inside the preview navigates the iframe, which hosted payment pages usually block.
+- Opening a window/tab from the user click avoids iframe embedding.
+- Doing it through a shared helper keeps checkout, wallet, and subscription consistent.
+
+### Files likely involved
+- `src/pages/Checkout.tsx`
+- `src/pages/agency/Wallet.tsx`
+- `src/pages/agency/Subscription.tsx`
+- `src/lib/...` new shared redirect helper
+
+Reply with approval and I’ll implement the fix.
