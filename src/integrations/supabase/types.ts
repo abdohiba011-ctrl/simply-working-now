@@ -695,28 +695,40 @@ export type Database = {
       }
       booking_messages: {
         Row: {
-          body: string
+          attachment_url: string | null
+          body: string | null
           booking_id: string
           created_at: string
+          flag_reasons: string[] | null
+          flagged: boolean
           id: string
+          message_type: string
           read_at: string | null
           sender_id: string | null
           sender_role: string
         }
         Insert: {
-          body: string
+          attachment_url?: string | null
+          body?: string | null
           booking_id: string
           created_at?: string
+          flag_reasons?: string[] | null
+          flagged?: boolean
           id?: string
+          message_type?: string
           read_at?: string | null
           sender_id?: string | null
           sender_role: string
         }
         Update: {
-          body?: string
+          attachment_url?: string | null
+          body?: string | null
           booking_id?: string
           created_at?: string
+          flag_reasons?: string[] | null
+          flagged?: boolean
           id?: string
+          message_type?: string
           read_at?: string | null
           sender_id?: string | null
           sender_role?: string
