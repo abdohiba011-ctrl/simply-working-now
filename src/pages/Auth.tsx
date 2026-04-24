@@ -442,74 +442,26 @@ const Auth = () => {
                   {resetStep === "password" && (
                     <>
                       <h1 className="text-3xl font-bold text-center mb-2 text-foreground">
-                        {t('auth.createNewPassword')}
+                        {t('auth.checkYourEmail') || 'Check your email'}
                       </h1>
                       <p className="text-center text-muted-foreground mb-6">
-                        {t('auth.enterNewPassword')}
+                        {(t('auth.resetLinkSentTo') || "We've sent a password reset link to")} <strong>{resetEmail}</strong>.
+                        {' '}
+                        {t('auth.clickLinkToReset') || 'Click the link in the email to set a new password.'}
                       </p>
-                      
-                      <form onSubmit={handleResetPassword} className="space-y-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="new-password">{t('auth.newPassword')}</Label>
-                          <div className="relative">
-                            <Input
-                              id="new-password"
-                              type={showNewPassword ? "text" : "password"}
-                              value={newPassword}
-                              onChange={(e) => setNewPassword(e.target.value)}
-                              required
-                              placeholder={t('auth.enterNewPasswordPlaceholder')}
-                              className="pr-10"
-                              autoComplete="new-password"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => setShowNewPassword(!showNewPassword)}
-                              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                            >
-                              {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                            </button>
-                          </div>
-                          <PasswordStrengthIndicator password={newPassword} />
-                        </div>
 
-                        <div className="space-y-2">
-                          <Label htmlFor="confirm-new-password">{t('auth.confirmNewPassword')}</Label>
-                          <div className="relative">
-                            <Input
-                              id="confirm-new-password"
-                              type={showConfirmNewPassword ? "text" : "password"}
-                              value={confirmNewPassword}
-                              onChange={(e) => setConfirmNewPassword(e.target.value)}
-                              required
-                              placeholder={t('auth.confirmNewPasswordPlaceholder')}
-                              className="pr-10"
-                              autoComplete="new-password"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => setShowConfirmNewPassword(!showConfirmNewPassword)}
-                              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                            >
-                              {showConfirmNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                            </button>
-                          </div>
-                          {confirmNewPassword && newPassword !== confirmNewPassword && (
-                            <p className="text-xs text-destructive">{t('auth.passwordsDoNotMatch')}</p>
-                          )}
-                          {confirmNewPassword && newPassword === confirmNewPassword && (
-                            <p className="text-xs text-green-600">{t('auth.passwordsMatch')}</p>
-                          )}
-                        </div>
-                        
-                        <Button 
-                          type="submit" 
-                          className="w-full" 
-                          disabled={isLoading}
-                        >
-                          {isLoading ? t('auth.resetting') : t('auth.resetPasswordBtn')}
-                        </Button>
-                      </form>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="w-full"
+                        onClick={() => {
+                          setShowForgotPassword(false);
+                          setResetStep("email");
+                          setResetEmail("");
+                        }}
+                      >
+                        {t('auth.backToLogin') || 'Back to login'}
+                      </Button>
                     </>
                   )}
                 </CardContent>
