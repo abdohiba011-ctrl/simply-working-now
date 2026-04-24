@@ -382,11 +382,22 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
 
         {/* Step 2 — form (fade in) */}
         {role ? (
-          <form
-            onSubmit={form.handleSubmit(onSubmit)}
-            className="space-y-4 animate-in fade-in duration-200"
-            noValidate
-          >
+          <div className="space-y-4 animate-in fade-in duration-200">
+            <GoogleSignInButton
+              label={t("mockAuth.signup_with_google", { defaultValue: "Sign up with Google" })}
+            />
+            <div className="flex items-center gap-3">
+              <div className="flex-1 h-px bg-[#163300]/10" />
+              <span className="text-xs uppercase tracking-wider" style={{ color: "rgba(22,51,0,0.5)" }}>
+                {t("mockAuth.or", { defaultValue: "or" })}
+              </span>
+              <div className="flex-1 h-px bg-[#163300]/10" />
+            </div>
+            <form
+              onSubmit={form.handleSubmit(onSubmit)}
+              className="space-y-4"
+              noValidate
+            >
             {/* Full name */}
             <Field
               id="name"
