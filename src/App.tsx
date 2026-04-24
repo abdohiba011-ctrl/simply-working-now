@@ -34,6 +34,7 @@ const Contact = lazy(() => import("./pages/Contact"));
 const ContactMessages = lazy(() => import("./pages/ContactMessages"));
 const Quarterly = lazy(() => import("./pages/Quarterly"));
 const GPSTracking = lazy(() => import("./pages/GPSTracking"));
+const Agencies = lazy(() => import("./pages/Agencies"));
 
 const BecomeBusiness = lazy(() => import("./pages/BecomeBusiness"));
 const Profile = lazy(() => import("./pages/Profile"));
@@ -142,6 +143,7 @@ const App = () => (
                   <Route path="/about" element={<About />} />
                   <Route path="/fixers" element={<Fixers />} />
                   <Route path="/booking-fee" element={<BookingFee />} />
+                  <Route path="/agencies" element={<Agencies />} />
                   <Route path="/contact" element={<Contact />} />
                   <Route path="/contact-messages" element={
                     <ProtectedRoute requireRole="admin"><ContactMessages /></ProtectedRoute>
