@@ -13,20 +13,19 @@ const ThankYou = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const type = searchParams.get("type") || "contact";
+  const bookingId = searchParams.get("bookingId");
+  const needsVerification = searchParams.get("needsVerification") === "1";
   const { t } = useLanguage();
 
   // Play success sound on page load
   useEffect(() => {
-    // Small delay to ensure page is rendered
     const soundTimer = setTimeout(() => {
       playSuccessSound();
     }, 300);
-
     return () => clearTimeout(soundTimer);
   }, []);
 
   useEffect(() => {
-    // Auto-redirect after 15 seconds for verification, 10 seconds for business, 8 seconds for others
     let delay = 8000;
     let redirectPath = "/";
 
@@ -37,8 +36,17 @@ const ThankYou = () => {
       delay = 10000;
       redirectPath = "/";
     } else if (type === "booking") {
-      delay = 20000;
-      redirectPath = "/booking-history";
+      if (needsVerification && bookingId) {
+        // Send new renters to verification right after payment.
+        delay = 4000;
+        redirectPath = `/verification?bookingId=${bookingId}&next=${encodeURIComponent(`/confirmation?bookingId=${bookingId}`)}`;
+      } else if (bookingId) {
+        delay = 6000;
+        redirectPath = `/confirmation?bookingId=${bookingId}`;
+      } else {
+        delay = 20000;
+        redirectPath = "/booking-history";
+      }
     }
 
     const timer = setTimeout(() => {
@@ -46,7 +54,7 @@ const ThankYou = () => {
     }, delay);
 
     return () => clearTimeout(timer);
-  }, [navigate, type]);
+  }, [navigate, type, needsVerification, bookingId]);
 
   const getMessage = () => {
     if (type === "verification") {
@@ -80,10 +88,20 @@ const ThankYou = () => {
       };
     }
     if (type === "booking") {
+      if (needsVerification) {
+        return {
+          title: "Payment received ✅",
+          description: "One last step — verify your ID and phone so the agency can finalize your booking.",
+          details: "We're taking you to verification in a moment…",
+          verificationInfo: false,
+          businessInfo: false,
+          bookingInfo: true,
+        };
+      }
       return {
         title: "Booking request sent! 🎉",
-        description: "Your 10 MAD booking fee was received. The agency has been notified and will reach out within 24 hours to confirm pickup details.",
-        details: "You can track your booking and chat with the agency from your bookings page.",
+        description: "Your 10 MAD booking fee was received. The agency will contact you in the chat within 5–10 minutes to confirm pickup details.",
+        details: "You can chat with the agency from your booking page.",
         verificationInfo: false,
         businessInfo: false,
         bookingInfo: true,
@@ -205,14 +223,28 @@ const ThankYou = () => {
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-8">
             {type === "booking" ? (
-              <>
-                <Button size="lg" onClick={() => navigate("/booking-history")} className="min-w-[200px]">
-                  View my booking
+              needsVerification && bookingId ? (
+                <Button
+                  size="lg"
+                  onClick={() => navigate(`/verification?bookingId=${bookingId}&next=${encodeURIComponent(`/confirmation?bookingId=${bookingId}`)}`)}
+                  className="min-w-[200px]"
+                >
+                  Verify now
                 </Button>
-                <Button size="lg" variant="outline" onClick={() => navigate("/")} className="min-w-[200px]">
-                  {t("thankYouPage.backToHome")}
-                </Button>
-              </>
+              ) : (
+                <>
+                  <Button
+                    size="lg"
+                    onClick={() => navigate(bookingId ? `/confirmation?bookingId=${bookingId}` : "/booking-history")}
+                    className="min-w-[200px]"
+                  >
+                    Open my booking
+                  </Button>
+                  <Button size="lg" variant="outline" onClick={() => navigate("/")} className="min-w-[200px]">
+                    {t("thankYouPage.backToHome")}
+                  </Button>
+                </>
+              )
             ) : type === "verification" ? (
               <>
                 <Button size="lg" onClick={() => navigate("/booking-history")} className="min-w-[200px]">

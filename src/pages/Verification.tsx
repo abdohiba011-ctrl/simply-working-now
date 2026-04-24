@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { getErrMsg } from "@/lib/errorMessages";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -63,7 +63,9 @@ const Verification = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { t } = useLanguage();
-  
+  const [searchParams] = useSearchParams();
+  const postPaymentBookingId = searchParams.get('bookingId');
+  const nextPath = searchParams.get('next');
   // Form state
   const [phone, setPhone] = useState("");
   const [firstName, setFirstName] = useState("");
@@ -120,7 +122,7 @@ const Verification = () => {
         if (profile.is_verified) {
           setIsAlreadyVerified(true);
           toast.success("Your account is already verified!");
-          navigate('/');
+          navigate(nextPath || '/');
           return;
         }
         setVerificationStatus(profile.verification_status || 'not_started');
@@ -352,8 +354,14 @@ const Verification = () => {
         console.error('Failed to notify admins:', notifErr);
       }
 
-      // Navigate to thank you page for verification
-      navigate('/thank-you?type=verification');
+      // After submission: if this came from a paid booking, send them to the booking page
+      // (chat is already unlocked); otherwise show the standard verification thank-you.
+      if (nextPath) {
+        toast.success("ID submitted! You can chat with the agency now.");
+        navigate(nextPath);
+      } else {
+        navigate('/thank-you?type=verification');
+      }
     } catch (err: unknown) {
       toast.error(getErrMsg(err) || "Failed to submit verification");
     } finally {
@@ -579,6 +587,16 @@ const Verification = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {/* Post-payment banner — user just paid the 10 MAD booking fee */}
+            {postPaymentBookingId && (
+              <Alert className="mb-6 bg-green-50 border-green-300 dark:bg-green-950/30 dark:border-green-700">
+                <CheckCircle2 className="h-4 w-4 text-green-600" />
+                <AlertDescription className="text-green-800 dark:text-green-200">
+                  <strong>Payment received ✅</strong> One last step — verify your ID and phone so the agency can confirm your booking.
+                </AlertDescription>
+              </Alert>
+            )}
+
             {/* Re-verification Reason Banner */}
             {rejectionReason && (
               <Alert className="mb-6 bg-amber-50 border-amber-300 dark:bg-amber-950/30 dark:border-amber-700">
