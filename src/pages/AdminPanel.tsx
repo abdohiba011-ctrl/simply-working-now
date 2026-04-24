@@ -285,6 +285,11 @@ const AdminPanel = () => {
             <AdminEmployeesTab />
           </TabErrorBoundary>
         )}
+        {activeTab === "email" && (
+          <TabErrorBoundary key={`email-${retryKey}`} tabName="Email" onRetry={handleTabRetry}>
+            <AdminEmailTestTab />
+          </TabErrorBoundary>
+        )}
       </div>
     </AdminLayout>
   );
