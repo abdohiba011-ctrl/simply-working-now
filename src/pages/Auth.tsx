@@ -540,34 +540,6 @@ const Auth = () => {
                     </h1>
                   </div>
 
-                  {/* Account type segmented switcher */}
-                  <div className="grid grid-cols-2 gap-1 p-1 mb-6 bg-muted rounded-lg">
-                    <button
-                      type="button"
-                      onClick={() => setAccountType("client")}
-                      className={`flex items-center justify-center gap-2 py-2.5 rounded-md text-sm font-medium transition-all ${
-                        accountType === "client"
-                          ? "bg-background text-foreground shadow-sm"
-                          : "text-muted-foreground hover:text-foreground"
-                      }`}
-                    >
-                      <span className="text-base">🏍️</span>
-                      <span>{t('auth.imAClient')}</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setAccountType("business")}
-                      className={`flex items-center justify-center gap-2 py-2.5 rounded-md text-sm font-medium transition-all ${
-                        accountType === "business"
-                          ? "bg-background text-foreground shadow-sm"
-                          : "text-muted-foreground hover:text-foreground"
-                      }`}
-                    >
-                      <span className="text-base">💼</span>
-                      <span>{t('auth.imABusiness')}</span>
-                    </button>
-                  </div>
-                  
                   {/* Google Sign-In */}
                   <Button
                     type="button"
