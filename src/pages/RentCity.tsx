@@ -125,9 +125,12 @@ export default function RentCity() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
+  const neighborhoodOptions = useMemo(() => getNeighborhoodsForCity(city), [city]);
+  const allCityLabel = neighborhoodOptions[0]; // e.g. "All Casablanca"
+
   // Filter state (initialized from URL)
   const [neighborhood, setNeighborhood] = useState<string>(
-    searchParams.get("neighborhood") || "Bouskoura"
+    searchParams.get("neighborhood") || allCityLabel
   );
   const [duration, setDuration] = useState<string>(
     searchParams.get("duration") || "1"
