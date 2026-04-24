@@ -474,7 +474,7 @@ const BikeDetails = () => {
             </Card>
 
             {/* Booking Section - Desktop & Mobile */}
-            <Card className="border-2 border-primary/20 bg-card shadow-lg relative overflow-hidden">
+            <Card id="booking-form" className="border-2 border-primary/20 bg-card shadow-lg relative overflow-hidden">
               <CardContent className="p-4 sm:p-6">
                 <div className="mb-4 sm:mb-6">
                   <span className="text-xs sm:text-sm text-muted-foreground font-medium">
