@@ -29,15 +29,18 @@ const ThankYou = () => {
     // Auto-redirect after 15 seconds for verification, 10 seconds for business, 8 seconds for others
     let delay = 8000;
     let redirectPath = "/";
-    
+
     if (type === "verification") {
       delay = 15000;
       redirectPath = "/booking-history";
     } else if (type === "business") {
       delay = 10000;
       redirectPath = "/";
+    } else if (type === "booking") {
+      delay = 20000;
+      redirectPath = "/booking-history";
     }
-    
+
     const timer = setTimeout(() => {
       navigate(redirectPath);
     }, delay);
