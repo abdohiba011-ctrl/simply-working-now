@@ -305,59 +305,25 @@ const BookingReview = () => {
             </CardContent>
           </Card>
 
-          {/* Payment Method */}
-          <Card className={!selectedPayment ? "border-2 border-muted-foreground/50 shadow-xl animate-[pulse_2s_ease-in-out_infinite]" : "border-2 border-border"}>
-            <CardContent className="p-6 space-y-4">
-              <h3 className="font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-                <CreditCard className="h-6 w-6 text-gray-700 dark:text-gray-300" />
-                <span className="text-lg">{t('bookingReviewPage.selectPaymentMethod')}</span>
-                {!selectedPayment && <Badge variant="secondary" className={isRTL ? 'mr-2' : 'ml-2'}>{t('hero.required')}</Badge>}
+          {/* Platform Fee Notice */}
+          <Card className="border-2 border-primary/30 bg-primary/5">
+            <CardContent className="p-6 space-y-3">
+              <h3 className="font-semibold text-foreground flex items-center gap-2">
+                <CreditCard className="h-5 w-5 text-primary" />
+                <span>Motonita booking fee</span>
               </h3>
-              
-              <div className="space-y-4">
-                <button
-                  onClick={() => setSelectedPayment("cash")}
-                  className={`group w-full flex items-center gap-4 p-5 rounded-xl border-2 transition-all duration-300 ${
-                    selectedPayment === "cash" 
-                      ? "border-foreground bg-muted shadow-xl scale-[1.02]" 
-                      : "border-border bg-background hover:border-foreground/50 hover:shadow-lg hover:scale-[1.01]"
-                  }`}
-                >
-                  <div className={`p-3 rounded-lg transition-colors ${selectedPayment === "cash" ? "bg-foreground/10" : "bg-muted"}`}>
-                    <Wallet className={`h-6 w-6 ${selectedPayment === "cash" ? "text-foreground" : "text-gray-700 dark:text-gray-300"}`} />
-                  </div>
-                  <div className={`${isRTL ? 'text-right' : 'text-left'} flex-1`}>
-                    <div className="font-semibold text-gray-900 dark:text-gray-100 text-lg">{t('booking.cashOnDelivery')}</div>
-                    <div className="text-sm text-muted-foreground">{t('booking.cashOnDeliveryDesc')}</div>
-                  </div>
-                  {selectedPayment === "cash" && (
-                    <div className="h-6 w-6 rounded-full bg-foreground flex items-center justify-center">
-                      <CheckCircle2 className="h-4 w-4 text-background" />
-                    </div>
-                  )}
-                </button>
-
-                <button
-                  onClick={() => setSelectedPayment("card")}
-                  className={`group w-full flex items-center gap-4 p-5 rounded-xl border-2 transition-all duration-300 ${
-                    selectedPayment === "card" 
-                      ? "border-foreground bg-muted shadow-xl scale-[1.02]" 
-                      : "border-border bg-background hover:border-foreground/50 hover:shadow-lg hover:scale-[1.01]"
-                  }`}
-                >
-                  <div className={`p-3 rounded-lg transition-colors ${selectedPayment === "card" ? "bg-foreground/10" : "bg-muted"}`}>
-                    <CreditCard className={`h-6 w-6 ${selectedPayment === "card" ? "text-foreground" : "text-gray-700 dark:text-gray-300"}`} />
-                  </div>
-                  <div className={`${isRTL ? 'text-right' : 'text-left'} flex-1`}>
-                    <div className="font-semibold text-gray-900 dark:text-gray-100 text-lg">{t('bookingReviewPage.payNowByCard')}</div>
-                    <div className="text-sm text-muted-foreground">{t('bookingReviewPage.secureOnlinePayment')}</div>
-                  </div>
-                  {selectedPayment === "card" && (
-                    <div className="h-6 w-6 rounded-full bg-foreground flex items-center justify-center">
-                      <CheckCircle2 className="h-4 w-4 text-background" />
-                    </div>
-                  )}
-                </button>
+              <p className="text-sm text-muted-foreground">
+                You'll pay a flat <strong className="text-foreground">10 MAD</strong> platform fee now by card.
+                This confirms your booking and unlocks chat with the agency.
+              </p>
+              <p className="text-sm text-muted-foreground">
+                The rental price and any deposit are paid <strong className="text-foreground">directly to the agency at pickup</strong> — not to Motonita.
+              </p>
+              <div className="flex items-start gap-2 p-3 rounded-md bg-yellow-500/10 border border-yellow-500/30">
+                <AlertTriangle className="h-4 w-4 text-yellow-600 dark:text-yellow-400 mt-0.5 flex-shrink-0" />
+                <p className="text-xs text-yellow-700 dark:text-yellow-300">
+                  The 10 MAD fee is non-refundable once paid. Please review everything below before continuing.
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -365,29 +331,33 @@ const BookingReview = () => {
           {/* Price Summary */}
           <Card>
             <CardContent className="p-6 space-y-3">
-              <h3 className="font-semibold text-gray-900 dark:text-gray-100">{t('bookingReviewPage.priceSummary')}</h3>
-              
+              <h3 className="font-semibold text-foreground">{t('bookingReviewPage.priceSummary')}</h3>
+
               <div className="space-y-2">
-                <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                <div className="flex justify-between text-muted-foreground">
                   <span>{dailyPrice} DH × {days} {days === 1 ? t('bookingHistoryPage.day') : t('booking.days')}</span>
                   <span>{subtotal} DH</span>
                 </div>
                 {deliveryFee > 0 && (
-                  <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                  <div className="flex justify-between text-muted-foreground">
                     <span>{t('booking.deliveryFee')}</span>
                     <span>{deliveryFee} DH</span>
                   </div>
                 )}
                 {promoApplied && (
-                  <div className="flex justify-between text-green-600 dark:text-green-400 font-medium">
+                  <div className="flex justify-between text-primary font-medium">
                     <span>{t('bookingReviewPage.promoDiscount')}</span>
                     <span>-{promoDiscount} DH</span>
                   </div>
                 )}
                 <Separator />
-                <div className="flex justify-between text-xl font-bold pt-2">
-                  <span className="text-gray-900 dark:text-gray-100">{t('booking.total')}</span>
-                  <span className="text-primary">{total} DH</span>
+                <div className="flex justify-between text-sm text-muted-foreground">
+                  <span>Rental total (paid to agency at pickup)</span>
+                  <span>{total} DH</span>
+                </div>
+                <div className="flex justify-between text-base font-semibold">
+                  <span className="text-foreground">Pay now (Motonita fee)</span>
+                  <span className="text-primary">10 DH</span>
                 </div>
               </div>
             </CardContent>
