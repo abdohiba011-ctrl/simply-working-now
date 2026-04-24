@@ -14,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { cityToSlug } from "@/lib/citySlug";
 
 import casablancaImg from "@/assets/city-casablanca.avif";
 import marrakechImg from "@/assets/city-marrakesh.avif";
@@ -161,11 +162,14 @@ export const HeroSection = memo(() => {
   const handleSearch = useCallback(() => {
     if (!city) return;
     const params = new URLSearchParams();
-    params.set("city", city);
-    params.set("neighborhood", neighborhood || ALL_NEIGHBORHOODS);
+    if (neighborhood && neighborhood !== ALL_NEIGHBORHOODS) {
+      params.set("neighborhood", neighborhood);
+    }
     if (dateRange?.from) params.set("start", format(dateRange.from, "yyyy-MM-dd"));
     if (dateRange?.to) params.set("end", format(dateRange.to, "yyyy-MM-dd"));
-    navigate(`/listings?${params.toString()}`);
+    const slug = cityToSlug(city);
+    const qs = params.toString();
+    navigate(`/rent/${slug}${qs ? `?${qs}` : ""}`);
   }, [city, neighborhood, dateRange, navigate]);
 
   const dateLabel =

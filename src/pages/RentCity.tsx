@@ -126,12 +126,16 @@ export default function RentCity() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const neighborhoodOptions = useMemo(() => getNeighborhoodsForCity(city), [city]);
-  const allCityLabel = neighborhoodOptions[0]; // e.g. allCityLabel
+  const allCityLabel = neighborhoodOptions[0]; // e.g. "All Casablanca"
 
-  // Filter state (initialized from URL)
-  const [neighborhood, setNeighborhood] = useState<string>(
-    searchParams.get("neighborhood") || allCityLabel
-  );
+  // Initial neighborhood from URL — but ONLY accept it if it belongs to this city.
+  // This prevents Casablanca neighborhoods leaking into Marrakech, etc.
+  const initialNeighborhood = (() => {
+    const fromUrl = searchParams.get("neighborhood");
+    if (fromUrl && neighborhoodOptions.includes(fromUrl)) return fromUrl;
+    return allCityLabel;
+  })();
+  const [neighborhood, setNeighborhood] = useState<string>(initialNeighborhood);
   const [duration, setDuration] = useState<string>(
     searchParams.get("duration") || "1"
   );
@@ -559,7 +563,7 @@ export default function RentCity() {
         <div className="flex gap-6">
           {/* Sidebar */}
           <aside className="hidden lg:block w-[280px] shrink-0">
-            <div className="sticky top-24 max-h-[calc(100vh-7rem)] flex flex-col bg-card border border-border rounded-xl p-4 shadow-sm">
+            <div className="sticky top-24 h-[calc(100vh-7rem)] flex flex-col bg-card border border-border rounded-xl p-4 shadow-sm overflow-hidden">
               {filterPanel}
             </div>
           </aside>

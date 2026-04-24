@@ -1,15 +1,42 @@
+## Plan
 
+Fix the city/neighborhood navigation so each city only shows its own neighborhoods and never falls back into Casablanca by accident.
 
-## Update announcement banner styling
+### What I’ll change
 
-Three changes to `src/components/AnnouncementBanner.tsx`:
+1. Route search flows directly to city pages
+- Update the hero search in `src/components/HeroSection.tsx` to navigate to `/rent/:city` instead of `/listings`.
+- Preserve the selected neighborhood and dates in the query string when moving to the city page.
+- Normalize city names to the route format used by `RentCity` so cities like Marrakech/Marrakesh resolve correctly.
 
-1. **Background color** — change from forest `#163300` to the primary brand lime `#9FE870`.
-2. **Remove close button** — delete the `X` dismiss button entirely, along with the `dismissed` state, the `sessionStorage` logic, and the `SESSION_KEY` constant. Banner is always visible.
-3. **Text color on lime background** — since lime is now the background, all text/icons currently white must become black (`#000` / forest `#163300` for strong contrast). Specifically:
-   - All `text-white` spans → `text-[#163300]` (forest, reads as near-black on lime)
-   - The lime-colored separators/italic text (`color: LIME`) → change to `#163300` so they remain visible
-   - Marquee track stays the same; only colors and the dismiss button are affected
+2. Stop legacy links from forcing Casablanca
+- Replace old `/listings?...` links in places like:
+  - `src/components/TopCitiesSection.tsx`
+  - `src/components/Footer.tsx`
+  - any other public links still pointing at `/listings`
+- Make them point to `/rent/<city-slug>` with city-correct query params.
 
-No other files need to change. The banner stays sticky at the top, 40px tall, marquee scrolling at 30s, pause-on-hover, reduced-motion fallback, and trilingual content all remain intact.
+3. Make `RentCity` accept both old and new query param shapes safely
+- Keep neighborhood selection scoped to the current route city.
+- Add compatibility so if an old link still passes `location` or other legacy params, the page only applies them when they belong to the current city.
+- If a neighborhood does not belong to the selected city, reset to that city’s “All <City>” option.
 
+4. Keep data filtering locked to the route city
+- Preserve the existing database filter by `city_id` in `src/pages/RentCity.tsx`.
+- Tighten the UI state initialization so filters come from the active city route first, not from stale generic listing params.
+
+### Expected result
+- `/rent/casablanca` shows only Casablanca neighborhoods.
+- `/rent/marrakech` shows only Marrakech neighborhoods.
+- Switching city no longer carries over a neighborhood from another city.
+- Clicking city cards, footer links, or hero search will open the correct city page instead of redirecting through Casablanca.
+
+### Technical details
+- Root cause: `App.tsx` currently redirects `/listings` to `/rent/casablanca`, while some components still navigate to `/listings?city=...`. That drops the selected city and creates a Casablanca fallback.
+- No backend or database changes are needed.
+- Main files likely affected:
+  - `src/components/HeroSection.tsx`
+  - `src/components/TopCitiesSection.tsx`
+  - `src/components/Footer.tsx`
+  - `src/pages/RentCity.tsx`
+  - possibly `src/App.tsx` for safer legacy redirect behavior
