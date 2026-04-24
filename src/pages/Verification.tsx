@@ -122,7 +122,7 @@ const Verification = () => {
         if (profile.is_verified) {
           setIsAlreadyVerified(true);
           toast.success("Your account is already verified!");
-          navigate('/');
+          navigate(nextPath || '/');
           return;
         }
         setVerificationStatus(profile.verification_status || 'not_started');
@@ -354,8 +354,14 @@ const Verification = () => {
         console.error('Failed to notify admins:', notifErr);
       }
 
-      // Navigate to thank you page for verification
-      navigate('/thank-you?type=verification');
+      // After submission: if this came from a paid booking, send them to the booking page
+      // (chat is already unlocked); otherwise show the standard verification thank-you.
+      if (nextPath) {
+        toast.success("ID submitted! You can chat with the agency now.");
+        navigate(nextPath);
+      } else {
+        navigate('/thank-you?type=verification');
+      }
     } catch (err: unknown) {
       toast.error(getErrMsg(err) || "Failed to submit verification");
     } finally {
