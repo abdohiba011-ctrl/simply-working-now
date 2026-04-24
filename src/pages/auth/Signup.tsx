@@ -333,17 +333,35 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
     }
   };
 
+  const isAgencyFlow = defaultRole === "agency";
+
   return (
     <AuthLayout>
       <div className="space-y-6">
-        <div className="space-y-1.5">
+        <div className="space-y-2">
+          {isAgencyFlow ? (
+            <span
+              className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider"
+              style={{ backgroundColor: "rgba(159,232,112,0.2)", color: "#163300" }}
+            >
+              <Building2 className="h-3 w-3" />
+              {t("mockAuth.agency_pill", { defaultValue: "For rental agencies" })}
+            </span>
+          ) : null}
           <h1 className="text-2xl font-bold tracking-tight" style={{ color: "#163300" }}>
-            {t("mockAuth.create_account", { defaultValue: "Create your account" })}
+            {isAgencyFlow
+              ? t("mockAuth.create_agency_account", { defaultValue: "Create your agency account" })
+              : t("mockAuth.create_account", { defaultValue: "Create your account" })}
           </h1>
           <p className="text-sm" style={{ color: "rgba(22,51,0,0.7)" }}>
-            {t("mockAuth.join_motonita", {
-              defaultValue: "Join Morocco's peer-to-peer motorbike marketplace",
-            })}
+            {isAgencyFlow
+              ? t("mockAuth.agency_subtitle", {
+                  defaultValue:
+                    "List your motorbikes and start earning. Includes a 30-day free Pro trial — no card required.",
+                })
+              : t("mockAuth.join_motonita", {
+                  defaultValue: "Join Morocco's peer-to-peer motorbike marketplace",
+                })}
           </p>
         </div>
 
