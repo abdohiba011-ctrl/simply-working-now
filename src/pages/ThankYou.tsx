@@ -204,67 +204,44 @@ const ThankYou = () => {
           )}
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-8">
-            {type === "verification" ? (
+            {type === "booking" ? (
               <>
-                <Button
-                  size="lg"
-                  onClick={() => navigate("/booking-history")}
-                  className="min-w-[200px]"
-                >
+                <Button size="lg" onClick={() => navigate("/booking-history")} className="min-w-[200px]">
+                  View my booking
+                </Button>
+                <Button size="lg" variant="outline" onClick={() => navigate("/")} className="min-w-[200px]">
+                  {t("thankYouPage.backToHome")}
+                </Button>
+              </>
+            ) : type === "verification" ? (
+              <>
+                <Button size="lg" onClick={() => navigate("/booking-history")} className="min-w-[200px]">
                   {t("thankYouPage.goToBookings")}
                 </Button>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  onClick={() => navigate("/")}
-                  className="min-w-[200px]"
-                >
+                <Button size="lg" variant="outline" onClick={() => navigate("/")} className="min-w-[200px]">
                   {t("thankYouPage.backToHome")}
                 </Button>
               </>
             ) : type === "business" ? (
               <>
-                <Button
-                  size="lg"
-                  onClick={() => navigate("/")}
-                  className="min-w-[200px]"
-                >
+                <Button size="lg" onClick={() => navigate("/")} className="min-w-[200px]">
                   {t("thankYouPage.backToHome")}
                 </Button>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  onClick={() => navigate("/profile")}
-                  className="min-w-[200px]"
-                >
+                <Button size="lg" variant="outline" onClick={() => navigate("/profile")} className="min-w-[200px]">
                   {t("thankYouPage.viewProfile")}
                 </Button>
               </>
             ) : (
               <>
-                <Button
-                  size="lg"
-                  onClick={() => navigate("/")}
-                  className="min-w-[200px]"
-                >
+                <Button size="lg" onClick={() => navigate("/")} className="min-w-[200px]">
                   {t("thankYouPage.backToHome")}
                 </Button>
                 {type === "affiliate" ? (
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    onClick={() => navigate("/affiliate")}
-                    className="min-w-[200px]"
-                  >
+                  <Button size="lg" variant="outline" onClick={() => navigate("/affiliate")} className="min-w-[200px]">
                     {t("thankYouPage.backToAffiliate")}
                   </Button>
                 ) : (
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    onClick={() => navigate("/contact")}
-                    className="min-w-[200px]"
-                  >
+                  <Button size="lg" variant="outline" onClick={() => navigate("/contact")} className="min-w-[200px]">
                     {t("thankYouPage.contactAgain")}
                   </Button>
                 )}
