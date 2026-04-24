@@ -15,6 +15,8 @@ interface Body {
   plan?: "free" | "pro" | "business";
   customer_email?: string;
   customer_name?: string;
+  success_path?: string;
+  error_path?: string;
 }
 
 const APP_URL =
