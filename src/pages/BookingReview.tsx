@@ -100,15 +100,9 @@ const BookingReview = () => {
   const [isProcessing, setIsProcessing] = useState(false);
 
   const handleContinue = async () => {
-    if (!selectedPayment) {
-      toast.error(t('bookingReviewPage.selectPaymentError'));
-      return;
-    }
-    
     setIsProcessing(true);
 
     if (!isAuthenticated) {
-      // Save pending booking to localStorage before redirecting
       const pendingBooking: PendingBooking = {
         bikeId: bikeId || "",
         bikeName,
@@ -119,18 +113,15 @@ const BookingReview = () => {
         deliveryMethod,
         location,
         dailyPrice,
-        selectedPayment: selectedPayment || undefined
       };
       safeSetItem('pendingBooking', pendingBooking);
-      
-      // Redirect to signup with return URL
-      const returnUrl = `/booking-review`;
-      navigate(`/auth?mode=signup&returnUrl=${encodeURIComponent(returnUrl)}`);
+
+      const returnUrl = `/booking-review?${searchParams.toString()}`;
+      navigate(`/auth?mode=login&returnUrl=${encodeURIComponent(returnUrl)}`);
       setIsProcessing(false);
       return;
     }
 
-    // Check verification and phone
     if (!isVerified) {
       toast.error(t('bookingReviewPage.verifyIdError'));
       setIsProcessing(false);
@@ -145,65 +136,9 @@ const BookingReview = () => {
       return;
     }
 
-    if (selectedPayment === "card") {
-      // Pass all data to checkout including total
-      setIsProcessing(false);
-      navigate(`/checkout?${searchParams.toString()}&total=${total}`);
-    } else {
-      // Cash on delivery - promote hold to a real booking (concurrency safe)
-      try {
-        const { data: userData, error: userError } = await supabase.auth.getUser();
-
-        if (userError || !userData.user || !bikeId || !pickup || !end) {
-          toast.error(t('checkoutPage.missingInfo'));
-          setIsProcessing(false);
-          return;
-        }
-
-        const holdId = searchParams.get("holdId");
-        if (!holdId) {
-          toast.error("Your reservation expired. Please reselect dates.");
-          setIsProcessing(false);
-          navigate(`/bike/${bikeId}`);
-          return;
-        }
-
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('name, email, phone')
-          .eq('id', userData.user.id)
-          .single();
-
-        const { data: bookingId, error } = await supabase.rpc('promote_hold_to_booking', {
-          _hold_id: holdId,
-          _customer_name: profile?.name || userData.user.email || 'Customer',
-          _customer_email: profile?.email || userData.user.email || '',
-          _customer_phone: profile?.phone || '',
-          _delivery_method: deliveryMethod || 'pickup',
-          _pickup_location: location || null,
-        });
-
-        if (error) {
-          if ((error.message || "").includes("HOLD_EXPIRED")) {
-            toast.error("Your 5-minute reservation expired. Please start over.");
-            navigate(`/bike/${bikeId}`);
-          } else {
-            throw error;
-          }
-          setIsProcessing(false);
-          return;
-        }
-
-        safeRemoveItem('pendingBooking');
-        toast.success(t('success.bookingConfirmed'));
-        navigate(`/confirmation?bookingId=${bookingId}&bikeName=${encodeURIComponent(bikeName)}&pickup=${pickup}&end=${end}&total=${total}&payment=cash`);
-      } catch (error: unknown) {
-        console.error("Error creating booking:", error);
-        toast.error(t('checkoutPage.bookingFailed'));
-      } finally {
-        setIsProcessing(false);
-      }
-    }
+    // Always card payment for the 10 MAD platform fee.
+    setIsProcessing(false);
+    navigate(`/checkout?${searchParams.toString()}&total=${total}`);
   };
 
   return (
