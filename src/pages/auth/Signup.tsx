@@ -712,6 +712,7 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
               )}
             </Button>
           </form>
+          </div>
         ) : null}
 
         <p className="text-center text-sm" style={{ color: "rgba(22,51,0,0.75)" }}>
