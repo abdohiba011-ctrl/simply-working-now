@@ -259,7 +259,7 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
   const authedUser = useAuthStore((s) => s.user);
 
   const [role, setRole] = useState<"renter" | "agency" | null>(
-    defaultRole ?? null,
+    defaultRole ?? "renter",
   );
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -375,29 +375,8 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
           </div>
         ) : null}
 
-        {/* Step 1 — role selection (hidden when arriving from a role-specific entry) */}
-        {!isAgencyFlow ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <RoleCard
-              selected={role === "renter"}
-              onClick={() => setRole("renter")}
-              icon={<Bike className="w-8 h-8" style={{ color: "#9FE870" }} />}
-              title={t("mockAuth.im_renting", { defaultValue: "I'm renting" })}
-              subtitle={t("mockAuth.im_renting_sub", {
-                defaultValue: "Find and book motorbikes across Morocco",
-              })}
-            />
-            <RoleCard
-              selected={role === "agency"}
-              onClick={() => setRole("agency")}
-              icon={<Building2 className="w-8 h-8" style={{ color: "#9FE870" }} />}
-              title={t("mockAuth.im_business", { defaultValue: "I'm a business" })}
-              subtitle={t("mockAuth.im_business_sub", {
-                defaultValue: "List your motorbikes and accept bookings",
-              })}
-            />
-          </div>
-        ) : (
+        {/* Agency flow shows a small renter cross-link; renter flow shows nothing (no toggle) */}
+        {isAgencyFlow ? (
           <p className="text-xs" style={{ color: "rgba(22,51,0,0.6)" }}>
             {t("mockAuth.not_business_prefix", { defaultValue: "Just want to rent a bike?" })}{" "}
             <button
@@ -409,7 +388,7 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
               {t("mockAuth.not_business_link", { defaultValue: "Sign up as a renter instead" })}
             </button>
           </p>
-        )}
+        ) : null}
 
         {/* Step 2 — form (fade in) */}
         {role ? (
