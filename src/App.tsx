@@ -20,6 +20,7 @@ import { AgencyShell } from "./components/agency/AgencyShell";
 // Eagerly load critical above-the-fold pages
 import Index from "./pages/Index";
 import Listings from "./pages/Listings";
+import Auth from "./pages/Auth";
 import Login from "./pages/auth/Login";
 import Signup from "./pages/auth/Signup";
 import AgencyLoginPage from "./pages/auth/AgencyLogin";
@@ -156,7 +157,7 @@ const App = () => (
                   } />
                   <Route path="/quarterly" element={<Quarterly />} />
                   <Route path="/gps-tracking" element={<GPSTracking />} />
-                  <Route path="/auth" element={<Login />} />
+                  <Route path="/auth" element={<Auth />} />
                   <Route path="/login" element={<Login />} />
                   <Route path="/agency/login" element={<AgencyLoginPage />} />
                   <Route path="/signup" element={<Signup />} />
