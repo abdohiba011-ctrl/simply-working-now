@@ -88,10 +88,20 @@ const ThankYou = () => {
       };
     }
     if (type === "booking") {
+      if (needsVerification) {
+        return {
+          title: "Payment received ✅",
+          description: "One last step — verify your ID and phone so the agency can finalize your booking.",
+          details: "We're taking you to verification in a moment…",
+          verificationInfo: false,
+          businessInfo: false,
+          bookingInfo: true,
+        };
+      }
       return {
         title: "Booking request sent! 🎉",
-        description: "Your 10 MAD booking fee was received. The agency has been notified and will reach out within 24 hours to confirm pickup details.",
-        details: "You can track your booking and chat with the agency from your bookings page.",
+        description: "Your 10 MAD booking fee was received. The agency will contact you in the chat within 5–10 minutes to confirm pickup details.",
+        details: "You can chat with the agency from your booking page.",
         verificationInfo: false,
         businessInfo: false,
         bookingInfo: true,
