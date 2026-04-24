@@ -45,8 +45,6 @@ const BookingReview = () => {
   const location = searchParams.get("location") || savedBooking?.location || "Casablanca";
   const dailyPrice = parseInt(searchParams.get("dailyPrice") || String(savedBooking?.dailyPrice) || "99");
 
-  const [promoApplied, setPromoApplied] = useState(false);
-  const [promoSuccessMsg, setPromoSuccessMsg] = useState("");
   const [isVerified, setIsVerified] = useState(false);
   const [hasPhone, setHasPhone] = useState(false);
   const [isCheckingProfile, setIsCheckingProfile] = useState(true);
@@ -91,9 +89,8 @@ const BookingReview = () => {
     ? Math.ceil((new Date(end).getTime() - new Date(pickup).getTime()) / (1000 * 60 * 60 * 24))
     : 1;
   const deliveryFee = deliveryMethod === "delivery" ? 25 : 0;
-  const promoDiscount = promoApplied ? 25 : 0;
   const subtotal = days * dailyPrice;
-  const total = subtotal + deliveryFee - promoDiscount;
+  const total = subtotal + deliveryFee;
 
 
   const [isProcessing, setIsProcessing] = useState(false);
@@ -204,18 +201,6 @@ const BookingReview = () => {
                 >
                   {t('bookingReviewPage.goToVerification')}
                 </Button>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Auto-applied promo message */}
-          {promoSuccessMsg && (
-            <Card className="border-green-600 bg-green-50 dark:bg-green-950 dark:border-green-800">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2 text-sm text-green-700 dark:text-green-300">
-                  <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
-                  <span className="font-medium">{promoSuccessMsg}</span>
-                </div>
               </CardContent>
             </Card>
           )}
@@ -341,12 +326,6 @@ const BookingReview = () => {
                   <div className="flex justify-between text-muted-foreground">
                     <span>{t('booking.deliveryFee')}</span>
                     <span>{deliveryFee} DH</span>
-                  </div>
-                )}
-                {promoApplied && (
-                  <div className="flex justify-between text-primary font-medium">
-                    <span>{t('bookingReviewPage.promoDiscount')}</span>
-                    <span>-{promoDiscount} DH</span>
                   </div>
                 )}
                 <Separator />
