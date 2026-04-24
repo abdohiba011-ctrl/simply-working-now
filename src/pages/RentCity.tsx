@@ -320,7 +320,7 @@ export default function RentCity() {
           </AccordionTrigger>
           <AccordionContent>
             <RadioGroup value={neighborhood} onValueChange={setNeighborhood} className="space-y-2">
-              {CASA_NEIGHBORHOODS.map((n) => (
+              {neighborhoodOptions.map((n) => (
                 <div key={n} className="flex items-center gap-2">
                   <RadioGroupItem value={n} id={`n-${n}`} />
                   <Label htmlFor={`n-${n}`} className="text-sm font-normal cursor-pointer">
@@ -507,7 +507,7 @@ export default function RentCity() {
               Motorbike Rental in {cityName}
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
-              {bikes.length} verified bike{bikes.length !== 1 ? "s" : ""} across {CASA_NEIGHBORHOODS.length - 1} neighborhoods
+              {bikes.length} verified bike{bikes.length !== 1 ? "s" : ""} across {neighborhoodOptions.length - 1} neighborhoods
             </p>
           </div>
 
