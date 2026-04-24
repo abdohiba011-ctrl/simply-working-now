@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { AlertTriangle, Users, Building2, Store, UserCog, Clock, CheckCircle, XCircle, UserX, Calendar, Bike, BarChart3, MapPin, Map, Tag } from "lucide-react";
+import { AlertTriangle, Users, Building2, Store, UserCog, Clock, CheckCircle, XCircle, UserX, Calendar, Bike, BarChart3, MapPin, Map, Tag, Mail } from "lucide-react";
 import { useAdminNotifications } from "@/hooks/useAdminNotifications";
 import { useAdminPermissions, AdminTabPermission } from "@/hooks/useAdminPermissions";
 import { AdminUnifiedClientsTab } from "@/components/admin/AdminUnifiedClientsTab";
