@@ -78,13 +78,59 @@ const BookingDetail = () => {
 
   const confirm = async () => {
     setBusy(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { setBusy(false); return toast.error("Not signed in"); }
+
+    // Ensure wallet exists & has 50 MAD
+    const { data: wallet } = await supabase
+      .from("agency_wallets").select("*").eq("user_id", user.id).maybeSingle();
+    let currentBalance = Number(wallet?.balance ?? 0);
+    if (!wallet) {
+      const { data: created } = await supabase.from("agency_wallets")
+        .insert({ user_id: user.id }).select().single();
+      currentBalance = Number(created?.balance ?? 0);
+    }
+    if (currentBalance < 50) {
+      setBusy(false);
+      return toast.error("Insufficient wallet balance. You need 50 MAD to confirm. Top up first.");
+    }
+
+    const newBalance = currentBalance - 50;
+    const { error: walletErr } = await supabase.from("agency_wallets")
+      .update({ balance: newBalance, updated_at: new Date().toISOString() })
+      .eq("user_id", user.id);
+    if (walletErr) { setBusy(false); return toast.error(walletErr.message); }
+
+    await supabase.from("agency_wallet_transactions").insert({
+      user_id: user.id,
+      type: "debit",
+      amount: -50,
+      balance_after: newBalance,
+      currency: "MAD",
+      status: "completed",
+      description: `Confirmation fee for booking #${booking.id.slice(0, 8)}`,
+      related_booking_id: booking.id,
+    });
+
     const { error } = await supabase
       .from("bookings")
-      .update({ status: "confirmed", confirmed_at: new Date().toISOString() })
+      .update({ booking_status: "confirmed", status: "confirmed", confirmed_at: new Date().toISOString(), confirmed_by: user.id })
       .eq("id", booking.id);
     setBusy(false);
     if (error) return toast.error(error.message);
-    toast.success("Booking confirmed");
+
+    // Notify renter
+    if (booking.user_id) {
+      await supabase.from("notifications").insert({
+        user_id: booking.user_id,
+        title: "Booking confirmed!",
+        message: `Your booking for ${safeDate(booking.pickup_date)} has been confirmed by the agency.`,
+        type: "success",
+        link: `/messages/${booking.id}`,
+      });
+    }
+
+    toast.success("Booking confirmed · 50 MAD deducted from wallet");
     setBooking({ ...booking, status: "confirmed" });
   };
 

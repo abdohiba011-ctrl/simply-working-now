@@ -206,12 +206,12 @@ const BikeDetails = () => {
       toast.error("Please select pickup and drop-off times");
       return;
     }
-    
+
     const pickup = format(dateRange.from, "yyyy-MM-dd");
     const end = format(dateRange.to, "yyyy-MM-dd");
-    
-    // Navigate to booking review page with tiered daily price
-    navigate(`/booking-review?bikeId=${id}&bikeName=${encodeURIComponent(bikeType.name)}&pickup=${pickup}&end=${end}&pickupTime=${pickupTime}&dropoffTime=${dropoffTime}&deliveryMethod=${deliveryMethod}&location=${encodeURIComponent(bike.location)}&dailyPrice=${dailyPrice}`);
+
+    // New booking flow with hold + mock payment
+    navigate(`/rent/review?bikeId=${id}&pickup=${pickup}&end=${end}&pickupTime=${pickupTime}&dropoffTime=${dropoffTime}&deliveryMethod=${deliveryMethod}&location=${encodeURIComponent(bike.location)}`);
   };
 
   const handleNextImage = () => {
