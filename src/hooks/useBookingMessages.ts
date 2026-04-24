@@ -6,9 +6,19 @@ export interface BookingMessage {
   booking_id: string;
   sender_id: string | null;
   sender_role: string;
-  body: string;
+  body: string | null;
+  attachment_url: string | null;
+  message_type: string;
+  flagged: boolean;
+  flag_reasons: string[] | null;
   read_at: string | null;
   created_at: string;
+}
+
+export interface SendMessageInput {
+  body?: string;
+  attachmentUrl?: string;
+  messageType?: "text" | "image";
 }
 
 export function useBookingMessages(bookingId: string | undefined) {
@@ -31,7 +41,7 @@ export function useBookingMessages(bookingId: string | undefined) {
         .eq("booking_id", bookingId)
         .order("created_at", { ascending: true });
       if (!cancelled) {
-        if (!error && data) setMessages(data as BookingMessage[]);
+        if (!error && data) setMessages(data as unknown as BookingMessage[]);
         setLoading(false);
       }
     })();
@@ -48,10 +58,23 @@ export function useBookingMessages(bookingId: string | undefined) {
         },
         (payload) => {
           setMessages((prev) => {
-            const next = payload.new as BookingMessage;
+            const next = payload.new as unknown as BookingMessage;
             if (prev.some((m) => m.id === next.id)) return prev;
             return [...prev, next];
           });
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "booking_messages",
+          filter: `booking_id=eq.${bookingId}`,
+        },
+        (payload) => {
+          const updated = payload.new as unknown as BookingMessage;
+          setMessages((prev) => prev.map((m) => (m.id === updated.id ? updated : m)));
         }
       )
       .subscribe();
@@ -63,20 +86,39 @@ export function useBookingMessages(bookingId: string | undefined) {
   }, [bookingId]);
 
   const send = useCallback(
-    async (body: string, senderRole: "renter" | "agency" | "admin") => {
-      if (!bookingId || !body.trim()) return { error: "empty" };
+    async (
+      input: string | SendMessageInput,
+      senderRole: "renter" | "agency" | "admin"
+    ) => {
+      if (!bookingId) return { error: "no_booking", message: null as BookingMessage | null };
+      const payload: SendMessageInput =
+        typeof input === "string" ? { body: input, messageType: "text" } : input;
+
+      const body = payload.body?.trim() ?? "";
+      const attachmentUrl = payload.attachmentUrl ?? null;
+      if (!body && !attachmentUrl) return { error: "empty", message: null };
+
       setSending(true);
       const {
         data: { user },
       } = await supabase.auth.getUser();
-      const { error } = await supabase.from("booking_messages").insert({
-        booking_id: bookingId,
-        sender_id: user?.id ?? null,
-        sender_role: senderRole,
-        body: body.trim(),
-      });
+      const { data, error } = await supabase
+        .from("booking_messages")
+        .insert({
+          booking_id: bookingId,
+          sender_id: user?.id ?? null,
+          sender_role: senderRole,
+          body: body || null,
+          attachment_url: attachmentUrl,
+          message_type: payload.messageType ?? (attachmentUrl ? "image" : "text"),
+        } as never)
+        .select("*")
+        .single();
       setSending(false);
-      return { error: error?.message ?? null };
+      return {
+        error: error?.message ?? null,
+        message: (data as unknown as BookingMessage) ?? null,
+      };
     },
     [bookingId]
   );
