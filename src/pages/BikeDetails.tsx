@@ -197,7 +197,7 @@ const BikeDetails = () => {
   
   const bikeType = bike.bike_type;
 
-  const handleBookNow = () => {
+  const handleBookNow = async () => {
     if (!dateRange?.from || !dateRange?.to) {
       toast.error("Please select dates");
       return;
@@ -206,12 +206,40 @@ const BikeDetails = () => {
       toast.error("Please select pickup and drop-off times");
       return;
     }
-    
+
     const pickup = format(dateRange.from, "yyyy-MM-dd");
     const end = format(dateRange.to, "yyyy-MM-dd");
-    
-    // Navigate to booking review page with tiered daily price
-    navigate(`/booking-review?bikeId=${id}&bikeName=${encodeURIComponent(bikeType.name)}&pickup=${pickup}&end=${end}&pickupTime=${pickupTime}&dropoffTime=${dropoffTime}&deliveryMethod=${deliveryMethod}&location=${encodeURIComponent(bike.location)}&dailyPrice=${dailyPrice}`);
+
+    // Try to acquire a 5-minute hold (concurrency safe). If user not signed in,
+    // skip the hold here — auth gate happens on BookingReview.
+    const { data: authData } = await supabase.auth.getUser();
+    let holdParams = "";
+    if (authData?.user && id) {
+      const { data: holdData, error: holdError } = await supabase.rpc("create_bike_hold", {
+        _bike_id: id,
+        _pickup: pickup,
+        _return: end,
+      });
+      if (holdError) {
+        const msg = holdError.message || "";
+        if (msg.includes("BIKE_ALREADY_BOOKED")) {
+          toast.error("Sorry, this bike was just booked for those dates. Please pick different dates.");
+        } else if (msg.includes("BIKE_HELD_BY_OTHER")) {
+          toast.error("Someone else is checking out this bike right now. Try again in a few minutes.");
+        } else if (msg.includes("INVALID_DATES")) {
+          toast.error("Invalid dates selected.");
+        } else {
+          toast.error("Could not reserve this bike. Please try again.");
+        }
+        return;
+      }
+      const hold = Array.isArray(holdData) ? holdData[0] : holdData;
+      if (hold?.hold_id) {
+        holdParams = `&holdId=${hold.hold_id}&holdExpiresAt=${encodeURIComponent(hold.expires_at)}`;
+      }
+    }
+
+    navigate(`/booking-review?bikeId=${id}&bikeName=${encodeURIComponent(bikeType.name)}&pickup=${pickup}&end=${end}&pickupTime=${pickupTime}&dropoffTime=${dropoffTime}&deliveryMethod=${deliveryMethod}&location=${encodeURIComponent(bike.location)}&dailyPrice=${dailyPrice}${holdParams}`);
   };
 
   const handleNextImage = () => {

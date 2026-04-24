@@ -153,12 +153,21 @@ const BookingReview = () => {
       setIsProcessing(false);
       navigate(`/checkout?${searchParams.toString()}&total=${total}`);
     } else {
-      // Cash on delivery - create booking directly
+      // Cash on delivery - promote hold to a real booking (concurrency safe)
       try {
         const { data: userData, error: userError } = await supabase.auth.getUser();
-        
+
         if (userError || !userData.user || !bikeId || !pickup || !end) {
           toast.error(t('checkoutPage.missingInfo'));
+          setIsProcessing(false);
+          return;
+        }
+
+        const holdId = searchParams.get("holdId");
+        if (!holdId) {
+          toast.error("Your reservation expired. Please reselect dates.");
+          setIsProcessing(false);
+          navigate(`/bike/${bikeId}`);
           return;
         }
 
@@ -168,29 +177,29 @@ const BookingReview = () => {
           .eq('id', userData.user.id)
           .single();
 
-        const { data, error } = await supabase
-          .from('bookings')
-          .insert({
-            user_id: userData.user.id,
-            bike_id: bikeId,
-            customer_name: profile?.name || userData.user.email || 'Customer',
-            customer_email: profile?.email || userData.user.email || '',
-            customer_phone: profile?.phone || '',
-            pickup_date: pickup,
-            return_date: end,
-            total_price: total,
-            status: 'pending'
-          })
-          .select()
-          .single();
+        const { data: bookingId, error } = await supabase.rpc('promote_hold_to_booking', {
+          _hold_id: holdId,
+          _customer_name: profile?.name || userData.user.email || 'Customer',
+          _customer_email: profile?.email || userData.user.email || '',
+          _customer_phone: profile?.phone || '',
+          _delivery_method: deliveryMethod || 'pickup',
+          _pickup_location: location || null,
+        });
 
-        if (error) throw error;
+        if (error) {
+          if ((error.message || "").includes("HOLD_EXPIRED")) {
+            toast.error("Your 5-minute reservation expired. Please start over.");
+            navigate(`/bike/${bikeId}`);
+          } else {
+            throw error;
+          }
+          setIsProcessing(false);
+          return;
+        }
 
-        // Clear pending booking from localStorage on success
         safeRemoveItem('pendingBooking');
-        
         toast.success(t('success.bookingConfirmed'));
-        navigate(`/confirmation?bookingId=${data.id}&bikeName=${encodeURIComponent(bikeName)}&pickup=${pickup}&end=${end}&total=${total}&payment=cash`);
+        navigate(`/confirmation?bookingId=${bookingId}&bikeName=${encodeURIComponent(bikeName)}&pickup=${pickup}&end=${end}&total=${total}&payment=cash`);
       } catch (error: unknown) {
         console.error("Error creating booking:", error);
         toast.error(t('checkoutPage.bookingFailed'));
