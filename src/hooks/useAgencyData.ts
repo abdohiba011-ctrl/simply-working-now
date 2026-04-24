@@ -30,7 +30,33 @@ export interface AgencySubscription {
   current_period_start: string | null;
   current_period_end: string | null;
   cancel_at_period_end: boolean;
+  trial_ends_at?: string | null;
+  grace_period_ends_at?: string | null;
+  locked_at?: string | null;
 }
+
+export interface SubscriptionLifecycle {
+  isTrialing: boolean;
+  isPastDue: boolean;
+  isLocked: boolean;
+  daysLeftInTrial: number | null;
+  daysLeftInGrace: number | null;
+}
+
+export const computeLifecycle = (s: AgencySubscription | null): SubscriptionLifecycle => {
+  if (!s) return { isTrialing: false, isPastDue: false, isLocked: false, daysLeftInTrial: null, daysLeftInGrace: null };
+  const now = Date.now();
+  const trialEnds = s.trial_ends_at ? new Date(s.trial_ends_at).getTime() : null;
+  const graceEnds = s.grace_period_ends_at ? new Date(s.grace_period_ends_at).getTime() : null;
+  const dayMs = 86400000;
+  return {
+    isTrialing: s.status === "trialing",
+    isPastDue: s.status === "past_due",
+    isLocked: s.status === "locked",
+    daysLeftInTrial: trialEnds ? Math.max(0, Math.ceil((trialEnds - now) / dayMs)) : null,
+    daysLeftInGrace: graceEnds ? Math.max(0, Math.ceil((graceEnds - now) / dayMs)) : null,
+  };
+};
 
 export interface AgencyBookingRow {
   id: string;
