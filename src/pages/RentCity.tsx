@@ -563,7 +563,7 @@ export default function RentCity() {
         <div className="flex gap-6">
           {/* Sidebar */}
           <aside className="hidden lg:block w-[280px] shrink-0">
-            <div className="sticky top-24 max-h-[calc(100vh-7rem)] flex flex-col bg-card border border-border rounded-xl p-4 shadow-sm">
+            <div className="sticky top-24 h-[calc(100vh-7rem)] flex flex-col bg-card border border-border rounded-xl p-4 shadow-sm overflow-hidden">
               {filterPanel}
             </div>
           </aside>
