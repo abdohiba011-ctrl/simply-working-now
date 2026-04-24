@@ -12,9 +12,21 @@ export interface BikeType {
   name: string;
   description: string | null;
   daily_price: number;
+  weekly_price?: number | null;
+  monthly_price?: number | null;
+  deposit_amount?: number | null;
+  license_required?: string | null;
+  min_age?: number | null;
+  min_experience_years?: number | null;
+  category?: string | null;
+  engine_cc?: number | null;
+  fuel_type?: string | null;
+  transmission?: string | null;
   main_image_url: string;
   features: string[];
   rating: number;
+  review_count?: number | null;
+  neighborhood?: string | null;
   created_at: string;
   updated_at: string;
 }
