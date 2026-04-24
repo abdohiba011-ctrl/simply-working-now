@@ -44,6 +44,7 @@ const BikeDetails = () => {
   // Fetch bike and detail images from database
   const { data: bike, isLoading: isLoadingBike } = useBike(id || "");
   const { data: detailImages, isLoading: isLoadingImages } = useBikeTypeImages(bike?.bike_type_id || "");
+  const { data: bikeReviews } = useBikeReviews(bike?.bike_type_id || "");
   const { data: pricingTiers } = usePricingTiers();
   
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
