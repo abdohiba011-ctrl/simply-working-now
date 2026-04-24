@@ -123,6 +123,35 @@ export const HeroSection = memo(() => {
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [calendarOpen, setCalendarOpen] = useState(false);
 
+  // Cities loaded from DB so the dropdown reflects real availability.
+  const [availableCities, setAvailableCities] = useState<string[]>([]);
+  const [comingSoonCities, setComingSoonCities] = useState<string[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("service_cities")
+        .select("name, is_available, is_coming_soon")
+        .order("display_order", { ascending: true })
+        .order("name", { ascending: true });
+      if (cancelled || !data) return;
+      const avail: string[] = [];
+      const soon: string[] = [];
+      for (const row of data) {
+        // Coming-soon takes precedence over is_available so back-office can
+        // park a city as "coming soon" without flipping availability semantics.
+        if (row.is_coming_soon) soon.push(row.name);
+        else if (row.is_available) avail.push(row.name);
+      }
+      setAvailableCities(avail);
+      setComingSoonCities(soon);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   // Preload images on mount
   useEffect(() => {
     rotatingCities.forEach((c) => {
