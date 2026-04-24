@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, memo } from "react";
-import { MapPin, Building2, Calendar as CalendarIcon, Bike } from "lucide-react";
+import { MapPin, Building2, Calendar as CalendarIcon, Bike, Clock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { DateRange } from "react-day-picker";
@@ -10,11 +10,14 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
 import { cityToSlug } from "@/lib/citySlug";
+import { supabase } from "@/integrations/supabase/client";
 
 import casablancaImg from "@/assets/city-casablanca.avif";
 import marrakechImg from "@/assets/city-marrakesh.avif";
