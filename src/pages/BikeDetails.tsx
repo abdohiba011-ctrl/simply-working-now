@@ -626,56 +626,6 @@ const BikeDetails = () => {
                         )}
                       </div>
 
-                      {/* Promo Code Section */}
-                      <div className="border-t pt-3 space-y-2">
-                        {appliedPromo ? (
-                          /* Show applied promo (auto-applied or manually applied) */
-                          <div className="flex items-center gap-2 text-green-600">
-                            <Tag className="h-4 w-4" />
-                            <span className="text-sm font-medium">Promo applied: {appliedPromo}</span>
-                          </div>
-                        ) : showPromoField ? (
-                          /* Show input field when user clicks the button */
-                          <div className="space-y-2">
-                            <div className="flex gap-2">
-                              <Input
-                                placeholder="Enter code"
-                                value={promoCode}
-                                onChange={(e) => {
-                                  setPromoCode(e.target.value);
-                                  setPromoError("");
-                                  setPromoSuccess("");
-                                }}
-                                className="flex-1 h-10 text-sm"
-                                autoFocus
-                              />
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={handleApplyPromo}
-                                className="h-10 px-4"
-                              >
-                                Apply
-                              </Button>
-                            </div>
-                            {promoError && (
-                              <p className="text-xs text-red-600">{promoError}</p>
-                            )}
-                          </div>
-                        ) : (
-                          /* Show button to reveal field */
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={() => setShowPromoField(true)}
-                            className="text-muted-foreground hover:text-foreground p-0 h-auto"
-                          >
-                            <Tag className="h-4 w-4 mr-2" />
-                            Have a promo code?
-                          </Button>
-                        )}
-                      </div>
-
                       <div className="flex justify-between font-semibold text-lg pt-2 border-t">
                         <span className="text-foreground">Total</span>
                         <span className="text-foreground font-bold">{totalPrice.toFixed(0)} DH</span>
