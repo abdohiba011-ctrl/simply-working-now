@@ -4,7 +4,7 @@ import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { CreditCard, MapPin, Calendar, Bike, Loader2, ChevronLeft, Lock, ShieldCheck } from "lucide-react";
+import { CreditCard, MapPin, Calendar, Bike, Loader2, ChevronLeft, Lock, ShieldCheck, ExternalLink } from "lucide-react";
 import { format } from "date-fns";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -32,6 +32,14 @@ const Checkout = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [profile, setProfile] = useState<{ name: string; email: string; phone: string; is_verified: boolean } | null>(null);
+  // Pending payment state — drives the "open in new tab" fallback UI and polling.
+  const [pendingPayment, setPendingPayment] = useState<{
+    paymentUrl: string;
+    paymentId: string;
+    bookingId: string;
+    needsVerification: string;
+  } | null>(null);
+  const [paymentWindow, setPaymentWindow] = useState<Window | null>(null);
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -66,6 +74,34 @@ const Checkout = () => {
     ? Math.ceil((new Date(end).getTime() - new Date(pickup).getTime()) / (1000 * 60 * 60 * 24))
     : 1;
   const rentalSubtotal = days * dailyPrice;
+
+  // Poll for payment completion when we have a pending payment.
+  useEffect(() => {
+    if (!pendingPayment) return;
+    let cancelled = false;
+    const interval = setInterval(async () => {
+      const { data } = await supabase
+        .from('youcanpay_payments')
+        .select('status')
+        .eq('id', pendingPayment.paymentId)
+        .maybeSingle();
+      if (cancelled || !data) return;
+      if (data.status === 'paid' || data.status === 'completed' || data.status === 'success') {
+        clearInterval(interval);
+        toast.success("Payment confirmed!");
+        navigate(`/thank-you?type=booking&bookingId=${pendingPayment.bookingId}&needsVerification=${pendingPayment.needsVerification}`);
+      } else if (data.status === 'failed' || data.status === 'canceled') {
+        clearInterval(interval);
+        toast.error("Payment was not completed. Please try again.");
+        setPendingPayment(null);
+        setPaymentWindow(null);
+      }
+    }, 3000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [pendingPayment, navigate]);
 
   const handlePay = async () => {
     if (!user || !bikeId || !pickup || !end) {
@@ -138,20 +174,37 @@ const Checkout = () => {
 
       // 3. Open YouCanPay hosted page (iframe-safe).
       const result = openHostedPayment(tokenResp.payment_url, preOpened);
-      if (!result.ok) {
-        toast.error("Your browser blocked the payment window. Please allow popups and try again.");
-        setIsSubmitting(false);
-        return;
-      }
-      if (result.method === "new-tab" || result.method === "pre-opened") {
+
+      // Always store pending payment so we can show the fallback button + poll.
+      setPendingPayment({
+        paymentUrl: tokenResp.payment_url,
+        paymentId: tokenResp.payment_id,
+        bookingId,
+        needsVerification,
+      });
+      if (result.ok && (result.method === "new-tab" || result.method === "pre-opened")) {
+        setPaymentWindow(preOpened || null);
         toast.success("Payment opened in a new tab. Complete it there to continue.");
-        setIsSubmitting(false);
+      } else if (!result.ok) {
+        toast.error("Popup blocked. Use the button below to open the payment page.");
       }
+      setIsSubmitting(false);
     } catch (error: unknown) {
       console.error("Error initiating payment:", error);
       toast.error(t('checkoutPage.bookingFailed'));
       if (preOpened && !preOpened.closed) preOpened.close();
       setIsSubmitting(false);
+    }
+  };
+
+  const handleOpenPaymentManually = () => {
+    if (!pendingPayment) return;
+    const win = window.open(pendingPayment.paymentUrl, "_blank", "noopener,noreferrer");
+    if (win) {
+      setPaymentWindow(win);
+      toast.success("Payment opened in a new tab.");
+    } else {
+      toast.error("Your browser is still blocking popups. Please allow them for this site.");
     }
   };
 
@@ -219,6 +272,30 @@ const Checkout = () => {
                     <>Pay {PLATFORM_FEE_MAD} MAD with card</>
                   )}
                 </Button>
+
+                {pendingPayment && (
+                  <div className="rounded-lg border-2 border-primary/40 bg-primary/5 p-4 space-y-3">
+                    <div className="flex items-start gap-2">
+                      <Loader2 className="h-4 w-4 mt-1 animate-spin text-primary flex-shrink-0" />
+                      <div className="text-sm">
+                        <p className="font-semibold text-foreground">Waiting for payment…</p>
+                        <p className="text-muted-foreground text-xs mt-1">
+                          Complete the payment in the YouCan Pay tab. We'll continue automatically when it's done.
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      onClick={handleOpenPaymentManually}
+                    >
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                      Open payment in new tab
+                    </Button>
+                  </div>
+                )}
 
                 <p className="text-xs text-muted-foreground text-center">
                   By paying, you agree the 10 MAD fee is non-refundable.
