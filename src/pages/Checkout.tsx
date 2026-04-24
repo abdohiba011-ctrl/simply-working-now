@@ -30,7 +30,7 @@ const Checkout = () => {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
-  const [profile, setProfile] = useState<{ name: string; email: string; phone: string } | null>(null);
+  const [profile, setProfile] = useState<{ name: string; email: string; phone: string; is_verified: boolean } | null>(null);
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -41,7 +41,7 @@ const Checkout = () => {
       try {
         const { data } = await supabase
           .from('profiles')
-          .select('name, email, phone')
+          .select('name, email, phone, is_verified')
           .eq('id', user.id)
           .single();
         if (data) {
@@ -49,6 +49,7 @@ const Checkout = () => {
             name: data.name || '',
             email: data.email || user.email || '',
             phone: data.phone || '',
+            is_verified: !!data.is_verified,
           });
         }
       } catch (error) {
@@ -75,9 +76,9 @@ const Checkout = () => {
       navigate(`/bike/${bikeId}`);
       return;
     }
-    if (!profile?.name || !profile?.phone) {
-      toast.error("Please complete your profile before paying.");
-      navigate('/verification');
+    if (!profile?.name) {
+      toast.error("Please complete your profile name before paying.");
+      navigate('/profile');
       return;
     }
 
@@ -88,7 +89,7 @@ const Checkout = () => {
         _hold_id: holdId,
         _customer_name: profile.name,
         _customer_email: profile.email,
-        _customer_phone: profile.phone,
+        _customer_phone: profile.phone || null,
         _delivery_method: deliveryMethod,
         _pickup_location: location || null,
       });
@@ -104,6 +105,8 @@ const Checkout = () => {
         return;
       }
 
+      const needsVerification = profile.is_verified ? '0' : '1';
+
       // 2. Create YouCanPay token for the 10 MAD platform fee.
       const { data: tokenResp, error: tokenErr } = await supabase.functions.invoke(
         'youcanpay-create-token',
@@ -115,7 +118,7 @@ const Checkout = () => {
             related_booking_id: bookingId,
             customer_email: profile.email,
             customer_name: profile.name,
-            success_path: `/thank-you?type=booking&bookingId=${bookingId}`,
+            success_path: `/thank-you?type=booking&bookingId=${bookingId}&needsVerification=${needsVerification}`,
             error_path: `/checkout?${searchParams.toString()}&yc=error`,
           },
         },
