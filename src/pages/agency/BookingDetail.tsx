@@ -29,6 +29,7 @@ interface Booking {
   total_days: number | null;
   amount_paid: number | null;
   bike_id: string | null;
+  user_id: string | null;
   notes: string | null;
   created_at: string;
 }
