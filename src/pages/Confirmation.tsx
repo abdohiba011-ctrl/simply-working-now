@@ -176,6 +176,15 @@ const Confirmation = () => {
                 </div>
               </div>
 
+              {/* Verification-pending notice (renter just submitted ID) */}
+              {verificationStatus === 'pending_review' && (
+                <div className={`rounded-lg p-4 mb-6 bg-amber-50 dark:bg-amber-950/30 border border-amber-300 dark:border-amber-700 ${isRTL ? "text-right" : "text-left"}`}>
+                  <p className="text-sm text-amber-800 dark:text-amber-200">
+                    <strong>Your ID is under review.</strong> You can chat with the agency now — they'll confirm pickup once verification is complete (usually under 24 hours).
+                  </p>
+                </div>
+              )}
+
               {/* In-platform chat */}
               {bookingId && (
                 <div className="mb-6">
