@@ -380,10 +380,12 @@ export const Header = memo(() => {
                       </DropdownMenuItem>
                     </>
                   )}
-                  <DropdownMenuItem onClick={() => navigate(isBusiness ? "/business-dashboard" : "/become-business")}>
-                    <Building2 className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
-                    {isBusiness ? t('header.businessDashboard') : t('header.becomePartner')}
-                  </DropdownMenuItem>
+                  {isBusiness && (
+                    <DropdownMenuItem onClick={() => navigate("/business-dashboard")}>
+                      <Building2 className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
+                      {t('header.businessDashboard')}
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogoutClick}>
                     <LogOut className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
@@ -523,10 +525,12 @@ export const Header = memo(() => {
                       {t('header.adminPanel')}
                     </Button>
                   )}
-                  <Button variant="outline" size="lg" className="justify-start gap-2 text-base min-h-[44px] mx-2" onClick={() => { navigate(isBusiness ? "/business-dashboard" : "/become-business"); setIsMenuOpen(false); }}>
-                    <Building2 className="h-5 w-5" />
-                    {isBusiness ? t('header.businessDashboard') : t('header.becomePartner')}
-                  </Button>
+                  {isBusiness && (
+                    <Button variant="outline" size="lg" className="justify-start gap-2 text-base min-h-[44px] mx-2" onClick={() => { navigate("/business-dashboard"); setIsMenuOpen(false); }}>
+                      <Building2 className="h-5 w-5" />
+                      {t('header.businessDashboard')}
+                    </Button>
+                  )}
                   <Button variant="outline" size="lg" className="justify-start gap-2 text-base min-h-[44px] mx-2" onClick={handleLogoutClick}>
                     <LogOut className="h-5 w-5" />
                     {t('header.logout')}
