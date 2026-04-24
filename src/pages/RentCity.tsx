@@ -308,20 +308,18 @@ export default function RentCity() {
   const totalDays = DURATION_OPTIONS.find((d) => d.id === duration)?.days ?? 1;
 
   const filterPanel = (
-    <div className="flex flex-col h-full">
-      <Accordion
-        type="multiple"
-        defaultValue={[
-          "neighborhood",
-          "duration",
-          "price",
-          "type",
-          "fuel",
-          "license",
-          "features",
-        ]}
-        className="flex-1 overflow-y-auto pr-2 -mr-2 space-y-2"
-      >
+    <div className="flex flex-col h-full min-h-0">
+      <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain pr-3 [scrollbar-width:thin]">
+        <Accordion
+          type="multiple"
+          defaultValue={[
+            "neighborhood",
+            "duration",
+            "price",
+            "type",
+          ]}
+          className="space-y-1"
+        >
         <AccordionItem value="neighborhood" className="border-border">
           <AccordionTrigger className="text-sm font-semibold">
             Neighborhood
