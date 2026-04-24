@@ -24,7 +24,6 @@ interface PendingBooking {
   deliveryMethod: string;
   location: string;
   dailyPrice: number;
-  selectedPayment?: "cash" | "card";
 }
 
 const BookingReview = () => {
