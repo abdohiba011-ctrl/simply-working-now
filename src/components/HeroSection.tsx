@@ -14,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { cityToSlug } from "@/lib/citySlug";
 
 import casablancaImg from "@/assets/city-casablanca.avif";
 import marrakechImg from "@/assets/city-marrakesh.avif";
