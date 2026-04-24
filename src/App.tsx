@@ -20,7 +20,10 @@ import { AgencyShell } from "./components/agency/AgencyShell";
 // Eagerly load critical above-the-fold pages
 import Index from "./pages/Index";
 import Listings from "./pages/Listings";
-import Auth from "./pages/Auth";
+import Login from "./pages/auth/Login";
+import Signup from "./pages/auth/Signup";
+import AgencyLoginPage from "./pages/auth/AgencyLogin";
+import AgencySignupPage from "./pages/auth/AgencySignup";
 
 // Lazy load all other page components
 const BecomeSeller = lazy(() => import("./pages/BecomeSeller"));
@@ -153,11 +156,11 @@ const App = () => (
                   } />
                   <Route path="/quarterly" element={<Quarterly />} />
                   <Route path="/gps-tracking" element={<GPSTracking />} />
-                  <Route path="/auth" element={<Auth />} />
-                  <Route path="/login" element={<Auth />} />
-                  <Route path="/agency/login" element={<Auth />} />
-                  <Route path="/signup" element={<Auth />} />
-                  <Route path="/agency/signup" element={<Auth />} />
+                  <Route path="/auth" element={<Login />} />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/agency/login" element={<AgencyLoginPage />} />
+                  <Route path="/signup" element={<Signup />} />
+                  <Route path="/agency/signup" element={<AgencySignupPage />} />
                   <Route path="/rent" element={<RentPlaceholder />} />
                   <Route path="/rent/:city" element={<CityListings />} />
                   <Route path="/rent/review" element={<BookingReviewNew />} />
