@@ -33,6 +33,20 @@ const Confirmation = () => {
     if (bookingId) {
       generateContract();
     }
+
+    // Check current user's verification status to maybe show a "review pending" banner.
+    (async () => {
+      const { data: auth } = await supabase.auth.getUser();
+      if (!auth?.user) return;
+      const { data: prof } = await supabase
+        .from('profiles')
+        .select('verification_status, is_verified')
+        .eq('id', auth.user.id)
+        .single();
+      if (prof) {
+        setVerificationStatus(prof.is_verified ? 'verified' : (prof.verification_status || null));
+      }
+    })();
   }, [bookingId]);
 
   const generateContract = async () => {
