@@ -3,12 +3,13 @@ import { Header } from "@/components/Header";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { CheckCircle, Calendar, MapPin, Mail, FileText, Download, Loader2, Phone, PlayCircle } from "lucide-react";
+import { CheckCircle, Calendar, MapPin, Mail, FileText, Download, Loader2, Clock, PlayCircle } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { safeRemoveItem } from "@/lib/safeStorage";
+import { BookingChat } from "@/components/BookingChat";
 
 const Confirmation = () => {
   const navigate = useNavigate();
@@ -146,7 +147,28 @@ const Confirmation = () => {
                 </div>
               </div>
 
-              {/* What's Next - Second */}
+              {/* Agency contact callout */}
+              <div className={`rounded-lg p-6 mb-6 bg-primary/10 border border-primary/30 ${isRTL ? "text-right" : "text-left"}`}>
+                <div className={`flex items-start gap-3 ${isRTL ? "flex-row-reverse" : ""}`}>
+                  <Clock className="h-6 w-6 text-primary flex-shrink-0 mt-0.5" />
+                  <div>
+                    <h2 className="font-semibold text-foreground mb-1">The agency will contact you in 5–10 minutes</h2>
+                    <p className="text-sm text-muted-foreground">
+                      Use the chat below to talk with the owner, share photos, and coordinate your pickup.
+                      Keep all conversation on Motonita — sharing phone numbers or moving off-platform is not allowed.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* In-platform chat */}
+              {bookingId && (
+                <div className="mb-6">
+                  <BookingChat bookingId={bookingId} viewerRole="renter" title="Chat with the agency" />
+                </div>
+              )}
+
+              {/* What's Next */}
               <div className={`bg-muted/30 rounded-lg p-6 mb-6 ${isRTL ? "text-right" : "text-left"}`}>
                 <h2 className="font-semibold text-lg mb-4 text-foreground">{t("confirmationPage.whatsNext")}</h2>
                 <div className="space-y-4">
@@ -170,20 +192,6 @@ const Confirmation = () => {
                     </div>
                     <div>
                       <p className={`font-medium text-foreground flex items-center gap-2 ${isRTL ? "flex-row-reverse" : ""}`}>
-                        <Phone className="h-4 w-4" />
-                        {t("confirmationPage.callCenterConfirmation")}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {t("confirmationPage.callCenterDesc")}
-                      </p>
-                    </div>
-                  </div>
-                  <div className={`flex items-start gap-3 ${isRTL ? "flex-row-reverse" : ""}`}>
-                    <div className="flex-shrink-0 w-6 h-6 rounded-full bg-foreground text-background flex items-center justify-center text-xs font-bold">
-                      3
-                    </div>
-                    <div>
-                      <p className={`font-medium text-foreground flex items-center gap-2 ${isRTL ? "flex-row-reverse" : ""}`}>
                         <Calendar className="h-4 w-4" />
                         {t("confirmationPage.pickupInstructions")}
                       </p>
@@ -192,7 +200,7 @@ const Confirmation = () => {
                   </div>
                   <div className={`flex items-start gap-3 ${isRTL ? "flex-row-reverse" : ""}`}>
                     <div className="flex-shrink-0 w-6 h-6 rounded-full bg-foreground text-background flex items-center justify-center text-xs font-bold">
-                      4
+                      3
                     </div>
                     <div>
                       <p className={`font-medium text-foreground flex items-center gap-2 ${isRTL ? "flex-row-reverse" : ""}`}>
@@ -204,7 +212,7 @@ const Confirmation = () => {
                   </div>
                   <div className={`flex items-start gap-3 ${isRTL ? "flex-row-reverse" : ""}`}>
                     <div className="flex-shrink-0 w-6 h-6 rounded-full bg-foreground text-background flex items-center justify-center text-xs font-bold">
-                      5
+                      4
                     </div>
                     <div>
                       <p className={`font-medium text-foreground flex items-center gap-2 ${isRTL ? "flex-row-reverse" : ""}`}>
