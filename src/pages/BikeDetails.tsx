@@ -106,7 +106,7 @@ const BikeDetails = () => {
   const bookingFee = 10;
   const dueAtPickup = subtotal + deliveryFee - promoDiscount;
   const totalUpfront = bookingFee;
-  const deposit = bike?.bike_type?.deposit_amount ? Number(bike.bike_type.deposit_amount) : 0;
+  const deposit = (bike?.bike_type as any)?.deposit_amount ? Number((bike?.bike_type as any).deposit_amount) : 0;
 
   const isSameDay = dateRange?.from && dateRange?.to &&
     format(dateRange.from, "yyyy-MM-dd") === format(dateRange.to, "yyyy-MM-dd");
