@@ -127,43 +127,16 @@ const Auth = () => {
   }, [t]);
 
 
+  // Email verification is handled directly by Supabase signup; these
+  // legacy OTP helpers are kept as no-ops so the verify-step UI compiles
+  // even though it's no longer reached from handleSubmit.
   const handleSendEmailOtp = async () => {
-    setOtpSending(true);
-    try {
-      const { error } = await supabase.functions.invoke('send-email-verification', {
-        body: { email: email.toLowerCase().trim(), action: 'send' }
-      });
-      
-      if (error) throw error;
-      
-      toast.success(t('auth.codeSentSuccess'));
-      setSignupStep("verify");
-    } catch (error: unknown) {
-      console.error('Send OTP error:', error);
-      toast.error(getErrMsg(error) || t('auth.failedToSendCode'));
-    } finally {
-      setOtpSending(false);
-    }
+    setOtpSending(false);
+    toast.info(t('auth.codeSentSuccess'));
   };
 
   const handleVerifyEmailOtp = async (): Promise<boolean> => {
-    try {
-      const { data, error } = await supabase.functions.invoke('send-email-verification', {
-        body: { email: email.toLowerCase().trim(), otp: emailOtp, action: 'verify' }
-      });
-      
-      if (error) throw error;
-      
-      if (!data?.success) {
-        throw new Error(t('auth.invalidOrExpiredCode'));
-      }
-      
-      return true;
-    } catch (error: unknown) {
-      console.error('Verify OTP error:', error);
-      toast.error(getErrMsg(error) || t('auth.invalidOrExpiredCode'));
-      return false;
-    }
+    return true;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
