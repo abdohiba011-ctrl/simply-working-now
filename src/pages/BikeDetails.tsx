@@ -163,7 +163,7 @@ const BikeDetails = () => {
     );
   }
 
-  const bikeType = bike.bike_type;
+  const bikeType: any = bike.bike_type;
   const neighborhood = bike.location || "Bouskoura";
   const cityName = "Casablanca";
   const agencyName = (bikeType as any)?.agency_name || "Casa Moto Rent";
