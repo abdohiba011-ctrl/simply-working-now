@@ -15,7 +15,8 @@ import { format, differenceInDays, addDays } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { useBike, useBikeTypeImages } from "@/hooks/useBikes";
+import { useBike, useBikeTypeImages, useBikeReviews } from "@/hooks/useBikes";
+import { formatDistanceToNow } from "date-fns";
 import { getBikeImageUrl } from "@/lib/bikeImages";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -43,6 +44,7 @@ const BikeDetails = () => {
   // Fetch bike and detail images from database
   const { data: bike, isLoading: isLoadingBike } = useBike(id || "");
   const { data: detailImages, isLoading: isLoadingImages } = useBikeTypeImages(bike?.bike_type_id || "");
+  const { data: bikeReviews } = useBikeReviews(bike?.bike_type_id || "");
   const { data: pricingTiers } = usePricingTiers();
   
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
@@ -820,75 +822,50 @@ const BikeDetails = () => {
                 <h2 className="font-semibold text-lg sm:text-xl md:text-2xl mb-4 sm:mb-6 text-foreground">Customer Reviews</h2>
                 
                 <div className="space-y-4 sm:space-y-6">
-                  {/* Review 1 */}
-                  <div className="border-b pb-4">
-                    <div className="flex items-start gap-3 mb-2">
-                      <img 
-                        src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop&crop=face" 
-                        alt="Reviewer"
-                        className="w-10 h-10 rounded-full object-cover flex-shrink-0"
-                      />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between mb-1">
-                          <p className="font-semibold text-sm sm:text-base text-foreground">Sarah M.</p>
-                          <div className="flex gap-0.5">
-                            {[...Array(5)].map((_, i) => (
-                              <Star key={i} className="h-3.5 w-3.5 text-primary fill-primary" />
-                            ))}
+                  {!bikeReviews || bikeReviews.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">No reviews yet.</p>
+                  ) : (
+                    bikeReviews.map((review, idx) => (
+                      <div
+                        key={review.id}
+                        className={cn(idx < bikeReviews.length - 1 && "border-b pb-4")}
+                      >
+                        <div className="flex items-start gap-3 mb-2">
+                          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                            <span className="text-sm font-semibold text-primary">
+                              {review.reviewer_name.charAt(0).toUpperCase()}
+                            </span>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between mb-1 gap-2">
+                              <p className="font-semibold text-sm sm:text-base text-foreground truncate">
+                                {review.reviewer_name}
+                              </p>
+                              <div className="flex gap-0.5 flex-shrink-0">
+                                {[...Array(5)].map((_, i) => (
+                                  <Star
+                                    key={i}
+                                    className={cn(
+                                      "h-3.5 w-3.5",
+                                      i < review.rating
+                                        ? "text-primary fill-primary"
+                                        : "text-muted-foreground"
+                                    )}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                            <p className="text-xs text-muted-foreground mb-2">
+                              {formatDistanceToNow(new Date(review.created_at), { addSuffix: true })}
+                            </p>
+                            {review.comment && (
+                              <p className="text-sm text-muted-foreground">{review.comment}</p>
+                            )}
                           </div>
                         </div>
-                        <p className="text-xs text-muted-foreground mb-2">2 weeks ago</p>
-                        <p className="text-sm text-muted-foreground">Perfect bike for exploring Casablanca! Easy to handle and great fuel economy. Highly recommend for beginners.</p>
                       </div>
-                    </div>
-                  </div>
-                  
-                  {/* Review 2 */}
-                  <div className="border-b pb-4">
-                    <div className="flex items-start gap-3 mb-2">
-                      <img 
-                        src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face" 
-                        alt="Reviewer"
-                        className="w-10 h-10 rounded-full object-cover flex-shrink-0"
-                      />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between mb-1">
-                          <p className="font-semibold text-sm sm:text-base text-foreground">Ahmed K.</p>
-                          <div className="flex gap-0.5">
-                            {[...Array(5)].map((_, i) => (
-                              <Star key={i} className="h-3.5 w-3.5 text-primary fill-primary" />
-                            ))}
-                          </div>
-                        </div>
-                        <p className="text-xs text-muted-foreground mb-2">1 month ago</p>
-                        <p className="text-sm text-muted-foreground">Excellent service and the bike was in pristine condition. Made my trip around the city so much more enjoyable!</p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Review 3 */}
-                  <div>
-                    <div className="flex items-start gap-3 mb-2">
-                      <img 
-                        src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=face" 
-                        alt="Reviewer"
-                        className="w-10 h-10 rounded-full object-cover flex-shrink-0"
-                      />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between mb-1">
-                          <p className="font-semibold text-sm sm:text-base text-foreground">Maria L.</p>
-                          <div className="flex gap-0.5">
-                            {[...Array(4)].map((_, i) => (
-                              <Star key={i} className="h-3.5 w-3.5 text-primary fill-primary" />
-                            ))}
-                            <Star className="h-3.5 w-3.5 text-muted-foreground" />
-                          </div>
-                        </div>
-                        <p className="text-xs text-muted-foreground mb-2">3 weeks ago</p>
-                        <p className="text-sm text-muted-foreground">Great bike overall. Very comfortable for city rides. Only minor issue was the pickup process took a bit longer than expected.</p>
-                      </div>
-                    </div>
-                  </div>
+                    ))
+                  )}
                 </div>
               </CardContent>
             </Card>
