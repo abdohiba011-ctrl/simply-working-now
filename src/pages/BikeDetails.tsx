@@ -794,25 +794,6 @@ const BikeDetails = () => {
                   </div>
                 </div>
 
-                <div className="border-t pt-3 sm:pt-4 mt-3 sm:mt-4">
-                  <h2 className="font-semibold text-base sm:text-lg mb-2 sm:mb-3 text-foreground">Owner</h2>
-                  <div className="flex items-center gap-2 sm:gap-3">
-                    {/* Show Building icon for rental shops, User icon for individuals */}
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-secondary/30 flex items-center justify-center flex-shrink-0">
-                      <Building2 className="w-5 h-5 sm:w-6 sm:h-6 text-foreground" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="font-medium text-sm sm:text-base text-foreground">Motonita Rental Shop</p>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="secondary" className="text-[10px] sm:text-xs">Verified Shop</Badge>
-                        <div className="flex items-center gap-0.5">
-                          <Star className="w-3 h-3 fill-primary text-primary" />
-                          <span className="text-xs text-muted-foreground">4.9</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
               </CardContent>
             </Card>
 
