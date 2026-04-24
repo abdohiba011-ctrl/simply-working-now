@@ -13,20 +13,19 @@ const ThankYou = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const type = searchParams.get("type") || "contact";
+  const bookingId = searchParams.get("bookingId");
+  const needsVerification = searchParams.get("needsVerification") === "1";
   const { t } = useLanguage();
 
   // Play success sound on page load
   useEffect(() => {
-    // Small delay to ensure page is rendered
     const soundTimer = setTimeout(() => {
       playSuccessSound();
     }, 300);
-
     return () => clearTimeout(soundTimer);
   }, []);
 
   useEffect(() => {
-    // Auto-redirect after 15 seconds for verification, 10 seconds for business, 8 seconds for others
     let delay = 8000;
     let redirectPath = "/";
 
@@ -37,8 +36,17 @@ const ThankYou = () => {
       delay = 10000;
       redirectPath = "/";
     } else if (type === "booking") {
-      delay = 20000;
-      redirectPath = "/booking-history";
+      if (needsVerification && bookingId) {
+        // Send new renters to verification right after payment.
+        delay = 4000;
+        redirectPath = `/verification?bookingId=${bookingId}&next=${encodeURIComponent(`/confirmation?bookingId=${bookingId}`)}`;
+      } else if (bookingId) {
+        delay = 6000;
+        redirectPath = `/confirmation?bookingId=${bookingId}`;
+      } else {
+        delay = 20000;
+        redirectPath = "/booking-history";
+      }
     }
 
     const timer = setTimeout(() => {
@@ -46,7 +54,7 @@ const ThankYou = () => {
     }, delay);
 
     return () => clearTimeout(timer);
-  }, [navigate, type]);
+  }, [navigate, type, needsVerification, bookingId]);
 
   const getMessage = () => {
     if (type === "verification") {
