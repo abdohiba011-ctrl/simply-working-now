@@ -18,7 +18,7 @@ import { AgencyShell } from "./components/agency/AgencyShell";
 
 // Eagerly load critical above-the-fold pages
 import Index from "./pages/Index";
-import Listings from "./pages/Listings";
+import RentCity from "./pages/RentCity";
 import Auth from "./pages/Auth";
 
 // Lazy load all other page components
@@ -132,7 +132,8 @@ const App = () => (
               <Suspense fallback={<PageLoadingSkeleton />}>
                 <Routes>
                   <Route path="/" element={<Index />} />
-                  <Route path="/listings" element={<Listings />} />
+                  <Route path="/listings" element={<Navigate to="/rent/casablanca" replace />} />
+                  <Route path="/rent/:city" element={<RentCity />} />
                   <Route path="/become-seller" element={<BecomeSeller />} />
                   <Route path="/affiliate" element={<Suspense fallback={<AffiliateSkeleton />}><Affiliate /></Suspense>} />
                   <Route path="/affiliate-signup" element={<AffiliateSignup />} />
