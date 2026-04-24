@@ -90,36 +90,44 @@ const Checkout = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!user || !bikeId || !pickup || !end) {
       toast.error(t('checkoutPage.missingInfo'));
       return;
     }
 
+    const holdId = searchParams.get("holdId");
+    if (!holdId) {
+      toast.error("Your reservation expired. Please reselect dates.");
+      navigate(`/bike/${bikeId}`);
+      return;
+    }
+
+    const deliveryMethod = searchParams.get("deliveryMethod") || "pickup";
+
     setIsSubmitting(true);
 
     try {
-      // Insert booking into database
-      const { data, error } = await supabase
-        .from('bookings')
-        .insert({
-          user_id: user.id,
-          bike_id: bikeId,
-          customer_name: formData.fullName,
-          customer_email: formData.email,
-          customer_phone: formData.phone,
-          pickup_date: pickup,
-          return_date: end,
-          total_price: total,
-          status: 'confirmed'
-        })
-        .select()
-        .single();
+      const { data: bookingId, error } = await supabase.rpc('promote_hold_to_booking', {
+        _hold_id: holdId,
+        _customer_name: formData.fullName,
+        _customer_email: formData.email,
+        _customer_phone: formData.phone,
+        _delivery_method: deliveryMethod,
+        _pickup_location: location || null,
+      });
 
-      if (error) throw error;
+      if (error) {
+        if ((error.message || "").includes("HOLD_EXPIRED")) {
+          toast.error("Your 5-minute reservation expired. Please start over.");
+          navigate(`/bike/${bikeId}`);
+          return;
+        }
+        throw error;
+      }
 
       toast.success(t('success.bookingConfirmed'));
-      navigate(`/confirmation?bookingId=${data.id}&bikeName=${encodeURIComponent(bikeName)}&pickup=${pickup}&end=${end}&total=${total}`);
+      navigate(`/confirmation?bookingId=${bookingId}&bikeName=${encodeURIComponent(bikeName)}&pickup=${pickup}&end=${end}&total=${total}`);
     } catch (error: unknown) {
       console.error("Error creating booking:", error);
       toast.error(t('checkoutPage.bookingFailed'));
