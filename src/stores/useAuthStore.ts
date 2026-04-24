@@ -391,10 +391,31 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     if (signInResult.error || !signInResult.data.user) {
       const err = mapSupabaseAuthError(signInResult.error?.message ?? "Login failed");
-      // Track client-side lockout heuristic on credential failures
+
+      // Track client-side lockout: 5 wrong creds → 15 min cooldown.
       if (err.code === "INVALID_CREDENTIALS") {
-        // Don't auto-lock from a single failure; let Supabase handle real limits.
+        const attempts = bumpFailedAttempts(emailOrPhone);
+        const remaining = Math.max(0, MAX_FAILED_ATTEMPTS - attempts);
+        if (attempts >= MAX_FAILED_ATTEMPTS) {
+          recordLockout(emailOrPhone, LOCKOUT_DURATION_MS);
+          clearFailedAttempts(emailOrPhone);
+          const lockedErr = makeAuthError(
+            "ACCOUNT_LOCKED",
+            "Too many failed attempts. Please try again in 15 minutes.",
+            { retryAfterMs: LOCKOUT_DURATION_MS },
+          );
+          set({ isLoading: false, error: lockedErr.message });
+          throw lockedErr;
+        }
+        // Annotate the error with attempts left so the UI can show it.
+        err.attemptsLeft = remaining;
+        if (remaining <= 2) {
+          err.message = `Incorrect email or password. ${remaining} ${
+            remaining === 1 ? "attempt" : "attempts"
+          } left before lockout.`;
+        }
       }
+
       set({
         isLoading: false,
         error: err.message,
@@ -405,6 +426,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
 
     clearLockout(emailOrPhone);
+    clearFailedAttempts(emailOrPhone);
 
     const mapped = await loadAuthUserModel(signInResult.data.user);
 
@@ -424,13 +446,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     const user: MockUser = { ...mapped, last_active_role: currentRole };
     writeLastRole(currentRole);
-    if (rememberMe) {
-      try {
-        localStorage.setItem(REMEMBER_ME_KEY, "1");
-      } catch {
-        // ignore
-      }
-    }
+    markRememberMe(rememberMe);
 
     set({
       user,
