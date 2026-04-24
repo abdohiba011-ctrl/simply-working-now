@@ -259,8 +259,8 @@ const BikeDetails = () => {
           <span className="text-sm text-muted-foreground pb-1">/day</span>
         </div>
         <div className="space-y-1">
-          <p className="text-xs text-primary font-medium">Save 10% on weekly rentals</p>
-          <p className="text-xs text-primary font-medium">Save 25% on monthly rentals</p>
+          <p className="text-xs text-foreground/70 font-medium">Save 10% on weekly rentals</p>
+          <p className="text-xs text-foreground/70 font-medium">Save 25% on monthly rentals</p>
         </div>
 
         <div className="border-t border-border/60" />
@@ -578,7 +578,7 @@ const BikeDetails = () => {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   {specs.map((s) => (
                     <div key={s.label} className="bg-card border border-border/60 rounded-lg p-4">
-                      <s.icon className="h-5 w-5 text-primary mb-2" />
+                      <s.icon className="h-5 w-5 text-foreground mb-2" />
                       <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">{s.label}</p>
                       <p className="text-base font-semibold text-foreground mt-0.5">{s.value}</p>
                     </div>
