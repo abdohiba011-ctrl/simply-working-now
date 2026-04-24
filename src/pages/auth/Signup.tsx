@@ -333,17 +333,35 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
     }
   };
 
+  const isAgencyFlow = defaultRole === "agency";
+
   return (
     <AuthLayout>
       <div className="space-y-6">
-        <div className="space-y-1.5">
+        <div className="space-y-2">
+          {isAgencyFlow ? (
+            <span
+              className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider"
+              style={{ backgroundColor: "rgba(159,232,112,0.2)", color: "#163300" }}
+            >
+              <Building2 className="h-3 w-3" />
+              {t("mockAuth.agency_pill", { defaultValue: "For rental agencies" })}
+            </span>
+          ) : null}
           <h1 className="text-2xl font-bold tracking-tight" style={{ color: "#163300" }}>
-            {t("mockAuth.create_account", { defaultValue: "Create your account" })}
+            {isAgencyFlow
+              ? t("mockAuth.create_agency_account", { defaultValue: "Create your agency account" })
+              : t("mockAuth.create_account", { defaultValue: "Create your account" })}
           </h1>
           <p className="text-sm" style={{ color: "rgba(22,51,0,0.7)" }}>
-            {t("mockAuth.join_motonita", {
-              defaultValue: "Join Morocco's peer-to-peer motorbike marketplace",
-            })}
+            {isAgencyFlow
+              ? t("mockAuth.agency_subtitle", {
+                  defaultValue:
+                    "List your motorbikes and start earning. Includes a 30-day free Pro trial — no card required.",
+                })
+              : t("mockAuth.join_motonita", {
+                  defaultValue: "Join Morocco's peer-to-peer motorbike marketplace",
+                })}
           </p>
         </div>
 
@@ -357,27 +375,41 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
           </div>
         ) : null}
 
-        {/* Step 1 — role selection */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <RoleCard
-            selected={role === "renter"}
-            onClick={() => setRole("renter")}
-            icon={<Bike className="w-8 h-8" style={{ color: "#9FE870" }} />}
-            title={t("mockAuth.im_renting", { defaultValue: "I'm renting" })}
-            subtitle={t("mockAuth.im_renting_sub", {
-              defaultValue: "Find and book motorbikes across Morocco",
-            })}
-          />
-          <RoleCard
-            selected={role === "agency"}
-            onClick={() => setRole("agency")}
-            icon={<Building2 className="w-8 h-8" style={{ color: "#9FE870" }} />}
-            title={t("mockAuth.im_business", { defaultValue: "I'm a business" })}
-            subtitle={t("mockAuth.im_business_sub", {
-              defaultValue: "List your motorbikes and accept bookings",
-            })}
-          />
-        </div>
+        {/* Step 1 — role selection (hidden when arriving from a role-specific entry) */}
+        {!isAgencyFlow ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <RoleCard
+              selected={role === "renter"}
+              onClick={() => setRole("renter")}
+              icon={<Bike className="w-8 h-8" style={{ color: "#9FE870" }} />}
+              title={t("mockAuth.im_renting", { defaultValue: "I'm renting" })}
+              subtitle={t("mockAuth.im_renting_sub", {
+                defaultValue: "Find and book motorbikes across Morocco",
+              })}
+            />
+            <RoleCard
+              selected={role === "agency"}
+              onClick={() => setRole("agency")}
+              icon={<Building2 className="w-8 h-8" style={{ color: "#9FE870" }} />}
+              title={t("mockAuth.im_business", { defaultValue: "I'm a business" })}
+              subtitle={t("mockAuth.im_business_sub", {
+                defaultValue: "List your motorbikes and accept bookings",
+              })}
+            />
+          </div>
+        ) : (
+          <p className="text-xs" style={{ color: "rgba(22,51,0,0.6)" }}>
+            {t("mockAuth.not_business_prefix", { defaultValue: "Just want to rent a bike?" })}{" "}
+            <button
+              type="button"
+              onClick={() => navigate("/signup")}
+              className="font-semibold underline underline-offset-2 hover:opacity-80"
+              style={{ color: "#163300" }}
+            >
+              {t("mockAuth.not_business_link", { defaultValue: "Sign up as a renter instead" })}
+            </button>
+          </p>
+        )}
 
         {/* Step 2 — form (fade in) */}
         {role ? (
