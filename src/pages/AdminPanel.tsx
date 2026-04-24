@@ -84,6 +84,7 @@ const AdminPanel = () => {
     { value: "rental-shops" as TabValue, label: t('admin.rentalShops'), icon: Store },
     { value: "employees" as TabValue, label: t('admin.employees'), icon: UserCog },
     { value: "analytics" as TabValue, label: t('admin.analytics'), icon: BarChart3 },
+    { value: "email" as TabValue, label: "Email", icon: Mail },
   ];
 
   // Filter tabs based on user permissions
