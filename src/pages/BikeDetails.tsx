@@ -470,6 +470,14 @@ const BikeDetails = () => {
                     <span className="text-muted-foreground text-xs sm:text-sm">(0)</span>
                   </div>
                 </div>
+                <Button
+                  variant="hero"
+                  size="lg"
+                  className="w-full mt-2"
+                  onClick={() => document.getElementById('booking-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                >
+                  {t('hero.bookNow')}
+                </Button>
               </CardContent>
             </Card>
 
