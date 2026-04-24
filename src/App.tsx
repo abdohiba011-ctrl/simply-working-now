@@ -103,6 +103,11 @@ const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword"));
 const ResetPasswordVerify = lazy(() => import("./pages/auth/ResetPasswordVerify"));
 const ResetPasswordNew = lazy(() => import("./pages/auth/ResetPasswordNew"));
 const SignupExtra = lazy(() => import("./pages/auth/SignupExtra"));
+const CityListings = lazy(() => import("./pages/rent/CityListings"));
+const BookingReviewNew = lazy(() => import("./pages/rent/BookingReviewNew"));
+const MockCheckout = lazy(() => import("./pages/rent/MockCheckout"));
+const BookingSuccess = lazy(() => import("./pages/rent/BookingSuccess"));
+const BookingChat = lazy(() => import("./pages/rent/BookingChat"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -154,6 +159,11 @@ const App = () => (
                   <Route path="/signup" element={<MockSignup />} />
                   <Route path="/agency/signup" element={<AgencySignup />} />
                   <Route path="/rent" element={<RentPlaceholder />} />
+                  <Route path="/rent/:city" element={<CityListings />} />
+                  <Route path="/rent/review" element={<BookingReviewNew />} />
+                  <Route path="/rent/checkout" element={<ProtectedRoute><MockCheckout /></ProtectedRoute>} />
+                  <Route path="/rent/booking/:id/success" element={<ProtectedRoute><BookingSuccess /></ProtectedRoute>} />
+                  <Route path="/messages/:id" element={<ProtectedRoute><BookingChat /></ProtectedRoute>} />
                   <Route path="/verify-email" element={<MockVerifyEmail />} />
                   <Route path="/forgot-password" element={<ForgotPassword />} />
                   <Route path="/reset-password/verify" element={<ResetPasswordVerify />} />
