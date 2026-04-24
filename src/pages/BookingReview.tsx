@@ -46,9 +46,6 @@ const BookingReview = () => {
   const location = searchParams.get("location") || savedBooking?.location || "Casablanca";
   const dailyPrice = parseInt(searchParams.get("dailyPrice") || String(savedBooking?.dailyPrice) || "99");
 
-  const [selectedPayment, setSelectedPayment] = useState<"cash" | "card" | null>(
-    (searchParams.get("payment") as "cash" | "card") || savedBooking?.selectedPayment || null
-  );
   const [promoApplied, setPromoApplied] = useState(false);
   const [promoSuccessMsg, setPromoSuccessMsg] = useState("");
   const [isVerified, setIsVerified] = useState(false);
