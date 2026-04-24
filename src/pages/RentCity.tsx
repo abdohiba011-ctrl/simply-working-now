@@ -126,7 +126,7 @@ export default function RentCity() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const neighborhoodOptions = useMemo(() => getNeighborhoodsForCity(city), [city]);
-  const allCityLabel = neighborhoodOptions[0]; // e.g. "All Casablanca"
+  const allCityLabel = neighborhoodOptions[0]; // e.g. allCityLabel
 
   // Filter state (initialized from URL)
   const [neighborhood, setNeighborhood] = useState<string>(
@@ -159,7 +159,7 @@ export default function RentCity() {
   useEffect(() => {
     const t = setTimeout(() => {
       const params = new URLSearchParams();
-      if (neighborhood !== "All Casablanca") params.set("neighborhood", neighborhood);
+      if (neighborhood !== allCityLabel) params.set("neighborhood", neighborhood);
       if (duration !== "1") params.set("duration", duration);
       if (priceRange[0] !== 50) params.set("minPrice", String(priceRange[0]));
       if (priceRange[1] !== 1000) params.set("maxPrice", String(priceRange[1]));
@@ -211,7 +211,7 @@ export default function RentCity() {
   const filtered = useMemo(() => {
     let list = bikes.filter((b) => {
       // Neighborhood
-      if (neighborhood !== "All Casablanca" && b.neighborhood !== neighborhood) return false;
+      if (neighborhood !== allCityLabel && b.neighborhood !== neighborhood) return false;
       // Price
       const price = Number(b.daily_price) || 0;
       if (price < priceRange[0] || price > priceRange[1]) return false;
@@ -258,7 +258,7 @@ export default function RentCity() {
   }, [bikes, neighborhood, priceRange, selectedTypes, fuel, licenses, features, sortBy]);
 
   const activeFilterCount =
-    (neighborhood !== "All Casablanca" ? 1 : 0) +
+    (neighborhood !== allCityLabel ? 1 : 0) +
     (duration !== "1" ? 1 : 0) +
     (priceRange[0] !== 50 || priceRange[1] !== 1000 ? 1 : 0) +
     selectedTypes.length +
@@ -284,7 +284,7 @@ export default function RentCity() {
   };
 
   const clearAll = () => {
-    setNeighborhood("All Casablanca");
+    setNeighborhood(allCityLabel);
     setDuration("1");
     setPriceRange([50, 1000]);
     setSelectedTypes([]);
@@ -562,7 +562,7 @@ export default function RentCity() {
             <div className="text-sm text-muted-foreground mb-3">
               Showing <span className="font-semibold text-foreground">{filtered.length}</span>{" "}
               of {bikes.length} bikes
-              {neighborhood !== "All Casablanca" && (
+              {neighborhood !== allCityLabel && (
                 <> in <span className="font-semibold text-foreground">{neighborhood}</span></>
               )}
             </div>
