@@ -126,12 +126,16 @@ export default function RentCity() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const neighborhoodOptions = useMemo(() => getNeighborhoodsForCity(city), [city]);
-  const allCityLabel = neighborhoodOptions[0]; // e.g. allCityLabel
+  const allCityLabel = neighborhoodOptions[0]; // e.g. "All Casablanca"
 
-  // Filter state (initialized from URL)
-  const [neighborhood, setNeighborhood] = useState<string>(
-    searchParams.get("neighborhood") || allCityLabel
-  );
+  // Initial neighborhood from URL — but ONLY accept it if it belongs to this city.
+  // This prevents Casablanca neighborhoods leaking into Marrakech, etc.
+  const initialNeighborhood = (() => {
+    const fromUrl = searchParams.get("neighborhood");
+    if (fromUrl && neighborhoodOptions.includes(fromUrl)) return fromUrl;
+    return allCityLabel;
+  })();
+  const [neighborhood, setNeighborhood] = useState<string>(initialNeighborhood);
   const [duration, setDuration] = useState<string>(
     searchParams.get("duration") || "1"
   );
