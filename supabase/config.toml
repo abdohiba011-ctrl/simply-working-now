@@ -5,3 +5,6 @@ verify_jwt = true
 
 [functions.youcanpay-webhook]
 verify_jwt = false
+
+[functions.seed-test-accounts]
+verify_jwt = false
