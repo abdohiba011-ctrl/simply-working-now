@@ -63,7 +63,9 @@ const Verification = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { t } = useLanguage();
-  
+  const [searchParams] = useSearchParams();
+  const postPaymentBookingId = searchParams.get('bookingId');
+  const nextPath = searchParams.get('next');
   // Form state
   const [phone, setPhone] = useState("");
   const [firstName, setFirstName] = useState("");
