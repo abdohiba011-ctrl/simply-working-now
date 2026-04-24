@@ -166,7 +166,13 @@ const Checkout = () => {
 
       if (tokenErr || !tokenResp?.payment_url) {
         console.error('Token error:', tokenErr, tokenResp);
-        toast.error("Could not start payment. Please try again.");
+        // Surface the real reason instead of a generic toast so the user
+        // (and us, in support) can tell config errors from network errors.
+        const detail =
+          (tokenResp && (tokenResp.error || tokenResp.details?.message)) ||
+          tokenErr?.message ||
+          "Payment service is unavailable. Please try again in a moment.";
+        toast.error(`Payment could not start: ${detail}`);
         if (preOpened && !preOpened.closed) preOpened.close();
         setIsSubmitting(false);
         return;
