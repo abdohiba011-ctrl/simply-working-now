@@ -174,20 +174,37 @@ const Checkout = () => {
 
       // 3. Open YouCanPay hosted page (iframe-safe).
       const result = openHostedPayment(tokenResp.payment_url, preOpened);
-      if (!result.ok) {
-        toast.error("Your browser blocked the payment window. Please allow popups and try again.");
-        setIsSubmitting(false);
-        return;
-      }
-      if (result.method === "new-tab" || result.method === "pre-opened") {
+
+      // Always store pending payment so we can show the fallback button + poll.
+      setPendingPayment({
+        paymentUrl: tokenResp.payment_url,
+        paymentId: tokenResp.payment_id,
+        bookingId,
+        needsVerification,
+      });
+      if (result.ok && (result.method === "new-tab" || result.method === "pre-opened")) {
+        setPaymentWindow(preOpened || null);
         toast.success("Payment opened in a new tab. Complete it there to continue.");
-        setIsSubmitting(false);
+      } else if (!result.ok) {
+        toast.error("Popup blocked. Use the button below to open the payment page.");
       }
+      setIsSubmitting(false);
     } catch (error: unknown) {
       console.error("Error initiating payment:", error);
       toast.error(t('checkoutPage.bookingFailed'));
       if (preOpened && !preOpened.closed) preOpened.close();
       setIsSubmitting(false);
+    }
+  };
+
+  const handleOpenPaymentManually = () => {
+    if (!pendingPayment) return;
+    const win = window.open(pendingPayment.paymentUrl, "_blank", "noopener,noreferrer");
+    if (win) {
+      setPaymentWindow(win);
+      toast.success("Payment opened in a new tab.");
+    } else {
+      toast.error("Your browser is still blocking popups. Please allow them for this site.");
     }
   };
 
