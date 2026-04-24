@@ -3,70 +3,53 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { PhoneInput } from "@/components/ui/phone-input";
-import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { CreditCard, MapPin, Calendar, Bike, Loader2, ChevronLeft } from "lucide-react";
+import { CreditCard, MapPin, Calendar, Bike, Loader2, ChevronLeft, Lock, ShieldCheck } from "lucide-react";
 import { format } from "date-fns";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { usePricingTiers, getDailyPriceForDuration } from "@/hooks/usePricingTiers";
+
+const PLATFORM_FEE_MAD = 10;
 
 const Checkout = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { t, isRTL } = useLanguage();
-  
+
   const bikeId = searchParams.get("bikeId");
   const bikeName = searchParams.get("bikeName") || "Motorbike";
   const pickup = searchParams.get("pickup");
   const end = searchParams.get("end");
   const location = searchParams.get("location") || "Casablanca";
-  const dailyPriceParam = parseInt(searchParams.get("dailyPrice") || "99");
-  const totalParam = searchParams.get("total");
-  
-  const { data: pricingTiers } = usePricingTiers();
-  
+  const dailyPrice = parseInt(searchParams.get("dailyPrice") || "99");
+  const deliveryMethod = searchParams.get("deliveryMethod") || "pickup";
+  const holdId = searchParams.get("holdId");
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+  const [profile, setProfile] = useState<{ name: string; email: string; phone: string } | null>(null);
 
-  const [formData, setFormData] = useState({
-    fullName: "",
-    email: "",
-    phone: "",
-    cardNumber: "",
-    expiry: "",
-    cvv: "",
-  });
-
-  // Pre-fill form with user profile data
   useEffect(() => {
     const fetchUserProfile = async () => {
       if (!user) {
         setIsLoadingProfile(false);
         return;
       }
-      
       try {
-        const { data, error } = await supabase
+        const { data } = await supabase
           .from('profiles')
           .select('name, email, phone')
           .eq('id', user.id)
           .single();
-
-        if (error) throw error;
-
         if (data) {
-          setFormData(prev => ({
-            ...prev,
-            fullName: data.name || '',
+          setProfile({
+            name: data.name || '',
             email: data.email || user.email || '',
             phone: data.phone || '',
-          }));
+          });
         }
       } catch (error) {
         console.error('Error fetching profile:', error);
@@ -74,64 +57,82 @@ const Checkout = () => {
         setIsLoadingProfile(false);
       }
     };
-
     fetchUserProfile();
   }, [user]);
 
-  const days = pickup && end 
+  const days = pickup && end
     ? Math.ceil((new Date(end).getTime() - new Date(pickup).getTime()) / (1000 * 60 * 60 * 24))
     : 1;
-  
-  // Use tiered pricing - recalculate based on days
-  const dailyPrice = getDailyPriceForDuration(pricingTiers, days);
-  const subtotal = days * dailyPrice;
-  const serviceFee = Math.round(subtotal * 0.1);
-  const total = totalParam ? parseInt(totalParam) : subtotal + serviceFee;
+  const rentalSubtotal = days * dailyPrice;
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
+  const handlePay = async () => {
     if (!user || !bikeId || !pickup || !end) {
       toast.error(t('checkoutPage.missingInfo'));
       return;
     }
-
-    const holdId = searchParams.get("holdId");
     if (!holdId) {
       toast.error("Your reservation expired. Please reselect dates.");
       navigate(`/bike/${bikeId}`);
       return;
     }
-
-    const deliveryMethod = searchParams.get("deliveryMethod") || "pickup";
+    if (!profile?.name || !profile?.phone) {
+      toast.error("Please complete your profile before paying.");
+      navigate('/verification');
+      return;
+    }
 
     setIsSubmitting(true);
-
     try {
-      const { data: bookingId, error } = await supabase.rpc('promote_hold_to_booking', {
+      // 1. Promote hold → real (pending) booking
+      const { data: bookingId, error: bookingErr } = await supabase.rpc('promote_hold_to_booking', {
         _hold_id: holdId,
-        _customer_name: formData.fullName,
-        _customer_email: formData.email,
-        _customer_phone: formData.phone,
+        _customer_name: profile.name,
+        _customer_email: profile.email,
+        _customer_phone: profile.phone,
         _delivery_method: deliveryMethod,
         _pickup_location: location || null,
       });
 
-      if (error) {
-        if ((error.message || "").includes("HOLD_EXPIRED")) {
+      if (bookingErr) {
+        if ((bookingErr.message || "").includes("HOLD_EXPIRED")) {
           toast.error("Your 5-minute reservation expired. Please start over.");
           navigate(`/bike/${bikeId}`);
-          return;
+        } else {
+          throw bookingErr;
         }
-        throw error;
+        setIsSubmitting(false);
+        return;
       }
 
-      toast.success(t('success.bookingConfirmed'));
-      navigate(`/confirmation?bookingId=${bookingId}&bikeName=${encodeURIComponent(bikeName)}&pickup=${pickup}&end=${end}&total=${total}`);
+      // 2. Create YouCanPay token for the 10 MAD platform fee.
+      const { data: tokenResp, error: tokenErr } = await supabase.functions.invoke(
+        'youcanpay-create-token',
+        {
+          body: {
+            purpose: 'booking_payment',
+            amount: PLATFORM_FEE_MAD,
+            currency: 'MAD',
+            related_booking_id: bookingId,
+            customer_email: profile.email,
+            customer_name: profile.name,
+            success_path: `/thank-you?type=booking&bookingId=${bookingId}`,
+            error_path: `/checkout?${searchParams.toString()}&yc=error`,
+          },
+        },
+      );
+
+      if (tokenErr || !tokenResp?.payment_url) {
+        console.error('Token error:', tokenErr, tokenResp);
+        toast.error("Could not start payment. Please try again.");
+        setIsSubmitting(false);
+        return;
+      }
+
+      // 3. Redirect to YouCanPay hosted page.
+      window.location.href = tokenResp.payment_url;
     } catch (error: unknown) {
-      console.error("Error creating booking:", error);
+      console.error("Error initiating payment:", error);
       toast.error(t('checkoutPage.bookingFailed'));
-    } finally {
       setIsSubmitting(false);
     }
   };
@@ -145,131 +146,91 @@ const Checkout = () => {
           <Button variant="outline" onClick={() => navigate(-1)} size="icon" className="flex-shrink-0">
             <ChevronLeft className={`h-4 w-4 ${isRTL ? 'rotate-180' : ''}`} />
           </Button>
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">{t('checkoutPage.title')}</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Pay booking fee</h1>
         </div>
 
         <div className="grid lg:grid-cols-3 gap-8">
-          {/* Form */}
-          <div className="lg:col-span-2">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Personal Information */}
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-xl font-semibold text-foreground">{t('checkoutPage.personalInfo')}</h2>
-                    {isLoadingProfile && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+          {/* Payment panel */}
+          <div className="lg:col-span-2 space-y-6">
+            <Card className="border-2 border-primary/30">
+              <CardContent className="p-6 space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 rounded-lg bg-primary/10">
+                    <CreditCard className="h-6 w-6 text-primary" />
                   </div>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    {t('checkoutPage.prefillNote')}
+                  <div>
+                    <h2 className="text-xl font-semibold text-foreground">Pay with card</h2>
+                    <p className="text-sm text-muted-foreground">Secure payment via YouCan Pay</p>
+                  </div>
+                </div>
+
+                <div className="rounded-lg border border-border p-4 space-y-3 bg-muted/30">
+                  <div className="flex justify-between items-baseline">
+                    <span className="text-sm text-muted-foreground">Amount due now</span>
+                    <span className="text-3xl font-bold text-foreground">{PLATFORM_FEE_MAD} MAD</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Flat Motonita booking fee. Card payment only — cash is not accepted for the platform fee.
                   </p>
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="fullName">{t('profile.fullName')}</Label>
-                      <Input
-                        id="fullName"
-                        value={formData.fullName}
-                        onChange={(e) => setFormData({...formData, fullName: e.target.value})}
-                        placeholder={t('profile.fullName')}
-                        required
-                      />
-                    </div>
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="email">{t('profile.email')}</Label>
-                        <Input
-                          id="email"
-                          type="email"
-                          value={formData.email}
-                          onChange={(e) => setFormData({...formData, email: e.target.value})}
-                          placeholder="your@email.com"
-                          required
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="phone">{t('profile.phone')}</Label>
-                        <PhoneInput
-                          id="phone"
-                          value={formData.phone}
-                          onChange={(value) => setFormData({...formData, phone: value})}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                </div>
 
-              {/* Payment Information */}
-              <Card>
-                <CardContent className="p-6">
-                  <h2 className="text-xl font-semibold mb-4 flex items-center gap-2 text-foreground">
-                    <CreditCard className="h-5 w-5" />
-                    {t('checkoutPage.paymentInfo')}
-                  </h2>
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="cardNumber">{t('checkoutPage.cardNumber')}</Label>
-                      <Input
-                        id="cardNumber"
-                        placeholder="1234 5678 9012 3456"
-                        value={formData.cardNumber}
-                        onChange={(e) => setFormData({...formData, cardNumber: e.target.value})}
-                        required
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="expiry">{t('checkoutPage.expiryDate')}</Label>
-                        <Input
-                          id="expiry"
-                          placeholder="MM/YY"
-                          value={formData.expiry}
-                          onChange={(e) => setFormData({...formData, expiry: e.target.value})}
-                          required
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="cvv">CVV</Label>
-                        <Input
-                          id="cvv"
-                          placeholder="123"
-                          value={formData.cvv}
-                          onChange={(e) => setFormData({...formData, cvv: e.target.value})}
-                          required
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                <ul className="space-y-2 text-sm text-muted-foreground">
+                  <li className="flex items-start gap-2">
+                    <Lock className="h-4 w-4 text-foreground mt-0.5 flex-shrink-0" />
+                    <span>You'll be redirected to YouCan Pay's secure page to enter your card.</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <ShieldCheck className="h-4 w-4 text-foreground mt-0.5 flex-shrink-0" />
+                    <span>The agency is notified instantly and will contact you within 24 hours to confirm pickup.</span>
+                  </li>
+                </ul>
 
-              <Button type="submit" size="lg" variant="hero" className="w-full" disabled={isSubmitting || isLoadingProfile}>
-                {isSubmitting ? t('booking.processing') : isLoadingProfile ? t('common.loading') : t('checkoutPage.completeBooking')}
-              </Button>
-            </form>
+                <Button
+                  variant="hero"
+                  size="lg"
+                  className="w-full"
+                  onClick={handlePay}
+                  disabled={isSubmitting || isLoadingProfile}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      Redirecting to payment…
+                    </>
+                  ) : (
+                    <>Pay {PLATFORM_FEE_MAD} MAD with card</>
+                  )}
+                </Button>
+
+                <p className="text-xs text-muted-foreground text-center">
+                  By paying, you agree the 10 MAD fee is non-refundable.
+                </p>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Summary */}
           <div className="lg:col-span-1">
             <Card className="sticky top-24">
               <CardContent className="p-6">
-                <h2 className="text-xl font-semibold mb-4 text-foreground">{t('checkoutPage.bookingSummary')}</h2>
+                <h2 className="text-xl font-semibold mb-4 text-foreground">Booking summary</h2>
 
-                  <div className="space-y-4">
-                    <div className="flex gap-4">
-                      <Bike className="h-16 w-16 text-foreground" />
-                      <div>
-                        <h3 className="font-semibold text-foreground">{bikeName}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          {dailyPrice} DH {t('hero.perDay')}
-                        </p>
-                      </div>
+                <div className="space-y-4">
+                  <div className="flex gap-4">
+                    <Bike className="h-16 w-16 text-foreground" />
+                    <div>
+                      <h3 className="font-semibold text-foreground">{bikeName}</h3>
+                      <p className="text-sm text-muted-foreground">
+                        {dailyPrice} DH {t('hero.perDay')}
+                      </p>
                     </div>
+                  </div>
 
                   <Separator />
 
                   <div className="space-y-2 text-sm">
                     <div className="flex items-start gap-2 text-muted-foreground">
-                      <Calendar className={`h-4 w-4 mt-0.5 flex-shrink-0`} />
+                      <Calendar className="h-4 w-4 mt-0.5 flex-shrink-0" />
                       <div>
                         <p className="font-medium text-foreground">{t('booking.rentalPeriod')}</p>
                         {pickup && end && (
@@ -278,7 +239,7 @@ const Checkout = () => {
                       </div>
                     </div>
                     <div className="flex items-start gap-2 text-muted-foreground">
-                      <MapPin className={`h-4 w-4 mt-0.5 flex-shrink-0`} />
+                      <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0" />
                       <div>
                         <p className="font-medium text-foreground">{t('booking.pickupLocation')}</p>
                         <p>{location}</p>
@@ -289,18 +250,17 @@ const Checkout = () => {
                   <Separator />
 
                   <div className="space-y-2">
-                    <div className="flex justify-between text-muted-foreground">
-                      <span>{dailyPrice} DH × {days} {t('booking.days')}</span>
-                      <span>{subtotal} DH</span>
+                    <div className="flex justify-between text-muted-foreground text-sm">
+                      <span>Rental ({days} {days === 1 ? 'day' : 'days'})</span>
+                      <span>{rentalSubtotal} DH</span>
                     </div>
-                    <div className="flex justify-between text-muted-foreground">
-                      <span>{t('checkoutPage.serviceFee')}</span>
-                      <span>{serviceFee} DH</span>
-                    </div>
+                    <p className="text-xs text-muted-foreground italic">
+                      Paid directly to the agency at pickup.
+                    </p>
                     <Separator />
-                    <div className="flex justify-between text-lg font-bold pt-2">
-                      <span className="text-foreground">{t('booking.total')}</span>
-                      <span className="text-foreground">{total} DH</span>
+                    <div className="flex justify-between text-base font-bold pt-2">
+                      <span className="text-foreground">Pay now</span>
+                      <span className="text-primary">{PLATFORM_FEE_MAD} DH</span>
                     </div>
                   </div>
                 </div>
