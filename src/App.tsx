@@ -154,10 +154,10 @@ const App = () => (
                   <Route path="/quarterly" element={<Quarterly />} />
                   <Route path="/gps-tracking" element={<GPSTracking />} />
                   <Route path="/auth" element={<Auth />} />
-                  <Route path="/login" element={<MockLogin />} />
-                  <Route path="/agency/login" element={<AgencyLogin />} />
-                  <Route path="/signup" element={<MockSignup />} />
-                  <Route path="/agency/signup" element={<AgencySignup />} />
+                  <Route path="/login" element={<Auth />} />
+                  <Route path="/agency/login" element={<Auth />} />
+                  <Route path="/signup" element={<Auth />} />
+                  <Route path="/agency/signup" element={<Auth />} />
                   <Route path="/rent" element={<RentPlaceholder />} />
                   <Route path="/rent/:city" element={<CityListings />} />
                   <Route path="/rent/review" element={<BookingReviewNew />} />
