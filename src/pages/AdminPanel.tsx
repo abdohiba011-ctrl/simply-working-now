@@ -26,7 +26,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 // Lazy load analytics tab to avoid loading recharts on initial load
 const AdminAnalyticsTab = lazy(() => import("@/components/admin/AdminAnalyticsTab").then(m => ({ default: m.AdminAnalyticsTab })));
 
-type TabValue = "clients" | "individual-owners" | "rental-shops" | "employees" | "bookings" | "fleet" | "analytics" | "locations" | "cities" | "pricing";
+type TabValue = "clients" | "individual-owners" | "rental-shops" | "employees" | "bookings" | "fleet" | "analytics" | "locations" | "cities" | "pricing" | "email";
 type FilterValue = "all" | "pending" | "verified" | "not_verified" | "blocked";
 
 // Map tab values to permission keys
