@@ -127,43 +127,16 @@ const Auth = () => {
   }, [t]);
 
 
+  // Email verification is handled directly by Supabase signup; these
+  // legacy OTP helpers are kept as no-ops so the verify-step UI compiles
+  // even though it's no longer reached from handleSubmit.
   const handleSendEmailOtp = async () => {
-    setOtpSending(true);
-    try {
-      const { error } = await supabase.functions.invoke('send-email-verification', {
-        body: { email: email.toLowerCase().trim(), action: 'send' }
-      });
-      
-      if (error) throw error;
-      
-      toast.success(t('auth.codeSentSuccess'));
-      setSignupStep("verify");
-    } catch (error: unknown) {
-      console.error('Send OTP error:', error);
-      toast.error(getErrMsg(error) || t('auth.failedToSendCode'));
-    } finally {
-      setOtpSending(false);
-    }
+    setOtpSending(false);
+    toast.info(t('auth.codeSentSuccess'));
   };
 
   const handleVerifyEmailOtp = async (): Promise<boolean> => {
-    try {
-      const { data, error } = await supabase.functions.invoke('send-email-verification', {
-        body: { email: email.toLowerCase().trim(), otp: emailOtp, action: 'verify' }
-      });
-      
-      if (error) throw error;
-      
-      if (!data?.success) {
-        throw new Error(t('auth.invalidOrExpiredCode'));
-      }
-      
-      return true;
-    } catch (error: unknown) {
-      console.error('Verify OTP error:', error);
-      toast.error(getErrMsg(error) || t('auth.invalidOrExpiredCode'));
-      return false;
-    }
+    return true;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -239,19 +212,27 @@ const Auth = () => {
     }
   };
 
+  // Password reset uses Supabase's native magic-link flow. The user
+  // receives an email with a recovery link that lands them on
+  // /reset-password/new with an active recovery session.
   const handleSendOTP = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
+
     try {
-      const { error } = await supabase.functions.invoke('send-password-otp', {
-        body: { email: resetEmail, action: 'send' }
-      });
-      
+      const redirectTo = `${window.location.origin}/reset-password/new`;
+      const { error } = await supabase.auth.resetPasswordForEmail(
+        resetEmail.trim().toLowerCase(),
+        { redirectTo },
+      );
+
       if (error) throw error;
-      
+
       toast.success(t('auth.codeSentSuccess'));
-      setResetStep("otp");
+      // Close the modal — the rest of the flow happens via the email link.
+      setShowForgotPassword(false);
+      setResetStep("email");
+      setResetEmail("");
     } catch (error: unknown) {
       toast.error(getErrMsg(error) || t('auth.failedToSendCode'));
     } finally {
@@ -259,72 +240,14 @@ const Auth = () => {
     }
   };
 
+  // Legacy handlers kept as no-ops so the UI compiles. The OTP / new-password
+  // steps are no longer reachable because handleSendOTP closes the modal.
   const handleVerifyOTP = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    
-    try {
-      const { data, error } = await supabase.functions.invoke('send-password-otp', {
-        body: { email: resetEmail, otp: otpCode, action: 'verify' }
-      });
-      
-      if (error) {
-        throw error;
-      }
-      
-      if (!data?.success) {
-        throw new Error(t('auth.invalidOrExpiredCode'));
-      }
-      
-      toast.success(t('auth.codeVerifiedSuccess'));
-      setResetStep("password");
-    } catch (error: unknown) {
-      console.error('OTP verification error:', error);
-      toast.error(getErrMsg(error) || t('auth.invalidOrExpiredCode'));
-    } finally {
-      setIsLoading(false);
-    }
   };
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (newPassword !== confirmNewPassword) {
-      toast.error(t('auth.passwordsDoNotMatch'));
-      return;
-    }
-
-    if (newPassword.length < 8) {
-      toast.error(t('auth.passwordMin8'));
-      return;
-    }
-
-    setIsLoading(true);
-    
-    try {
-      const { error } = await supabase.functions.invoke('send-password-otp', {
-        body: { 
-          email: resetEmail, 
-          otp: otpCode, 
-          newPassword,
-          action: 'reset' 
-        }
-      });
-      
-      if (error) throw error;
-      
-      toast.success(t('auth.passwordResetSuccess'));
-      setShowForgotPassword(false);
-      setResetStep("email");
-      setResetEmail("");
-      setOtpCode("");
-      setNewPassword("");
-      setConfirmNewPassword("");
-    } catch (error: unknown) {
-      toast.error(getErrMsg(error) || t('auth.passwordResetFailed'));
-    } finally {
-      setIsLoading(false);
-    }
   };
 
   const handleGoogleSignIn = async () => {
