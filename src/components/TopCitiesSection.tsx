@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ResponsiveImage } from "@/components/ui/responsive-image";
+import { cityToSlug } from "@/lib/citySlug";
 
 // Fallback images for cities - optimized AVIF format
 import marrakeshImg from "@/assets/city-marrakesh.avif";
@@ -111,9 +112,7 @@ export const TopCitiesSection = () => {
                 }`}
                 onClick={() =>
                   isAvailable &&
-                  navigate(
-                    `/listings?city=${encodeURIComponent(city.name)}&cityId=${city.id}`
-                  )
+                  navigate(`/rent/${cityToSlug(city.name)}`)
                 }
                 style={{ animationDelay: `${index * 0.1}s` }}
               >
