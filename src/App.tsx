@@ -38,7 +38,7 @@ const BecomeBusiness = lazy(() => import("./pages/BecomeBusiness"));
 const Profile = lazy(() => import("./pages/Profile"));
 const BikeDetails = lazy(() => import("./pages/BikeDetails"));
 const BookingReview = lazy(() => import("./pages/BookingReview"));
-const PaymentSelection = lazy(() => import("./pages/PaymentSelection"));
+
 const Checkout = lazy(() => import("./pages/Checkout"));
 const Confirmation = lazy(() => import("./pages/Confirmation"));
 const BusinessDashboard = lazy(() => import("./pages/BusinessDashboard"));
