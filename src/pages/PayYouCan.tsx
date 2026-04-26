@@ -113,16 +113,26 @@ export default function PayYouCan() {
     };
   }, [token, pubKey, isSandbox]);
 
+  const buildStatusUrl = (outcome: "success" | "error") => {
+    const qs = new URLSearchParams({
+      pid,
+      next: successPath,
+      retry: errorPath,
+      outcome,
+      title,
+    });
+    return `/payment-status?${qs.toString()}`;
+  };
+
   const handlePay = () => {
     const yc = ycRef.current;
     if (!yc) return;
     setStatus("paying");
     yc.pay(token)
       .then(() => {
-        toast.success("Payment successful");
-        const url = appendPid(successPath, pid);
-        // Webhook is the source of truth; success page polls if needed.
-        navigate(url, { replace: true });
+        toast.success("Payment submitted");
+        // Don't trust the client outcome — let PaymentStatus poll the webhook.
+        navigate(buildStatusUrl("success"), { replace: true });
       })
       .catch((err: any) => {
         console.error("YouCan Pay error", err);
@@ -131,7 +141,7 @@ export default function PayYouCan() {
             ? err
             : err?.message || "Payment failed. Please try again.";
         toast.error(message);
-        setStatus("ready");
+        navigate(buildStatusUrl("error"), { replace: true });
       });
   };
 
