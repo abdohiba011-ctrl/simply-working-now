@@ -40,12 +40,8 @@ export function UserMenu({ align = "end" }: Props) {
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
   const currentRole = useAuthStore((s) => s.currentRole);
-  const switchRole = useAuthStore((s) => s.switchRole);
 
   const [logoutOpen, setLogoutOpen] = useState(false);
-  const [activationModal, setActivationModal] = useState<
-    null | "activate-renter" | "activate-agency"
-  >(null);
 
   if (!user) return null;
 
@@ -53,21 +49,6 @@ export function UserMenu({ align = "end" }: Props) {
   const hasAgency = !!user.roles.agency?.active;
   const initials = (user.name || user.email).slice(0, 1).toUpperCase();
 
-  const handleSwitch = (target: "renter" | "agency") => {
-    switchRole(target);
-    toast.success(
-      t("switched_mode").replace(
-        "{role}",
-        target === "renter" ? t("renter_short") : t("business_short"),
-      ),
-    );
-    if (target === "renter") {
-      navigate("/rent");
-    } else {
-      const verified = user.roles.agency?.verified;
-      navigate(verified ? "/agency/dashboard" : "/agency/verification");
-    }
-  };
 
   const roleBadgeLabel =
     hasRenter && hasAgency
@@ -145,13 +126,6 @@ export function UserMenu({ align = "end" }: Props) {
       </DropdownMenu>
 
       <LogoutConfirmDialog open={logoutOpen} onOpenChange={setLogoutOpen} />
-      {activationModal && (
-        <RoleActivationModal
-          open
-          onOpenChange={(v) => !v && setActivationModal(null)}
-          mode={activationModal}
-        />
-      )}
     </>
   );
 }
