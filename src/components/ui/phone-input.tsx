@@ -60,19 +60,25 @@ const cleanPhoneForStorage = (value: string): string => {
   return value;
 };
 
-// Validate Moroccan phone number
+// Validate Moroccan phone number — tolerant of stored formats like
+// "+212...", "00212...", "212...", "0...", or 9-digit local without leading 0.
 const isValidMoroccanPhone = (value: string): boolean => {
   if (!value) return false;
-  let digits = value.replace(/\D/g, "");
+  // Normalize Arabic-Indic / full-width digits to ASCII before stripping
+  const ascii = value.replace(/[\u0660-\u0669]/g, (d) =>
+    String.fromCharCode(d.charCodeAt(0) - 0x0660 + 48),
+  );
+  let digits = ascii.replace(/\D/g, "");
 
-  // Normalize: drop country code prefixes so we always compare a 10-digit local number
-  if (digits.startsWith("212")) {
-    digits = "0" + digits.slice(3);
-  } else if (digits.length === 9 && /^[567]/.test(digits)) {
+  // Drop international prefixes
+  if (digits.startsWith("00212")) digits = digits.slice(5);
+  else if (digits.startsWith("212")) digits = digits.slice(3);
+
+  // Add the leading 0 if it's a 9-digit national number
+  if (digits.length === 9 && /^[567]/.test(digits)) {
     digits = "0" + digits;
   }
 
-  // Final check: 10 digits, leading 0, then 5/6/7
   return /^0[567]\d{8}$/.test(digits);
 };
 
