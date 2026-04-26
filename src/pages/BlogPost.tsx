@@ -25,12 +25,14 @@ export default function BlogPost() {
 
   const related = useMemo(() => (post ? getRelatedPosts(post.slug, 3) : []), [post]);
 
+  const content = useMemo(() => (post ? getArticleContent(post.slug) : undefined), [post]);
+
   const bodyHtml = useMemo(() => {
     if (!post) return "";
-    const raw = post.body?.[language] ?? post.body?.en ?? "";
+    const raw = content?.body[language] ?? content?.body.en ?? post.body?.[language] ?? post.body?.en ?? "";
     if (!raw) return `<p>${t("blog.placeholderBody")}</p>`;
     return enhanceBodyHtml(raw, post.slug, language);
-  }, [post, language, t]);
+  }, [post, content, language, t]);
 
   const wordCount = useMemo(() => {
     const txt = bodyHtml.replace(/<[^>]+>/g, " ").trim();
