@@ -49,9 +49,9 @@ const Help = () => {
           <Card className="p-5">
             <MessageCircle className="h-6 w-6 text-primary" />
             <h3 className="mt-3 font-semibold">Live chat</h3>
-            <p className="mt-1 text-xs text-muted-foreground">Mon–Fri, 9:00–19:00</p>
-            <Badge variant="secondary" className="mt-2 bg-success/15 text-success">● Online now</Badge>
-            <Button size="sm" className="mt-4 w-full">Start chat</Button>
+            <p className="mt-1 text-xs text-muted-foreground">Coming soon</p>
+            <Badge variant="outline" className="mt-2">Not yet available</Badge>
+            <Button size="sm" className="mt-4 w-full" disabled>Start chat</Button>
           </Card>
           <Card className="p-5">
             <Mail className="h-6 w-6 text-primary" />
