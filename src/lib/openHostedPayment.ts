@@ -54,6 +54,13 @@ export function openHostedPayment(
     // Cross-origin top — fall back to a new tab.
   }
 
+  // Inside a sandboxed iframe, window.open often returns a non-null reference
+  // that lands on about:blank and never navigates. Treat embedded as blocked
+  // so the UI shows a manual "Open payment page" link the user can click.
+  if (isEmbedded) {
+    return { ok: false, method: "blocked" };
+  }
+
   const win = window.open(url, "_blank", "noopener,noreferrer");
   if (win) return { ok: true, method: "new-tab" };
 
@@ -65,8 +72,21 @@ export function openHostedPayment(
  * window with `openHostedPayment(url, preOpened)` once the URL is ready.
  */
 export function preOpenPaymentWindow(): Window | null {
+  // Detect iframe — pre-opening from inside a sandboxed preview iframe
+  // tends to land on about:blank with no way to navigate it cross-origin.
+  // Skip pre-open in that case so the caller falls back to a manual link.
+  let isEmbedded = false;
   try {
-    return window.open("about:blank", "_blank", "noopener,noreferrer");
+    isEmbedded = window.self !== window.top;
+  } catch {
+    isEmbedded = true;
+  }
+  if (isEmbedded) return null;
+
+  try {
+    // IMPORTANT: do NOT pass "noopener" here — that returns null and we
+    // lose the reference needed to set location.href later.
+    return window.open("about:blank", "_blank");
   } catch {
     return null;
   }
