@@ -31,78 +31,19 @@ const CITY_COORDS: Record<string, { lat: number; lng: number; label: { en: strin
 
 // Morocco map bounding box — covers from Western Sahara to the north
 const MAP_BOUNDS = { minLng: -17.5, maxLng: -0.5, minLat: 21.0, maxLat: 36.5 };
-const VIEW_W = 600;
-const VIEW_H = 720;
+// SimpleMaps Morocco SVG is in a 1000x1000 viewBox, already projected.
+// We derive a linear lat/lng -> SVG transform from two known region centroids
+// in the source SVG (Tangier-Tetouan at (-5.83, 35.76) -> (692.1, 98.1) and
+// Dakhla at (-15.96, 23.68) -> (212.6, 835)) so our city dots land inside
+// the correct region without re-projecting the country shape.
+const VIEW_W = MOROCCO_VIEWBOX.w;
+const VIEW_H = MOROCCO_VIEWBOX.h;
 
 const project = (lat: number, lng: number) => {
-  const x = ((lng - MAP_BOUNDS.minLng) / (MAP_BOUNDS.maxLng - MAP_BOUNDS.minLng)) * VIEW_W;
-  const y = VIEW_H - ((lat - MAP_BOUNDS.minLat) / (MAP_BOUNDS.maxLat - MAP_BOUNDS.minLat)) * VIEW_H;
+  const x = 968.1 + 47.34 * lng;
+  const y = 2279.5 - 61.0 * lat;
   return { x, y };
 };
-
-// Simplified polygons of Morocco's 12 administrative regions, in [lng, lat].
-// Hand-tuned to be lightweight (~10 vertices each) yet recognizable as Morocco
-// when assembled. Northern regions are denser; southern Sahara regions wider.
-type Region = { id: string; name: string; coords: Array<[number, number]> };
-
-const REGIONS: Region[] = [
-  // ---- Northern Morocco ----
-  { id: "tanger-tetouan", name: "Tanger-Tétouan-Al Hoceïma", coords: [
-    [-6.0,35.92],[-5.3,35.78],[-4.6,35.45],[-3.9,35.30],[-3.55,35.18],
-    [-3.85,34.85],[-4.55,34.85],[-5.30,34.95],[-5.95,35.10],[-6.30,35.40],[-6.30,35.78],
-  ]},
-  { id: "oriental", name: "Oriental", coords: [
-    [-3.55,35.18],[-2.20,35.10],[-1.05,34.75],[-1.05,33.40],[-1.55,32.50],
-    [-2.40,32.40],[-3.25,32.95],[-3.85,33.50],[-3.95,34.10],[-3.85,34.85],
-  ]},
-  // ---- North-central ----
-  { id: "fes-meknes", name: "Fès-Meknès", coords: [
-    [-5.95,35.10],[-5.30,34.95],[-4.55,34.85],[-3.85,34.85],[-3.85,33.50],
-    [-4.55,33.40],[-5.30,33.55],[-5.85,33.85],[-6.20,34.30],[-6.20,34.80],
-  ]},
-  { id: "rabat-sale", name: "Rabat-Salé-Kénitra", coords: [
-    [-6.95,35.05],[-6.20,34.80],[-6.20,34.30],[-5.85,33.85],[-6.30,33.65],
-    [-6.95,33.75],[-7.40,34.10],[-7.30,34.55],[-7.10,34.85],
-  ]},
-  { id: "beni-mellal", name: "Béni Mellal-Khénifra", coords: [
-    [-5.85,33.85],[-5.30,33.55],[-4.55,33.40],[-3.85,33.50],[-3.25,32.95],
-    [-3.95,32.45],[-5.05,32.20],[-5.85,32.55],[-6.30,32.95],[-6.30,33.65],
-  ]},
-  // ---- Central / Atlantic ----
-  { id: "casablanca-settat", name: "Casablanca-Settat", coords: [
-    [-7.40,34.10],[-6.95,33.75],[-6.30,33.65],[-6.30,32.95],[-6.85,32.55],
-    [-7.65,32.30],[-8.45,32.40],[-8.95,32.70],[-9.05,33.05],[-8.65,33.40],[-8.10,33.80],
-  ]},
-  { id: "marrakech-safi", name: "Marrakech-Safi", coords: [
-    [-8.10,33.80],[-8.65,33.40],[-9.05,33.05],[-8.95,32.70],[-9.55,32.05],
-    [-9.85,31.40],[-9.55,30.95],[-8.65,30.85],[-7.85,30.95],[-7.05,31.20],
-    [-6.55,31.60],[-6.30,32.20],[-6.85,32.55],[-7.65,32.30],
-  ]},
-  { id: "draa-tafilalet", name: "Drâa-Tafilalet", coords: [
-    [-3.95,32.45],[-3.25,32.95],[-2.40,32.40],[-1.95,31.40],[-2.55,30.45],
-    [-3.85,29.75],[-5.05,29.55],[-5.85,29.85],[-6.30,30.55],[-6.55,31.20],
-    [-6.30,31.85],[-5.85,32.55],[-5.05,32.20],
-  ]},
-  // ---- South ----
-  { id: "souss-massa", name: "Souss-Massa", coords: [
-    [-9.85,31.40],[-9.55,30.95],[-8.65,30.85],[-7.85,30.95],[-7.05,31.20],
-    [-6.55,31.20],[-6.30,30.55],[-6.85,29.85],[-7.85,29.45],[-9.05,29.55],
-    [-9.85,29.95],[-10.05,30.55],
-  ]},
-  { id: "guelmim", name: "Guelmim-Oued Noun", coords: [
-    [-10.05,30.55],[-9.85,29.95],[-9.05,29.55],[-7.85,29.45],[-6.85,29.85],
-    [-5.85,29.85],[-5.05,29.55],[-5.55,28.55],[-7.05,28.05],[-9.05,27.95],
-    [-10.55,28.30],[-11.05,29.10],[-10.85,29.95],
-  ]},
-  { id: "laayoune", name: "Laâyoune-Sakia El Hamra", coords: [
-    [-11.05,29.10],[-10.55,28.30],[-9.05,27.95],[-7.05,28.05],[-7.05,26.05],
-    [-9.05,25.95],[-11.85,26.55],[-13.05,27.65],[-13.55,28.45],
-  ]},
-  { id: "dakhla", name: "Dakhla-Oued Ed-Dahab", coords: [
-    [-13.05,27.65],[-11.85,26.55],[-9.05,25.95],[-9.05,23.05],[-11.05,21.55],
-    [-13.05,21.45],[-15.55,22.85],[-16.85,24.55],[-15.95,26.05],[-14.55,27.05],
-  ]},
-];
 
 export const CitiesAvailableSection = () => {
   const navigate = useNavigate();
