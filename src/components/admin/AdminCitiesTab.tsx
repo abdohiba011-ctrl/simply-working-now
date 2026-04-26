@@ -188,7 +188,7 @@ export const AdminCitiesTab = () => {
           name: newCity.name.trim(),
           name_key: nameKey,
           image_url: newCity.image_url || null,
-          bikes_count: newCity.bikes_count,
+          // bikes_count omitted — computed live from bike_types catalog
           price_from: newCity.price_from,
           is_available: newCity.is_available,
           is_coming_soon: newCity.is_coming_soon,
