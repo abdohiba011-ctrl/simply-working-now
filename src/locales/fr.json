@@ -2502,6 +2502,7 @@
     "business_plus_renter": "Pro + Locataire",
     "switch_to_renter": "Passer en mode locataire",
     "switch_to_business": "Passer en mode professionnel",
+    "become_agency": "Passer côté agence",
     "switched_mode": "Passé en mode {role}",
     "renter_short": "locataire",
     "business_short": "professionnel",

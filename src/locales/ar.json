@@ -2505,6 +2505,7 @@
     "business_plus_renter": "تجاري + مستأجر",
     "switch_to_renter": "التبديل إلى وضع المستأجر",
     "switch_to_business": "التبديل إلى وضع الأعمال",
+    "become_agency": "التبديل إلى وضع الوكالة",
     "switched_mode": "تم التبديل إلى وضع {role}",
     "renter_short": "المستأجر",
     "business_short": "الأعمال",

@@ -2503,6 +2503,7 @@
     "business_plus_renter": "Business + Renter",
     "switch_to_renter": "Switch to renter mode",
     "switch_to_business": "Switch to business mode",
+    "become_agency": "Switch to agency",
     "switched_mode": "Switched to {role} mode",
     "renter_short": "renter",
     "business_short": "business",
