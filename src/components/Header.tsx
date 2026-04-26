@@ -8,6 +8,7 @@ import logoDark from "@/assets/motonita-logo-dark.svg";
 import { useTheme } from "@/hooks/useTheme";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAuthStore } from "@/stores/useAuthStore";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { LogoutConfirmDialog } from "@/components/LogoutConfirmDialog";
@@ -46,6 +47,14 @@ export const Header = memo(() => {
   const isBusiness = hasRole('business');
   const isAdmin = hasRole('admin');
   const isRenter = isAuthenticated && !isBusiness && !isAdmin;
+  const storeUser = useAuthStore((s) => s.user);
+  const switchRoleStore = useAuthStore((s) => s.switchRole);
+  const hasAgencyRole = !!storeUser?.roles?.agency?.active;
+  const handleSwitchToAgency = useCallback(() => {
+    switchRoleStore("agency");
+    setIsMenuOpen(false);
+    navigate("/agency/agency-center");
+  }, [switchRoleStore, navigate]);
   const { balance: renterBalance, currency: renterCurrency, isLoading: renterWalletLoading } = useRenterWallet();
 
   // Track scroll position for dynamic menu positioning
