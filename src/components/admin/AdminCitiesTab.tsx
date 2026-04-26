@@ -151,7 +151,7 @@ export const AdminCitiesTab = () => {
         .update({
           name: editingCity.name,
           image_url: editingCity.image_url,
-          bikes_count: editingCity.bikes_count,
+          // bikes_count intentionally not written — value is now computed live from bike_types
           price_from: editingCity.price_from,
           is_available: editingCity.is_available,
           is_coming_soon: editingCity.is_coming_soon,
