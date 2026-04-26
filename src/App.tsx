@@ -184,6 +184,7 @@ const App = () => (
                   <Route path="/booking/:id" element={<ProtectedRoute><BookingDetails /></ProtectedRoute>} />
                   <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
                   <Route path="/inbox" element={<ProtectedRoute><Inbox /></ProtectedRoute>} />
+                  <Route path="/billing" element={<ProtectedRoute><Billing /></ProtectedRoute>} />
                   <Route path="/admin/verifications" element={<ProtectedRoute requireRole="admin"><AdminVerifications /></ProtectedRoute>} />
                   <Route path="/admin" element={<ProtectedRoute requireRole="admin"><AdminPanel /></ProtectedRoute>} />
                   <Route path="/admin/panel" element={<ProtectedRoute requireRole="admin"><AdminPanel /></ProtectedRoute>} />
