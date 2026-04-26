@@ -53,6 +53,7 @@ const BookingHistory = lazy(() => import("./pages/BookingHistory"));
 const BookingDetails = lazy(() => import("./pages/BookingDetails"));
 const Notifications = lazy(() => import("./pages/Notifications"));
 const Inbox = lazy(() => import("./pages/Inbox"));
+const Billing = lazy(() => import("./pages/Billing"));
 const AdminVerifications = lazy(() => import("./pages/AdminVerifications"));
 const AdminPanel = lazy(() => import("./pages/AdminPanel"));
 const AdminBookings = lazy(() => import("./pages/admin/AdminBookings"));
