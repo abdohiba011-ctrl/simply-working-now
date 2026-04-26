@@ -35,7 +35,7 @@ const Dashboard = () => {
     try { return parseISO(b.created_at) >= monthStart; } catch { return false; }
   });
   const revenueThisMonth = bookingsThisMonth.reduce((s, b) => s + Number(b.total_price || 0), 0);
-  const pending = bookings.filter((b) => b.status === "pending").length;
+  const pending = bookings.filter((b) => (b.booking_status || b.status) === "pending").length;
 
   const greeting = (() => {
     const h = new Date().getHours();
@@ -128,7 +128,7 @@ const Dashboard = () => {
                       )}>
                         {isPickup ? "Pickup" : "Return"}
                       </span>
-                      <StatusChip status={b.status || "pending"} />
+                      <StatusChip status={b.booking_status || b.status || "pending"} />
                     </div>
                   );
                 })
