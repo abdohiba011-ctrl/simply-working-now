@@ -50,19 +50,41 @@ export const TopCitiesSection = () => {
     },
   });
 
-  // Subscribe to real-time updates for service_cities
+  // Live bike counts per city — sourced from real bike_types data via the
+  // city_bike_counts view. Never fall back to the manually-typed
+  // service_cities.bikes_count column (it can be wrong/fake).
+  const { data: liveCounts = [] } = useQuery({
+    queryKey: ['city-bike-counts'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('city_bike_counts' as any)
+        .select('city_id, bikes_available');
+      if (error) throw error;
+      return (data || []) as Array<{ city_id: string; bikes_available: number }>;
+    },
+  });
+
+  const countByCity = new Map<string, number>(
+    liveCounts.map((c) => [c.city_id, Number(c.bikes_available) || 0])
+  );
+
+  // Realtime: refresh counts whenever cities or bike_types change
   useEffect(() => {
     const channel = supabase
       .channel('cities_homepage_realtime')
       .on(
         'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'service_cities'
-        },
+        { event: '*', schema: 'public', table: 'service_cities' },
         () => {
           queryClient.invalidateQueries({ queryKey: ['service-cities-homepage'] });
+          queryClient.invalidateQueries({ queryKey: ['city-bike-counts'] });
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'bike_types' },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['city-bike-counts'] });
         }
       )
       .subscribe();
