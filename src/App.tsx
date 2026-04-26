@@ -108,6 +108,8 @@ const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword"));
 const ResetPasswordVerify = lazy(() => import("./pages/auth/ResetPasswordVerify"));
 const ResetPasswordNew = lazy(() => import("./pages/auth/ResetPasswordNew"));
 const SignupExtra = lazy(() => import("./pages/auth/SignupExtra"));
+const Blog = lazy(() => import("./pages/Blog"));
+const BlogPost = lazy(() => import("./pages/BlogPost"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -145,6 +147,8 @@ const App = () => (
                   <Route path="/affiliate-signup" element={<AffiliateSignup />} />
                   <Route path="/thank-you" element={<ThankYou />} />
                   <Route path="/about" element={<About />} />
+                  <Route path="/blog" element={<Blog />} />
+                  <Route path="/blog/:slug" element={<BlogPost />} />
                   <Route path="/fixers" element={<Fixers />} />
                   <Route path="/booking-fee" element={<BookingFee />} />
                   <Route path="/agencies" element={<Agencies />} />
