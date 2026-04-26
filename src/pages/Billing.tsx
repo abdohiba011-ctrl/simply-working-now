@@ -147,7 +147,6 @@ export default function Billing() {
       return;
     }
     setSubmitting(true);
-    const preOpened = preOpenPaymentWindow();
     try {
       const { data, error } = await supabase.functions.invoke("youcanpay-create-token", {
         body: {
@@ -156,26 +155,21 @@ export default function Billing() {
           currency: "MAD",
           customer_email: profile.email || user?.email,
           customer_name: profile.name,
-          success_path: "/billing?topup=success",
-          error_path: "/billing?topup=error",
         },
       });
-      if (error || !data?.payment_url) {
-        if (preOpened) preOpened.close();
-        throw new Error(error?.message || "Failed to start payment");
+      if (error || !data?.token_id || !data?.public_key) {
+        throw new Error(error?.message || data?.error || "Failed to start payment");
       }
-      const result = openHostedPayment(data.payment_url, preOpened);
-      if (!result.ok) {
-        // Popup blocked (often the case inside the Lovable preview iframe).
-        // Surface a clickable link so the user can open the payment page manually.
-        setPendingPaymentUrl(data.payment_url);
-        toast.message("Click 'Open payment page' to continue", {
-          description: "Your browser blocked the automatic redirect.",
-        });
-      } else {
-        setPendingPaymentUrl(null);
-        setTopupOpen(false);
-      }
+      const url = buildYouCanPayUrl({
+        resp: data,
+        amount: num,
+        currency: "MAD",
+        successPath: "/billing?topup=success",
+        errorPath: "/billing?topup=error",
+        title: "Top up credits",
+      });
+      setTopupOpen(false);
+      navigate(url);
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "Top up failed";
       toast.error(msg);

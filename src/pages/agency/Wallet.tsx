@@ -51,34 +51,33 @@ const Wallet = () => {
 
   const balance = Number(wallet?.balance || 0);
 
+  const navigate = useNavigate();
   const handleTopup = async () => {
     if (!amount || amount <= 0) return toast.error("Enter a valid amount");
     setProcessing(true);
-    const preOpened = preOpenPaymentWindow();
     try {
       const { data, error } = await supabase.functions.invoke("youcanpay-create-token", {
         body: {
           purpose: "wallet_topup",
           amount,
           currency: "MAD",
-          success_path: "/agency/finance?yc=success#wallet",
-          error_path: "/agency/finance?yc=error#wallet",
         },
       });
       if (error) throw error;
-      if (data?.payment_url) {
-        const result = openHostedPayment(data.payment_url, preOpened);
-        if (!result.ok) {
-          toast.error("Your browser blocked the payment window. Please allow popups.");
-        } else if (result.method === "new-tab" || result.method === "pre-opened") {
-          toast.success("Payment opened in a new tab.");
-        }
-        return;
+      if (!data?.token_id || !data?.public_key) {
+        throw new Error(data?.error || "Could not initialize payment");
       }
-      if (preOpened && !preOpened.closed) preOpened.close();
-      toast.error("Could not initialize payment");
+      const url = buildYouCanPayUrl({
+        resp: data,
+        amount,
+        currency: "MAD",
+        successPath: "/agency/finance?yc=success#wallet",
+        errorPath: "/agency/finance?yc=error#wallet",
+        title: "Top up wallet",
+      });
+      setTopupOpen(false);
+      navigate(url);
     } catch (e: any) {
-      if (preOpened && !preOpened.closed) preOpened.close();
       toast.error(e.message || "Failed to start top up");
     } finally {
       setProcessing(false);
