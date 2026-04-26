@@ -23,7 +23,7 @@ export const BlogCard = memo(({ post, priority = false }: BlogCardProps) => {
   return (
     <Link
       to={`/blog/${post.slug}`}
-      className="group block rounded-xl border border-[#163300]/10 bg-white overflow-hidden transition duration-200 hover:shadow-lg hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-[#9FE870]"
+      className="group block rounded-xl border border-border bg-white overflow-hidden transition duration-200 hover:shadow-lg hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-[#9FE870]"
       aria-label={post.title[language]}
     >
       <div className="aspect-video w-full overflow-hidden bg-muted">
@@ -37,20 +37,20 @@ export const BlogCard = memo(({ post, priority = false }: BlogCardProps) => {
         />
       </div>
       <div className="p-6">
-        <span className="inline-block bg-[#9FE870] text-[#163300] rounded-full px-3 py-1 text-xs font-medium">
+        <span className="inline-block bg-[#9FE870] text-foreground rounded-full px-3 py-1 text-xs font-medium">
           {categoryLabel}
         </span>
         <div className="mt-3 text-xs text-muted-foreground">
           {minRead} · {dateText}
         </div>
-        <h2 className="mt-2 text-xl font-bold text-[#163300] line-clamp-2 leading-tight">
+        <h2 className="mt-2 text-xl font-bold text-foreground line-clamp-2 leading-tight">
           {post.title[language]}
         </h2>
         <p className="mt-2 text-base text-muted-foreground line-clamp-3">
           {post.excerpt[language]}
         </p>
         <div className="mt-4 text-sm text-muted-foreground">{t("blog.byEditorial")}</div>
-        <div className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-[#163300] group-hover:text-[#3a7d00]">
+        <div className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-foreground group-hover:text-primary">
           {t("blog.readArticle")}
           <ArrowRight className="h-4 w-4 rtl:rotate-180" />
         </div>

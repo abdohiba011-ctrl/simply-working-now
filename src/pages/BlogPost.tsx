@@ -115,13 +115,13 @@ export default function BlogPost() {
         <div className="max-w-[1000px] mx-auto px-6 py-10">
           {/* Breadcrumb + back */}
           <nav aria-label="Breadcrumb" className="text-sm text-muted-foreground flex items-center gap-1 flex-wrap">
-            <Link to="/" className="hover:text-[#163300]">{t("footer.home")}</Link>
+            <Link to="/" className="hover:text-foreground">{t("footer.home")}</Link>
             <ChevronRight className="h-3 w-3 rtl:rotate-180" />
-            <Link to="/blog" className="hover:text-[#163300]">Blog</Link>
+            <Link to="/blog" className="hover:text-foreground">Blog</Link>
             <ChevronRight className="h-3 w-3 rtl:rotate-180" />
-            <span className="text-[#163300] line-clamp-1">{post.title[language]}</span>
+            <span className="text-foreground line-clamp-1">{post.title[language]}</span>
           </nav>
-          <Link to="/blog" className="mt-4 inline-flex items-center gap-2 text-sm text-[#163300] hover:underline">
+          <Link to="/blog" className="mt-4 inline-flex items-center gap-2 text-sm text-foreground hover:underline">
             <ArrowLeft className="h-4 w-4 rtl:rotate-180" />
             {t("blog.backToBlog")}
           </Link>
@@ -129,10 +129,10 @@ export default function BlogPost() {
 
         <div className="max-w-[1000px] mx-auto px-6 pb-16 grid lg:grid-cols-[1fr_260px] gap-12">
           <article>
-            <span className="inline-block bg-[#9FE870] text-[#163300] rounded-full px-3 py-1 text-xs font-medium">
+            <span className="inline-block bg-[#9FE870] text-foreground rounded-full px-3 py-1 text-xs font-medium">
               {t(`blog.categories.${post.category}`)}
             </span>
-            <h1 className="mt-4 text-2xl md:text-4xl font-bold text-[#163300] leading-tight tracking-tight">
+            <h1 className="mt-4 text-2xl md:text-4xl font-bold text-foreground leading-tight tracking-tight">
               {post.title[language]}
             </h1>
             <div className="mt-4 text-sm text-muted-foreground">
@@ -152,16 +152,16 @@ export default function BlogPost() {
 
             <div
               id="article-body"
-              className="prose prose-lg max-w-none mt-10 prose-headings:text-[#163300] prose-h2:mt-12 prose-h2:text-2xl prose-h2:font-bold prose-h3:mt-8 prose-h3:text-xl prose-h3:font-semibold prose-p:leading-relaxed prose-blockquote:border-l-4 prose-blockquote:border-[#9FE870] prose-blockquote:italic prose-a:text-[#163300] prose-a:underline-offset-4 hover:prose-a:text-[#3a7d00] prose-img:rounded-lg"
+              className="prose prose-lg max-w-none mt-10 prose-headings:text-foreground prose-h2:mt-12 prose-h2:text-2xl prose-h2:font-bold prose-h3:mt-8 prose-h3:text-xl prose-h3:font-semibold prose-p:leading-relaxed prose-blockquote:border-l-4 prose-blockquote:border-[#9FE870] prose-blockquote:italic prose-a:text-foreground prose-a:underline-offset-4 hover:prose-a:text-primary prose-img:rounded-lg"
               dangerouslySetInnerHTML={{ __html: bodyHtml }}
             />
 
             {/* End-of-article footer */}
-            <div className="mt-12 border-t border-[#163300]/10 pt-8">
-              <div className="flex items-start gap-4 rounded-xl border border-[#163300]/10 p-5 bg-white">
-                <div className="w-12 h-12 rounded-full bg-[#163300] text-[#9FE870] flex items-center justify-center font-bold text-lg" aria-hidden="true">M</div>
+            <div className="mt-12 border-t border-border pt-8">
+              <div className="flex items-start gap-4 rounded-xl border border-border p-5 bg-white">
+                <div className="w-12 h-12 rounded-full bg-foreground text-[#9FE870] flex items-center justify-center font-bold text-lg" aria-hidden="true">M</div>
                 <div>
-                  <div className="font-semibold text-[#163300]">{t("blog.byEditorial")}</div>
+                  <div className="font-semibold text-foreground">{t("blog.byEditorial")}</div>
                   <p className="text-sm text-muted-foreground mt-1">{t("blog.editorialBio")}</p>
                 </div>
               </div>
@@ -172,7 +172,7 @@ export default function BlogPost() {
 
               {related.length > 0 && (
                 <div className="mt-12">
-                  <h2 className="text-2xl font-bold text-[#163300] mb-6">{t("blog.relatedArticles")}</h2>
+                  <h2 className="text-2xl font-bold text-foreground mb-6">{t("blog.relatedArticles")}</h2>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {related.map((r) => (
                       <BlogCard key={r.slug} post={r} />
@@ -195,7 +195,7 @@ export default function BlogPost() {
         </div>
 
         {/* Trust strip */}
-        <div className="border-t border-[#163300]/10 bg-muted/30">
+        <div className="border-t border-border bg-muted/30">
           <div className="max-w-[1000px] mx-auto px-6 py-8 text-sm text-muted-foreground">
             {t("blog.trustStrip")} {t("blog.lastReviewed")}: {dateText}
           </div>

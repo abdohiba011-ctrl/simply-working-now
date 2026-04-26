@@ -24,8 +24,8 @@ export function NewsletterCta() {
   };
 
   return (
-    <div className="rounded-xl border border-[#163300]/10 bg-[#9FE870]/15 p-6 md:p-8">
-      <h3 className="text-xl font-bold text-[#163300]">{t("blog.newsletterTitle")}</h3>
+    <div className="rounded-xl border border-border bg-[#9FE870]/15 p-6 md:p-8">
+      <h3 className="text-xl font-bold text-foreground">{t("blog.newsletterTitle")}</h3>
       <p className="mt-2 text-sm text-muted-foreground">{t("blog.newsletterSubtitle")}</p>
       <form onSubmit={submit} className="mt-4 flex flex-col sm:flex-row gap-2">
         <Input
@@ -36,7 +36,7 @@ export function NewsletterCta() {
           placeholder={t("blog.newsletterPlaceholder")}
           className="bg-white"
         />
-        <Button type="submit" disabled={submitting} className="bg-[#163300] text-white hover:bg-[#163300]/90">
+        <Button type="submit" disabled={submitting} className="bg-foreground text-white hover:bg-foreground/90">
           {t("blog.newsletterCta")}
         </Button>
       </form>
