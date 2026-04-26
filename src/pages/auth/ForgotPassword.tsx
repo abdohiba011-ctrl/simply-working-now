@@ -75,7 +75,7 @@ export default function ForgotPassword() {
     [lockoutMs],
   );
 
-  const [sent, setSent] = useState(false);
+  
 
   const onSubmit = async (values: FormValues) => {
     setServerError(null);
