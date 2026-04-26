@@ -499,6 +499,12 @@ export const Header = memo(() => {
                       {t('header.businessDashboard')}
                     </DropdownMenuItem>
                   )}
+                  {hasAgencyRole && (
+                    <DropdownMenuItem onClick={handleSwitchToAgency}>
+                      <Building2 className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
+                      Switch to business
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogoutClick}>
                     <LogOut className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
@@ -652,6 +658,12 @@ export const Header = memo(() => {
                     <Button variant="outline" size="lg" className="justify-start gap-2 text-base min-h-[44px] mx-2" onClick={() => { navigate("/business-dashboard"); setIsMenuOpen(false); }}>
                       <Building2 className="h-5 w-5" />
                       {t('header.businessDashboard')}
+                    </Button>
+                  )}
+                  {hasAgencyRole && (
+                    <Button variant="outline" size="lg" className="justify-start gap-2 text-base min-h-[44px] mx-2" onClick={handleSwitchToAgency}>
+                      <Building2 className="h-5 w-5" />
+                      Switch to business
                     </Button>
                   )}
                   <Button variant="outline" size="lg" className="justify-start gap-2 text-base min-h-[44px] mx-2" onClick={handleLogoutClick}>
