@@ -85,6 +85,17 @@ export default function BlogPost() {
               { "@type": "ListItem", position: 3, name: post.title[language], item: `${SITE}/blog/${post.slug}` },
             ],
           },
+          ...(content?.faq[language]?.length
+            ? [{
+                "@context": "https://schema.org",
+                "@type": "FAQPage",
+                mainEntity: content.faq[language].map((f) => ({
+                  "@type": "Question",
+                  name: f.q,
+                  acceptedAnswer: { "@type": "Answer", text: f.a },
+                })),
+              }]
+            : []),
         ]
       : [],
   });
