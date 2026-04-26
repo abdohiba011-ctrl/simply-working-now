@@ -374,6 +374,21 @@ export const Header = memo(() => {
             </Select>
             
             {isAuthenticated ? (
+              <>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="rounded-full h-10 w-10 p-0 relative"
+                  aria-label={t('header.messages')}
+                  onClick={() => navigate("/inbox")}
+                >
+                  <MessageCircle className="h-5 w-5" />
+                  {unreadMessages > 0 && (
+                    <span className="absolute -top-1 -right-1 h-5 min-w-5 px-1 bg-destructive text-destructive-foreground text-xs font-bold rounded-full flex items-center justify-center">
+                      {unreadMessages > 9 ? '9+' : unreadMessages}
+                    </span>
+                  )}
+                </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="icon" className="rounded-full h-10 w-10 p-0 relative">
