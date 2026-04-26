@@ -2485,7 +2485,7 @@
     "update_password": "Update password",
     "updating": "Updating...",
     "password_updated": "Password updated!",
-    "reset_link_expired": "Your reset link expired. Please request a new one.",
+    "reset_link_expired": "Your reset code expired. Please request a new one.",
     "too_many_reset_requests": "Too many reset requests. Try again in {{time}}.",
     "incorrect_code_attempts": "Incorrect code. {{n}} attempts remaining.",
     "too_many_wrong_attempts": "Too many wrong attempts. We've sent you a new code.",

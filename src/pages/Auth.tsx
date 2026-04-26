@@ -37,15 +37,7 @@ const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [showForgotPassword, setShowForgotPassword] = useState(false);
-  const [resetEmail, setResetEmail] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
-  const [resetStep, setResetStep] = useState<"email" | "otp" | "password">("email");
-  const [otpCode, setOtpCode] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmNewPassword, setConfirmNewPassword] = useState("");
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
   
   // Email verification for signup
   const [signupStep, setSignupStep] = useState<"details" | "verify">("details");
@@ -284,36 +276,8 @@ const Auth = () => {
     }
   };
 
-  const handleSendOTP = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-
-    try {
-      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
-        redirectTo: `${window.location.origin}/reset-password`,
-      });
-
-      if (error) throw error;
-
-      toast.success(t('auth.codeSentSuccess'));
-      // Show a "check your email" confirmation step instead of OTP entry.
-      setResetStep("password");
-    } catch (error: unknown) {
-      toast.error(getErrMsg(error) || t('auth.failedToSendCode'));
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleVerifyOTP = async (_e: React.FormEvent) => {
-    // No-op: kept for backward compatibility with old UI references.
-    // The reset flow now uses an email link instead of an OTP code.
-  };
-
-  const handleResetPassword = async (_e: React.FormEvent) => {
-    // No-op: password is set on the dedicated /reset-password page after
-    // the user clicks the email link.
-  };
+  // Forgot-password / reset is handled by the dedicated /forgot-password
+  // page (6-digit OTP flow). The button on this page just redirects there.
 
   const handleGoogleSignIn = useCallback(async () => {
     setIsLoading(true);
@@ -384,145 +348,7 @@ const Auth = () => {
       <section className="py-20">
         <div className="container mx-auto px-4">
           <div className="max-w-md mx-auto">
-            {showForgotPassword ? (
-              <Card>
-                <CardContent className="p-8">
-                  {resetStep === "email" && (
-                    <>
-                      <h1 className="text-3xl font-bold text-center mb-2 text-foreground">
-                        {t('auth.resetPassword')}
-                      </h1>
-                      <p className="text-center text-muted-foreground mb-6">
-                        {t('auth.resetPasswordDesc')}
-                      </p>
-                      
-                      <form onSubmit={handleSendOTP} className="space-y-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="reset-email">{t('auth.email')}</Label>
-                          <Input
-                            id="reset-email"
-                            type="email"
-                            value={resetEmail}
-                            onChange={(e) => setResetEmail(e.target.value)}
-                            required
-                            placeholder={t('auth.yourEmailPlaceholder')}
-                            autoComplete="email"
-                          />
-                        </div>
-                        
-                        <div className="flex gap-2">
-                          <Button 
-                            type="submit" 
-                            className="flex-1" 
-                            disabled={isLoading}
-                          >
-                            {isLoading ? t('auth.sending') : t('auth.sendVerificationCode')}
-                          </Button>
-                          <Button 
-                            type="button" 
-                            variant="outline" 
-                            onClick={() => {
-                              setShowForgotPassword(false);
-                              setResetStep("email");
-                            }}
-                            disabled={isLoading}
-                          >
-                            {t('auth.cancel')}
-                          </Button>
-                        </div>
-                      </form>
-                    </>
-                  )}
-
-                  {resetStep === "otp" && (
-                    <>
-                      <h1 className="text-3xl font-bold text-center mb-2 text-foreground">
-                        {t('auth.enterVerificationCode')}
-                      </h1>
-                      <p className="text-center text-muted-foreground mb-6">
-                        {t('auth.codeSentTo')} {resetEmail}
-                      </p>
-                      
-                      <form onSubmit={handleVerifyOTP} className="space-y-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="otp-code">{t('auth.verificationCode')}</Label>
-                          <Input
-                            id="otp-code"
-                            type="text"
-                            value={otpCode}
-                            onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 8))}
-                            required
-                            placeholder={t('auth.enterCode')}
-                            maxLength={8}
-                            className="text-center text-2xl tracking-widest font-bold"
-                            autoComplete="one-time-code"
-                          />
-                        </div>
-                        
-                        <div className="flex gap-2">
-                          <Button 
-                            type="submit" 
-                            className="flex-1" 
-                            disabled={isLoading || otpCode.length !== 8}
-                          >
-                            {isLoading ? t('auth.verifying') : t('auth.verify')}
-                          </Button>
-                          <Button 
-                            type="button" 
-                            variant="outline" 
-                            onClick={() => {
-                              setResetStep("email");
-                              setOtpCode("");
-                            }}
-                            disabled={isLoading}
-                          >
-                            {t('auth.back')}
-                          </Button>
-                        </div>
-
-                        <div className="text-center">
-                          <Button
-                            type="button"
-                            variant="link"
-                            className="text-sm"
-                            onClick={handleSendOTP}
-                            disabled={isLoading}
-                          >
-                            {t('auth.resendCode')}
-                          </Button>
-                        </div>
-                      </form>
-                    </>
-                  )}
-
-                  {resetStep === "password" && (
-                    <>
-                      <h1 className="text-3xl font-bold text-center mb-2 text-foreground">
-                        {t('auth.checkYourEmail') || 'Check your email'}
-                      </h1>
-                      <p className="text-center text-muted-foreground mb-6">
-                        {(t('auth.resetLinkSentTo') || "We've sent a password reset link to")} <strong>{resetEmail}</strong>.
-                        {' '}
-                        {t('auth.clickLinkToReset') || 'Click the link in the email to set a new password.'}
-                      </p>
-
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="w-full"
-                        onClick={() => {
-                          setShowForgotPassword(false);
-                          setResetStep("email");
-                          setResetEmail("");
-                        }}
-                      >
-                        {t('auth.backToLogin') || 'Back to login'}
-                      </Button>
-                    </>
-                  )}
-                </CardContent>
-              </Card>
-            ) : isSignup && signupStep === "verify" ? (
+            {isSignup && signupStep === "verify" ? (
               // Email OTP Verification Step
               <Card>
                 <CardContent className="p-8">
@@ -782,7 +608,7 @@ const Auth = () => {
                             type="button"
                             variant="link"
                             className="p-0 text-sm text-primary hover:underline"
-                            onClick={() => setShowForgotPassword(true)}
+                            onClick={() => navigate("/forgot-password")}
                           >
                             {t('auth.forgotPassword')}
                           </Button>

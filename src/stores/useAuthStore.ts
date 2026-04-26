@@ -662,9 +662,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       // Best-effort client-side rate limit
       checkResetRequestAllowed(email);
 
-      const { error } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
-        redirectTo: `${window.location.origin}/reset-password/new`,
-      });
+      // No redirectTo: we use a 6-digit OTP-only flow, not a magic link.
+      // Supabase still emails the recovery token, which the user enters on
+      // /reset-password/verify and we exchange via verifyOtp({ type:'recovery' }).
+      const { error } = await supabase.auth.resetPasswordForEmail(
+        email.trim().toLowerCase(),
+      );
       // Always record the attempt — even if Supabase silently no-ops on
       // a non-existent address, we want to enforce our per-hour cap.
       recordResetResend(email);
@@ -721,7 +724,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     const email = consumeResetToken(resetToken);
     if (!email) {
-      const err = makeAuthError("TOKEN_EXPIRED", "Your reset link expired. Please request a new one.");
+      const err = makeAuthError("TOKEN_EXPIRED", "Your reset code expired. Please request a new one.");
       set({ isLoading: false, error: err.message });
       throw err;
     }
