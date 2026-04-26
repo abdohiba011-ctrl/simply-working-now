@@ -21,14 +21,14 @@ interface RecoveryEmailProps {
 export const RecoveryEmail = ({ siteName, token }: RecoveryEmailProps) => (
   <Html lang="en" dir="ltr">
     <Head />
-    <Preview>Your {siteName} password reset code: {token}</Preview>
+    <Preview>Your Motonita password reset code: {token}</Preview>
     <Body style={main}>
       <Container style={container}>
         <Heading style={h1}>Reset your password</Heading>
         <Text style={text}>
           We received a request to reset your password for{' '}
-          <strong>{siteName}</strong>. Use the 6-digit code below to set a new
-          password.
+          <strong>Motonita</strong>. Enter the 6-digit code below on the
+          password reset page to choose a new password.
         </Text>
 
         <Section style={codeWrap}>
@@ -36,8 +36,8 @@ export const RecoveryEmail = ({ siteName, token }: RecoveryEmailProps) => (
         </Section>
 
         <Text style={smallNote}>
-          This code expires in 60 minutes. Enter it on the password reset page
-          on motonita.ma.
+          This code expires in 60 minutes. Do not share it with anyone — the
+          Motonita team will never ask for it.
         </Text>
 
         <Text style={footer}>
