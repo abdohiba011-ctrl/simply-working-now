@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,6 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import {
+  Briefcase,
   LogOut,
   Settings as SettingsIcon,
   User as UserIcon,
@@ -40,6 +42,7 @@ export function UserMenu({ align = "end" }: Props) {
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
   const currentRole = useAuthStore((s) => s.currentRole);
+  const switchRole = useAuthStore((s) => s.switchRole);
 
   const [logoutOpen, setLogoutOpen] = useState(false);
 
@@ -47,6 +50,14 @@ export function UserMenu({ align = "end" }: Props) {
 
   const hasRenter = !!user.roles.renter?.active;
   const hasAgency = !!user.roles.agency?.active;
+  const canSwitchRoles = hasRenter && hasAgency;
+
+  const handleSwitchRole = () => {
+    const target = currentRole === "agency" ? "renter" : "agency";
+    switchRole(target);
+    toast.success(target === "agency" ? t("switch_to_business") : t("switch_to_renter"));
+    navigate(target === "agency" ? "/agency/agency-center" : "/profile");
+  };
   const initials = (user.name || user.email).slice(0, 1).toUpperCase();
 
 
@@ -112,6 +123,22 @@ export function UserMenu({ align = "end" }: Props) {
             <SettingsIcon className="mr-2 h-4 w-4" />
             {t("settings_link")}
           </DropdownMenuItem>
+
+          {canSwitchRoles && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleSwitchRole}>
+                {currentRole === "agency" ? (
+                  <UserIcon className="mr-2 h-4 w-4" />
+                ) : (
+                  <Briefcase className="mr-2 h-4 w-4" />
+                )}
+                {currentRole === "agency"
+                  ? t("switch_to_renter")
+                  : t("switch_to_business")}
+              </DropdownMenuItem>
+            </>
+          )}
 
           <DropdownMenuSeparator />
 
