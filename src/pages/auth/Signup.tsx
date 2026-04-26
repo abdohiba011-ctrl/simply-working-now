@@ -32,6 +32,7 @@ import { useAuthStore } from "@/stores/useAuthStore";
 import { COMMON_PASSWORDS } from "@/lib/mockAuth";
 import { cn } from "@/lib/utils";
 import { navigateAfterAuth } from "@/lib/routeAfterAuth";
+import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 
 const PHONE_REGEX = /^(\+212|00212|0)[67]\d{8}$/;
 
@@ -388,6 +389,33 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
               {t("mockAuth.not_business_link", { defaultValue: "Sign up as a renter instead" })}
             </button>
           </p>
+        ) : null}
+
+        {/* Google sign-up */}
+        {role ? (
+          <div className="space-y-3">
+            <GoogleSignInButton
+              label={
+                isAgencyFlow
+                  ? t("mockAuth.signup_with_google_business", {
+                      defaultValue: "Sign up with Google",
+                    })
+                  : t("mockAuth.signup_with_google", {
+                      defaultValue: "Sign up with Google",
+                    })
+              }
+            />
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" style={{ borderColor: "rgba(22,51,0,0.1)" }} />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-white px-2" style={{ color: "rgba(22,51,0,0.55)" }}>
+                  {t("mockAuth.or", { defaultValue: "or" })}
+                </span>
+              </div>
+            </div>
+          </div>
         ) : null}
 
         {/* Step 2 — form (fade in) */}
