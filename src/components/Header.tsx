@@ -422,6 +422,15 @@ export const Header = memo(() => {
                     <CalendarIcon className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
                     {t('header.bookingHistory')}
                   </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate("/inbox")} className="relative">
+                    <MessageCircle className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
+                    {t('header.messages')}
+                    {unreadMessages > 0 && (
+                      <span className="ltr:ml-auto rtl:mr-auto h-5 min-w-5 px-1 bg-destructive text-destructive-foreground text-xs font-bold rounded-full flex items-center justify-center">
+                        {unreadMessages > 9 ? '9+' : unreadMessages}
+                      </span>
+                    )}
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate("/notifications")} className="relative">
                     <Bell className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
                     {t('header.notifications')}
@@ -570,6 +579,15 @@ export const Header = memo(() => {
                   <Button variant="outline" size="lg" className="justify-start gap-2 text-base min-h-[44px] mx-2" onClick={() => { navigate("/booking-history"); setIsMenuOpen(false); }}>
                     <CalendarIcon className="h-5 w-5" />
                     {t('header.bookingHistory')}
+                  </Button>
+                  <Button variant="outline" size="lg" className="justify-start gap-2 text-base min-h-[44px] mx-2 relative" onClick={() => { navigate("/inbox"); setIsMenuOpen(false); }}>
+                    <MessageCircle className="h-5 w-5" />
+                    {t('header.messages')}
+                    {unreadMessages > 0 && (
+                      <span className="ltr:ml-auto rtl:mr-auto h-5 min-w-5 px-1 bg-destructive text-destructive-foreground text-xs font-bold rounded-full flex items-center justify-center">
+                        {unreadMessages > 9 ? '9+' : unreadMessages}
+                      </span>
+                    )}
                   </Button>
                   <Button variant="outline" size="lg" className="justify-start gap-2 text-base min-h-[44px] mx-2 relative" onClick={() => { navigate("/notifications"); setIsMenuOpen(false); }}>
                     <Bell className="h-5 w-5" />
