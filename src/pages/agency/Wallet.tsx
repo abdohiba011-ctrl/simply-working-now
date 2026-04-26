@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AgencyLayout } from "@/components/agency/AgencyLayout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -23,6 +23,31 @@ const Wallet = () => {
   const [accountLabel, setAccountLabel] = useState("");
   const [processing, setProcessing] = useState(false);
 
+  // Auto-refresh after returning from a successful YouCan Pay redirect.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("yc") === "success") {
+      toast.success("Payment received — updating your balance…");
+      refresh();
+      // Strip query params, keep hash.
+      const hash = window.location.hash;
+      window.history.replaceState({}, "", window.location.pathname + hash);
+      // Poll a few times in case the webhook lags behind.
+      let n = 0;
+      const t = setInterval(() => {
+        n++;
+        refresh();
+        if (n >= 5) clearInterval(t);
+      }, 3000);
+      return () => clearInterval(t);
+    }
+    if (params.get("yc") === "error") {
+      toast.error("Payment was not completed.");
+      const hash = window.location.hash;
+      window.history.replaceState({}, "", window.location.pathname + hash);
+    }
+  }, [refresh]);
+
   const balance = Number(wallet?.balance || 0);
 
   const handleTopup = async () => {
@@ -31,7 +56,13 @@ const Wallet = () => {
     const preOpened = preOpenPaymentWindow();
     try {
       const { data, error } = await supabase.functions.invoke("youcanpay-create-token", {
-        body: { purpose: "wallet_topup", amount, currency: "MAD" },
+        body: {
+          purpose: "wallet_topup",
+          amount,
+          currency: "MAD",
+          success_path: "/agency/finance?yc=success#wallet",
+          error_path: "/agency/finance?yc=error#wallet",
+        },
       });
       if (error) throw error;
       if (data?.payment_url) {
