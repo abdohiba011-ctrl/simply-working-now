@@ -1,112 +1,56 @@
+## Goal
+Make the bike count shown on each city card reflect **reality**: count actual approved, active, available bikes per city. Show **0** honestly when a city has none. No more admin-typed fake numbers.
 
-Build a live, auto-regenerating `sitemap.xml` for motonita.ma backed by a Supabase Edge Function, plus a clean `robots.txt`.
+## Current bug
+`service_cities.bikes_count` is a manually-typed number stored in the DB (e.g. Casablanca = 400, Marrakech = 10) but the actual catalog has Casablanca = 12, Marrakech = 0, Rabat = 0. This violates the "never fake stats" rule from project knowledge.
 
-## 1. Edge Function: `generate-sitemap`
+## Solution: compute counts live from `bike_types` joined to `service_cities`
 
-Create `supabase/functions/generate-sitemap/index.ts` (public, `verify_jwt = false`).
-
-On every request it queries the database and emits a fresh XML sitemap. Cached for 1 hour at the edge (`Cache-Control: public, max-age=3600`).
-
-**Static URLs always included** (with `lastmod = today`):
-
-| URL | priority | changefreq |
-|---|---|---|
-| `/` | 1.0 | daily |
-| `/blog` | 0.85 | weekly |
-| `/blog/how-to-rent-motorbike-morocco` | 0.85 | monthly |
-| `/blog/motorbike-license-morocco-guide` | 0.85 | monthly |
-| `/blog/motorbike-rental-casablanca-neighborhoods` | 0.85 | monthly |
-| `/blog/best-motorbike-routes-morocco` | 0.85 | monthly |
-| `/about` | 0.7 | monthly |
-| `/contact` | 0.7 | monthly |
-| `/agencies` | 0.7 | monthly |
-| `/affiliate` | 0.7 | monthly |
-| `/become-business` | 0.6 | monthly |
-| `/privacy-policy`, `/terms`, `/cookies` | 0.3 | yearly |
-
-**Dynamic URLs from the database:**
-
-- **Cities**: `SELECT name FROM service_cities WHERE is_available = true` → `https://motonita.ma/rent/{slug}` at priority 0.9, changefreq daily. Slugs via the existing `cityToSlug()` map (Marrakech → `marrakech`, El Jadida → `el-jadida`, etc.).
-- **Bikes**: `SELECT id, updated_at FROM bike_types WHERE is_approved = true AND business_status = 'active'` → `https://motonita.ma/bike/{id}` at priority 0.8, changefreq weekly, `lastmod = updated_at`.
-
-**Excluded** (per request): all auth routes, `/agency/*`, `/admin/*`, `/profile`, `/booking*`, `/checkout`, `/inbox`, `/notifications`, `/billing`, `/settings`, `/verification`, `/add-bike`, dashboards, `/faq` (no route — homepage section), neighborhood URLs (query-param filters, not real routes — including would create duplicate-content issues).
-
-**Response headers:**
+### 1. Create a database view `city_bike_counts` (read-only, public)
+```sql
+CREATE OR REPLACE VIEW public.city_bike_counts AS
+SELECT
+  sc.id AS city_id,
+  sc.name,
+  COUNT(DISTINCT bt.id) FILTER (
+    WHERE bt.is_approved = true
+      AND COALESCE(bt.business_status, 'active') = 'active'
+      AND COALESCE(bt.availability_status, 'available') = 'available'
+  ) AS bikes_available
+FROM public.service_cities sc
+LEFT JOIN public.bike_types bt ON bt.city_id = sc.id
+GROUP BY sc.id, sc.name;
 ```
-Content-Type: application/xml; charset=utf-8
-Cache-Control: public, max-age=3600, s-maxage=3600
-```
+Grant SELECT to `anon` and `authenticated`. No RLS needed (it's a view over already-public data).
 
-CORS handled via `corsHeaders` on OPTIONS preflight. No JWT validation (public). No input/rate limiting needed (GET-only, cached).
+### 2. Update `TopCitiesSection.tsx`
+- Fetch `service_cities` as today **plus** the new `city_bike_counts` view in parallel.
+- Display the live `bikes_available` value (showing `0` when zero).
+- For cities with 0 bikes that are still marked available: show "0 bikes available · check back soon" instead of an active CTA, OR keep the link but show the honest 0. (Recommend: keep clickable, show honest 0 — users will see the empty state on `/rent/{city}` which is already built.)
+- Realtime subscription on `bike_types` so counts update when bikes are added/removed.
 
-## 2. Public sitemap URL: `https://motonita.ma/sitemap.xml`
+### 3. Update `AdminCitiesTab.tsx`
+- Remove the manual `bikes_count` input field from Add and Edit dialogs.
+- Replace the table's `bikes_count` column with a read-only "Live count" pulled from the view.
+- This prevents admins from ever typing fake numbers again.
 
-The edge function lives at `https://impgemzhqvbxitsxxczm.supabase.co/functions/v1/generate-sitemap`. Two parts:
+### 4. Deprecate the column (non-destructive)
+Leave `service_cities.bikes_count` in place to avoid breaking anything else, but stop reading and stop writing to it. Optional follow-up migration can drop it later.
 
-- **Update `public/robots.txt`** to point `Sitemap:` directly at the edge function URL. Google, Bing, and all major crawlers accept cross-origin sitemap URLs declared in robots.txt — this is the standard SPA pattern.
-- **Replace `public/sitemap.xml`** with a minimal static fallback listing always-known URLs (homepage, 16 cities, 4 blog posts, static pages). Guarantees something exists at `motonita.ma/sitemap.xml` even though robots.txt directs crawlers to the live one.
+### 5. Verify
+After deploy:
+- Casablanca card → shows **12**
+- Marrakech card → shows **0**
+- Rabat card → shows **0**
+- Add a new bike via admin → corresponding city count goes up live
+- Disable/reject a bike → count goes down live
 
-## 3. Updated `public/robots.txt`
+## Files changed
+- New migration: `create view city_bike_counts + grants`
+- `src/components/TopCitiesSection.tsx` — fetch view, display live count
+- `src/components/admin/AdminCitiesTab.tsx` — remove manual input, show live read-only count
+- (No changes needed to `RentCity.tsx` — it already filters real bikes)
 
-```
-User-agent: *
-Allow: /
-
-Disallow: /admin/
-Disallow: /agency/
-Disallow: /profile
-Disallow: /settings
-Disallow: /checkout
-Disallow: /booking-review
-Disallow: /payment-status
-Disallow: /pay/
-Disallow: /confirmation
-Disallow: /inbox
-Disallow: /notifications
-Disallow: /billing
-Disallow: /verification
-Disallow: /add-bike
-Disallow: /all-bookings
-Disallow: /booking-history
-Disallow: /booking/
-Disallow: /change-password
-Disallow: /reset-password/
-Disallow: /forgot-password
-Disallow: /verify-email
-Disallow: /login
-Disallow: /signup
-Disallow: /auth
-
-Sitemap: https://impgemzhqvbxitsxxczm.supabase.co/functions/v1/generate-sitemap
-Sitemap: https://motonita.ma/sitemap.xml
-```
-
-## 4. Auto-regeneration
-
-Because the edge function queries live on each request:
-
-- **New bike approved** → appears on next crawl (within 1h cache window)
-- **New city goes live** → appears within 1h
-- **Blog posts** → static list in the edge function; adding a new post requires editing it (mirrors `src/data/blog-content/index.ts`)
-- **Agency approval** → no public agency profile pages currently; n/a
-
-## 5. Files to create/edit
-
-| File | Action |
-|---|---|
-| `supabase/functions/generate-sitemap/index.ts` | Create (edge function) |
-| `public/robots.txt` | Replace |
-| `public/sitemap.xml` | Replace with static fallback |
-
-## 6. Verification after deploy
-
-- `curl` the function URL → valid XML with bikes + cities
-- `curl -I` shows `Content-Type: application/xml`
-- Validate against sitemaps.org schema
-- Spot-check homepage, one city, one bike, one blog URL
-
-## Out of scope (per your answers)
-
-- Individual neighborhood URLs
-- `/faq` route
-- Per-bike SEO slugs (currently UUID-only; possible follow-up)
+## Out of scope
+- Neighborhood-level counts (Casablanca → Bouskoura, etc.) — can be a follow-up
+- Coming-soon cities stay as configured by admin (handled separately by `is_coming_soon` / `is_available` flags)
