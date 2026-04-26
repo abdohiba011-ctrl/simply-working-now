@@ -20,10 +20,11 @@ export interface BlogPost {
   body?: Partial<BlogTrilingual>;
 }
 
-import heroRent from "@/assets/blog-rent-morocco.jpg";
-import heroLicense from "@/assets/blog-license-morocco.jpg";
-import heroCasablanca from "@/assets/blog-casablanca.jpg";
-import heroAtlas from "@/assets/blog-atlas-routes.jpg";
+// Real photographs from Pexels (free for commercial use, no attribution required, hotlinking allowed)
+const heroRent = "https://images.pexels.com/photos/2611686/pexels-photo-2611686.jpeg?auto=compress&cs=tinysrgb&w=1600";
+const heroLicense = "https://images.pexels.com/photos/1413412/pexels-photo-1413412.jpeg?auto=compress&cs=tinysrgb&w=1600";
+const heroCasablanca = "https://images.pexels.com/photos/4502973/pexels-photo-4502973.jpeg?auto=compress&cs=tinysrgb&w=1600";
+const heroAtlas = "https://images.pexels.com/photos/1715193/pexels-photo-1715193.jpeg?auto=compress&cs=tinysrgb&w=1600";
 
 export const blogPosts: BlogPost[] = [
   {
