@@ -257,30 +257,6 @@ const Checkout = () => {
                   )}
                 </Button>
 
-                {pendingPayment && (
-                  <div className="rounded-lg border-2 border-primary/40 bg-primary/5 p-4 space-y-3">
-                    <div className="flex items-start gap-2">
-                      <Loader2 className="h-4 w-4 mt-1 animate-spin text-primary flex-shrink-0" />
-                      <div className="text-sm">
-                        <p className="font-semibold text-foreground">Waiting for payment…</p>
-                        <p className="text-muted-foreground text-xs mt-1">
-                          Complete the payment in the YouCan Pay tab. We'll continue automatically when it's done.
-                        </p>
-                      </div>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="w-full"
-                      onClick={handleOpenPaymentManually}
-                    >
-                      <ExternalLink className="h-4 w-4 mr-2" />
-                      Open payment in new tab
-                    </Button>
-                  </div>
-                )}
-
                 <p className="text-xs text-muted-foreground text-center">
                   By paying, you agree the 10 MAD fee is non-refundable.
                 </p>
