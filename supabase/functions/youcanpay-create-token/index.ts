@@ -1,5 +1,5 @@
-// YouCanPay - create payment token
-// Supports purposes: booking_payment, wallet_topup, subscription
+// YouCanPay - create payment token (sandbox)
+// Supports purposes: booking_payment, wallet_topup, subscription, renter_topup
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
@@ -30,10 +30,18 @@ Deno.serve(async (req) => {
     const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const ANON = Deno.env.get("SUPABASE_PUBLISHABLE_KEY") || Deno.env.get("SUPABASE_ANON_KEY")!;
     const PRIVATE_KEY = Deno.env.get("YOUCANPAY_PRIVATE_KEY");
-    if (!PRIVATE_KEY) {
-      return new Response(JSON.stringify({ error: "YOUCANPAY_PRIVATE_KEY not set" }), {
-        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    const PUBLIC_KEY = Deno.env.get("YOUCANPAY_PUBLIC_KEY");
+    if (!PRIVATE_KEY || !PUBLIC_KEY) {
+      return new Response(
+        JSON.stringify({
+          error: "YouCan Pay keys not configured",
+          missing: {
+            YOUCANPAY_PRIVATE_KEY: !PRIVATE_KEY,
+            YOUCANPAY_PUBLIC_KEY: !PUBLIC_KEY,
+          },
+        }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
     }
 
     const authHeader = req.headers.get("Authorization") || "";
@@ -59,7 +67,7 @@ Deno.serve(async (req) => {
     const admin = createClient(SUPABASE_URL, SERVICE_ROLE);
     const currency = body.currency || "MAD";
 
-    // Insert pending payment record (cents not used; YouCanPay uses minor units in some flows)
+    // Insert pending payment record
     const { data: payment, error: payErr } = await admin
       .from("youcanpay_payments")
       .insert({
@@ -78,10 +86,17 @@ Deno.serve(async (req) => {
       .single();
     if (payErr) throw payErr;
 
-    // Call YouCanPay sandbox tokenize endpoint
     const orderId = payment.id;
-    const defaultSuccess = `${APP_URL}/agency/finance#wallet?yc=success&pid=${orderId}`;
-    const defaultError = `${APP_URL}/agency/finance#wallet?yc=error&pid=${orderId}`;
+
+    // Default redirect URLs depend on caller. Renter top-ups land on /billing,
+    // agency wallet/sub flows land on /agency/finance#wallet.
+    const isRenterFlow = body.purpose === "renter_topup";
+    const defaultSuccess = isRenterFlow
+      ? `${APP_URL}/billing?topup=success&pid=${orderId}`
+      : `${APP_URL}/agency/finance#wallet?yc=success&pid=${orderId}`;
+    const defaultError = isRenterFlow
+      ? `${APP_URL}/billing?topup=error&pid=${orderId}`
+      : `${APP_URL}/agency/finance#wallet?yc=error&pid=${orderId}`;
     const buildUrl = (p?: string, fallback?: string) => {
       if (!p) return fallback!;
       const sep = p.includes("?") ? "&" : "?";
@@ -91,7 +106,9 @@ Deno.serve(async (req) => {
     const errorUrl = buildUrl(body.error_path, defaultError);
     const webhookUrl = `${SUPABASE_URL}/functions/v1/youcanpay-webhook`;
 
+    // YouCan Pay sandbox tokenize payload — REQUIRES both pub_key and pri_key.
     const ycPayload = {
+      pub_key: PUBLIC_KEY,
       pri_key: PRIVATE_KEY,
       amount: Math.round(amount * 100), // minor units
       currency,
@@ -116,12 +133,23 @@ Deno.serve(async (req) => {
     try { ycData = JSON.parse(ycText); } catch { ycData = { raw: ycText }; }
 
     if (!ycResp.ok || !ycData?.token?.id) {
+      console.error("YouCanPay tokenize failed", {
+        status: ycResp.status,
+        body: ycData,
+        sentAmount: ycPayload.amount,
+        currency,
+        orderId,
+      });
       await admin
         .from("youcanpay_payments")
         .update({ status: "failed", raw_response: ycData })
         .eq("id", orderId);
       return new Response(
-        JSON.stringify({ error: "YouCanPay tokenize failed", details: ycData }),
+        JSON.stringify({
+          error: "YouCanPay tokenize failed",
+          status: ycResp.status,
+          details: ycData,
+        }),
         { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
@@ -132,7 +160,8 @@ Deno.serve(async (req) => {
       .update({ token_id: tokenId, raw_response: ycData })
       .eq("id", orderId);
 
-    const payment_url = `https://youcanpay.com/sandbox/${tokenId}`;
+    // Sandbox hosted-checkout URL (NOT youcanpay.com/sandbox/...)
+    const payment_url = `https://pay.youcan.shop/sandbox/${tokenId}`;
     return new Response(
       JSON.stringify({ token_id: tokenId, payment_id: orderId, payment_url }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },

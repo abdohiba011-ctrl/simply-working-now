@@ -100,6 +100,14 @@ export function TopupConfirmDialog({
                 booking fees and other platform charges.
               </span>
             </div>
+            <div className="rounded-md border border-dashed border-primary/30 bg-primary/5 p-3 text-xs">
+              <div className="mb-1 font-semibold text-primary">Sandbox test mode</div>
+              <div className="text-muted-foreground">
+                Use card <span className="font-mono">4242 4242 4242 4242</span>, any future
+                expiry, any CVC. To simulate a failure, use{" "}
+                <span className="font-mono">4000 0000 0000 0002</span>.
+              </div>
+            </div>
           </div>
         )}
 
