@@ -359,6 +359,31 @@ const Auth = () => {
   };
 
 
+  if (processingOAuthHash) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <section className="py-20">
+          <div className="container mx-auto px-4">
+            <div className="max-w-md mx-auto">
+              <Card>
+                <CardContent className="p-10 flex flex-col items-center gap-4 text-center">
+                  <div className="h-10 w-10 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+                  <h1 className="text-xl font-semibold text-foreground">
+                    {t('auth.signingYouIn') || 'Signing you in…'}
+                  </h1>
+                  <p className="text-sm text-muted-foreground">
+                    {t('auth.completingGoogle') || 'Completing your Google sign-in. This takes just a moment.'}
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </section>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
