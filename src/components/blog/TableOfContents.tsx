@@ -46,8 +46,8 @@ export function TableOfContents({ containerSelector = "#article-body" }: { conta
 
   return (
     <nav aria-label={t("blog.onThisPage")} className="text-sm">
-      <h3 className="font-semibold text-[#163300] mb-3">{t("blog.onThisPage")}</h3>
-      <ul className="space-y-2 border-l-2 border-[#163300]/10">
+      <h3 className="font-semibold text-foreground mb-3">{t("blog.onThisPage")}</h3>
+      <ul className="space-y-2 border-l-2 border-border">
         {headings.map((h) => (
           <li key={h.id}>
             <a
@@ -58,8 +58,8 @@ export function TableOfContents({ containerSelector = "#article-body" }: { conta
               }}
               className={`block ps-3 -ms-0.5 border-l-2 -translate-x-px transition-colors ${
                 active === h.id
-                  ? "border-[#9FE870] text-[#163300] font-medium"
-                  : "border-transparent text-muted-foreground hover:text-[#163300]"
+                  ? "border-primary text-foreground font-medium"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
               }`}
             >
               {h.text}

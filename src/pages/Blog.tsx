@@ -51,7 +51,7 @@ export default function Blog() {
       <main className="flex-1">
         <section className="max-w-[1200px] mx-auto px-6 py-16">
           <header className="mb-10 max-w-3xl">
-            <h1 className="text-3xl md:text-5xl font-bold text-[#163300] leading-tight tracking-tight">
+            <h1 className="text-3xl md:text-5xl font-bold text-foreground leading-tight tracking-tight">
               {t("blog.indexTitle")}
             </h1>
             <p className="mt-4 text-lg text-muted-foreground leading-relaxed">
