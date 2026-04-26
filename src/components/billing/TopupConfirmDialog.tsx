@@ -16,6 +16,7 @@ interface TopupConfirmDialogProps {
   currency: string;
   submitting: boolean;
   onConfirm: () => void;
+  pendingPaymentUrl?: string | null;
 }
 
 export function TopupConfirmDialog({
@@ -27,6 +28,7 @@ export function TopupConfirmDialog({
   currency,
   submitting,
   onConfirm,
+  pendingPaymentUrl,
 }: TopupConfirmDialogProps) {
   const [step, setStep] = useState<"amount" | "confirm">("amount");
 

@@ -487,13 +487,17 @@ export default function Billing() {
 
       <TopupConfirmDialog
         open={topupOpen}
-        onOpenChange={setTopupOpen}
+        onOpenChange={(o) => {
+          setTopupOpen(o);
+          if (!o) setPendingPaymentUrl(null);
+        }}
         amount={amount}
         onAmountChange={setAmount}
         currentBalance={balance}
         currency={currency}
         submitting={submitting}
         onConfirm={submitTopup}
+        pendingPaymentUrl={pendingPaymentUrl}
       />
 
       <Footer />
