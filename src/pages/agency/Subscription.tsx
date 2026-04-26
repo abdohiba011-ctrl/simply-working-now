@@ -10,7 +10,8 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAgencySubscription } from "@/hooks/useAgencyData";
-import { openHostedPayment, preOpenPaymentWindow } from "@/lib/openHostedPayment";
+import { buildYouCanPayUrl } from "@/lib/openHostedPayment";
+import { useNavigate } from "react-router-dom";
 
 interface Plan {
   key: "free" | "pro" | "business";
@@ -29,6 +30,7 @@ const PLANS: Plan[] = [
 
 const Subscription = () => {
   const { subscription, loading, refresh } = useAgencySubscription();
+  const navigate = useNavigate();
   const [yearly, setYearly] = useState(false);
   const [processing, setProcessing] = useState<string | null>(null);
   const current = subscription?.plan || "free";
@@ -77,7 +79,6 @@ const Subscription = () => {
       return;
     }
     setProcessing(plan.key);
-    const preOpened = preOpenPaymentWindow();
     try {
       const amount = yearly ? plan.yearly : plan.monthly;
       const { data, error } = await supabase.functions.invoke("youcanpay-create-token", {
@@ -87,24 +88,22 @@ const Subscription = () => {
           currency: "MAD",
           plan: plan.key,
           yearly,
-          success_path: "/agency/finance?yc=success#subscription",
-          error_path: "/agency/finance?yc=error#subscription",
         },
       });
       if (error) throw error;
-      if (data?.payment_url) {
-        const result = openHostedPayment(data.payment_url, preOpened);
-        if (!result.ok) {
-          toast.error("Your browser blocked the payment window. Please allow popups.");
-        } else if (result.method === "new-tab" || result.method === "pre-opened") {
-          toast.success("Payment opened in a new tab.");
-        }
-        return;
+      if (!data?.token_id || !data?.public_key) {
+        throw new Error(data?.error || "Could not initialize payment");
       }
-      if (preOpened && !preOpened.closed) preOpened.close();
-      toast.error("Could not initialize payment");
+      const url = buildYouCanPayUrl({
+        resp: data,
+        amount,
+        currency: "MAD",
+        successPath: "/agency/finance?yc=success#subscription",
+        errorPath: "/agency/finance?yc=error#subscription",
+        title: `Upgrade to ${plan.name}`,
+      });
+      navigate(url);
     } catch (e: any) {
-      if (preOpened && !preOpened.closed) preOpened.close();
       toast.error(e.message || "Failed");
     } finally {
       setProcessing(null);

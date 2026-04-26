@@ -160,10 +160,18 @@ Deno.serve(async (req) => {
       .update({ token_id: tokenId, raw_response: ycData })
       .eq("id", orderId);
 
-    // Sandbox hosted-checkout URL (NOT youcanpay.com/sandbox/...)
-    const payment_url = `https://pay.youcan.shop/sandbox/${tokenId}`;
+    // YouCan Pay does NOT expose a hosted-redirect URL on its public API.
+    // The official integration is to embed `ycpay.js` in our own page and
+    // call `ycPay.pay(tokenId)` from a button. We return the token + public
+    // key so the frontend can render the embedded form.
+    const isSandbox = PUBLIC_KEY.startsWith("pub_sandbox_");
     return new Response(
-      JSON.stringify({ token_id: tokenId, payment_id: orderId, payment_url }),
+      JSON.stringify({
+        token_id: tokenId,
+        payment_id: orderId,
+        public_key: PUBLIC_KEY,
+        is_sandbox: isSandbox,
+      }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (e: any) {
