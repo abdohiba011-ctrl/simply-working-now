@@ -12,6 +12,7 @@ import { MockProtectedRoute } from "@/components/auth/MockProtectedRoute";
 import { PageLoadingSkeleton, BookingHistorySkeleton, ProfileSkeleton, BikeDetailsSkeleton } from "@/components/ui/loading-skeleton";
 import { AffiliateSkeleton } from "@/components/ui/affiliate-skeleton";
 import { ScrollToTop } from "./components/ScrollToTop";
+import { OAuthHashWatcher } from "./components/OAuthHashWatcher";
 import { ScrollToTopButton } from "./components/ScrollToTopButton";
 import { LanguageSuggestionBanner } from "./components/LanguageSuggestionBanner";
 import { ErrorBoundary } from "./components/ErrorBoundary";
@@ -136,6 +137,7 @@ const App = () => (
             <LanguageSuggestionBanner />
             <BrowserRouter>
               <ScrollToTop />
+              <OAuthHashWatcher />
               <ScrollToTopButton />
               <Suspense fallback={<PageLoadingSkeleton />}>
                 <Routes>
