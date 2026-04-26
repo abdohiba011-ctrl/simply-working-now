@@ -33,6 +33,7 @@ import { COMMON_PASSWORDS } from "@/lib/mockAuth";
 import { cn } from "@/lib/utils";
 import { navigateAfterAuth } from "@/lib/routeAfterAuth";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
+import { checkAccountMethod } from "@/lib/checkAccountMethod";
 
 const PHONE_REGEX = /^(\+212|00212|0)[67]\d{8}$/;
 
@@ -307,6 +308,30 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
   const onSubmit = async (values: SignupValues) => {
     if (!role) return;
     setServerError(null);
+
+    // Pre-flight: refuse to create a duplicate account for the same email.
+    // This catches the common typo case (e.g. you already have an account
+    // with that email but added/removed a letter by mistake).
+    const existing = await checkAccountMethod(values.email);
+    if (existing.status === "oauth_only") {
+      setServerError(
+        t("mockAuth.signup_email_oauth", {
+          defaultValue:
+            "An account with this email already exists and uses Google sign-in. Please use \"Continue with Google\" instead.",
+        }),
+      );
+      return;
+    }
+    if (existing.status === "has_password") {
+      setServerError(
+        t("mockAuth.signup_email_taken", {
+          defaultValue:
+            "An account with this email already exists. Try logging in instead.",
+        }),
+      );
+      return;
+    }
+
     try {
       await signup(
         {

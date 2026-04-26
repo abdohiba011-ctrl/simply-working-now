@@ -3,6 +3,8 @@ project_id = "impgemzhqvbxitsxxczm"
 [functions]
   [functions.auth-email-hook]
     verify_jwt = false
+  [functions.check-account-method]
+    verify_jwt = false
   [functions.generate-receipt]
     verify_jwt = true
   [functions.generate-sitemap]
