@@ -55,7 +55,6 @@ const Auth = () => {
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
-  const autoStartedGoogleOAuth = useRef(false);
 
 
 
