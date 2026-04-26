@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cityToSlug } from "@/lib/citySlug";
+import { MOROCCO_REGIONS, MOROCCO_VIEWBOX } from "@/data/moroccoRegions";
 
 // Approximate lat/lng for major Moroccan cities
 const CITY_COORDS: Record<string, { lat: number; lng: number; label: { en: string; fr: string; ar: string } }> = {
