@@ -50,6 +50,7 @@ export default function Billing() {
   const [amount, setAmount] = useState<string>("100");
   const [submitting, setSubmitting] = useState(false);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [pendingPaymentUrl, setPendingPaymentUrl] = useState<string | null>(null);
 
   // ---- URL-driven tab + filters ----
   const activeTab = params.get("tab") ?? "credits";
@@ -164,8 +165,14 @@ export default function Billing() {
       }
       const result = openHostedPayment(data.payment_url, preOpened);
       if (!result.ok) {
-        toast.error("Could not open the payment page. Please disable popup blockers and try again.");
+        // Popup blocked (often the case inside the Lovable preview iframe).
+        // Surface a clickable link so the user can open the payment page manually.
+        setPendingPaymentUrl(data.payment_url);
+        toast.message("Click 'Open payment page' to continue", {
+          description: "Your browser blocked the automatic redirect.",
+        });
       } else {
+        setPendingPaymentUrl(null);
         setTopupOpen(false);
       }
     } catch (e: unknown) {
