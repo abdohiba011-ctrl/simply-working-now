@@ -71,6 +71,7 @@ const generateNameKey = (name: string) => {
 
 export const AdminCitiesTab = () => {
   const [cities, setCities] = useState<ServiceCity[]>([]);
+  const [liveCounts, setLiveCounts] = useState<Map<string, number>>(new Map());
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [showEditDialog, setShowEditDialog] = useState(false);
@@ -97,7 +98,23 @@ export const AdminCitiesTab = () => {
 
   useEffect(() => {
     fetchCities();
+    fetchLiveCounts();
   }, []);
+
+  const fetchLiveCounts = async () => {
+    const { data, error } = await supabase
+      .from('city_bike_counts' as any)
+      .select('city_id, bikes_available');
+    if (error) {
+      console.error('Failed to load live bike counts', error);
+      return;
+    }
+    const map = new Map<string, number>();
+    ((data as unknown) as Array<{ city_id: string; bikes_available: number }> | null)?.forEach((row) => {
+      map.set(row.city_id, Number(row.bikes_available) || 0);
+    });
+    setLiveCounts(map);
+  };
 
   const fetchCities = async () => {
     setIsLoading(true);
@@ -109,6 +126,8 @@ export const AdminCitiesTab = () => {
 
       if (error) throw error;
       setCities(data || []);
+      // Refresh live counts whenever we refresh the list
+      fetchLiveCounts();
     } catch (error) {
       toast.error("Failed to load cities");
       console.error(error);
@@ -132,7 +151,7 @@ export const AdminCitiesTab = () => {
         .update({
           name: editingCity.name,
           image_url: editingCity.image_url,
-          bikes_count: editingCity.bikes_count,
+          // bikes_count intentionally not written — value is now computed live from bike_types
           price_from: editingCity.price_from,
           is_available: editingCity.is_available,
           is_coming_soon: editingCity.is_coming_soon,
@@ -169,7 +188,7 @@ export const AdminCitiesTab = () => {
           name: newCity.name.trim(),
           name_key: nameKey,
           image_url: newCity.image_url || null,
-          bikes_count: newCity.bikes_count,
+          // bikes_count omitted — computed live from bike_types catalog
           price_from: newCity.price_from,
           is_available: newCity.is_available,
           is_coming_soon: newCity.is_coming_soon,
@@ -399,7 +418,12 @@ export const AdminCitiesTab = () => {
                         <span className="font-medium">{city.name}</span>
                       </div>
                     </TableCell>
-                    <TableCell>{city.bikes_count}</TableCell>
+                    <TableCell>
+                      <div className="flex flex-col">
+                        <span className="font-medium">{liveCounts.get(city.id) ?? 0}</span>
+                        <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Live</span>
+                      </div>
+                    </TableCell>
                     <TableCell>{city.price_from} DH/day</TableCell>
                     <TableCell className="text-center">
                       <Button
@@ -479,15 +503,7 @@ export const AdminCitiesTab = () => {
                 onImageChange={(url) => setNewCity({ ...newCity, image_url: url })}
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Available Bikes</Label>
-                <Input
-                  type="number"
-                  value={newCity.bikes_count}
-                  onChange={(e) => setNewCity({ ...newCity, bikes_count: parseInt(e.target.value) || 0 })}
-                />
-              </div>
+            <div className="grid grid-cols-1 gap-4">
               <div className="space-y-2">
                 <Label>Price From (DH/day)</Label>
                 <Input
@@ -496,6 +512,9 @@ export const AdminCitiesTab = () => {
                   onChange={(e) => setNewCity({ ...newCity, price_from: parseFloat(e.target.value) || 0 })}
                 />
               </div>
+              <p className="text-xs text-muted-foreground">
+                Bike count is calculated automatically from real listings — no manual entry.
+              </p>
             </div>
             <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
               <Label>Is Available (not coming soon)</Label>
@@ -553,12 +572,11 @@ export const AdminCitiesTab = () => {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Available Bikes</Label>
-                  <Input
-                    type="number"
-                    value={editingCity.bikes_count}
-                    onChange={(e) => setEditingCity({ ...editingCity, bikes_count: parseInt(e.target.value) || 0 })}
-                  />
+                  <Label>Live Bikes</Label>
+                  <div className="h-10 px-3 flex items-center rounded-md border bg-muted text-sm">
+                    {liveCounts.get(editingCity.id) ?? 0} bikes
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">Auto from listings</p>
                 </div>
                 <div className="space-y-2">
                   <Label>Price From (DH/day)</Label>

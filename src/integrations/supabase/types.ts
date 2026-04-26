@@ -375,6 +375,13 @@ export type Database = {
             foreignKeyName: "bike_inventory_city_id_fkey"
             columns: ["city_id"]
             isOneToOne: false
+            referencedRelation: "city_bike_counts"
+            referencedColumns: ["city_id"]
+          },
+          {
+            foreignKeyName: "bike_inventory_city_id_fkey"
+            columns: ["city_id"]
+            isOneToOne: false
             referencedRelation: "service_cities"
             referencedColumns: ["id"]
           },
@@ -562,6 +569,13 @@ export type Database = {
           year?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "bike_types_city_id_fkey"
+            columns: ["city_id"]
+            isOneToOne: false
+            referencedRelation: "city_bike_counts"
+            referencedColumns: ["city_id"]
+          },
           {
             foreignKeyName: "bike_types_city_id_fkey"
             columns: ["city_id"]
@@ -1704,6 +1718,13 @@ export type Database = {
             foreignKeyName: "service_locations_city_id_fkey"
             columns: ["city_id"]
             isOneToOne: false
+            referencedRelation: "city_bike_counts"
+            referencedColumns: ["city_id"]
+          },
+          {
+            foreignKeyName: "service_locations_city_id_fkey"
+            columns: ["city_id"]
+            isOneToOne: false
             referencedRelation: "service_cities"
             referencedColumns: ["id"]
           },
@@ -2114,6 +2135,14 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      city_bike_counts: {
+        Row: {
+          bikes_available: number | null
+          city_id: string | null
+          name: string | null
+        }
+        Relationships: []
       }
     }
     Functions: {
