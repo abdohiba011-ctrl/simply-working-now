@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -19,7 +19,6 @@ import { PrivacyTermsModal } from "@/components/PrivacyTermsModal";
 import { getUserFriendlyError, getErrMsg } from "@/lib/errorMessages";
 import { playSuccessSound } from "@/lib/soundEffects";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { PRIMARY_PRODUCTION_ORIGIN } from "@/lib/oauthDomain";
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
