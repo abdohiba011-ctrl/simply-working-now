@@ -176,6 +176,8 @@ export const Header = memo(() => {
       console.error("Error fetching unread messages:", e);
     }
   };
+
+  const playNotificationSound = useCallback(() => {
     try {
       // Create a more noticeable notification sound
       const audioContext = new (window.AudioContext || (window as typeof window & { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
