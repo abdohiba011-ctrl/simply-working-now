@@ -2484,7 +2484,7 @@
     "update_password": "Mettre à jour",
     "updating": "Mise à jour...",
     "password_updated": "Mot de passe mis à jour !",
-    "reset_link_expired": "Votre lien de réinitialisation a expiré. Veuillez en demander un nouveau.",
+    "reset_link_expired": "Votre code de réinitialisation a expiré. Veuillez en demander un nouveau.",
     "too_many_reset_requests": "Trop de demandes. Réessayez dans {{time}}.",
     "incorrect_code_attempts": "Code incorrect. {{n}} essais restants.",
     "too_many_wrong_attempts": "Trop d'essais incorrects. Nous vous avons envoyé un nouveau code.",
