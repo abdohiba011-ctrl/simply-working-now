@@ -302,11 +302,16 @@ const Auth = () => {
     // the user clicks the email link.
   };
 
-  const beginGoogleOAuth = useCallback(async () => {
+  const handleGoogleSignIn = useCallback(async () => {
     setIsLoading(true);
     try {
+      // Stay on the current origin. Lovable Cloud's managed OAuth helper
+      // requires that initiation and callback happen on the same host so
+      // that the broker's `state` (and any cookies) line up. Forcing a
+      // jump to a different domain mid-flow causes
+      // "failed to exchange authorization code state".
       const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: PRIMARY_PRODUCTION_ORIGIN,
+        redirect_uri: window.location.origin,
       });
 
       if (result.error) {
@@ -320,7 +325,7 @@ const Auth = () => {
         // Browser is navigating to Google. Nothing more to do.
         return;
       }
-      // Popup flow (sandbox / iframe): tokens already set on the supabase
+      // Popup flow (iframe / preview): tokens already set on the supabase
       // client. The auth context's `onAuthStateChange` listener will fire
       // and the redirect-on-auth effect above will route the user.
       playSuccessSound();
@@ -333,37 +338,6 @@ const Auth = () => {
     }
   }, [t]);
 
-  const handleGoogleSignIn = async () => {
-    // Keep the whole OAuth state/code exchange on the canonical domain.
-    // Starting on preview, published lovable.app, or www can set the state
-    // cookie on one host and return the authorization code to another host.
-    if (window.location.origin !== PRIMARY_PRODUCTION_ORIGIN) {
-      const url = new URL("/auth", PRIMARY_PRODUCTION_ORIGIN);
-      url.searchParams.set("startGoogleOAuth", "1");
-      if (returnUrl) url.searchParams.set("returnUrl", returnUrl);
-      window.location.href = url.toString();
-      return;
-    }
-
-    await beginGoogleOAuth();
-  };
-
-  useEffect(() => {
-    if (
-      searchParams.get("startGoogleOAuth") === "1" &&
-      !autoStartedGoogleOAuth.current &&
-      !authLoading &&
-      !isAuthenticated &&
-      !isLoading &&
-      window.location.origin === PRIMARY_PRODUCTION_ORIGIN
-    ) {
-      autoStartedGoogleOAuth.current = true;
-      const cleanUrl = new URL(window.location.href);
-      cleanUrl.searchParams.delete("startGoogleOAuth");
-      window.history.replaceState({}, "", `${cleanUrl.pathname}${cleanUrl.search}${cleanUrl.hash}`);
-      void beginGoogleOAuth();
-    }
-  }, [authLoading, beginGoogleOAuth, isAuthenticated, isLoading, searchParams]);
 
 
   if (processingOAuthHash) {
