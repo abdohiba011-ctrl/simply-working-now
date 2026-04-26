@@ -220,7 +220,10 @@ export const Header = memo(() => {
   useEffect(() => {
     if (!user) return;
     
-    const interval = setInterval(fetchUnreadNotifications, 30000);
+    const interval = setInterval(() => {
+      fetchUnreadNotifications();
+      fetchUnreadMessages();
+    }, 30000);
     return () => clearInterval(interval);
   }, [user, unreadNotifications]);
 
