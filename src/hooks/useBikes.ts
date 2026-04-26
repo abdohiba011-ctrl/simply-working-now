@@ -82,8 +82,10 @@ export const useBikes = (location?: string, bikeTypeId?: string) => {
         throw new Error("Invalid bike type ID format");
       }
       
+      // Use the safe public view that excludes sensitive columns
+      // (license_plate, notes) for anonymous/public reads.
       let query = supabase
-        .from("bikes")
+        .from("bikes_public" as any)
         .select(`
           *,
           bike_type:bike_types(*)
