@@ -1,46 +1,47 @@
-# Fix misleading login error
+## Plan to fix login, registration, and forgot-password QA
 
-## Root cause (confirmed via database query)
+I’ll fix the auth area as one clean, dedicated Motonita experience — no two-sided green hero page like the screenshot.
 
-Your account `abdrahimbamouh56@gmail.com` exists, has a password, and **just successfully signed in moments ago** (`last_sign_in_at: 2026-04-26 22:57:58`). So the credentials work.
+### 1. Remove the split auth layout everywhere
+- Replace the current two-column `AuthLayout` with a single centered auth card/page.
+- Keep the Motonita logo, language selector, and clean Wise-style branding.
+- Apply it to login, signup, forgot password, OTP verification, and new password pages.
+- Ensure mobile works cleanly at 375px and Arabic RTL still behaves correctly.
 
-However, you also have **3 lookalike accounts** that confuse login attempts:
-- `abdrahimbamouhd56@gmail.com` (extra `d`)
-- `abdrahimbamouhs56@gmail.com` (extra `s`)
-- `bamouhabdrahim57@gmail.com` (Google-only — no password set, will ALWAYS fail email/password login)
+### 2. Make forgot password a true 6-digit OTP flow
+- Keep `/forgot-password` as the only starting page for password reset.
+- User enters email → receives a 6-digit code → enters code → sets new password.
+- Remove the confusing password reset link/button experience from the recovery email.
+- Update wording everywhere to say “code” / “6-digit code”, not “reset link”.
+- Make the OTP screen and new password screen feel like one dedicated flow, not separate unrelated pages.
 
-Supabase always returns the same generic "Invalid login credentials" for security, which hides what's actually wrong.
+### 3. Send auth emails from Motonita’s email domain
+- Your custom domain `motonita.ma` exists, but the email sender domain is not currently configured for sending.
+- To send password reset and verification emails from your Motonita email domain instead of the default `no-reply@auth.lovable.cloud`, I’ll start the email sender setup for `motonita.ma` / `notify.motonita.ma`.
+- If DNS setup is required, I’ll show the Cloud email setup dialog and continue after it’s configured.
+- Once active, reset emails should show Motonita branding and sender domain, with only the 6-digit code.
 
-## Plan
+### 4. Fix “Remember me” so it has visible behavior
+- Save the user’s email/phone when “Remember me” is checked and prefill it on the next visit.
+- If “Remember me” is not checked, clear the saved identifier.
+- Add session-handling logic so the checkbox actually controls whether the login is kept across browser restarts as much as the current Cloud auth client allows.
+- Update label wording if needed so users understand what it does.
 
-### 1. Smarter login error detection (`src/pages/auth/Login.tsx` + `useAuthStore.ts`)
-When Supabase returns `invalid_credentials`, before showing the generic error:
-- Call a new edge function `check-account-method` that looks up the email in `auth.users` and returns:
-  - `not_found` → show "No account exists for this email. Sign up?"
-  - `oauth_only` (provider is google, no password) → show **"This account was created with Google. Please use 'Continue with Google'."** + highlight the Google button
-  - `has_password` → show standard "Incorrect password. Forgot it?" with a clear link to `/forgot-password`
+### 5. QA login and signup flows
+I’ll review and test:
+- Login with email/password
+- Login with Google account messaging
+- Wrong password messaging
+- Account exists / duplicate registration handling
+- Signup renter flow
+- Signup agency flow
+- Forgot password → OTP → new password
+- Resend code cooldown
+- Auth pages in English, French, Arabic
+- Desktop and mobile layout
 
-### 2. New edge function `check-account-method`
-- Public function (no JWT required)
-- Input: `{ email }`
-- Uses service role key to query `auth.users` for the email and inspect `encrypted_password` and `raw_app_meta_data.providers`
-- Output: `{ status: 'not_found' | 'oauth_only' | 'has_password' }`
-- **Privacy-safe**: only triggered AFTER a failed login attempt, rate-limited per IP, never reveals passwords or any PII
-
-### 3. Block silent duplicate-account creation (`src/pages/auth/Signup.tsx`)
-Add a pre-signup check: if email already exists, show a clear message ("An account already exists with this email — sign in instead") and prevent the lookalike duplicates problem in the future.
-
-### 4. Optional cleanup helper (admin only)
-Add an entry in the Admin panel to **merge / delete** the lookalike duplicate accounts for `abdrahimbamouh*56@gmail.com`. Requires user (you) to confirm which account is the canonical one to keep.
-
-### Files to change
-- `src/pages/auth/Login.tsx` — branch error UI on detected account state
-- `src/stores/useAuthStore.ts` — call check function on `invalid_credentials`
-- `src/pages/auth/Signup.tsx` — pre-flight email existence check
-- `supabase/functions/check-account-method/index.ts` *(new)*
-- `supabase/config.toml` — register new function with `verify_jwt = false`
-- `src/locales/en.json` / `fr.json` / `ar.json` — new error strings
-
-### What you should do RIGHT NOW (before approving the plan)
-- The email that works is **`abdrahimbamouh56@gmail.com`** (no extra letter). Use that one.
-- If you were trying `bamouhabdrahim57@gmail.com`, click **Continue with Google** instead — that account has no password.
+### Technical details
+- I’ll update `AuthLayout`, the login/signup/reset pages, and i18n text files.
+- I’ll adjust the auth recovery email template so it renders a 6-digit code, not a reset button/link.
+- I’ll update the auth email hook sender/site naming so emails say Motonita and use the configured sender domain.
+- I’ll add or update tests/smoke checks for the auth pages, then run the project tests and build checks after implementation.
