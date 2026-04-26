@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -56,6 +56,7 @@ const Auth = () => {
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
+  const autoStartedGoogleOAuth = useRef(false);
 
 
 
@@ -357,11 +358,16 @@ const Auth = () => {
   useEffect(() => {
     if (
       searchParams.get("startGoogleOAuth") === "1" &&
+      !autoStartedGoogleOAuth.current &&
       !authLoading &&
       !isAuthenticated &&
       !isLoading &&
       window.location.origin === PRIMARY_PRODUCTION_ORIGIN
     ) {
+      autoStartedGoogleOAuth.current = true;
+      const cleanUrl = new URL(window.location.href);
+      cleanUrl.searchParams.delete("startGoogleOAuth");
+      window.history.replaceState({}, "", `${cleanUrl.pathname}${cleanUrl.search}${cleanUrl.hash}`);
       void beginGoogleOAuth();
     }
   }, [authLoading, beginGoogleOAuth, isAuthenticated, isLoading, searchParams]);
