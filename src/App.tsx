@@ -42,6 +42,7 @@ const BikeDetails = lazy(() => import("./pages/BikeDetails"));
 const BookingReview = lazy(() => import("./pages/BookingReview"));
 
 const Checkout = lazy(() => import("./pages/Checkout"));
+const PayYouCan = lazy(() => import("./pages/PayYouCan"));
 const Confirmation = lazy(() => import("./pages/Confirmation"));
 const BusinessDashboard = lazy(() => import("./pages/BusinessDashboard"));
 const AddBike = lazy(() => import("./pages/AddBike"));
@@ -173,6 +174,7 @@ const App = () => (
                   <Route path="/booking-review" element={<BookingReview />} />
                   <Route path="/payment-selection" element={<Navigate to="/booking-review" replace />} />
                   <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
+                  <Route path="/pay/youcanpay" element={<ProtectedRoute><PayYouCan /></ProtectedRoute>} />
                   <Route path="/confirmation" element={<ProtectedRoute><Confirmation /></ProtectedRoute>} />
                   <Route path="/business-dashboard" element={<Navigate to="/agency/dashboard" replace />} />
                   <Route path="/add-bike" element={<ProtectedRoute requireRole="business"><AddBike /></ProtectedRoute>} />
