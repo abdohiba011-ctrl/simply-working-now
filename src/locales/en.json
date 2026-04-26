@@ -441,6 +441,36 @@
     "contactUs": "Contact Us",
     "rights": "All rights reserved"
   },
+  "blog": {
+    "indexTitle": "Motonita Blog — Motorbike Rental Insights for Morocco",
+    "indexSubtitle": "Guides, routes, and everything you need to know about renting motorbikes and scooters across Morocco.",
+    "categories": {
+      "guide": "Guide",
+      "legal": "Legal",
+      "local": "Local",
+      "routes": "Routes"
+    },
+    "minRead": "{{count}} min read",
+    "byEditorial": "By Motonita Editorial Team",
+    "editorialBio": "We cover everything about renting, riding, and exploring Morocco on two wheels.",
+    "readArticle": "Read article",
+    "backToBlog": "Back to Blog",
+    "onThisPage": "On this page",
+    "jumpToSection": "Jump to section",
+    "relatedArticles": "Related articles",
+    "share": "Share",
+    "copyLink": "Link copied",
+    "newsletterTitle": "Get monthly motorbike rental tips for Morocco",
+    "newsletterSubtitle": "Routes, legal updates, and seasonal offers — straight to your inbox.",
+    "newsletterPlaceholder": "Your email",
+    "newsletterCta": "Subscribe",
+    "newsletterSuccess": "Thanks! You're subscribed.",
+    "placeholderBody": "Article content will be added in the next deployment phase.",
+    "trustStrip": "This article is part of Motonita's editorial guidelines. We update articles regularly to reflect current laws, prices, and best practices in Morocco.",
+    "lastReviewed": "Last reviewed",
+    "published": "Published",
+    "updated": "Last updated"
+  },
   "listings": {
     "title": "Find Your Perfect Ride",
     "subtitle": "Select your neighborhood and discover available motorbikes",
