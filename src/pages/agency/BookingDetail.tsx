@@ -15,6 +15,7 @@ import { toast } from "sonner";
 interface Booking {
   id: string;
   status: string | null;
+  booking_status: string | null;
   payment_status: string | null;
   customer_name: string | null;
   customer_email: string | null;
@@ -78,14 +79,23 @@ const BookingDetail = () => {
 
   const confirm = async () => {
     setBusy(true);
-    const { error } = await supabase
-      .from("bookings")
-      .update({ status: "confirmed", confirmed_at: new Date().toISOString() })
-      .eq("id", booking.id);
+    const { data, error } = await supabase.rpc("confirm_booking", { _booking_id: booking.id });
     setBusy(false);
-    if (error) return toast.error(error.message);
-    toast.success("Booking confirmed");
-    setBooking({ ...booking, status: "confirmed" });
+    if (error) {
+      const msg = error.message || "";
+      if (msg.includes("INSUFFICIENT_WALLET_BALANCE")) {
+        return toast.error("Not enough wallet balance — top up at least 50 MAD to confirm.");
+      }
+      if (msg.includes("NOT_PENDING")) {
+        return toast.error("Booking is no longer pending.");
+      }
+      if (msg.includes("NOT_ASSIGNED_TO_YOU")) {
+        return toast.error("This booking is not assigned to your agency.");
+      }
+      return toast.error(msg);
+    }
+    toast.success(`Booking confirmed — 50 MAD fee deducted${(data as any)?.new_balance != null ? ` (balance: ${(data as any).new_balance} MAD)` : ""}`);
+    setBooking({ ...booking, status: "confirmed", booking_status: "confirmed" });
   };
 
   const cancel = async () => {
@@ -94,7 +104,7 @@ const BookingDetail = () => {
     const { error } = await supabase
       .from("bookings")
       .update({
-        status: "cancelled",
+        booking_status: "cancelled",
         cancelled_at: new Date().toISOString(),
         cancellation_reason: cancelReason,
       })
@@ -106,7 +116,7 @@ const BookingDetail = () => {
     navigate("/agency/bookings");
   };
 
-  const isPending = (booking.status || "").toLowerCase() === "pending";
+  const isPending = (booking.booking_status || booking.status || "").toLowerCase() === "pending";
 
   return (
     <AgencyLayout>
@@ -120,7 +130,7 @@ const BookingDetail = () => {
           <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <h1 className="text-3xl font-bold tracking-tight">Booking #{booking.id.slice(0, 8)}</h1>
-              <StatusChip status={booking.status || "pending"} size="lg" />
+              <StatusChip status={booking.booking_status || booking.status || "pending"} size="lg" />
             </div>
             <div className="flex flex-wrap gap-2">
               {isPending && (
