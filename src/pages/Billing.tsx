@@ -30,7 +30,6 @@ import { TransactionFilters } from "@/components/billing/TransactionFilters";
 import { TopupConfirmDialog } from "@/components/billing/TopupConfirmDialog";
 import {
   applyFilters,
-  DEFAULT_FILTERS,
   readFiltersFromParams,
   writeFiltersToParams,
   type BillingFilterState,
