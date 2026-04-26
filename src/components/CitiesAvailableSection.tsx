@@ -299,6 +299,7 @@ export const CitiesAvailableSection = () => {
             <p className="mt-2 text-center text-xs text-background/60 animate-fade-in">
               {t("cities.tapAgainHint")}
             </p>
+          )}
           <p className="mt-3 text-center text-[10px] text-background/40">
             Map © SimpleMaps
           </p>
