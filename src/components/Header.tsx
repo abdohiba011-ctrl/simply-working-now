@@ -461,6 +461,7 @@ export const Header = memo(() => {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+              </>
             ) : (
               <>
                 <Button variant="outline" onClick={() => navigate("/auth")}>
