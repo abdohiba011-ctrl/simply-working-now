@@ -25,6 +25,7 @@ import {
   queueBecomeBusinessPrompt,
   type LoginContext,
 } from "@/lib/routeAfterAuth";
+import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 
 const PHONE_REGEX = /^(\+212|00212|0)[67]\d{8}$/;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -216,6 +217,20 @@ export default function Login({ context = "renter" }: LoginProps) {
             </div>
           </div>
         ) : null}
+
+        <div className="space-y-3">
+          <GoogleSignInButton />
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" style={{ borderColor: "rgba(22,51,0,0.1)" }} />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-white px-2" style={{ color: "rgba(22,51,0,0.55)" }}>
+                {t("mockAuth.or", { defaultValue: "or" })}
+              </span>
+            </div>
+          </div>
+        </div>
 
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" noValidate>
           {/* Identifier */}
