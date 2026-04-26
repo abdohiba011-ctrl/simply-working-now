@@ -116,18 +116,21 @@ export const PhoneInput = forwardRef<HTMLInputElement, PhoneInputProps>(
     return (
       <div className="relative">
         {showIcon && (
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none">
-            <Phone className={cn(
-              "h-4 w-4 transition-colors",
-              isFocused ? "text-primary" : "text-muted-foreground"
-            )} />
-            <span className={cn(
-              "text-sm font-medium",
-              isFocused ? "text-foreground" : "text-muted-foreground"
-            )}>
-              +212
-            </span>
-          </div>
+          <>
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5 pointer-events-none z-10">
+              <Phone className={cn(
+                "h-4 w-4 transition-colors shrink-0",
+                isFocused ? "text-primary" : "text-muted-foreground"
+              )} />
+              <span className={cn(
+                "text-sm font-medium whitespace-nowrap",
+                isFocused ? "text-foreground" : "text-muted-foreground"
+              )}>
+                +212
+              </span>
+            </div>
+            <div className="absolute left-[4.75rem] top-1/2 -translate-y-1/2 h-5 w-px bg-border pointer-events-none" />
+          </>
         )}
         <Input
           ref={ref}
@@ -141,7 +144,7 @@ export const PhoneInput = forwardRef<HTMLInputElement, PhoneInputProps>(
             showIcon && "pl-[5.5rem]",
             !isValid && value && "border-destructive focus-visible:ring-destructive",
             error && "border-destructive focus-visible:ring-destructive",
-            "ltr-content",
+            "ltr-content tracking-wide",
             className
           )}
           placeholder="06 XX XX XX XX"
