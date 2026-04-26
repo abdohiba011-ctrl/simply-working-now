@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,16 +10,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import {
-  ArrowRightLeft,
   LogOut,
-  Plus,
   Settings as SettingsIcon,
   User as UserIcon,
 } from "lucide-react";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useLanguageStore } from "@/stores/useLanguageStore";
 import { LogoutConfirmDialog } from "@/components/auth/LogoutConfirmDialog";
-import { RoleActivationModal } from "@/components/auth/RoleActivationModal";
 import enLocale from "@/locales/en.json";
 import frLocale from "@/locales/fr.json";
 import arLocale from "@/locales/ar.json";
