@@ -1,7 +1,8 @@
 import { useState, useEffect, memo, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Globe, User, LogOut, Settings, Lock, Building2, Calendar as CalendarIcon, MoreHorizontal, Users, Phone, Shield, MapPin, Bell, ShieldCheck, LayoutDashboard, BadgeCheck, Tag, ShoppingBag, Bike, Receipt, Wrench, MessageCircle } from "lucide-react";
+import { Menu, X, Globe, User, LogOut, Settings, Lock, Building2, Calendar as CalendarIcon, MoreHorizontal, Users, Phone, Shield, MapPin, Bell, ShieldCheck, LayoutDashboard, BadgeCheck, Tag, ShoppingBag, Bike, Receipt, Wrench, MessageCircle, Wallet } from "lucide-react";
+import { useRenterWallet } from "@/hooks/useRenterWallet";
 import logoLight from "@/assets/motonita-logo.svg";
 import logoDark from "@/assets/motonita-logo-dark.svg";
 import { useTheme } from "@/hooks/useTheme";
@@ -44,6 +45,8 @@ export const Header = memo(() => {
   const navigate = useNavigate();
   const isBusiness = hasRole('business');
   const isAdmin = hasRole('admin');
+  const isRenter = isAuthenticated && !isBusiness && !isAdmin;
+  const { balance: renterBalance, currency: renterCurrency, isLoading: renterWalletLoading } = useRenterWallet();
 
   // Track scroll position for dynamic menu positioning
   useEffect(() => {
@@ -375,6 +378,24 @@ export const Header = memo(() => {
             
             {isAuthenticated ? (
               <>
+                {isRenter && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-10 gap-1.5 rounded-full px-3 font-semibold"
+                    aria-label={t('header.credits') || 'Credits'}
+                    onClick={() => navigate("/billing")}
+                  >
+                    <Wallet className="h-4 w-4 text-primary" />
+                    {renterWalletLoading ? (
+                      <span className="inline-block h-3 w-10 animate-pulse rounded bg-muted" />
+                    ) : (
+                      <span className="tabular-nums">
+                        {Math.round(renterBalance)} <span className="text-xs font-normal text-muted-foreground">{renterCurrency}</span>
+                      </span>
+                    )}
+                  </Button>
+                )}
                 <Button
                   variant="outline"
                   size="icon"
@@ -422,6 +443,12 @@ export const Header = memo(() => {
                     <CalendarIcon className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
                     {t('header.bookingHistory')}
                   </DropdownMenuItem>
+                  {isRenter && (
+                    <DropdownMenuItem onClick={() => navigate("/billing")}>
+                      <Wallet className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
+                      {t('header.credits') || 'Credits'} · {Math.round(renterBalance)} {renterCurrency}
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuItem onClick={() => navigate("/inbox")} className="relative">
                     <MessageCircle className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
                     {t('header.messages')}

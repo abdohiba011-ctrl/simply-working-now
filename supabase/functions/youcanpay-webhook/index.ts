@@ -59,7 +59,18 @@ Deno.serve(async (req) => {
     }
 
     // Credit/apply based on purpose
-    if (payment.purpose === "wallet_topup" && payment.related_wallet_user_id) {
+    if (payment.purpose === "renter_topup" && (payment.related_wallet_user_id || payment.user_id)) {
+      const userId = payment.related_wallet_user_id || payment.user_id;
+      const { error: creditErr } = await admin.rpc("credit_renter_wallet", {
+        _user_id: userId,
+        _amount: Number(payment.amount),
+        _payment_id: payment.id,
+        _method: "youcanpay",
+        _reference: transactionId,
+        _description: "Credits top up",
+      });
+      if (creditErr) console.error("credit_renter_wallet error", creditErr);
+    } else if (payment.purpose === "wallet_topup" && payment.related_wallet_user_id) {
       const userId = payment.related_wallet_user_id;
       const { data: wallet } = await admin
         .from("agency_wallets")
