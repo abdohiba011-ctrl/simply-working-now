@@ -45,6 +45,8 @@ export const Header = memo(() => {
   const navigate = useNavigate();
   const isBusiness = hasRole('business');
   const isAdmin = hasRole('admin');
+  const isRenter = isAuthenticated && !isBusiness && !isAdmin;
+  const { balance: renterBalance, currency: renterCurrency, isLoading: renterWalletLoading } = useRenterWallet();
 
   // Track scroll position for dynamic menu positioning
   useEffect(() => {
