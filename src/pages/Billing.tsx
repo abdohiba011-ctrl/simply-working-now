@@ -38,11 +38,13 @@ import {
 const PRESETS = [50, 100, 200, 500];
 
 export default function Billing() {
-  const { user, userRoles } = useAuth();
+  const { user, userRoles, isLoading: authLoading } = useAuth();
   const [params, setParams] = useSearchParams();
   const { balance, currency, isLoading, transactions, refetch, refetchTransactions } = useRenterWallet();
 
-  const isRenter = userRoles?.includes("renter") ?? false;
+  // A "renter" in this app = any authenticated user that is not an agency/business or admin.
+  // The user_roles enum is: admin | business | user. There is no explicit "renter" role.
+  const isRenter = !userRoles?.some((r) => r === "business" || r === "admin");
 
   const [topupOpen, setTopupOpen] = useState(false);
   const [amount, setAmount] = useState<string>("100");
