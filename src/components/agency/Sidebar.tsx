@@ -33,9 +33,10 @@ const NAV: NavItem[] = [
 interface SidebarProps {
   collapsed: boolean;
   onToggle: () => void;
+  hideCollapseToggle?: boolean;
 }
 
-export const Sidebar = ({ collapsed, onToggle }: SidebarProps) => {
+export const Sidebar = ({ collapsed, onToggle, hideCollapseToggle }: SidebarProps) => {
   const location = useLocation();
   const user = useAuthStore((s) => s.user);
   const agency = useAgencyStore();
@@ -50,8 +51,9 @@ export const Sidebar = ({ collapsed, onToggle }: SidebarProps) => {
   return (
     <aside
       className={cn(
-        "sticky top-0 hidden h-screen shrink-0 flex-col border-r border-border bg-card transition-all duration-200 lg:flex",
-        collapsed ? "w-16" : "w-[240px]",
+        "sticky top-0 h-screen shrink-0 flex-col border-r border-border bg-card transition-all duration-200",
+        hideCollapseToggle ? "flex w-full" : "hidden lg:flex",
+        collapsed && !hideCollapseToggle ? "w-16" : !hideCollapseToggle ? "w-[240px]" : "",
       )}
     >
       {/* Logo */}
@@ -64,15 +66,17 @@ export const Sidebar = ({ collapsed, onToggle }: SidebarProps) => {
         ) : (
           <span className="text-lg font-bold text-primary">M</span>
         )}
-        <Button
-          size="icon"
-          variant="ghost"
-          onClick={onToggle}
-          aria-label="Toggle sidebar"
-          className="h-7 w-7"
-        >
-          {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-        </Button>
+        {!hideCollapseToggle && (
+          <Button
+            size="icon"
+            variant="ghost"
+            onClick={onToggle}
+            aria-label="Toggle sidebar"
+            className="h-7 w-7"
+          >
+            {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+          </Button>
+        )}
       </div>
 
       {/* Nav */}
