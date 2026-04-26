@@ -26,6 +26,7 @@ import {
   type LoginContext,
 } from "@/lib/routeAfterAuth";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
+import { checkAccountMethod, type AccountMethodStatus } from "@/lib/checkAccountMethod";
 
 const PHONE_REGEX = /^(\+212|00212|0)[67]\d{8}$/;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -70,6 +71,7 @@ export default function Login({ context = "renter" }: LoginProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [resendingVerification, setResendingVerification] = useState(false);
   const [lockoutMs, setLockoutMs] = useState(0);
+  const [accountHint, setAccountHint] = useState<AccountMethodStatus | null>(null);
 
   const form = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
@@ -103,6 +105,7 @@ export default function Login({ context = "renter" }: LoginProps) {
 
   const onSubmit = async (values: LoginValues) => {
     clearError();
+    setAccountHint(null);
     try {
       const loggedIn = await login(
         values.identifier,
@@ -137,6 +140,16 @@ export default function Login({ context = "renter" }: LoginProps) {
       const e = err as AuthError;
       if (e.code === "ACCOUNT_LOCKED") {
         setLockoutMs(e.retryAfterMs ?? 0);
+      }
+      // For invalid-credential failures, ask the backend WHY this failed
+      // (no account / OAuth-only / wrong password) so we can show a
+      // helpful, specific message instead of the generic one.
+      if (e.code === "INVALID_CREDENTIALS" && idType === "email") {
+        const ident = values.identifier.trim();
+        if (EMAIL_REGEX.test(ident)) {
+          const r = await checkAccountMethod(ident);
+          if (r.status !== "unknown") setAccountHint(r.status);
+        }
       }
       // error message already in store
     }
