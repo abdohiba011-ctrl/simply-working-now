@@ -239,15 +239,15 @@ export const CitiesAvailableSection = () => {
                 }}
               >
                 {(() => {
-                  const padX = 14;
-                  const iconW = 16;
-                  const gap = 8;
-                  // approximate text width (avg ~7.5px per char at fontSize 14)
-                  const textW = Math.max(60, activePoint.label.length * 7.5);
+                  const padX = 20;
+                  const iconW = 22;
+                  const gap = 10;
+                  // approximate text width (avg ~10.5px per char at fontSize 20)
+                  const textW = Math.max(80, activePoint.label.length * 10.5);
                   const w = padX * 2 + textW + (selectedCity === activePoint.key ? gap + iconW : 0);
-                  const h = 34;
+                  const h = 48;
                   const x = activePoint.x - w / 2;
-                  const y = activePoint.y - 52;
+                  const y = activePoint.y - 72;
                   return (
                     <>
                       <rect
@@ -257,26 +257,26 @@ export const CitiesAvailableSection = () => {
                         height={h}
                         rx={h / 2}
                         fill="hsl(var(--background))"
-                        filter="drop-shadow(0 4px 12px hsl(var(--foreground) / 0.35))"
+                        filter="drop-shadow(0 6px 16px hsl(var(--foreground) / 0.45))"
                       />
                       <text
                         x={x + padX + textW / 2}
-                        y={y + h / 2 + 5}
+                        y={y + h / 2 + 7}
                         textAnchor="middle"
                         fill="hsl(var(--foreground))"
-                        fontSize="14"
+                        fontSize="20"
                         fontWeight="600"
                       >
                         {activePoint.label}
                       </text>
                       {selectedCity === activePoint.key && (
-                        <g transform={`translate(${x + padX + textW + gap}, ${y + h / 2 - 8}) ${isRTL ? "rotate(180 8 8)" : ""}`}>
+                        <g transform={`translate(${x + padX + textW + gap}, ${y + h / 2 - 11}) ${isRTL ? "rotate(180 11 11)" : ""}`}>
                           {/* ChevronRight glyph */}
                           <path
-                            d="M5 3 L11 8 L5 13"
+                            d="M7 4 L15 11 L7 18"
                             fill="none"
                             stroke="hsl(var(--primary))"
-                            strokeWidth="2.25"
+                            strokeWidth="3"
                             strokeLinecap="round"
                             strokeLinejoin="round"
                           />
@@ -284,7 +284,7 @@ export const CitiesAvailableSection = () => {
                       )}
                       {/* Little notch */}
                       <path
-                        d={`M ${activePoint.x - 6} ${y + h} L ${activePoint.x} ${y + h + 7} L ${activePoint.x + 6} ${y + h} Z`}
+                        d={`M ${activePoint.x - 9} ${y + h} L ${activePoint.x} ${y + h + 10} L ${activePoint.x + 9} ${y + h} Z`}
                         fill="hsl(var(--background))"
                       />
                     </>
