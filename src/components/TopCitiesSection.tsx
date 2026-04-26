@@ -175,7 +175,7 @@ export const TopCitiesSection = () => {
                       {cityName}
                     </h3>
                     <p className="text-sm text-white/90 font-medium">
-                      {city.bikes_count || 0} {t('cities.bikesAvailable')}
+                      {countByCity.get(city.id) ?? 0} {t('cities.bikesAvailable')}
                     </p>
                   </div>
                 </div>
