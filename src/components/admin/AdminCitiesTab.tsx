@@ -71,6 +71,7 @@ const generateNameKey = (name: string) => {
 
 export const AdminCitiesTab = () => {
   const [cities, setCities] = useState<ServiceCity[]>([]);
+  const [liveCounts, setLiveCounts] = useState<Map<string, number>>(new Map());
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [showEditDialog, setShowEditDialog] = useState(false);
