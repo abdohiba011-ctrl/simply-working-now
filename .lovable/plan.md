@@ -1,30 +1,39 @@
-I found the current failure is happening in the managed Google OAuth helper while exchanging the authorization code. The latest console/session data shows it occurs on the preview URL inside an iframe/popup flow, which is a known place where the preview fetch/proxy can interfere with auth token exchange. I’ll make the auth flow more robust and stop users from hitting the broken preview-specific path.
+I found the Google flow is still using custom domain/iframe breakout code in `src/pages/Auth.tsx` and `src/lib/oauthDomain.ts`. The live error URL (`https://motonita.ma/#error=server_error&error_description=failed+to+exchange+authorization+code...`) means Google completed, but the backend OAuth broker failed while exchanging Google’s code. The app should not keep adding custom redirects around Lovable Cloud’s managed Google OAuth; it should use the standard same-origin broker flow and then verify the backend Google provider/domain setup.
 
-Plan:
+Plan to make sign-in work:
 
-1. Update the Google sign-in handler in `src/pages/Auth.tsx`
-   - Detect when the app is running inside Lovable preview/iframe.
-   - Instead of opening Google in the iframe popup flow, send the user to the published production URL auth page in a top-level tab/window context.
-   - Keep the production flow on the same origin once it starts, so the OAuth state/code exchange matches correctly.
+1. Remove conflicting OAuth redirect logic
+   - Update `src/pages/Auth.tsx` so the Google button calls only:
+     - `lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin })`
+   - Remove the forced redirect to `https://motonita.ma/auth` and the `canCompleteOAuthHere(...)` gate.
+   - Keep only simple handling for returned errors/tokens.
 
-2. Add a safe return-path handoff
-   - Preserve `returnUrl` where appropriate.
-   - Only allow internal return paths, not arbitrary external redirects.
-   - After successful Google sign-in, continue using the existing role-based redirect logic.
+2. Stop maintaining custom OAuth domain helpers
+   - Remove or simplify `src/lib/oauthDomain.ts` so it no longer controls whether OAuth can run.
+   - Keep the managed OAuth package as the source of truth, because it already handles top-level vs iframe behavior.
 
-3. Clean up stale/conflicting OAuth code
-   - Remove or stop relying on the old `oauthDomain.ts` custom-domain workaround comments/functions, because they contradict the current managed OAuth behavior and can lead to more cross-domain state issues.
-   - Do not edit the auto-generated Lovable auth integration file.
-   - Revert the manual Supabase auth client OAuth options if needed, because the generated client should not be manually maintained and the managed Lovable OAuth helper is responsible for the flow.
+3. Standardize login/signup entry points
+   - The app currently has two auth systems/routes: `/auth` and newer `/login`/`/signup` pages.
+   - Make the public header/login/signup links consistently use the real Cloud auth flow that includes Google sign-in.
+   - If needed, add the Google button to the `/login` and `/signup` pages too, or redirect those routes to `/auth` to avoid users landing on a different auth implementation.
 
-4. Improve the user-facing error state
-   - If OAuth returns `error` / `error_description`, clear the broken URL parameters and show a clearer message like: “Google sign-in could not finish here. Please open the live site and try again.”
-   - Keep the “Signing you in…” interstitial for real callback token processing.
+4. Fix post-login routing/session detection
+   - After Google succeeds, wait for the auth session and route the user to the correct place:
+     - pending booking → booking review
+     - business role → agency/business dashboard
+     - normal renter → home/search
+   - Clean `#error=...` or `#access_token=...` URL fragments after handling them, so users are not stuck seeing old OAuth errors.
 
-5. Verify after implementation
+5. Validate Lovable Cloud Google configuration
+   - Refresh/reconfigure the managed Google auth provider if available in build mode.
+   - If the backend is using custom Google credentials, verify the configured Google Client ID/Secret and the Google redirect URL from Lovable Cloud Auth settings. A bad or stale client secret is the most likely cause of `failed to exchange authorization code` after Google says “Continue”.
+   - Confirm both `motonita.ma` and `www.motonita.ma` are active domains, with one primary domain to avoid cross-domain confusion.
+
+6. Test and verify
    - Run TypeScript/build checks.
-   - Test that clicking Google sign-in from preview redirects out to the live site instead of failing inside the iframe.
-   - Confirm the live-site path remains `https://motonita.ma/auth` and does not jump between `www`, preview, and published domains during the same OAuth attempt.
+   - Test the Google button on the published/custom domain, not only inside preview.
+   - Confirm the callback no longer lands on `#error=server_error` and that the user becomes authenticated after clicking Continue.
 
-Technical note:
-The preview error is consistent with the known OAuth preview limitation: the preview environment can interfere with auth POST/token exchange. The fix is to avoid completing Google OAuth inside the preview iframe and force the real sign-in attempt to happen on the live, top-level site.
+Technical notes:
+- I will not edit the auto-generated `src/integrations/lovable/index.ts` or `src/integrations/supabase/client.ts`.
+- The persistent `failed to exchange authorization code` is usually backend/provider configuration, not a React rendering issue. The code cleanup removes app-side causes; if it still fails after that, the remaining fix is updating the Google credentials/redirect URL in Lovable Cloud Authentication settings.
