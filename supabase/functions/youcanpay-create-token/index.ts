@@ -8,7 +8,7 @@ const corsHeaders = {
 };
 
 interface Body {
-  purpose: "booking_payment" | "wallet_topup" | "subscription";
+  purpose: "booking_payment" | "wallet_topup" | "subscription" | "renter_topup";
   amount: number;
   currency?: string;
   related_booking_id?: string | null;
