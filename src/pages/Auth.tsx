@@ -284,36 +284,8 @@ const Auth = () => {
     }
   };
 
-  const handleSendOTP = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-
-    try {
-      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
-        redirectTo: `${window.location.origin}/reset-password`,
-      });
-
-      if (error) throw error;
-
-      toast.success(t('auth.codeSentSuccess'));
-      // Show a "check your email" confirmation step instead of OTP entry.
-      setResetStep("password");
-    } catch (error: unknown) {
-      toast.error(getErrMsg(error) || t('auth.failedToSendCode'));
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleVerifyOTP = async (_e: React.FormEvent) => {
-    // No-op: kept for backward compatibility with old UI references.
-    // The reset flow now uses an email link instead of an OTP code.
-  };
-
-  const handleResetPassword = async (_e: React.FormEvent) => {
-    // No-op: password is set on the dedicated /reset-password page after
-    // the user clicks the email link.
-  };
+  // Forgot-password / reset is handled by the dedicated /forgot-password
+  // page (6-digit OTP flow). The button on this page just redirects there.
 
   const handleGoogleSignIn = useCallback(async () => {
     setIsLoading(true);
