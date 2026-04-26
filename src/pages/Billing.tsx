@@ -229,8 +229,8 @@ export default function Billing() {
     else toast.success("Billing info saved");
   };
 
-  // Non-renter gate
-  if (user && userRoles && !isRenter) {
+  // Non-renter gate — only show after auth has finished loading
+  if (!authLoading && user && !isRenter) {
     return (
       <div className="min-h-screen bg-background">
         <Header />
