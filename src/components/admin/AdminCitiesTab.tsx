@@ -418,7 +418,12 @@ export const AdminCitiesTab = () => {
                         <span className="font-medium">{city.name}</span>
                       </div>
                     </TableCell>
-                    <TableCell>{city.bikes_count}</TableCell>
+                    <TableCell>
+                      <div className="flex flex-col">
+                        <span className="font-medium">{liveCounts.get(city.id) ?? 0}</span>
+                        <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Live</span>
+                      </div>
+                    </TableCell>
                     <TableCell>{city.price_from} DH/day</TableCell>
                     <TableCell className="text-center">
                       <Button
