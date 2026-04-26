@@ -100,7 +100,7 @@ const AgencyLogin = lazy(() => import("./pages/auth/AgencyLogin"));
 const MockSignup = lazy(() => import("./pages/auth/Signup"));
 const AgencySignup = lazy(() => import("./pages/auth/AgencySignup"));
 const MockVerifyEmail = lazy(() => import("./pages/auth/VerifyEmail"));
-const RentPlaceholder = lazy(() => import("./pages/auth/RentPlaceholder"));
+
 const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword"));
 const ResetPasswordVerify = lazy(() => import("./pages/auth/ResetPasswordVerify"));
 const ResetPasswordNew = lazy(() => import("./pages/auth/ResetPasswordNew"));
@@ -156,7 +156,7 @@ const App = () => (
                   <Route path="/agency/login" element={<AgencyLogin />} />
                   <Route path="/signup" element={<MockSignup />} />
                   <Route path="/agency/signup" element={<AgencySignup />} />
-                  <Route path="/rent" element={<RentPlaceholder />} />
+                  <Route path="/rent" element={<Navigate to="/rent/casablanca" replace />} />
                   <Route path="/verify-email" element={<MockVerifyEmail />} />
                   <Route path="/forgot-password" element={<ForgotPassword />} />
                   <Route path="/reset-password/verify" element={<ResetPasswordVerify />} />
