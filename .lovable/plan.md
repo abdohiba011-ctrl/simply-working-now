@@ -1,42 +1,48 @@
-# Replace AI blog images with real stock photos
+## Problem
 
-The current blog hero images in `src/assets/blog-*.jpg` are AI-generated. You want **real photos** from free stock libraries (Pexels / Pixabay) instead.
+The Google flow itself is working server-side — the auth logs show successful logins for `bellaoumaima550@gmail.com`, `abdrahimbamouh56@gmail.com`, and others (`action: login, login_method: token, status: 200`). Tokens are being issued by Google and the broker.
 
-## What I'll change
+What's broken is the **frontend handoff after the redirect back to `motonita.ma`**:
+1. Google redirects to `https://motonita.ma/auth#access_token=...&refresh_token=...`
+2. Supabase's `detectSessionInUrl` should pick up the tokens and create a session — but our client config (`src/integrations/supabase/client.ts`) doesn't explicitly enable it, and the URL hash is being stripped/handled by other code paths before supabase sees it.
+3. Result: tokens sit in the URL, no session is created, `isAuthenticated` stays `false`, and the Auth page just re-renders itself ("stays in its place") — exactly what the user described.
 
-### 1. Source real photos from Pexels
-Pexels and Pixabay allow free commercial use with no attribution, and Pexels explicitly permits hotlinking from their CDN. I'll pick one real photograph per article:
+## Root cause
 
-| Article | Subject |
-|---|---|
-| How to Rent a Motorbike in Morocco | Real photo: motorbike on an open road |
-| Motorbike License Requirements | Real photo: motorcycle helmet + gloves + documents |
-| Casablanca Neighborhoods | Real photo: Casablanca cityscape / Hassan II mosque |
-| Best Motorbike Routes | Real photo: rider on a winding mountain road |
+Two compounding issues:
 
-### 2. Hotlink instead of bundling
-I'll use direct Pexels CDN URLs (`images.pexels.com/.../photo.jpeg?auto=compress&cs=tinysrgb&w=1600`) rather than downloading the files. This matches the project memory rule **"Use URL-based image hosting/placeholders (no local static imports)"** and keeps the bundle small.
+**A. `detectSessionInUrl` not explicit.** While it defaults to `true`, the `flowType` is also unset. The Lovable broker uses an **implicit flow** (returns tokens in the URL hash), which requires `flowType: 'implicit'` on the supabase client to be reliably parsed. Without it, supabase-js may try PKCE exchange and fail silently, leaving the tokens unprocessed.
 
-### 3. Update `src/data/blogPosts.ts`
-- Remove the four `import heroX from "@/assets/blog-*.jpg"` lines
-- Replace each `heroImage:` field with the corresponding Pexels URL
-- Leave titles, excerpts, alt text, and all trilingual content untouched
+**B. Hash-error handler in `Auth.tsx` (lines 117–126) clears the URL hash unconditionally if it contains `error=`** — and on some redirects the hash includes both tokens AND a benign warning, but more importantly, **other navigations** (e.g. the `www → apex` redirect on line 111) drop the hash entirely. If a user lands on `www.motonita.ma/auth#access_token=...`, we redirect to `motonita.ma/auth` and **lose the tokens**.
 
-### 4. Delete the AI-generated files
-Remove from `src/assets/`:
-- `blog-rent-morocco.jpg`
-- `blog-license-morocco.jpg`
-- `blog-casablanca.jpg`
-- `blog-atlas-routes.jpg`
+## Fix
 
-### 5. Verify
-Visit `/blog` and each of the four article pages to confirm the real photos load correctly in EN/FR/AR with proper alt text and no broken images.
+1. **`src/integrations/supabase/client.ts`** — explicitly enable hash-based session detection so supabase-js reliably picks up `#access_token=...` after the OAuth redirect:
+   ```ts
+   auth: {
+     storage: localStorage,
+     persistSession: true,
+     autoRefreshToken: true,
+     detectSessionInUrl: true,
+     flowType: 'implicit',
+   }
+   ```
 
-## Files touched
-- `src/data/blogPosts.ts` — swap imports for Pexels URLs
-- `src/assets/blog-*.jpg` (×4) — delete
+2. **`src/pages/Auth.tsx`** — fix the `www → apex` canonicalization to **preserve the URL hash** when redirecting (currently it drops `window.location.hash` for the apex case in some browsers). Build the target URL as `pathname + search + hash` (already done) but **only redirect if there are no OAuth tokens in the hash** — otherwise let supabase consume them on this host first, then optionally canonicalize.
+
+3. **`src/pages/Auth.tsx` redirect-on-auth effect** — currently it only watches `[authLoading, isAuthenticated, ...]`. Add a tiny grace-period: when the page loads with `#access_token=` in the URL, show a "Signing you in…" spinner instead of the login form, so the user doesn't see the same auth page flash and think nothing happened. After supabase-js processes the hash and `isAuthenticated` flips, the existing redirect runs.
+
+4. **Sanity check** — add a one-time console log + toast if we land on `/auth` with a hash containing `access_token` but supabase fails to set a session within ~3 seconds, so future debugging is instant.
+
+No backend / Supabase config changes are needed (the broker is correctly configured — auth logs prove logins succeed).
+
+## Files to edit
+
+- `src/integrations/supabase/client.ts` — add `detectSessionInUrl: true` and `flowType: 'implicit'`
+- `src/pages/Auth.tsx` — preserve hash on www→apex redirect; add "Signing you in…" interstitial when tokens are present in the URL hash; add 3-second sanity-check toast
 
 ## Out of scope
-- No changes to `BlogCard.tsx`, `BlogPost.tsx`, or any article body content
-- No changes to translations, routes, or sitemap
-- No changes to other AI-generated assets elsewhere in the project
+
+- No changes to `src/integrations/lovable/index.ts` (auto-generated, do not touch).
+- No changes to `src/lib/oauthDomain.ts` — the same-origin strategy is correct and the auth logs confirm it works.
+- No changes to `/login` and `/signup` pages — they don't expose Google sign-in (and per memory the OAuth entry point lives on `/auth`).
