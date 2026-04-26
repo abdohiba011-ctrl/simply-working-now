@@ -98,7 +98,23 @@ export const AdminCitiesTab = () => {
 
   useEffect(() => {
     fetchCities();
+    fetchLiveCounts();
   }, []);
+
+  const fetchLiveCounts = async () => {
+    const { data, error } = await supabase
+      .from('city_bike_counts' as any)
+      .select('city_id, bikes_available');
+    if (error) {
+      console.error('Failed to load live bike counts', error);
+      return;
+    }
+    const map = new Map<string, number>();
+    ((data as unknown) as Array<{ city_id: string; bikes_available: number }> | null)?.forEach((row) => {
+      map.set(row.city_id, Number(row.bikes_available) || 0);
+    });
+    setLiveCounts(map);
+  };
 
   const fetchCities = async () => {
     setIsLoading(true);
@@ -110,6 +126,8 @@ export const AdminCitiesTab = () => {
 
       if (error) throw error;
       setCities(data || []);
+      // Refresh live counts whenever we refresh the list
+      fetchLiveCounts();
     } catch (error) {
       toast.error("Failed to load cities");
       console.error(error);
