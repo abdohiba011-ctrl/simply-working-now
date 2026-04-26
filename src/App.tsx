@@ -43,6 +43,7 @@ const BookingReview = lazy(() => import("./pages/BookingReview"));
 
 const Checkout = lazy(() => import("./pages/Checkout"));
 const PayYouCan = lazy(() => import("./pages/PayYouCan"));
+const PaymentStatus = lazy(() => import("./pages/PaymentStatus"));
 const Confirmation = lazy(() => import("./pages/Confirmation"));
 const BusinessDashboard = lazy(() => import("./pages/BusinessDashboard"));
 const AddBike = lazy(() => import("./pages/AddBike"));
