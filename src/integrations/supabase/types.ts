@@ -1030,6 +1030,13 @@ export type Database = {
             referencedRelation: "bikes_owner_view"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "bookings_bike_id_fkey"
+            columns: ["bike_id"]
+            isOneToOne: false
+            referencedRelation: "bikes_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       client_file_downloads: {
@@ -1853,6 +1860,47 @@ export type Database = {
           },
         ]
       }
+      bikes_public: {
+        Row: {
+          available: boolean | null
+          bike_type_id: string | null
+          condition: string | null
+          created_at: string | null
+          id: string | null
+          location: string | null
+          owner_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          available?: boolean | null
+          bike_type_id?: string | null
+          condition?: string | null
+          created_at?: string | null
+          id?: string | null
+          location?: string | null
+          owner_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          available?: boolean | null
+          bike_type_id?: string | null
+          condition?: string | null
+          created_at?: string | null
+          id?: string | null
+          location?: string | null
+          owner_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bikes_bike_type_id_fkey"
+            columns: ["bike_type_id"]
+            isOneToOne: false
+            referencedRelation: "bike_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       business_bookings_view: {
         Row: {
           admin_status: string | null
@@ -1978,6 +2026,13 @@ export type Database = {
             columns: ["bike_id"]
             isOneToOne: false
             referencedRelation: "bikes_owner_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_bike_id_fkey"
+            columns: ["bike_id"]
+            isOneToOne: false
+            referencedRelation: "bikes_public"
             referencedColumns: ["id"]
           },
         ]
