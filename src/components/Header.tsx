@@ -152,7 +152,30 @@ export const Header = memo(() => {
     }
   };
 
-  const playNotificationSound = useCallback(() => {
+  const fetchUnreadMessages = async () => {
+    if (!user) return;
+    try {
+      // Get bookings owned by this user
+      const { data: bks } = await supabase
+        .from("bookings")
+        .select("id")
+        .eq("user_id", user.id);
+      const ids = (bks || []).map((b: { id: string }) => b.id);
+      if (ids.length === 0) {
+        setUnreadMessages(0);
+        return;
+      }
+      const { count } = await supabase
+        .from("booking_messages")
+        .select("*", { count: "exact", head: true })
+        .in("booking_id", ids)
+        .neq("sender_id", user.id)
+        .is("read_at", null);
+      setUnreadMessages(count || 0);
+    } catch (e) {
+      console.error("Error fetching unread messages:", e);
+    }
+  };
     try {
       // Create a more noticeable notification sound
       const audioContext = new (window.AudioContext || (window as typeof window & { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
