@@ -110,6 +110,19 @@ export function TopupConfirmDialog({
                 <span className="font-mono">4000 0000 0000 0002</span>.
               </div>
             </div>
+            {pendingPaymentUrl && (
+              <div className="rounded-md border border-primary/40 bg-primary/10 p-3 text-xs">
+                <div className="mb-2 font-semibold">Your browser blocked the redirect</div>
+                <a
+                  href={pendingPaymentUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
+                >
+                  Open payment page →
+                </a>
+              </div>
+            )}
           </div>
         )}
 
