@@ -1,14 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/shared/EmptyState";
-import { MessageCircle, Loader2, ChevronRight } from "lucide-react";
+import { MessageCircle, Loader2, ChevronLeft, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { format } from "date-fns";
+import { cn } from "@/lib/utils";
+import { BookingChat } from "@/components/BookingChat";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface BookingRow {
   id: string;
@@ -28,8 +31,10 @@ interface Conversation extends BookingRow {
 
 const Inbox = () => {
   const { user } = useAuth();
+  const isMobile = useIsMobile();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeId, setActiveId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -40,7 +45,7 @@ const Inbox = () => {
       const { data: bookings } = await supabase
         .from("bookings")
         .select(
-          "id, bike_id, pickup_date, return_date, booking_status, customer_name, bikes(bike_types(name))"
+          "id, bike_id, pickup_date, return_date, booking_status, customer_name, bikes(bike_types(name))",
         )
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
@@ -77,7 +82,7 @@ const Inbox = () => {
         const ms = byBooking.get(b.id) || [];
         const last = ms[0];
         const unread = ms.filter(
-          (m) => m.sender_id && m.sender_id !== user.id && !m.read_at
+          (m) => m.sender_id && m.sender_id !== user.id && !m.read_at,
         ).length;
         return {
           ...b,
@@ -89,7 +94,7 @@ const Inbox = () => {
         };
       });
 
-      // Sort: bookings with messages first (newest message), then others by pickup
+      // Conversations with messages first (newest), then by pickup date
       enriched.sort((a, b) => {
         if (a.lastMessageAt && b.lastMessageAt)
           return b.lastMessageAt.localeCompare(a.lastMessageAt);
@@ -100,19 +105,27 @@ const Inbox = () => {
 
       if (!cancelled) {
         setConversations(enriched);
+        // Auto-select most recent on desktop
+        if (!isMobile && enriched.length > 0 && !activeId) {
+          setActiveId(enriched[0].id);
+        }
         setLoading(false);
       }
     };
 
     load();
 
-    // Realtime: refresh when new messages arrive in any of the user's bookings
     const channel = supabase
-      .channel("inbox-messages")
+      .channel(`inbox-messages-${user.id}`)
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "booking_messages" },
-        () => load()
+        () => load(),
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "booking_messages" },
+        () => load(),
       )
       .subscribe();
 
@@ -120,27 +133,47 @@ const Inbox = () => {
       cancelled = true;
       supabase.removeChannel(channel);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
+
+  // Mark messages as read when a conversation is opened
+  useEffect(() => {
+    if (!user || !activeId) return;
+    (async () => {
+      await supabase
+        .from("booking_messages")
+        .update({ read_at: new Date().toISOString() })
+        .eq("booking_id", activeId)
+        .neq("sender_id", user.id)
+        .is("read_at", null);
+    })();
+  }, [activeId, user]);
 
   const totalUnread = useMemo(
     () => conversations.reduce((acc, c) => acc + c.unread, 0),
-    [conversations]
+    [conversations],
   );
+
+  const activeConversation = conversations.find((c) => c.id === activeId);
+  const showChatPane = !isMobile || !!activeId;
+  const showListPane = !isMobile || !activeId;
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
-      <main className="flex-1 max-w-4xl mx-auto w-full px-4 py-8">
-        <div className="flex items-center gap-3 mb-6">
-          <h1 className="text-2xl font-bold text-foreground">Inbox</h1>
-          {totalUnread > 0 && (
-            <Badge variant="destructive">{totalUnread} unread</Badge>
-          )}
-        </div>
+      <main className="flex-1 max-w-6xl mx-auto w-full px-4 py-6">
+        {!isMobile || !activeId ? (
+          <div className="flex items-center gap-3 mb-4">
+            <h1 className="text-2xl font-bold text-foreground">Messages</h1>
+            {totalUnread > 0 && (
+              <Badge variant="destructive">{totalUnread} unread</Badge>
+            )}
+          </div>
+        ) : null}
 
         {loading ? (
           <div className="flex items-center justify-center py-16 text-muted-foreground">
-            <Loader2 className="h-5 w-5 animate-spin mr-2" /> Loading your conversations…
+            <Loader2 className="h-5 w-5 animate-spin mr-2" /> Loading conversations…
           </div>
         ) : conversations.length === 0 ? (
           <EmptyState
@@ -149,42 +182,84 @@ const Inbox = () => {
             description="Once you book a motorbike, your chat with the agency will appear here."
           />
         ) : (
-          <div className="space-y-2">
-            {conversations.map((c) => {
-              const bikeName = c.bikes?.bike_types?.name || "Motorbike";
-              return (
-                <Link key={c.id} to={`/booking/${c.id}`} className="block">
-                  <Card className="hover:border-primary/60 transition-colors">
-                    <CardContent className="p-4 flex items-center gap-4">
-                      <div className="flex-shrink-0 h-10 w-10 rounded-full bg-primary/10 text-primary flex items-center justify-center">
-                        <MessageCircle className="h-5 w-5" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between gap-2">
-                          <p className="font-medium text-foreground truncate">{bikeName}</p>
-                          {c.unread > 0 && (
-                            <Badge variant="destructive" className="text-[10px] h-5">
-                              {c.unread}
-                            </Badge>
-                          )}
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                          {format(new Date(c.pickup_date), "MMM d")} →{" "}
-                          {format(new Date(c.return_date), "MMM d")} ·{" "}
-                          <span className="uppercase tracking-wide">{c.booking_status}</span>
-                        </p>
-                        {c.lastMessagePreview && (
-                          <p className="text-sm text-muted-foreground truncate mt-1">
-                            {c.lastMessagePreview}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {showListPane && (
+              <div className="md:col-span-1 space-y-2 md:max-h-[75vh] md:overflow-y-auto">
+                {conversations.map((c) => {
+                  const bikeName = c.bikes?.bike_types?.name || "Motorbike";
+                  return (
+                    <button
+                      key={c.id}
+                      onClick={() => setActiveId(c.id)}
+                      className={cn(
+                        "w-full text-left",
+                        activeId === c.id ? "ring-2 ring-primary rounded-lg" : "",
+                      )}
+                    >
+                      <Card className="hover:border-primary/50 transition-colors">
+                        <CardContent className="p-3">
+                          <div className="flex items-center gap-2 mb-1">
+                            <User className="h-4 w-4 text-muted-foreground shrink-0" />
+                            <span className="font-medium text-sm text-foreground truncate flex-1">
+                              {bikeName}
+                            </span>
+                            {c.unread > 0 && (
+                              <Badge variant="destructive" className="text-[10px] h-5">
+                                {c.unread}
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            {format(new Date(c.pickup_date), "MMM d")} →{" "}
+                            {format(new Date(c.return_date), "MMM d")}
                           </p>
-                        )}
-                      </div>
-                      <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                    </CardContent>
-                  </Card>
-                </Link>
-              );
-            })}
+                          {c.lastMessagePreview && (
+                            <p className="text-xs text-muted-foreground truncate mt-1">
+                              {c.lastMessagePreview}
+                            </p>
+                          )}
+                          <p className="text-[10px] uppercase tracking-wide text-muted-foreground mt-1">
+                            {c.booking_status}
+                          </p>
+                        </CardContent>
+                      </Card>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {showChatPane && (
+              <div className="md:col-span-2">
+                {isMobile && activeId && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="mb-2 -ml-2"
+                    onClick={() => setActiveId(null)}
+                  >
+                    <ChevronLeft className="h-4 w-4 mr-1" /> Back to conversations
+                  </Button>
+                )}
+                {activeId ? (
+                  <BookingChat
+                    bookingId={activeId}
+                    viewerRole="renter"
+                    title={
+                      activeConversation?.bikes?.bike_types?.name
+                        ? `Chat — ${activeConversation.bikes.bike_types.name}`
+                        : "Chat with agency"
+                    }
+                  />
+                ) : (
+                  <EmptyState
+                    icon={MessageCircle}
+                    title="Select a conversation"
+                    description="Pick a booking on the left to view messages."
+                  />
+                )}
+              </div>
+            )}
           </div>
         )}
       </main>

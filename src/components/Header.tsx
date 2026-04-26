@@ -1,7 +1,7 @@
 import { useState, useEffect, memo, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Globe, User, LogOut, Settings, Lock, Building2, Calendar as CalendarIcon, MoreHorizontal, Users, Phone, Shield, MapPin, Bell, ShieldCheck, LayoutDashboard, BadgeCheck, Tag, ShoppingBag, Bike, Receipt, Wrench } from "lucide-react";
+import { Menu, X, Globe, User, LogOut, Settings, Lock, Building2, Calendar as CalendarIcon, MoreHorizontal, Users, Phone, Shield, MapPin, Bell, ShieldCheck, LayoutDashboard, BadgeCheck, Tag, ShoppingBag, Bike, Receipt, Wrench, MessageCircle } from "lucide-react";
 import logoLight from "@/assets/motonita-logo.svg";
 import logoDark from "@/assets/motonita-logo-dark.svg";
 import { useTheme } from "@/hooks/useTheme";
@@ -37,6 +37,7 @@ export const Header = memo(() => {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [userName, setUserName] = useState<string>("");
   const [unreadNotifications, setUnreadNotifications] = useState(0);
+  const [unreadMessages, setUnreadMessages] = useState(0);
   const [isScrolled, setIsScrolled] = useState(false);
   const { language, setLanguage, t } = useLanguage();
   const { user, isAuthenticated, logout, hasRole } = useAuth();
@@ -62,7 +63,31 @@ export const Header = memo(() => {
     if (user) {
       fetchUserProfile();
       fetchUnreadNotifications();
+      fetchUnreadMessages();
     }
+  }, [user]);
+
+  // Realtime: bump unread message count when a new message arrives in any of
+  // the user's bookings.
+  useEffect(() => {
+    if (!user) return;
+    const channel = supabase
+      .channel(`header-msgs-${user.id}`)
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "booking_messages" },
+        () => fetchUnreadMessages(),
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "booking_messages" },
+        () => fetchUnreadMessages(),
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const [isVerified, setIsVerified] = useState(false);
@@ -127,6 +152,31 @@ export const Header = memo(() => {
     }
   };
 
+  const fetchUnreadMessages = async () => {
+    if (!user) return;
+    try {
+      // Get bookings owned by this user
+      const { data: bks } = await supabase
+        .from("bookings")
+        .select("id")
+        .eq("user_id", user.id);
+      const ids = (bks || []).map((b: { id: string }) => b.id);
+      if (ids.length === 0) {
+        setUnreadMessages(0);
+        return;
+      }
+      const { count } = await supabase
+        .from("booking_messages")
+        .select("*", { count: "exact", head: true })
+        .in("booking_id", ids)
+        .neq("sender_id", user.id)
+        .is("read_at", null);
+      setUnreadMessages(count || 0);
+    } catch (e) {
+      console.error("Error fetching unread messages:", e);
+    }
+  };
+
   const playNotificationSound = useCallback(() => {
     try {
       // Create a more noticeable notification sound
@@ -170,7 +220,10 @@ export const Header = memo(() => {
   useEffect(() => {
     if (!user) return;
     
-    const interval = setInterval(fetchUnreadNotifications, 30000);
+    const interval = setInterval(() => {
+      fetchUnreadNotifications();
+      fetchUnreadMessages();
+    }, 30000);
     return () => clearInterval(interval);
   }, [user, unreadNotifications]);
 
@@ -321,6 +374,21 @@ export const Header = memo(() => {
             </Select>
             
             {isAuthenticated ? (
+              <>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="rounded-full h-10 w-10 p-0 relative"
+                  aria-label={t('header.messages')}
+                  onClick={() => navigate("/inbox")}
+                >
+                  <MessageCircle className="h-5 w-5" />
+                  {unreadMessages > 0 && (
+                    <span className="absolute -top-1 -right-1 h-5 min-w-5 px-1 bg-destructive text-destructive-foreground text-xs font-bold rounded-full flex items-center justify-center">
+                      {unreadMessages > 9 ? '9+' : unreadMessages}
+                    </span>
+                  )}
+                </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="icon" className="rounded-full h-10 w-10 p-0 relative">
@@ -353,6 +421,15 @@ export const Header = memo(() => {
                   <DropdownMenuItem onClick={() => navigate("/booking-history")}>
                     <CalendarIcon className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
                     {t('header.bookingHistory')}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate("/inbox")} className="relative">
+                    <MessageCircle className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
+                    {t('header.messages')}
+                    {unreadMessages > 0 && (
+                      <span className="ltr:ml-auto rtl:mr-auto h-5 min-w-5 px-1 bg-destructive text-destructive-foreground text-xs font-bold rounded-full flex items-center justify-center">
+                        {unreadMessages > 9 ? '9+' : unreadMessages}
+                      </span>
+                    )}
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate("/notifications")} className="relative">
                     <Bell className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
@@ -393,6 +470,7 @@ export const Header = memo(() => {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+              </>
             ) : (
               <>
                 <Button variant="outline" onClick={() => navigate("/auth")}>
@@ -501,6 +579,15 @@ export const Header = memo(() => {
                   <Button variant="outline" size="lg" className="justify-start gap-2 text-base min-h-[44px] mx-2" onClick={() => { navigate("/booking-history"); setIsMenuOpen(false); }}>
                     <CalendarIcon className="h-5 w-5" />
                     {t('header.bookingHistory')}
+                  </Button>
+                  <Button variant="outline" size="lg" className="justify-start gap-2 text-base min-h-[44px] mx-2 relative" onClick={() => { navigate("/inbox"); setIsMenuOpen(false); }}>
+                    <MessageCircle className="h-5 w-5" />
+                    {t('header.messages')}
+                    {unreadMessages > 0 && (
+                      <span className="ltr:ml-auto rtl:mr-auto h-5 min-w-5 px-1 bg-destructive text-destructive-foreground text-xs font-bold rounded-full flex items-center justify-center">
+                        {unreadMessages > 9 ? '9+' : unreadMessages}
+                      </span>
+                    )}
                   </Button>
                   <Button variant="outline" size="lg" className="justify-start gap-2 text-base min-h-[44px] mx-2 relative" onClick={() => { navigate("/notifications"); setIsMenuOpen(false); }}>
                     <Bell className="h-5 w-5" />
