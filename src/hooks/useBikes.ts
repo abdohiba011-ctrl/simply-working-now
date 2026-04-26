@@ -103,7 +103,7 @@ export const useBikes = (location?: string, bikeTypeId?: string) => {
       const { data, error } = await query;
       
       if (error) throw error;
-      return data as Bike[];
+      return (data as unknown) as Bike[];
     },
   });
 };
