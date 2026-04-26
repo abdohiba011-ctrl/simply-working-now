@@ -100,6 +100,13 @@ const Auth = () => {
     }
   }, [authLoading, isAuthenticated, hasRole, navigate, returnUrl]);
 
+  // Detect tokens in URL hash so we can show a "Signing you in…" interstitial
+  // instead of flashing the login form while supabase-js consumes them.
+  const [processingOAuthHash, setProcessingOAuthHash] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return /[#&]access_token=/.test(window.location.hash);
+  });
+
   // Canonicalize www → apex so the OAuth round-trip never crosses host
   // boundaries (the broker's state cookie is scoped per-host). Also
   // surface a clean error toast if the broker returned an OAuth error in
@@ -107,24 +114,55 @@ const Auth = () => {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    // (1) Canonicalize www → apex
-    if (window.location.hostname === "www.motonita.ma") {
-      const target = `${PRIMARY_PRODUCTION_ORIGIN}${window.location.pathname}${window.location.search}${window.location.hash}`;
+    const hash = window.location.hash || "";
+    const hasOAuthTokens = /[#&]access_token=/.test(hash);
+
+    // (1) Canonicalize www → apex — but NEVER while OAuth tokens are in
+    // the hash. The cross-host navigation would drop the hash on some
+    // browsers and supabase-js would never see the session.
+    if (window.location.hostname === "www.motonita.ma" && !hasOAuthTokens) {
+      const target = `${PRIMARY_PRODUCTION_ORIGIN}${window.location.pathname}${window.location.search}${hash}`;
       window.location.replace(target);
       return;
     }
 
     // (2) Surface OAuth errors returned by the broker in the URL hash.
-    if (window.location.hash.includes("error=")) {
-      const hashParams = new URLSearchParams(window.location.hash.slice(1));
+    // Skip when access_token is also present (success case with a benign warning).
+    if (hash.includes("error=") && !hasOAuthTokens) {
+      const hashParams = new URLSearchParams(hash.slice(1));
       const errDesc = hashParams.get("error_description") || hashParams.get("error");
       if (errDesc) {
         toast.error(decodeURIComponent(errDesc.replace(/\+/g, " ")));
-        // Clean the URL so the toast doesn't fire again on re-render.
         window.history.replaceState({}, "", window.location.pathname + window.location.search);
       }
     }
+
+    // (3) Sanity check: if tokens are in the hash but supabase-js hasn't
+    // produced a session within 3.5s, surface a clear error so we don't
+    // leave the user staring at a silent login form.
+    if (hasOAuthTokens) {
+      const timer = window.setTimeout(async () => {
+        const { data } = await supabase.auth.getSession();
+        if (!data.session) {
+          console.error("[OAuth] Tokens in URL but no session after 3.5s");
+          toast.error("Google sign-in didn't complete. Please try again.");
+          setProcessingOAuthHash(false);
+          window.history.replaceState({}, "", window.location.pathname + window.location.search);
+        } else {
+          setProcessingOAuthHash(false);
+        }
+      }, 3500);
+      return () => window.clearTimeout(timer);
+    }
   }, [t]);
+
+  // Once a session is detected, drop the interstitial so the redirect effect
+  // can take over.
+  useEffect(() => {
+    if (isAuthenticated && processingOAuthHash) {
+      setProcessingOAuthHash(false);
+    }
+  }, [isAuthenticated, processingOAuthHash]);
 
 
   const handleSendEmailOtp = async () => {
