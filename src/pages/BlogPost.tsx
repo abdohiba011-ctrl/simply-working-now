@@ -152,7 +152,7 @@ export default function BlogPost() {
 
             <div
               id="article-body"
-              className="prose prose-lg max-w-none mt-10 prose-headings:text-foreground prose-h2:mt-12 prose-h2:text-2xl prose-h2:font-bold prose-h3:mt-8 prose-h3:text-xl prose-h3:font-semibold prose-p:leading-relaxed prose-blockquote:border-l-4 prose-blockquote:border-primary prose-blockquote:italic prose-a:text-foreground prose-a:underline-offset-4 hover:prose-a:text-primary prose-img:rounded-lg"
+              className="prose prose-lg dark:prose-invert max-w-none mt-10 prose-headings:text-foreground prose-p:text-foreground/90 prose-li:text-foreground/90 prose-strong:text-foreground prose-h2:mt-12 prose-h2:text-2xl prose-h2:font-bold prose-h3:mt-8 prose-h3:text-xl prose-h3:font-semibold prose-p:leading-relaxed prose-blockquote:border-l-4 prose-blockquote:border-primary prose-blockquote:italic prose-blockquote:text-foreground prose-a:text-primary prose-a:underline-offset-4 hover:prose-a:text-primary/80 prose-img:rounded-lg"
               dangerouslySetInnerHTML={{ __html: bodyHtml }}
             />
 
