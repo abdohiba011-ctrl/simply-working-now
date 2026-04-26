@@ -10,6 +10,7 @@ import { TableOfContents } from "@/components/blog/TableOfContents";
 import { ShareButtons } from "@/components/blog/ShareButtons";
 import { NewsletterCta } from "@/components/blog/NewsletterCta";
 import { getPostBySlug, getRelatedPosts } from "@/data/blogPosts";
+import { getArticleContent } from "@/data/blog-content";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useDocumentHead } from "@/hooks/useDocumentHead";
 import { enhanceBodyHtml } from "@/lib/blogInternalLinks";
