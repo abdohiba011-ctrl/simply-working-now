@@ -1,54 +1,77 @@
-## Context
+## Goal
 
-The user `abdrahimbamouh56@gmail.com` (id `4e6fd364-…`) **already has the `admin` role** in `user_roles` (alongside `business` and `user`). No DB change is needed for admin access — the issue is purely UI: the admin entry point and the role switcher are not consistently shown across the renter and agency surfaces.
+Replace the "click the reset link" experience with a clean **6-digit code** flow for ALL registered users (renters, agencies, admins). Fix every piece of wording (EN/FR/AR) and ship a branded recovery email that shows only the 6-digit code.
 
-### Current state in code
-- **Renter `Header.tsx`** uses the legacy `useAuth().hasRole('admin')` and already renders an "Admin Panel" link → /admin/panel for desktop dropdown and mobile menu. ✅ (works for this user on the renter side)
-- **Renter `Header.tsx`** does **not** show a "Switch to agency" item, even when the user also has the agency role. ❌
-- **Agency `Header.tsx`** uses `<UserMenu />` which already has the renter↔agency switch. ✅
-- **`UserMenu`** does **not** show an "Admin Panel" link, so when the user is on the agency side they cannot reach `/admin/panel` from the menu. ❌
-- **`loadAuthUserModel`** in `useAuthStore.ts` does not surface the `admin` role on the `MockUser` object — it only tracks `renter` and `agency`. We need an `isAdmin` flag derived from `user_roles` so `UserMenu` can conditionally show the admin link.
+## What's already in place (good news)
 
-## Plan
+- Routes exist: `/forgot-password`, `/reset-password/verify`, `/reset-password/new`.
+- `ResetPasswordVerify.tsx` already uses a 6-digit `OtpInput` and calls `supabase.auth.verifyOtp({ type: "recovery", token: code })` — this works for all Supabase users.
+- Backend supports it: `resetPasswordForEmail` always issues a 6-digit recovery OTP for every user; we just need to surface it instead of pushing the link.
 
-### 1. Surface admin role in the auth store
-- In `src/stores/useAuthStore.ts` → `loadAuthUserModel`:
-  - After fetching `roles`, also expose `isAdmin = roles.includes('admin')`.
-  - Add `isAdmin: boolean` to the `MockUser` shape (extend the type used by the store; non-breaking optional field).
-  - No change to login/logout flow.
+## Bugs / gaps to fix
 
-### 2. Add Admin Panel link to `UserMenu`
-- In `src/components/auth/UserMenu.tsx`:
-  - Read `user.isAdmin` from the store.
-  - When `isAdmin` is true, render a new dropdown item "Admin Panel" (with Shield icon) that navigates to `/admin/panel`. Place it above the role-switch section.
-  - This makes the admin entry available on **both** the renter side (header dropdown can later be migrated) and the agency side (where `UserMenu` is already used).
+### 1. `ForgotPassword.tsx` — does NOT send the user to the OTP screen
+After successful send it just shows a "Check your email for a reset link" message. Fix:
+- After `requestPasswordReset(email)` succeeds, **navigate to `/reset-password/verify?email=…`** instead of showing the inline "sent" card.
+- Update copy: "We'll email you a 6-digit code" / button label "Send code".
 
-### 3. Add renter→agency switch on the renter Header
-- In `src/components/Header.tsx`:
-  - Detect dual-role users via `useAuthStore`: `hasAgency = user?.roles.agency.active`.
-  - When the user is currently in renter mode AND `hasAgency` is true, add a "Switch to business" entry in the existing user dropdown (desktop) and the mobile menu, mirroring the existing "Admin Panel" entry.
-  - On click: call `switchRole('agency')` and navigate to `/agency/agency-center` (matches `UserMenu` behavior).
-  - Keep all existing items (Profile, Bookings, Notifications, Settings, Admin Panel, Logout) intact.
+### 2. `Auth.tsx` — legacy inline forgot-password block uses "reset link" wording and `redirectTo: /reset-password`
+- Replace the inline `handleSendOTP` form with a redirect: when the user clicks "Forgot password?", navigate to `/forgot-password` (the dedicated page). Remove the `showForgotPassword` modal block and the dead `handleResetPassword` no-op. This keeps a single, consistent flow.
 
-### 4. Verify the agency side already works
-- `src/components/agency/Header.tsx` uses `<UserMenu />`, which already has agency→renter switch. After step 2, it will also have the Admin Panel link for this user. No further change needed there.
+### 3. `useAuthStore.requestPasswordReset` — drop `redirectTo` (or keep harmless)
+- Remove `redirectTo` (we don't need a magic-link landing page anymore). Supabase will still send the 6-digit token in the email. Keeping it doesn't break OTP, but removing it stops the link from looking like the primary CTA in the default template.
 
-### 5. No DB migration required
-- The user already has the `admin` role row. Once the UI changes ship, "Admin" will appear in both the renter Header dropdown (existing) and the agency `UserMenu` (new).
+### 4. `ResetPasswordNew.tsx` — keep the internal-token path, drop the email-link fallback wording
+- The page already supports the internal token from `verifyResetCode`. Tidy: remove the "if reset link expired" Supabase-session fallback messaging, since users will always arrive here via the 6-digit verify step. Keep the actual `supabase.auth.updateUser({ password })` call (a recovery session is established by `verifyOtp`).
 
-## Files to change
-- `src/stores/useAuthStore.ts` — add `isAdmin` to `MockUser` mapping.
-- `src/lib/mockAuth.ts` — extend `MockUser` interface with optional `isAdmin?: boolean`.
-- `src/components/auth/UserMenu.tsx` — add conditional Admin Panel item.
-- `src/components/Header.tsx` — add "Switch to business" item (desktop dropdown + mobile menu) for dual-role renters.
+### 5. Wording cleanup — EN, FR, AR
+Update every string referring to "reset link", "click the link", "magic link":
+
+| Key (mockAuth.* / auth.*) | New EN | New FR | New AR |
+|---|---|---|---|
+| `send_reset_link` | "Send code" | "Envoyer le code" | "إرسال الرمز" |
+| `reset_email_sent_title` | "Check your email" | "Consultez votre email" | "تحقق من بريدك" |
+| `reset_email_sent_body` | "We sent a 6-digit code to {{email}}. Enter it on the next screen." | "Nous avons envoyé un code à 6 chiffres à {{email}}." | "أرسلنا رمزًا من 6 أرقام إلى {{email}}." |
+| `reset_password_sub` | "Enter your email and we'll send you a 6-digit code." | "Entrez votre email pour recevoir un code à 6 chiffres." | "أدخل بريدك لتلقي رمز من 6 أرقام." |
+| Any "reset link" / "lien de réinitialisation" / "رابط" | replace with "code" / "code" / "رمز" |
+
+Files to grep/update:
+- `src/locales/en.json`, `src/locales/fr.json`, `src/locales/ar.json` (under `mockAuth` and `auth`)
+- `src/locales/translations.ts` (mirror of the JSONs)
+- Inline `defaultValue:` strings in `ForgotPassword.tsx`, `ResetPasswordVerify.tsx`, `ResetPasswordNew.tsx`, `Auth.tsx`
+
+### 6. Custom recovery email template (so the email itself is code-only)
+By default Supabase's recovery email includes both `{{ .Token }}` and `{{ .ConfirmationURL }}`. To make the experience truly code-only:
+
+- Scaffold Lovable auth email templates (`scaffold_auth_email_templates`)
+- Re-style with Motonita brand: lime `#9FE870` accent, deep forest `#163300` text, white background, Inter font
+- In `recovery.tsx`, render the **6-digit code in a large, copyable badge** as the primary content. Do NOT render any magic-link button. Add a small line: "This code expires in 60 minutes."
+- Localize the recovery email body: render in EN/FR/AR if the user's `language` metadata is set; otherwise default to EN with FR/AR sections beneath. (Simple approach: ship EN-only first; we can iterate.)
+- Deploy `auth-email-hook` so the new template goes live.
+
+### 7. Routing safety net
+- If a user still clicks an old magic-link from a previously-sent email and lands on `/reset-password/new` with a recovery hash, keep the existing Supabase-session fallback so the password update still works (no regression for in-flight reset emails).
+
+### 8. Testing checklist (manual, after implementation)
+- Renter user → `/forgot-password` → submit email → redirected to `/reset-password/verify` → email arrives → enter 6-digit code → land on `/reset-password/new` → set new password → routed to `/rent`.
+- Agency user → same flow → routed to `/agency/dashboard` (or verification).
+- Admin user → same flow → can sign in afterwards and access `/admin/panel`.
+- Wrong code → shake + error + clears digits.
+- Expired code (after 60 min) → "Request new code" CTA visible.
+- Resend cooldown enforced (60s).
+- All three languages render correctly (RTL preserved for AR).
+
+## Files to edit
+
+1. `src/pages/auth/ForgotPassword.tsx` — navigate to verify page on success; update copy.
+2. `src/pages/auth/ResetPasswordVerify.tsx` — copy polish only (already OTP-based).
+3. `src/pages/auth/ResetPasswordNew.tsx` — remove "link expired" wording; keep functionality.
+4. `src/pages/Auth.tsx` — replace inline forgot-password block with a redirect to `/forgot-password`; remove dead `handleSendOTP` / `handleResetPassword`.
+5. `src/stores/useAuthStore.ts` — drop `redirectTo` in `requestPasswordReset`.
+6. `src/locales/en.json`, `src/locales/fr.json`, `src/locales/ar.json`, `src/locales/translations.ts` — wording updates.
+7. New: `supabase/functions/auth-email-hook/*` and `supabase/functions/_shared/email-templates/recovery.tsx` (+ siblings) via the auth-email scaffold tool, then customize `recovery.tsx` to be code-first and brand-styled, then deploy.
 
 ## Out of scope
-- No changes to OAuth / Google sign-in flow.
-- No changes to RLS or DB schema.
-- Not migrating the renter `Header.tsx` to use `<UserMenu />` (larger refactor) — we only add the missing switch entry.
 
-## Verification after implementation
-1. Log in as `abdrahimbamouh56@gmail.com` on the renter site → header dropdown shows: Profile, …, **Switch to business**, **Admin Panel**, Logout.
-2. Click "Switch to business" → lands on `/agency/agency-center`; agency header `UserMenu` now shows: Profile, Settings, **Admin Panel**, **Switch to renter**, Logout.
-3. Click "Switch to renter" → returns to renter view. Both directions work symmetrically.
-4. A normal renter (no agency, no admin) sees neither entry — unchanged behavior.
+- Phone-based password reset (current flow is email-only — same as today).
+- Changing the 60-minute Supabase OTP expiry (default is fine).
