@@ -1923,6 +1923,7 @@ export type Database = {
       }
     }
     Functions: {
+      confirm_booking: { Args: { _booking_id: string }; Returns: Json }
       create_bike_hold: {
         Args: { _bike_id: string; _pickup: string; _return: string }
         Returns: {
@@ -1991,6 +1992,7 @@ export type Database = {
           read_ct: number
         }[]
       }
+      request_plan_downgrade: { Args: never; Returns: Json }
     }
     Enums: {
       app_role: "admin" | "business" | "user"

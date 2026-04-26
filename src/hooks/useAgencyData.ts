@@ -75,6 +75,7 @@ export interface AgencyBookingRow {
   total_days: number | null;
   amount_paid: number | null;
   status: string | null;
+  booking_status: string | null;
   payment_status: string | null;
   notes: string | null;
   created_at: string;

@@ -79,11 +79,10 @@ export function MockProtectedRoute({ children, role }: MockProtectedRouteProps) 
     useAuthStore.getState().switchRole(role);
   }
 
-  if (role === "agency" && !user.roles.agency.verified) {
-    if (!location.pathname.includes("/agency/verification")) {
-      return <Navigate to="/agency/verification" replace />;
-    }
-  }
+  // Unverified agencies are NOT blocked from the dashboard anymore.
+  // We surface a banner inside AgencyShell instead. This avoids
+  // redirect loops with the new agency-center hub and lets users
+  // navigate to upload documents themselves.
 
   return <>{children}</>;
 }

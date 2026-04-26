@@ -33,7 +33,7 @@ const Bookings = () => {
 
   const filtered = useMemo(() => {
     let result = bookings;
-    if (status !== "all") result = result.filter((b) => b.status === status);
+    if (status !== "all") result = result.filter((b) => (b.booking_status || b.status) === status);
     if (search) {
       const q = search.toLowerCase();
       result = result.filter((b) =>
@@ -117,7 +117,7 @@ const Bookings = () => {
                       {format(parseISO(b.pickup_date), "dd MMM")} → {format(parseISO(b.return_date), "dd MMM yyyy")}
                     </TableCell>
                     <TableCell className="text-right tabular-nums">{Number(b.total_price || 0).toLocaleString()} MAD</TableCell>
-                    <TableCell><StatusChip status={b.status || "pending"} /></TableCell>
+                    <TableCell><StatusChip status={b.booking_status || b.status || "pending"} /></TableCell>
                     <TableCell><Button size="sm" variant="ghost">Open</Button></TableCell>
                   </TableRow>
                 ))}

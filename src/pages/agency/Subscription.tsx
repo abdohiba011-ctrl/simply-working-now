@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AgencyLayout } from "@/components/agency/AgencyLayout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -33,22 +33,46 @@ const Subscription = () => {
   const [processing, setProcessing] = useState<string | null>(null);
   const current = subscription?.plan || "free";
 
+  // Auto-refresh after returning from a successful YouCan Pay redirect.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("yc") === "success") {
+      toast.success("Payment received — updating your plan…");
+      refresh();
+      const hash = window.location.hash;
+      window.history.replaceState({}, "", window.location.pathname + hash);
+      let n = 0;
+      const t = setInterval(() => {
+        n++;
+        refresh();
+        if (n >= 5) clearInterval(t);
+      }, 3000);
+      return () => clearInterval(t);
+    }
+    if (params.get("yc") === "error") {
+      toast.error("Payment was not completed.");
+      const hash = window.location.hash;
+      window.history.replaceState({}, "", window.location.pathname + hash);
+    }
+  }, [refresh]);
+
   const handleSelect = async (plan: Plan) => {
     if (plan.key === current) return;
     if (plan.key === "free") {
-      // Downgrade is direct
+      // Downgrade goes through a security-definer RPC that blocks
+      // locked / past_due users from escaping their billing state.
       try {
-        const { data: u } = await supabase.auth.getUser();
-        if (!u.user) return;
-        const { error } = await supabase
-          .from("agency_subscriptions")
-          .update({ plan: "free", status: "active" })
-          .eq("user_id", u.user.id);
+        const { error } = await supabase.rpc("request_plan_downgrade");
         if (error) throw error;
         toast.success("Switched to Free plan");
         refresh();
       } catch (e: any) {
-        toast.error(e.message || "Failed");
+        const msg = e.message || "";
+        if (msg.includes("CANNOT_DOWNGRADE_FROM_")) {
+          toast.error("Your account is past due or locked — pay the outstanding amount first.");
+        } else {
+          toast.error(msg || "Failed");
+        }
       }
       return;
     }
@@ -57,7 +81,15 @@ const Subscription = () => {
     try {
       const amount = yearly ? plan.yearly : plan.monthly;
       const { data, error } = await supabase.functions.invoke("youcanpay-create-token", {
-        body: { purpose: "subscription", amount, currency: "MAD", plan: plan.key, yearly },
+        body: {
+          purpose: "subscription",
+          amount,
+          currency: "MAD",
+          plan: plan.key,
+          yearly,
+          success_path: "/agency/finance?yc=success#subscription",
+          error_path: "/agency/finance?yc=error#subscription",
+        },
       });
       if (error) throw error;
       if (data?.payment_url) {

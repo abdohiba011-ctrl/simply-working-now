@@ -24,6 +24,9 @@ const ROUTE_NAMES: Record<string, string> = {
   motorbikes: "Motorbikes",
   messages: "Messages",
   calendar: "Calendar",
+  finance: "Finance",
+  "agency-center": "Agency Center",
+  settings: "Settings",
   wallet: "Wallet",
   transactions: "Transactions",
   subscription: "Subscription",
@@ -37,6 +40,27 @@ const ROUTE_NAMES: Record<string, string> = {
   integrations: "Integrations",
   help: "Help & Support",
 };
+
+// Command palette destinations (route + optional hash)
+const CMD_TARGETS: { label: string; path: string }[] = [
+  { label: "Dashboard", path: "/agency/dashboard" },
+  { label: "Bookings", path: "/agency/bookings" },
+  { label: "Motorbikes", path: "/agency/motorbikes" },
+  { label: "Messages", path: "/agency/messages" },
+  { label: "Calendar", path: "/agency/calendar" },
+  { label: "Wallet", path: "/agency/finance#wallet" },
+  { label: "Transactions", path: "/agency/finance#transactions" },
+  { label: "Subscription", path: "/agency/finance#subscription" },
+  { label: "Invoices", path: "/agency/finance#invoices" },
+  { label: "Profile", path: "/agency/agency-center#profile" },
+  { label: "Team", path: "/agency/agency-center#team" },
+  { label: "Verification", path: "/agency/agency-center#verification" },
+  { label: "Analytics", path: "/agency/agency-center#analytics" },
+  { label: "Preferences", path: "/agency/settings#preferences" },
+  { label: "Notifications", path: "/agency/settings#notifications" },
+  { label: "Integrations", path: "/agency/settings#integrations" },
+  { label: "Help & Support", path: "/agency/settings#help" },
+];
 
 const LANGS: { code: Language; flag: string; label: string }[] = [
   { code: "fr", flag: "🇫🇷", label: "Français" },
@@ -133,7 +157,7 @@ export const Header = ({ onMobileMenu }: HeaderProps) => {
         </Button>
 
         {/* Help */}
-        <Button variant="ghost" size="icon" aria-label="Help" onClick={() => navigate("/agency/help")}>
+        <Button variant="ghost" size="icon" aria-label="Help" onClick={() => navigate("/agency/settings#help")}>
           <HelpCircle className="h-5 w-5" />
         </Button>
 
@@ -147,15 +171,15 @@ export const Header = ({ onMobileMenu }: HeaderProps) => {
         <CommandList>
           <CommandEmpty>No results.</CommandEmpty>
           <CommandGroup heading="Navigate">
-            {Object.entries(ROUTE_NAMES).map(([slug, name]) => (
+            {CMD_TARGETS.map((t) => (
               <CommandItem
-                key={slug}
+                key={t.path}
                 onSelect={() => {
                   setCmdOpen(false);
-                  navigate(`/agency/${slug}`);
+                  navigate(t.path);
                 }}
               >
-                {name}
+                {t.label}
               </CommandItem>
             ))}
           </CommandGroup>
