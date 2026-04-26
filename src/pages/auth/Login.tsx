@@ -73,10 +73,23 @@ export default function Login({ context = "renter" }: LoginProps) {
   const [lockoutMs, setLockoutMs] = useState(0);
   const [accountHint, setAccountHint] = useState<AccountMethodStatus | null>(null);
 
+  // Restore "Remember me" identifier from previous session
+  const rememberedId = (() => {
+    try {
+      return localStorage.getItem("motonita_remembered_identifier") ?? "";
+    } catch {
+      return "";
+    }
+  })();
+
   const form = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
     mode: "onBlur",
-    defaultValues: { identifier: "", password: "", rememberMe: false },
+    defaultValues: {
+      identifier: rememberedId,
+      password: "",
+      rememberMe: !!rememberedId,
+    },
   });
 
   const identifierValue = form.watch("identifier");
@@ -106,6 +119,16 @@ export default function Login({ context = "renter" }: LoginProps) {
   const onSubmit = async (values: LoginValues) => {
     clearError();
     setAccountHint(null);
+    // Persist or clear the remembered identifier
+    try {
+      if (values.rememberMe) {
+        localStorage.setItem("motonita_remembered_identifier", values.identifier.trim());
+      } else {
+        localStorage.removeItem("motonita_remembered_identifier");
+      }
+    } catch {
+      // ignore storage errors (private mode, etc.)
+    }
     try {
       const loggedIn = await login(
         values.identifier,
