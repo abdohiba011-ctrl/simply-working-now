@@ -20,13 +20,16 @@ export interface BlogPost {
   body?: Partial<BlogTrilingual>;
 }
 
-const IMG = (id: string) => `https://images.unsplash.com/${id}?w=1200&q=80&auto=format&fit=crop`;
+import heroRent from "@/assets/blog-rent-morocco.jpg";
+import heroLicense from "@/assets/blog-license-morocco.jpg";
+import heroCasablanca from "@/assets/blog-casablanca.jpg";
+import heroAtlas from "@/assets/blog-atlas-routes.jpg";
 
 export const blogPosts: BlogPost[] = [
   {
     slug: "how-to-rent-motorbike-morocco",
     category: "guide",
-    heroImage: IMG("photo-1558981806-ec527fa84c39"),
+    heroImage: heroRent,
     heroAlt: {
       en: "Motorbike on a Moroccan road",
       fr: "Moto sur une route marocaine",
@@ -49,7 +52,7 @@ export const blogPosts: BlogPost[] = [
   {
     slug: "motorbike-license-morocco-guide",
     category: "legal",
-    heroImage: IMG("photo-1568772585407-9361f9bf3a87"),
+    heroImage: heroLicense,
     heroAlt: {
       en: "Motorcycle rider gear and license",
       fr: "Équipement de motard et permis",
@@ -72,7 +75,7 @@ export const blogPosts: BlogPost[] = [
   {
     slug: "motorbike-rental-casablanca-neighborhoods",
     category: "local",
-    heroImage: IMG("photo-1539020140153-e479b8c5c1a6"),
+    heroImage: heroCasablanca,
     heroAlt: {
       en: "Casablanca cityscape",
       fr: "Vue de Casablanca",
@@ -95,7 +98,7 @@ export const blogPosts: BlogPost[] = [
   {
     slug: "best-motorbike-routes-morocco",
     category: "routes",
-    heroImage: IMG("photo-1489493585363-d69421e0edd3"),
+    heroImage: heroAtlas,
     heroAlt: {
       en: "Atlas mountain road",
       fr: "Route dans l'Atlas",
