@@ -151,6 +151,7 @@ async function loadAuthUserModel(authUser: User): Promise<MockUser> {
     failed_login_attempts: 0,
     locked_until: null,
     suspended: !!profile?.is_frozen,
+    isAdmin: roles.includes("admin"),
   };
 }
 

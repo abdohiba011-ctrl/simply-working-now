@@ -38,6 +38,7 @@ export interface MockUser {
   failed_login_attempts: number;
   locked_until: string | null;
   suspended?: boolean;
+  isAdmin?: boolean;
 }
 
 export interface AuthError extends Error {

@@ -14,6 +14,7 @@ import {
   Briefcase,
   LogOut,
   Settings as SettingsIcon,
+  Shield,
   User as UserIcon,
 } from "lucide-react";
 import { useAuthStore } from "@/stores/useAuthStore";
@@ -123,6 +124,16 @@ export function UserMenu({ align = "end" }: Props) {
             <SettingsIcon className="mr-2 h-4 w-4" />
             {t("settings_link")}
           </DropdownMenuItem>
+
+          {user.isAdmin && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => navigate("/admin/panel")}>
+                <Shield className="mr-2 h-4 w-4" />
+                Admin Panel
+              </DropdownMenuItem>
+            </>
+          )}
 
           {canSwitchRoles && (
             <>

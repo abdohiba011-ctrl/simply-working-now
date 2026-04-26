@@ -8,6 +8,7 @@ import logoDark from "@/assets/motonita-logo-dark.svg";
 import { useTheme } from "@/hooks/useTheme";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAuthStore } from "@/stores/useAuthStore";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { LogoutConfirmDialog } from "@/components/LogoutConfirmDialog";
@@ -46,6 +47,14 @@ export const Header = memo(() => {
   const isBusiness = hasRole('business');
   const isAdmin = hasRole('admin');
   const isRenter = isAuthenticated && !isBusiness && !isAdmin;
+  const storeUser = useAuthStore((s) => s.user);
+  const switchRoleStore = useAuthStore((s) => s.switchRole);
+  const hasAgencyRole = !!storeUser?.roles?.agency?.active;
+  const handleSwitchToAgency = useCallback(() => {
+    switchRoleStore("agency");
+    setIsMenuOpen(false);
+    navigate("/agency/agency-center");
+  }, [switchRoleStore, navigate]);
   const { balance: renterBalance, currency: renterCurrency, isLoading: renterWalletLoading } = useRenterWallet();
 
   // Track scroll position for dynamic menu positioning
@@ -490,6 +499,12 @@ export const Header = memo(() => {
                       {t('header.businessDashboard')}
                     </DropdownMenuItem>
                   )}
+                  {hasAgencyRole && (
+                    <DropdownMenuItem onClick={handleSwitchToAgency}>
+                      <Building2 className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
+                      Switch to business
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogoutClick}>
                     <LogOut className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
@@ -643,6 +658,12 @@ export const Header = memo(() => {
                     <Button variant="outline" size="lg" className="justify-start gap-2 text-base min-h-[44px] mx-2" onClick={() => { navigate("/business-dashboard"); setIsMenuOpen(false); }}>
                       <Building2 className="h-5 w-5" />
                       {t('header.businessDashboard')}
+                    </Button>
+                  )}
+                  {hasAgencyRole && (
+                    <Button variant="outline" size="lg" className="justify-start gap-2 text-base min-h-[44px] mx-2" onClick={handleSwitchToAgency}>
+                      <Building2 className="h-5 w-5" />
+                      Switch to business
                     </Button>
                   )}
                   <Button variant="outline" size="lg" className="justify-start gap-2 text-base min-h-[44px] mx-2" onClick={handleLogoutClick}>
