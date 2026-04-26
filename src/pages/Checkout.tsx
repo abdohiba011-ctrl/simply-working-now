@@ -120,9 +120,6 @@ const Checkout = () => {
     }
 
     setIsSubmitting(true);
-    // Pre-open a blank tab synchronously from the click so popup blockers
-    // don't kick in later when we have the payment URL.
-    const preOpened = preOpenPaymentWindow();
     try {
       // 1. Promote hold → real (pending) booking
       const { data: bookingId, error: bookingErr } = await supabase.rpc('promote_hold_to_booking', {
@@ -158,59 +155,40 @@ const Checkout = () => {
             related_booking_id: bookingId,
             customer_email: profile.email,
             customer_name: profile.name,
-            success_path: `/thank-you?type=booking&bookingId=${bookingId}&needsVerification=${needsVerification}`,
-            error_path: `/checkout?${searchParams.toString()}&yc=error`,
           },
         },
       );
 
-      if (tokenErr || !tokenResp?.payment_url) {
+      if (tokenErr || !tokenResp?.token_id || !tokenResp?.public_key) {
         console.error('Token error:', tokenErr, tokenResp);
-        // Surface the real reason instead of a generic toast so the user
-        // (and us, in support) can tell config errors from network errors.
         const detail =
           (tokenResp && (tokenResp.error || tokenResp.details?.message)) ||
           tokenErr?.message ||
           "Payment service is unavailable. Please try again in a moment.";
         toast.error(`Payment could not start: ${detail}`);
-        if (preOpened && !preOpened.closed) preOpened.close();
         setIsSubmitting(false);
         return;
       }
 
-      // 3. Open YouCanPay hosted page (iframe-safe).
-      const result = openHostedPayment(tokenResp.payment_url, preOpened);
-
-      // Always store pending payment so we can show the fallback button + poll.
-      setPendingPayment({
-        paymentUrl: tokenResp.payment_url,
-        paymentId: tokenResp.payment_id,
-        bookingId,
-        needsVerification,
+      // 3. Navigate to in-app embedded YouCan Pay form (no popup, no iframe).
+      const successPath = `/thank-you?type=booking&bookingId=${bookingId}&needsVerification=${needsVerification}`;
+      const errorPath = `/checkout?${searchParams.toString()}&yc=error`;
+      const qs = new URLSearchParams({
+        token: tokenResp.token_id,
+        pubKey: tokenResp.public_key,
+        pid: tokenResp.payment_id,
+        amount: String(PLATFORM_FEE_MAD),
+        currency: 'MAD',
+        sandbox: tokenResp.is_sandbox ? '1' : '0',
+        success: successPath,
+        error: errorPath,
+        title: 'Pay booking fee',
       });
-      if (result.ok && (result.method === "new-tab" || result.method === "pre-opened")) {
-        setPaymentWindow(preOpened || null);
-        toast.success("Payment opened in a new tab. Complete it there to continue.");
-      } else if (!result.ok) {
-        toast.error("Popup blocked. Use the button below to open the payment page.");
-      }
-      setIsSubmitting(false);
+      navigate(`/pay/youcanpay?${qs.toString()}`);
     } catch (error: unknown) {
       console.error("Error initiating payment:", error);
       toast.error(t('checkoutPage.bookingFailed'));
-      if (preOpened && !preOpened.closed) preOpened.close();
       setIsSubmitting(false);
-    }
-  };
-
-  const handleOpenPaymentManually = () => {
-    if (!pendingPayment) return;
-    const win = window.open(pendingPayment.paymentUrl, "_blank", "noopener,noreferrer");
-    if (win) {
-      setPaymentWindow(win);
-      toast.success("Payment opened in a new tab.");
-    } else {
-      toast.error("Your browser is still blocking popups. Please allow them for this site.");
     }
   };
 
