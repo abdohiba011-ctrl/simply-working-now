@@ -203,7 +203,60 @@ export default function Login({ context = "renter" }: LoginProps) {
             <div className="flex items-start gap-2">
               <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
               <div className="flex-1 space-y-2">
-                <p>{typeof error === "string" ? error : error.message}</p>
+                {accountHint === "oauth_only" ? (
+                  <>
+                    <p className="font-semibold">
+                      {t("mockAuth.account_uses_google_title", {
+                        defaultValue: "This account was created with Google",
+                      })}
+                    </p>
+                    <p className="text-xs">
+                      {t("mockAuth.account_uses_google_body", {
+                        defaultValue:
+                          "There's no password on file. Please use the \"Continue with Google\" button below to sign in.",
+                      })}
+                    </p>
+                  </>
+                ) : accountHint === "not_found" ? (
+                  <>
+                    <p className="font-semibold">
+                      {t("mockAuth.no_account_title", {
+                        defaultValue: "No account found for this email",
+                      })}
+                    </p>
+                    <p className="text-xs">
+                      {t("mockAuth.no_account_body", {
+                        defaultValue:
+                          "Double-check the spelling or sign up to create a new account.",
+                      })}{" "}
+                      <Link
+                        to={context === "agency" ? "/agency/signup" : "/signup"}
+                        className="font-semibold underline underline-offset-2"
+                      >
+                        {t("mockAuth.signup", { defaultValue: "Sign up" })}
+                      </Link>
+                    </p>
+                  </>
+                ) : accountHint === "has_password" ? (
+                  <>
+                    <p>
+                      {t("mockAuth.wrong_password_body", {
+                        defaultValue:
+                          "Incorrect password. Make sure caps lock is off and try again.",
+                      })}
+                    </p>
+                    <p className="text-xs">
+                      <Link
+                        to="/forgot-password"
+                        className="font-semibold underline underline-offset-2"
+                      >
+                        {t("mockAuth.forgot_password", { defaultValue: "Forgot password?" })}
+                      </Link>
+                    </p>
+                  </>
+                ) : (
+                  <p>{typeof error === "string" ? error : error.message}</p>
+                )}
 
                 {needsVerification ? (
                   <button
