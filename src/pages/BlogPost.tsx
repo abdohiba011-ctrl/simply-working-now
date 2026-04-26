@@ -152,14 +152,14 @@ export default function BlogPost() {
 
             <div
               id="article-body"
-              className="prose prose-lg max-w-none mt-10 prose-headings:text-foreground prose-h2:mt-12 prose-h2:text-2xl prose-h2:font-bold prose-h3:mt-8 prose-h3:text-xl prose-h3:font-semibold prose-p:leading-relaxed prose-blockquote:border-l-4 prose-blockquote:border-[#9FE870] prose-blockquote:italic prose-a:text-foreground prose-a:underline-offset-4 hover:prose-a:text-primary prose-img:rounded-lg"
+              className="prose prose-lg max-w-none mt-10 prose-headings:text-foreground prose-h2:mt-12 prose-h2:text-2xl prose-h2:font-bold prose-h3:mt-8 prose-h3:text-xl prose-h3:font-semibold prose-p:leading-relaxed prose-blockquote:border-l-4 prose-blockquote:border-primary prose-blockquote:italic prose-a:text-foreground prose-a:underline-offset-4 hover:prose-a:text-primary prose-img:rounded-lg"
               dangerouslySetInnerHTML={{ __html: bodyHtml }}
             />
 
             {/* End-of-article footer */}
             <div className="mt-12 border-t border-border pt-8">
               <div className="flex items-start gap-4 rounded-xl border border-border p-5 bg-card">
-                <div className="w-12 h-12 rounded-full bg-foreground text-[#9FE870] flex items-center justify-center font-bold text-lg" aria-hidden="true">M</div>
+                <div className="w-12 h-12 rounded-full bg-foreground text-primary flex items-center justify-center font-bold text-lg" aria-hidden="true">M</div>
                 <div>
                   <div className="font-semibold text-foreground">{t("blog.byEditorial")}</div>
                   <p className="text-sm text-muted-foreground mt-1">{t("blog.editorialBio")}</p>

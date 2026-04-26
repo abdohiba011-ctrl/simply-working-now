@@ -58,7 +58,7 @@ export function TableOfContents({ containerSelector = "#article-body" }: { conta
               }}
               className={`block ps-3 -ms-0.5 border-l-2 -translate-x-px transition-colors ${
                 active === h.id
-                  ? "border-[#9FE870] text-foreground font-medium"
+                  ? "border-primary text-foreground font-medium"
                   : "border-transparent text-muted-foreground hover:text-foreground"
               }`}
             >
