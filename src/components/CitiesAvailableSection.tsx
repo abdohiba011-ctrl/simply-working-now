@@ -207,21 +207,21 @@ export const CitiesAvailableSection = () => {
                   className="cursor-pointer focus:outline-none"
                 >
                   {isSelected && (
-                    <circle cx={p.x} cy={p.y} r="14" fill="hsl(var(--primary) / 0.30)">
-                      <animate attributeName="r" values="10;20;10" dur="2s" repeatCount="indefinite" />
+                    <circle cx={p.x} cy={p.y} r="22" fill="hsl(var(--primary) / 0.30)">
+                      <animate attributeName="r" values="16;32;16" dur="2s" repeatCount="indefinite" />
                       <animate attributeName="opacity" values="0.7;0;0.7" dur="2s" repeatCount="indefinite" />
                     </circle>
                   )}
                   <circle
                     cx={p.x}
                     cy={p.y}
-                    r={isActive ? 7 : 5}
+                    r={isActive ? 11 : 8}
                     fill={isSelected ? "hsl(var(--primary))" : "hsl(var(--background))"}
                     stroke={isSelected ? "hsl(var(--background))" : "hsl(var(--foreground))"}
-                    strokeWidth="1.5"
+                    strokeWidth="2"
                   />
                   {/* Larger invisible hit-area for mobile */}
-                  <circle cx={p.x} cy={p.y} r="18" fill="transparent" />
+                  <circle cx={p.x} cy={p.y} r="28" fill="transparent" />
                 </g>
               );
             })}
