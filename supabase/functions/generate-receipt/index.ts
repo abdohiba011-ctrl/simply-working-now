@@ -246,8 +246,9 @@ Deno.serve(async (req) => {
     });
 
     const bytes = await pdf.save();
+    const buf = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer;
 
-    return new Response(bytes, {
+    return new Response(buf, {
       status: 200,
       headers: {
         ...corsHeaders,
