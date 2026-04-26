@@ -9,7 +9,8 @@ import { ArrowDownToLine, ArrowUpFromLine, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAgencyWallet } from "@/hooks/useAgencyData";
-import { openHostedPayment, preOpenPaymentWindow } from "@/lib/openHostedPayment";
+import { buildYouCanPayUrl } from "@/lib/openHostedPayment";
+import { useNavigate } from "react-router-dom";
 
 const PRESETS = [100, 500, 1000, 2500, 5000];
 

@@ -10,7 +10,8 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAgencySubscription } from "@/hooks/useAgencyData";
-import { openHostedPayment, preOpenPaymentWindow } from "@/lib/openHostedPayment";
+import { buildYouCanPayUrl } from "@/lib/openHostedPayment";
+import { useNavigate } from "react-router-dom";
 
 interface Plan {
   key: "free" | "pro" | "business";
