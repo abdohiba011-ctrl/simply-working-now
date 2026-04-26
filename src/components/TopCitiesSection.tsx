@@ -60,7 +60,7 @@ export const TopCitiesSection = () => {
         .from('city_bike_counts' as any)
         .select('city_id, bikes_available');
       if (error) throw error;
-      return (data || []) as Array<{ city_id: string; bikes_available: number }>;
+      return ((data as unknown) || []) as Array<{ city_id: string; bikes_available: number }>;
     },
   });
 
