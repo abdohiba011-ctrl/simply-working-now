@@ -30,6 +30,7 @@ const PLANS: Plan[] = [
 
 const Subscription = () => {
   const { subscription, loading, refresh } = useAgencySubscription();
+  const navigate = useNavigate();
   const [yearly, setYearly] = useState(false);
   const [processing, setProcessing] = useState<string | null>(null);
   const current = subscription?.plan || "free";

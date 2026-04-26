@@ -41,6 +41,7 @@ const PRESETS = [50, 100, 200, 500];
 export default function Billing() {
   const { user, userRoles, isLoading: authLoading } = useAuth();
   const [params, setParams] = useSearchParams();
+  const navigate = useNavigate();
   const { balance, currency, isLoading, transactions, refetch, refetchTransactions } = useRenterWallet();
 
   // A "renter" in this app = any authenticated user that is not an agency/business or admin.
