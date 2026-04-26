@@ -376,7 +376,13 @@
     "bikesAvailable": "bikes available",
     "from": "From",
     "comingSoon": "Coming Soon",
-    "comingSoonTooltip": "We'll be expanding to {city} soon! Stay tuned."
+    "comingSoonTooltip": "We'll be expanding to {city} soon! Stay tuned.",
+    "availableTitle": "We reach you everywhere!",
+    "availableSubtitle": "Available across Morocco's major cities — from Casablanca to Rabat, Marrakech and beyond.",
+    "coverageQuestion": "Does our service cover your city?",
+    "checkNow": "Check now",
+    "tapAgainHint": "Tap again to view rentals",
+    "suggestCity": "Suggest a city"
   },
   "howItWorks": {
     "title": "How It Works",
