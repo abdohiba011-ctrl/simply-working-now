@@ -724,7 +724,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     const email = consumeResetToken(resetToken);
     if (!email) {
-      const err = makeAuthError("TOKEN_EXPIRED", "Your reset link expired. Please request a new one.");
+      const err = makeAuthError("TOKEN_EXPIRED", "Your reset code expired. Please request a new one.");
       set({ isLoading: false, error: err.message });
       throw err;
     }

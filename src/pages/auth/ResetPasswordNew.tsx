@@ -115,7 +115,7 @@ export default function ResetPasswordNew() {
     if (internalToken && !isResetTokenValid(internalToken)) {
       toast.error(
         t("mockAuth.reset_link_expired", {
-          defaultValue: "Your reset link expired. Please request a new one.",
+          defaultValue: "Your reset code expired. Please request a new one.",
         }),
       );
       navigate("/forgot-password", { replace: true });
@@ -163,7 +163,7 @@ export default function ResetPasswordNew() {
             toast.error(
               t("mockAuth.reset_link_expired", {
                 defaultValue:
-                  "Your reset link expired. Please request a new one.",
+                  "Your reset code expired. Please request a new one.",
               }),
             );
             navigate("/forgot-password", { replace: true });
@@ -181,7 +181,7 @@ export default function ResetPasswordNew() {
       if (e?.code === "TOKEN_EXPIRED" || e?.code === "INVALID_TOKEN") {
         toast.error(
           t("mockAuth.reset_link_expired", {
-            defaultValue: "Your reset link expired. Please request a new one.",
+            defaultValue: "Your reset code expired. Please request a new one.",
           }),
         );
         navigate("/forgot-password", { replace: true });
