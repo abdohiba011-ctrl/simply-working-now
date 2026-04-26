@@ -23,7 +23,7 @@ export const BlogCard = memo(({ post, priority = false }: BlogCardProps) => {
   return (
     <Link
       to={`/blog/${post.slug}`}
-      className="group block rounded-xl border border-border bg-white overflow-hidden transition duration-200 hover:shadow-lg hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-[#9FE870]"
+      className="group block rounded-xl border border-border bg-card overflow-hidden transition duration-200 hover:shadow-lg hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-primary"
       aria-label={post.title[language]}
     >
       <div className="aspect-video w-full overflow-hidden bg-muted">
@@ -37,7 +37,7 @@ export const BlogCard = memo(({ post, priority = false }: BlogCardProps) => {
         />
       </div>
       <div className="p-6">
-        <span className="inline-block bg-[#9FE870] text-foreground rounded-full px-3 py-1 text-xs font-medium">
+        <span className="inline-block bg-primary text-primary-foreground rounded-full px-3 py-1 text-xs font-medium">
           {categoryLabel}
         </span>
         <div className="mt-3 text-xs text-muted-foreground">

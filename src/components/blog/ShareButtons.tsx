@@ -26,7 +26,7 @@ export function ShareButtons({ url, title }: Props) {
     }
   };
 
-  const btn = "w-10 h-10 rounded-full border border-border flex items-center justify-center hover:bg-[#9FE870]/20 transition-colors";
+  const btn = "w-10 h-10 rounded-full border border-border flex items-center justify-center hover:bg-primary/20 transition-colors";
 
   return (
     <div className="flex items-center gap-2">

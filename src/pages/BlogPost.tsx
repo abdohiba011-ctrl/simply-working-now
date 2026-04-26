@@ -129,7 +129,7 @@ export default function BlogPost() {
 
         <div className="max-w-[1000px] mx-auto px-6 pb-16 grid lg:grid-cols-[1fr_260px] gap-12">
           <article>
-            <span className="inline-block bg-[#9FE870] text-foreground rounded-full px-3 py-1 text-xs font-medium">
+            <span className="inline-block bg-primary text-primary-foreground rounded-full px-3 py-1 text-xs font-medium">
               {t(`blog.categories.${post.category}`)}
             </span>
             <h1 className="mt-4 text-2xl md:text-4xl font-bold text-foreground leading-tight tracking-tight">
@@ -158,7 +158,7 @@ export default function BlogPost() {
 
             {/* End-of-article footer */}
             <div className="mt-12 border-t border-border pt-8">
-              <div className="flex items-start gap-4 rounded-xl border border-border p-5 bg-white">
+              <div className="flex items-start gap-4 rounded-xl border border-border p-5 bg-card">
                 <div className="w-12 h-12 rounded-full bg-foreground text-[#9FE870] flex items-center justify-center font-bold text-lg" aria-hidden="true">M</div>
                 <div>
                   <div className="font-semibold text-foreground">{t("blog.byEditorial")}</div>

@@ -24,7 +24,7 @@ export function NewsletterCta() {
   };
 
   return (
-    <div className="rounded-xl border border-border bg-[#9FE870]/15 p-6 md:p-8">
+    <div className="rounded-xl border border-border bg-primary/10 p-6 md:p-8">
       <h3 className="text-xl font-bold text-foreground">{t("blog.newsletterTitle")}</h3>
       <p className="mt-2 text-sm text-muted-foreground">{t("blog.newsletterSubtitle")}</p>
       <form onSubmit={submit} className="mt-4 flex flex-col sm:flex-row gap-2">
@@ -34,7 +34,7 @@ export function NewsletterCta() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder={t("blog.newsletterPlaceholder")}
-          className="bg-white"
+          className="bg-card"
         />
         <Button type="submit" disabled={submitting} className="bg-foreground text-white hover:bg-foreground/90">
           {t("blog.newsletterCta")}
