@@ -176,6 +176,7 @@ const App = () => (
                   <Route path="/payment-selection" element={<Navigate to="/booking-review" replace />} />
                   <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
                   <Route path="/pay/youcanpay" element={<ProtectedRoute><PayYouCan /></ProtectedRoute>} />
+                  <Route path="/payment-status" element={<ProtectedRoute><PaymentStatus /></ProtectedRoute>} />
                   <Route path="/confirmation" element={<ProtectedRoute><Confirmation /></ProtectedRoute>} />
                   <Route path="/business-dashboard" element={<Navigate to="/agency/dashboard" replace />} />
                   <Route path="/add-bike" element={<ProtectedRoute requireRole="business"><AddBike /></ProtectedRoute>} />
