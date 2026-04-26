@@ -376,7 +376,13 @@
     "bikesAvailable": "دراجة متوفرة",
     "from": "ابتداءً من",
     "comingSoon": "قريباً",
-    "comingSoonTooltip": "سنتوسع قريباً إلى {city}! ترقبوا."
+    "comingSoonTooltip": "سنتوسع قريباً إلى {city}! ترقبوا.",
+    "availableTitle": "نصل إليك في كل مكان!",
+    "availableSubtitle": "متوفر في كبرى مدن المغرب — من الدار البيضاء إلى الرباط ومراكش وما بعدها.",
+    "coverageQuestion": "هل نغطي مدينتك؟",
+    "checkNow": "تحقق الآن",
+    "tapAgainHint": "اضغط مرة أخرى لعرض الإيجارات",
+    "suggestCity": "اقترح مدينة"
   },
   "howItWorks": {
     "title": "كيف يعمل",

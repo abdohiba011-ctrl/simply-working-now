@@ -376,7 +376,13 @@
     "bikesAvailable": "motos disponibles",
     "from": "À partir de",
     "comingSoon": "Bientôt Disponible",
-    "comingSoonTooltip": "Nous nous étendrons bientôt à {city} ! Restez à l'écoute."
+    "comingSoonTooltip": "Nous nous étendrons bientôt à {city} ! Restez à l'écoute.",
+    "availableTitle": "Nous vous rejoignons partout !",
+    "availableSubtitle": "Disponible dans les grandes villes du Maroc — de Casablanca à Rabat, Marrakech et au-delà.",
+    "coverageQuestion": "Notre service couvre-t-il votre ville ?",
+    "checkNow": "Vérifier",
+    "tapAgainHint": "Touchez à nouveau pour voir les locations",
+    "suggestCity": "Proposer une ville"
   },
   "howItWorks": {
     "title": "Comment Ça Marche",
