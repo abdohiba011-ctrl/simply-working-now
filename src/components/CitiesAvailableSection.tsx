@@ -99,17 +99,9 @@ export const CitiesAvailableSection = () => {
   const activePoint =
     points.find((p) => p.key === (selectedCity || hoveredCity)) || null;
 
-  // Pre-project region paths once per render
-  const regionPaths = REGIONS.map((r) => {
-    const d =
-      r.coords
-        .map(([lng, lat], i) => {
-          const { x, y } = project(lat, lng);
-          return `${i === 0 ? "M" : "L"} ${x.toFixed(1)} ${y.toFixed(1)}`;
-        })
-        .join(" ") + " Z";
-    return { id: r.id, d };
-  });
+  // Region paths come pre-projected from the SimpleMaps source — just render them.
+  const regionPaths = MOROCCO_REGIONS;
+
 
   return (
     <section
