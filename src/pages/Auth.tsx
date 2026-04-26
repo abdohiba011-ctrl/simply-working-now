@@ -319,13 +319,36 @@ const Auth = () => {
   };
 
   const handleGoogleSignIn = useCallback(async () => {
+    // Only allow internal return paths to prevent open-redirect abuse.
+    const safeReturn = returnUrl && returnUrl.startsWith("/") && !returnUrl.startsWith("//")
+      ? returnUrl
+      : null;
+
+    // The Lovable preview iframe (and other embedded contexts) interfere
+    // with Google's authorization-code exchange. If we're not in a context
+    // that can complete OAuth reliably, bounce the user out to the
+    // production site in a top-level navigation and let them sign in there.
+    if (!canCompleteOAuthHere(window.location.origin)) {
+      const target = new URL("/auth", PRIMARY_PRODUCTION_ORIGIN);
+      if (safeReturn) target.searchParams.set("returnUrl", safeReturn);
+      try {
+        // Try to break out of the iframe so the OAuth popup/window opens
+        // from the live site, not the preview.
+        if (window.top && window.top !== window.self) {
+          window.top.location.href = target.toString();
+          return;
+        }
+      } catch {
+        /* ignore cross-origin top-frame errors */
+      }
+      window.location.href = target.toString();
+      return;
+    }
+
     setIsLoading(true);
     try {
-      // Stay on the current origin. Lovable Cloud's managed OAuth helper
-      // requires that initiation and callback happen on the same host so
-      // that the broker's `state` (and any cookies) line up. Forcing a
-      // jump to a different domain mid-flow causes
-      // "failed to exchange authorization code state".
+      // Same-origin flow: initiation and callback both happen on the
+      // production custom domain so the OAuth state/code exchange lines up.
       const result = await lovable.auth.signInWithOAuth("google", {
         redirect_uri: window.location.origin,
       });
@@ -341,9 +364,9 @@ const Auth = () => {
         // Browser is navigating to Google. Nothing more to do.
         return;
       }
-      // Popup flow (iframe / preview): tokens already set on the supabase
-      // client. The auth context's `onAuthStateChange` listener will fire
-      // and the redirect-on-auth effect above will route the user.
+      // Tokens already set on the supabase client. The auth context's
+      // onAuthStateChange listener will fire and the redirect-on-auth
+      // effect above will route the user.
       playSuccessSound();
       toast.success(t('auth.googleSignInSuccess'));
     } catch (error: unknown) {
@@ -352,7 +375,7 @@ const Auth = () => {
       toast.error(msg);
       setIsLoading(false);
     }
-  }, [t]);
+  }, [returnUrl, t]);
 
 
 
