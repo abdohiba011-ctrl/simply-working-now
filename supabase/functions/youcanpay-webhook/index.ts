@@ -14,8 +14,34 @@ Deno.serve(async (req) => {
     const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const admin = createClient(SUPABASE_URL, SERVICE_ROLE);
 
-    const payload = await req.json().catch(() => ({}));
-    console.log("youcanpay-webhook payload:", JSON.stringify(payload));
+    // YouCan Pay sandbox can post either JSON or form-encoded bodies.
+    const contentType = (req.headers.get("content-type") || "").toLowerCase();
+    let payload: Record<string, any> = {};
+    try {
+      if (contentType.includes("application/json")) {
+        payload = await req.json();
+      } else if (
+        contentType.includes("application/x-www-form-urlencoded") ||
+        contentType.includes("multipart/form-data")
+      ) {
+        const form = await req.formData();
+        for (const [k, v] of form.entries()) payload[k] = typeof v === "string" ? v : String(v);
+      } else {
+        // Fallback: try JSON, then raw text.
+        const raw = await req.text();
+        try { payload = JSON.parse(raw); }
+        catch {
+          // Try urlencoded as a last resort
+          try {
+            const sp = new URLSearchParams(raw);
+            sp.forEach((v, k) => { payload[k] = v; });
+          } catch { payload = { raw }; }
+        }
+      }
+    } catch (e) {
+      console.error("youcanpay-webhook body parse failed", e);
+    }
+    console.log("youcanpay-webhook payload:", JSON.stringify(payload), "content-type:", contentType);
 
     // YouCanPay typically sends order_id, transaction_id, status
     const orderId = payload.order_id || payload.orderId || payload.metadata?.order_id;
