@@ -70,6 +70,11 @@ export const Footer = memo(() => {
                 </Link>
               </li>
               <li>
+                <Link to="/blog" className="text-background/80 hover:text-primary transition-colors">
+                  {t('footer.blog')}
+                </Link>
+              </li>
+              <li>
                 <Link to="/#faq" className="text-background/80 hover:text-primary transition-colors">
                   {t('footer.faq')}
                 </Link>
