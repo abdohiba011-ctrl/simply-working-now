@@ -116,19 +116,20 @@ export const useBike = (bikeId: string) => {
         throw new Error("Invalid bike ID format");
       }
 
-      // Try direct bikes.id lookup first
+      // Public reads must go through bikes_public — anon has no SELECT on bikes.
+      // Try direct id lookup first
       const direct = await supabase
-        .from("bikes")
+        .from("bikes_public" as any)
         .select(`*, bike_type:bike_types(*)`)
         .eq("id", bikeId)
         .maybeSingle();
 
       if (direct.error) throw direct.error;
-      if (direct.data) return direct.data as Bike;
+      if (direct.data) return (direct.data as unknown) as Bike;
 
       // Fallback: id may be a bike_type_id coming from listings cards
       const viaType = await supabase
-        .from("bikes")
+        .from("bikes_public" as any)
         .select(`*, bike_type:bike_types(*)`)
         .eq("bike_type_id", bikeId)
         .limit(1)
@@ -136,7 +137,7 @@ export const useBike = (bikeId: string) => {
 
       if (viaType.error) throw viaType.error;
       if (!viaType.data) throw new Error("Bike not found");
-      return viaType.data as Bike;
+      return (viaType.data as unknown) as Bike;
     },
     enabled: !!bikeId && isValidUUID(bikeId),
   });
