@@ -10,6 +10,7 @@ import { TableOfContents } from "@/components/blog/TableOfContents";
 import { ShareButtons } from "@/components/blog/ShareButtons";
 import { NewsletterCta } from "@/components/blog/NewsletterCta";
 import { getPostBySlug, getRelatedPosts } from "@/data/blogPosts";
+import { getArticleContent } from "@/data/blog-content";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useDocumentHead } from "@/hooks/useDocumentHead";
 import { enhanceBodyHtml } from "@/lib/blogInternalLinks";
@@ -24,12 +25,14 @@ export default function BlogPost() {
 
   const related = useMemo(() => (post ? getRelatedPosts(post.slug, 3) : []), [post]);
 
+  const content = useMemo(() => (post ? getArticleContent(post.slug) : undefined), [post]);
+
   const bodyHtml = useMemo(() => {
     if (!post) return "";
-    const raw = post.body?.[language] ?? post.body?.en ?? "";
+    const raw = content?.body[language] ?? content?.body.en ?? post.body?.[language] ?? post.body?.en ?? "";
     if (!raw) return `<p>${t("blog.placeholderBody")}</p>`;
     return enhanceBodyHtml(raw, post.slug, language);
-  }, [post, language, t]);
+  }, [post, content, language, t]);
 
   const wordCount = useMemo(() => {
     const txt = bodyHtml.replace(/<[^>]+>/g, " ").trim();
@@ -82,6 +85,17 @@ export default function BlogPost() {
               { "@type": "ListItem", position: 3, name: post.title[language], item: `${SITE}/blog/${post.slug}` },
             ],
           },
+          ...(content?.faq[language]?.length
+            ? [{
+                "@context": "https://schema.org",
+                "@type": "FAQPage",
+                mainEntity: content.faq[language].map((f) => ({
+                  "@type": "Question",
+                  name: f.q,
+                  acceptedAnswer: { "@type": "Answer", text: f.a },
+                })),
+              }]
+            : []),
         ]
       : [],
   });
