@@ -138,31 +138,6 @@ export function UserMenu({ align = "end" }: Props) {
 
           <DropdownMenuSeparator />
 
-          {/* Role switching section */}
-          {hasRenter && hasAgency && (
-            <DropdownMenuItem
-              onClick={() => handleSwitch(currentRole === "agency" ? "renter" : "agency")}
-            >
-              <ArrowRightLeft className="mr-2 h-4 w-4" />
-              {currentRole === "agency"
-                ? t("switch_to_renter")
-                : t("switch_to_business")}
-            </DropdownMenuItem>
-          )}
-          {hasAgency && !hasRenter && (
-            <DropdownMenuItem
-              onClick={() => setActivationModal("activate-renter")}
-              className="text-muted-foreground"
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              {t("activate_renter")}
-            </DropdownMenuItem>
-          )}
-          {/* Renter-only users no longer see a "become a business" CTA here.
-              Agency activation flow lives on the public Agencies landing page. */}
-
-          <DropdownMenuSeparator />
-
           <DropdownMenuItem
             onClick={() => setLogoutOpen(true)}
             className="text-destructive focus:text-destructive"
