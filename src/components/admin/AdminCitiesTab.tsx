@@ -572,12 +572,11 @@ export const AdminCitiesTab = () => {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Available Bikes</Label>
-                  <Input
-                    type="number"
-                    value={editingCity.bikes_count}
-                    onChange={(e) => setEditingCity({ ...editingCity, bikes_count: parseInt(e.target.value) || 0 })}
-                  />
+                  <Label>Live Bikes</Label>
+                  <div className="h-10 px-3 flex items-center rounded-md border bg-muted text-sm">
+                    {liveCounts.get(editingCity.id) ?? 0} bikes
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">Auto from listings</p>
                 </div>
                 <div className="space-y-2">
                   <Label>Price From (DH/day)</Label>
