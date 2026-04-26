@@ -67,7 +67,7 @@ export function useRenterWallet() {
   useEffect(() => {
     if (!user) return;
     const channel = supabase
-      .channel(`renter-wallet-${user.id}`)
+      .channel(`renter-wallet-${user.id}-${Math.random().toString(36).slice(2)}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "renter_wallets", filter: `user_id=eq.${user.id}` },
