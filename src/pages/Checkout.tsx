@@ -4,13 +4,12 @@ import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { CreditCard, MapPin, Calendar, Bike, Loader2, ChevronLeft, Lock, ShieldCheck, ExternalLink } from "lucide-react";
+import { CreditCard, MapPin, Calendar, Bike, Loader2, ChevronLeft, Lock, ShieldCheck } from "lucide-react";
 import { format } from "date-fns";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { openHostedPayment, preOpenPaymentWindow } from "@/lib/openHostedPayment";
 
 const PLATFORM_FEE_MAD = 10;
 
@@ -32,14 +31,6 @@ const Checkout = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [profile, setProfile] = useState<{ name: string; email: string; phone: string; is_verified: boolean } | null>(null);
-  // Pending payment state — drives the "open in new tab" fallback UI and polling.
-  const [pendingPayment, setPendingPayment] = useState<{
-    paymentUrl: string;
-    paymentId: string;
-    bookingId: string;
-    needsVerification: string;
-  } | null>(null);
-  const [paymentWindow, setPaymentWindow] = useState<Window | null>(null);
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -74,34 +65,6 @@ const Checkout = () => {
     ? Math.ceil((new Date(end).getTime() - new Date(pickup).getTime()) / (1000 * 60 * 60 * 24))
     : 1;
   const rentalSubtotal = days * dailyPrice;
-
-  // Poll for payment completion when we have a pending payment.
-  useEffect(() => {
-    if (!pendingPayment) return;
-    let cancelled = false;
-    const interval = setInterval(async () => {
-      const { data } = await supabase
-        .from('youcanpay_payments')
-        .select('status')
-        .eq('id', pendingPayment.paymentId)
-        .maybeSingle();
-      if (cancelled || !data) return;
-      if (data.status === 'paid' || data.status === 'completed' || data.status === 'success') {
-        clearInterval(interval);
-        toast.success("Payment confirmed!");
-        navigate(`/thank-you?type=booking&bookingId=${pendingPayment.bookingId}&needsVerification=${pendingPayment.needsVerification}`);
-      } else if (data.status === 'failed' || data.status === 'canceled') {
-        clearInterval(interval);
-        toast.error("Payment was not completed. Please try again.");
-        setPendingPayment(null);
-        setPaymentWindow(null);
-      }
-    }, 3000);
-    return () => {
-      cancelled = true;
-      clearInterval(interval);
-    };
-  }, [pendingPayment, navigate]);
 
   const handlePay = async () => {
     if (!user || !bikeId || !pickup || !end) {
