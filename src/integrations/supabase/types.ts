@@ -1536,6 +1536,84 @@ export type Database = {
         }
         Relationships: []
       }
+      renter_wallet_transactions: {
+        Row: {
+          amount: number
+          balance_after: number | null
+          created_at: string
+          currency: string
+          description: string | null
+          id: string
+          metadata: Json | null
+          method: string | null
+          reference: string | null
+          related_booking_id: string | null
+          related_payment_id: string | null
+          status: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          balance_after?: number | null
+          created_at?: string
+          currency?: string
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          method?: string | null
+          reference?: string | null
+          related_booking_id?: string | null
+          related_payment_id?: string | null
+          status?: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          balance_after?: number | null
+          created_at?: string
+          currency?: string
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          method?: string | null
+          reference?: string | null
+          related_booking_id?: string | null
+          related_payment_id?: string | null
+          status?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      renter_wallets: {
+        Row: {
+          balance: number
+          created_at: string
+          currency: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          balance?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          balance?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       service_cities: {
         Row: {
           bikes_count: number | null
@@ -2046,6 +2124,17 @@ export type Database = {
           expires_at: string
           hold_id: string
         }[]
+      }
+      credit_renter_wallet: {
+        Args: {
+          _amount: number
+          _description?: string
+          _method?: string
+          _payment_id?: string
+          _reference?: string
+          _user_id: string
+        }
+        Returns: Json
       }
       delete_email: {
         Args: { message_id: number; queue_name: string }
