@@ -62,24 +62,18 @@ const cleanPhoneForStorage = (value: string): string => {
 
 // Validate Moroccan phone number
 const isValidMoroccanPhone = (value: string): boolean => {
-  const digits = value.replace(/\D/g, "");
-  
-  // Check for valid Moroccan mobile (06/07) or landline (05)
-  if (digits.startsWith("0")) {
-    return /^0[567]\d{8}$/.test(digits);
-  }
-  
-  // Check with country code
+  if (!value) return false;
+  let digits = value.replace(/\D/g, "");
+
+  // Normalize: drop country code prefixes so we always compare a 10-digit local number
   if (digits.startsWith("212")) {
-    return /^212[567]\d{8}$/.test(digits);
+    digits = "0" + digits.slice(3);
+  } else if (digits.length === 9 && /^[567]/.test(digits)) {
+    digits = "0" + digits;
   }
-  
-  // Check 9-digit format without leading 0
-  if (digits.length === 9) {
-    return /^[567]\d{8}$/.test(digits);
-  }
-  
-  return false;
+
+  // Final check: 10 digits, leading 0, then 5/6/7
+  return /^0[567]\d{8}$/.test(digits);
 };
 
 export const PhoneInput = forwardRef<HTMLInputElement, PhoneInputProps>(
