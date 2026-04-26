@@ -144,34 +144,13 @@ export const CitiesAvailableSection = () => {
             role="img"
             aria-label="Map of Morocco showing available cities"
           >
-            {/* Soft glow under the map, clipped to Morocco's silhouette */}
-            <defs>
-              <radialGradient id="moroccoGlow" cx="50%" cy="55%" r="60%">
-                <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.35" />
-                <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0.05" />
-              </radialGradient>
-              <clipPath id="moroccoMask">
-                {regionPaths.map((r) => (
-                  <path key={r.id} d={r.d} />
-                ))}
-              </clipPath>
-            </defs>
-            <rect
-              x="0"
-              y="0"
-              width={VIEW_W}
-              height={VIEW_H}
-              fill="url(#moroccoGlow)"
-              clipPath="url(#moroccoMask)"
-            />
-
-            {/* Regions */}
+            {/* Regions — uniform fill, no color highlight */}
             <g>
               {regionPaths.map((r) => (
                 <path
                   key={r.id}
                   d={r.d}
-                  fill="hsl(var(--background) / 0.10)"
+                  fill="hsl(var(--background) / 0.18)"
                   stroke="hsl(var(--background) / 0.45)"
                   strokeWidth="1.4"
                   strokeLinejoin="round"
