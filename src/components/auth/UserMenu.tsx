@@ -151,6 +151,16 @@ export function UserMenu({ align = "end" }: Props) {
             </>
           )}
 
+          {!hasAgency && hasRenter && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => navigate("/agency/signup")}>
+                <Briefcase className="mr-2 h-4 w-4" />
+                {t("become_agency")}
+              </DropdownMenuItem>
+            </>
+          )}
+
           <DropdownMenuSeparator />
 
           <DropdownMenuItem
