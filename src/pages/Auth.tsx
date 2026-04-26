@@ -116,14 +116,9 @@ const Auth = () => {
     const hash = window.location.hash || "";
     const hasOAuthTokens = /[#&]access_token=/.test(hash);
 
-    // (1) Canonicalize www → apex — but NEVER while OAuth tokens are in
-    // the hash. The cross-host navigation would drop the hash on some
-    // browsers and supabase-js would never see the session.
-    if (window.location.hostname === "www.motonita.ma" && !hasOAuthTokens) {
-      const target = `${PRIMARY_PRODUCTION_ORIGIN}${window.location.pathname}${window.location.search}${hash}`;
-      window.location.replace(target);
-      return;
-    }
+    // (1) www → apex canonicalization removed: it was interfering with
+    // the OAuth callback hand-off. Domain canonicalization should be
+    // handled at the DNS / hosting layer, not in the auth callback.
 
     // (2) Surface OAuth errors returned by the broker in the URL hash.
     // Skip when access_token is also present (success case with a benign warning).
