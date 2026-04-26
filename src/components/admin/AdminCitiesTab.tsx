@@ -503,15 +503,7 @@ export const AdminCitiesTab = () => {
                 onImageChange={(url) => setNewCity({ ...newCity, image_url: url })}
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Available Bikes</Label>
-                <Input
-                  type="number"
-                  value={newCity.bikes_count}
-                  onChange={(e) => setNewCity({ ...newCity, bikes_count: parseInt(e.target.value) || 0 })}
-                />
-              </div>
+            <div className="grid grid-cols-1 gap-4">
               <div className="space-y-2">
                 <Label>Price From (DH/day)</Label>
                 <Input
@@ -520,6 +512,9 @@ export const AdminCitiesTab = () => {
                   onChange={(e) => setNewCity({ ...newCity, price_from: parseFloat(e.target.value) || 0 })}
                 />
               </div>
+              <p className="text-xs text-muted-foreground">
+                Bike count is calculated automatically from real listings — no manual entry.
+              </p>
             </div>
             <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
               <Label>Is Available (not coming soon)</Label>
