@@ -12,6 +12,8 @@ import {
 } from "lucide-react";
 import logoLight from "@/assets/motonita-logo.svg";
 import logoDark from "@/assets/motonita-logo-dark.svg";
+import markLight from "@/assets/motonita-mark-dark.svg";
+import markDark from "@/assets/motonita-mark-light.svg";
 
 interface NavItem {
   to: string;
@@ -64,7 +66,10 @@ export const Sidebar = ({ collapsed, onToggle, hideCollapseToggle }: SidebarProp
             <img src={logoDark} alt="Motonita" className="hidden h-6 w-auto dark:block" />
           </div>
         ) : (
-          <span className="text-lg font-bold text-primary">M</span>
+          <div className="flex w-full items-center justify-center">
+            <img src={markLight} alt="Motonita" className="h-6 w-auto dark:hidden" />
+            <img src={markDark} alt="Motonita" className="hidden h-6 w-auto dark:block" />
+          </div>
         )}
         {!hideCollapseToggle && (
           <Button
