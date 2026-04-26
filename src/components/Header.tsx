@@ -443,6 +443,12 @@ export const Header = memo(() => {
                     <CalendarIcon className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
                     {t('header.bookingHistory')}
                   </DropdownMenuItem>
+                  {isRenter && (
+                    <DropdownMenuItem onClick={() => navigate("/billing")}>
+                      <Wallet className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
+                      {t('header.credits') || 'Credits'} · {Math.round(renterBalance)} {renterCurrency}
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuItem onClick={() => navigate("/inbox")} className="relative">
                     <MessageCircle className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
                     {t('header.messages')}
