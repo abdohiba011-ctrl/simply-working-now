@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,16 +10,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import {
-  ArrowRightLeft,
   LogOut,
-  Plus,
   Settings as SettingsIcon,
   User as UserIcon,
 } from "lucide-react";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useLanguageStore } from "@/stores/useLanguageStore";
 import { LogoutConfirmDialog } from "@/components/auth/LogoutConfirmDialog";
-import { RoleActivationModal } from "@/components/auth/RoleActivationModal";
 import enLocale from "@/locales/en.json";
 import frLocale from "@/locales/fr.json";
 import arLocale from "@/locales/ar.json";
@@ -44,12 +40,8 @@ export function UserMenu({ align = "end" }: Props) {
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
   const currentRole = useAuthStore((s) => s.currentRole);
-  const switchRole = useAuthStore((s) => s.switchRole);
 
   const [logoutOpen, setLogoutOpen] = useState(false);
-  const [activationModal, setActivationModal] = useState<
-    null | "activate-renter" | "activate-agency"
-  >(null);
 
   if (!user) return null;
 
@@ -57,21 +49,6 @@ export function UserMenu({ align = "end" }: Props) {
   const hasAgency = !!user.roles.agency?.active;
   const initials = (user.name || user.email).slice(0, 1).toUpperCase();
 
-  const handleSwitch = (target: "renter" | "agency") => {
-    switchRole(target);
-    toast.success(
-      t("switched_mode").replace(
-        "{role}",
-        target === "renter" ? t("renter_short") : t("business_short"),
-      ),
-    );
-    if (target === "renter") {
-      navigate("/rent");
-    } else {
-      const verified = user.roles.agency?.verified;
-      navigate(verified ? "/agency/dashboard" : "/agency/verification");
-    }
-  };
 
   const roleBadgeLabel =
     hasRenter && hasAgency
@@ -138,31 +115,6 @@ export function UserMenu({ align = "end" }: Props) {
 
           <DropdownMenuSeparator />
 
-          {/* Role switching section */}
-          {hasRenter && hasAgency && (
-            <DropdownMenuItem
-              onClick={() => handleSwitch(currentRole === "agency" ? "renter" : "agency")}
-            >
-              <ArrowRightLeft className="mr-2 h-4 w-4" />
-              {currentRole === "agency"
-                ? t("switch_to_renter")
-                : t("switch_to_business")}
-            </DropdownMenuItem>
-          )}
-          {hasAgency && !hasRenter && (
-            <DropdownMenuItem
-              onClick={() => setActivationModal("activate-renter")}
-              className="text-muted-foreground"
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              {t("activate_renter")}
-            </DropdownMenuItem>
-          )}
-          {/* Renter-only users no longer see a "become a business" CTA here.
-              Agency activation flow lives on the public Agencies landing page. */}
-
-          <DropdownMenuSeparator />
-
           <DropdownMenuItem
             onClick={() => setLogoutOpen(true)}
             className="text-destructive focus:text-destructive"
@@ -174,13 +126,6 @@ export function UserMenu({ align = "end" }: Props) {
       </DropdownMenu>
 
       <LogoutConfirmDialog open={logoutOpen} onOpenChange={setLogoutOpen} />
-      {activationModal && (
-        <RoleActivationModal
-          open
-          onOpenChange={(v) => !v && setActivationModal(null)}
-          mode={activationModal}
-        />
-      )}
     </>
   );
 }
