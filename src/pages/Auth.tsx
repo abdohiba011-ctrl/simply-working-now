@@ -19,6 +19,10 @@ import { PrivacyTermsModal } from "@/components/PrivacyTermsModal";
 import { getUserFriendlyError, getErrMsg } from "@/lib/errorMessages";
 import { playSuccessSound } from "@/lib/soundEffects";
 import { useLanguage } from "@/contexts/LanguageContext";
+import {
+  PRIMARY_PRODUCTION_ORIGIN,
+  canCompleteOAuthHere,
+} from "@/lib/oauthDomain";
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
@@ -100,46 +104,58 @@ const Auth = () => {
   }, [authLoading, isAuthenticated, hasRole, navigate, returnUrl]);
 
   // Detect tokens in URL hash so we can show a "Signing you in…" interstitial
-  // instead of flashing the login form while supabase-js consumes them.
+  // briefly while the OAuth helper finishes. The Lovable Cloud auth helper
+  // calls supabase.auth.setSession() itself, so we just wait for the session
+  // to appear.
   const [processingOAuthHash, setProcessingOAuthHash] = useState<boolean>(() => {
     if (typeof window === "undefined") return false;
     return /[#&]access_token=/.test(window.location.hash);
   });
 
-  // Canonicalize www → apex so the OAuth round-trip never crosses host
-  // boundaries (the broker's state cookie is scoped per-host). Also
-  // surface a clean error toast if the broker returned an OAuth error in
-  // the URL hash (e.g. `#error=server_error&error_description=...`).
+  // Surface clear errors when Google / the OAuth broker returned an error
+  // in the URL (hash or query string). Clean the broken parameters so the
+  // toast doesn't fire again on re-render.
   useEffect(() => {
     if (typeof window === "undefined") return;
 
     const hash = window.location.hash || "";
+    const search = window.location.search || "";
     const hasOAuthTokens = /[#&]access_token=/.test(hash);
 
-    // (1) www → apex canonicalization removed: it was interfering with
-    // the OAuth callback hand-off. Domain canonicalization should be
-    // handled at the DNS / hosting layer, not in the auth callback.
+    const surfaceError = (raw: string) => {
+      const decoded = decodeURIComponent(raw.replace(/\+/g, " "));
+      if (/exchange authorization code/i.test(decoded)) {
+        toast.error(
+          "Google sign-in could not finish here. Please open the live site (motonita.ma) and try again.",
+          { duration: 7000 },
+        );
+      } else {
+        toast.error(decoded);
+      }
+    };
 
-    // (2) Surface OAuth errors returned by the broker in the URL hash.
-    // Skip when access_token is also present (success case with a benign warning).
     if (hash.includes("error=") && !hasOAuthTokens) {
-      const hashParams = new URLSearchParams(hash.slice(1));
-      const errDesc = hashParams.get("error_description") || hashParams.get("error");
-      if (errDesc) {
-        toast.error(decodeURIComponent(errDesc.replace(/\+/g, " ")));
-        window.history.replaceState({}, "", window.location.pathname + window.location.search);
+      const params = new URLSearchParams(hash.slice(1));
+      const err = params.get("error_description") || params.get("error");
+      if (err) surfaceError(err);
+      window.history.replaceState({}, "", window.location.pathname + window.location.search);
+    } else if (search.includes("error=")) {
+      const params = new URLSearchParams(search);
+      const err = params.get("error_description") || params.get("error");
+      if (err) {
+        surfaceError(err);
+        window.history.replaceState({}, "", window.location.pathname);
       }
     }
 
-    // (3) Sanity check: if tokens are in the hash but supabase-js hasn't
-    // produced a session within 3.5s, surface a clear error so we don't
-    // leave the user staring at a silent login form.
+    // Sanity check: if tokens are in the hash but no session shows up
+    // within ~3.5s, surface a clear error and drop the interstitial.
     if (hasOAuthTokens) {
       const timer = window.setTimeout(async () => {
         const { data } = await supabase.auth.getSession();
         if (!data.session) {
           console.error("[OAuth] Tokens in URL but no session after 3.5s");
-          toast.error("Google sign-in didn't complete. Please try again.");
+          toast.error(t('auth.googleSignInFailed') || "Google sign-in didn't complete. Please try again.");
           setProcessingOAuthHash(false);
           window.history.replaceState({}, "", window.location.pathname + window.location.search);
         } else {
@@ -303,13 +319,36 @@ const Auth = () => {
   };
 
   const handleGoogleSignIn = useCallback(async () => {
+    // Only allow internal return paths to prevent open-redirect abuse.
+    const safeReturn = returnUrl && returnUrl.startsWith("/") && !returnUrl.startsWith("//")
+      ? returnUrl
+      : null;
+
+    // The Lovable preview iframe (and other embedded contexts) interfere
+    // with Google's authorization-code exchange. If we're not in a context
+    // that can complete OAuth reliably, bounce the user out to the
+    // production site in a top-level navigation and let them sign in there.
+    if (!canCompleteOAuthHere(window.location.origin)) {
+      const target = new URL("/auth", PRIMARY_PRODUCTION_ORIGIN);
+      if (safeReturn) target.searchParams.set("returnUrl", safeReturn);
+      try {
+        // Try to break out of the iframe so the OAuth popup/window opens
+        // from the live site, not the preview.
+        if (window.top && window.top !== window.self) {
+          window.top.location.href = target.toString();
+          return;
+        }
+      } catch {
+        /* ignore cross-origin top-frame errors */
+      }
+      window.location.href = target.toString();
+      return;
+    }
+
     setIsLoading(true);
     try {
-      // Stay on the current origin. Lovable Cloud's managed OAuth helper
-      // requires that initiation and callback happen on the same host so
-      // that the broker's `state` (and any cookies) line up. Forcing a
-      // jump to a different domain mid-flow causes
-      // "failed to exchange authorization code state".
+      // Same-origin flow: initiation and callback both happen on the
+      // production custom domain so the OAuth state/code exchange lines up.
       const result = await lovable.auth.signInWithOAuth("google", {
         redirect_uri: window.location.origin,
       });
@@ -325,9 +364,9 @@ const Auth = () => {
         // Browser is navigating to Google. Nothing more to do.
         return;
       }
-      // Popup flow (iframe / preview): tokens already set on the supabase
-      // client. The auth context's `onAuthStateChange` listener will fire
-      // and the redirect-on-auth effect above will route the user.
+      // Tokens already set on the supabase client. The auth context's
+      // onAuthStateChange listener will fire and the redirect-on-auth
+      // effect above will route the user.
       playSuccessSound();
       toast.success(t('auth.googleSignInSuccess'));
     } catch (error: unknown) {
@@ -336,7 +375,7 @@ const Auth = () => {
       toast.error(msg);
       setIsLoading(false);
     }
-  }, [t]);
+  }, [returnUrl, t]);
 
 
 
