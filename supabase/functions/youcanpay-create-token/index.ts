@@ -69,7 +69,8 @@ Deno.serve(async (req) => {
         currency,
         status: "pending",
         related_booking_id: body.related_booking_id || null,
-        related_wallet_user_id: body.purpose === "wallet_topup" ? user.id : null,
+        related_wallet_user_id:
+          body.purpose === "wallet_topup" || body.purpose === "renter_topup" ? user.id : null,
         customer_email: body.customer_email || user.email || null,
         customer_name: body.customer_name || null,
       })
