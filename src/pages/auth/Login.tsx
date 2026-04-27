@@ -7,7 +7,6 @@ import { z } from "zod";
 import { toast } from "sonner";
 import { Eye, EyeOff, Mail, Phone, AlertCircle, Loader2 } from "lucide-react";
 
-import { AuthLayout } from "@/components/auth/AuthLayout";
 import { AgencyAuthLayout } from "@/components/auth/AgencyAuthLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
