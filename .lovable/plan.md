@@ -1,43 +1,73 @@
-You’re right. The current frontend asks for a 6-digit reset code, but the password reset request is still using the backend’s default password recovery email path, which can produce a reset-link email when the custom auth email hook is not active or while the email domain is still pending. That is why you saw a link. The logic is inconsistent and needs to be fixed at the source.
+## Goal
 
-Plan to make password reset OTP-only everywhere:
+Keep the agency forgot-password flow exactly as it is today (the lime/forest split-screen `AgencyAuthLayout` at `/forgot-password`). Build a **separate** renter forgot-password flow that lives entirely inside the renter UI (Header + standard card, like `/auth`), so renters never get bounced into the agency-branded screens.
 
-1. Replace the reset-link trigger
-   - Stop using the default password recovery email method for `/forgot-password`.
-   - Use an OTP-only auth request instead, configured to send a 6-digit code and not create new users.
-   - Keep the user on the Motonita reset-code screen after submitting their email.
+## Current state (problem)
 
-2. Verify the OTP correctly
-   - Update `/reset-password/verify` so the 6-digit code is verified as the same OTP type that was sent.
-   - After a valid code, allow the user to continue to `/reset-password/new` and set the new password.
-   - Keep the flow: email → 6-digit code → new password. No clickable reset link.
+- Renter login (`/auth`) → "Forgot password" button navigates to `/forgot-password`
+- `/forgot-password` renders `AgencyAuthLayout` (agency-branded split screen)
+- `/reset-password/verify` and `/reset-password/new` also render `AgencyAuthLayout`
+- Result: a renter resetting their password is dropped into agency-branded screens — wrong UX, mixes the two contexts.
 
-3. Remove legacy reset-link handling
-   - Remove the fallback path in `ResetPasswordNew.tsx` that accepts a clicked recovery link/session.
-   - Update comments and error messages from “reset link” to “reset code”.
-   - Add a guard so old recovery-link URLs redirect back to `/forgot-password` instead of acting as a valid reset path.
+Agency side (`/agency/login` → "Forgot password" → `/forgot-password`) looks correct and stays untouched.
 
-4. Fix the email templates that can still show links
-   - Update auth email templates so password reset and magic-link style emails display only `{token}` as a 6-digit code.
-   - Remove button/link wording from reset-related email copy.
-   - Keep Motonita branding: white email background, forest text, lime code box.
+## Plan
 
-5. Deploy and test the email function
-   - Redeploy the auth email handler after the template changes.
-   - Test the reset flow from `/forgot-password` and confirm:
-     - the UI shows six OTP boxes,
-     - the sent email contains a 6-digit code only,
-     - no “Reset Password” button/link appears,
-     - entering the code allows setting a new password,
-     - “Wrong email?” returns to `/forgot-password`.
+### 1. Create three new renter-only pages
 
-Technical details:
-- Main files to update:
-  - `src/stores/useAuthStore.ts`
-  - `src/pages/auth/ResetPasswordVerify.tsx`
-  - `src/pages/auth/ResetPasswordNew.tsx`
-  - `supabase/functions/_shared/email-templates/recovery.tsx`
-  - `supabase/functions/_shared/email-templates/magic-link.tsx`
-  - `supabase/functions/auth-email-hook/index.ts`
-- Also audit routes in `src/App.tsx` for any old `/reset-password` link destination.
-- The email domain currently shows as pending, so default emails may still be used until Cloud email setup finishes. The code fix will remove the link trigger from the app and make the custom templates OTP-only when active.
+Mirror the existing OTP flow but wrap content in renter chrome (`<Header />` + centered `Card`, same look as `/auth`). Same 6-digit OTP logic — no magic links, no behavior change.
+
+- `src/pages/auth/RenterForgotPassword.tsx` — email input → calls `requestPasswordReset` → navigates to `/renter/reset-password/verify?email=...`
+- `src/pages/auth/RenterResetPasswordVerify.tsx` — 6-digit OTP entry → on success navigates to `/renter/reset-password/new?token=...`
+- `src/pages/auth/RenterResetPasswordNew.tsx` — new password form → on success navigates to `/auth`
+
+All three reuse the same `useAuthStore` actions (`requestPasswordReset`, `verifyResetOtp`, `resetPasswordWithToken` — whatever the existing pages call). No backend or auth-store changes.
+
+### 2. Add new routes in `src/App.tsx`
+
+```text
+/renter/forgot-password           → RenterForgotPassword
+/renter/reset-password/verify     → RenterResetPasswordVerify
+/renter/reset-password/new        → RenterResetPasswordNew
+```
+
+Existing agency routes stay exactly as they are:
+```text
+/forgot-password           → ForgotPassword (agency layout)
+/reset-password/verify     → ResetPasswordVerify (agency layout)
+/reset-password/new        → ResetPasswordNew (agency layout)
+```
+
+### 3. Point the renter login button to the new flow
+
+In `src/pages/Auth.tsx` line 452, change:
+```text
+navigate("/forgot-password")  →  navigate("/renter/forgot-password")
+```
+
+### 4. Verify all internal links
+
+- Renter pages (`/auth`, renter reset screens) only link to `/renter/...` reset URLs and back to `/auth`.
+- Agency pages (`/login`, `/agency/login`, agency reset screens) only link to `/forgot-password`, `/reset-password/...`, and `/login`.
+- No cross-linking between the two flows.
+
+### 5. i18n
+
+Reuse existing translation keys (`auth.forgotPassword`, `mockAuth.reset_password`, `mockAuth.reset_password_sub`, `mockAuth.send_reset_code`, `mockAuth.back_to_login`, etc.) in all three languages — no new keys needed.
+
+## Out of scope (do not touch)
+
+- Agency `/forgot-password`, `/reset-password/verify`, `/reset-password/new` — keep as-is
+- `AgencyAuthLayout`, agency Login/Signup, logo
+- `useAuthStore`, OTP backend, email templates — already on 6-digit codes
+
+## Files
+
+**New**
+- `src/pages/auth/RenterForgotPassword.tsx`
+- `src/pages/auth/RenterResetPasswordVerify.tsx`
+- `src/pages/auth/RenterResetPasswordNew.tsx`
+
+**Modified**
+- `src/App.tsx` — add 3 renter routes
+- `src/pages/Auth.tsx` — change forgot-password link target
