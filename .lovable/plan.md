@@ -1,44 +1,71 @@
-## Issues to fix
+## Senior-UX redesign brief — Agency dashboard
 
-You walked through: home → "More" → Agencies → "Sign up" → landed on `/agency/signup`. Three real problems:
+Reference: COD Partner-style layout — soft canvas, rounded cards floating on a tinted background, pastel icon tiles, generous breathing room, friendly header.
 
-1. **Wrong logo on dark mode.** The auth page (`AuthLayout`) imports the *light-mode* logo (`motonita-logo.svg`, dark text) and shows it even when the app is in dark mode, so it disappears against the dark background.
-2. **App defaults to dark mode** when the visitor's OS is set to dark. You want light mode as the default for new visitors — only switch to dark if the user explicitly chooses it.
-3. **Signup page styling looks off** in dark mode — the card uses hardcoded light colors (`bg-white`, `#163300` text, `rgba(22,51,0,...)` borders), so in dark mode it renders as a light card with poor contrast around it.
+We keep Motonita's lime (`#9FE870`) brand identity — we are not adopting the violet palette of the reference. We are adopting the *layout language*, *radius scale*, *spacing rhythm*, and *icon-tile pattern*.
 
-Side note on "mock authenticator": the Google button is real (Lovable Cloud OAuth). The "Sign up with Google" label currently reads fine — no "Business" suffix is rendered. If you saw that wording, it was the previous translation. We'll double-check the label says just "Sign up with Google".
+## What changes
 
-## Changes
+### 1. Canvas + radius language
+Bigger, friendlier radii everywhere. Cards float on a tinted canvas with clear separation.
 
-### 1. Default theme = light (always)
-`src/hooks/useTheme.ts`
-- Remove the `prefers-color-scheme: dark` system check.
-- New visitors → `light`. Only `localStorage` overrides.
+| Token | Before | After |
+|---|---|---|
+| `--radius` | 0.75rem (12px) | 1rem (16px) — drives `rounded-lg` |
+| Page background | `bg-muted/20` | softer tinted canvas (`hsl(96 25% 97%)` light / unchanged dark) |
+| Cards | `rounded-xl` mixed | unified `rounded-2xl` |
+| Buttons / pills / inputs | `rounded-md` mixed | `rounded-xl` for primary actions, `rounded-full` for chips |
+| Icon tiles | none / `rounded-lg` | `rounded-2xl` soft pastel tiles (44×44) |
 
-### 2. Auth layout uses theme-aware logo
-`src/components/auth/AuthLayout.tsx`
-- Import both `motonita-logo.svg` and `motonita-logo-dark.svg`.
-- Use `useTheme()` to pick the correct one (same pattern as `Header.tsx`, `Sidebar.tsx`).
+### 2. Sidebar — floating, pill nav, pastel icons
+- Sidebar becomes a floating panel: `m-3 rounded-2xl border bg-card shadow-sm` (sits on the canvas, no hard right border).
+- Width: 240→**256px** expanded, 64→**72px** collapsed.
+- Each nav row becomes a **pill** with a **soft pastel icon tile** on the left (the reference's signature).
+  - Inactive: `rounded-xl` row, `rounded-xl` muted tile (`bg-muted`), icon at `text-muted-foreground`.
+  - Active: `bg-primary/15` pill, icon tile `bg-primary/25`, icon `text-foreground`, no fill hack.
+  - Hover: subtle `bg-muted/60` row + tile lifts to `bg-muted`.
+- 12px vertical gap between rows (currently 4px).
+- Footer profile block: rounded-2xl card with avatar, name, role chip ("Agency"), and a separated "Log out" button — same warmth as the reference's user card.
+- Collapse button: pill chip on the **outer edge** of the floating sidebar, half-overlapping (matches the reference's chevron tab).
 
-### 3. Auth pages adapt to dark mode
-`src/components/auth/AuthLayout.tsx` + `src/pages/auth/Signup.tsx` + `src/pages/auth/Login.tsx`
-- Replace hardcoded colors with semantic tokens:
-  - `bg-white` on dividers → `bg-card`
-  - `style={{ color: "#163300" }}` → `text-foreground`
-  - `style={{ color: "rgba(22,51,0,0.7)" }}` → `text-muted-foreground`
-  - `borderColor: "rgba(22,51,0,0.08/0.10)"` → `border-border`
-- Keep the lime accent pill (#9FE870) since it's brand and works on both themes.
+### 3. Header — calmer, less crowded
+- Height stays 64px, but: remove the breadcrumb (it competes with the page H1). Replace with a small **"Hey {name} 👋"** greeting chip on the left (matches the reference) — only on the dashboard; other pages keep page title only.
+- Search becomes a **rounded-full** input, 360px wide on lg, with `⌘K` kbd hint.
+- Wallet button: rounded-full pill, lime icon tile inside.
+- Order: greeting → spacer → search → language → wallet → theme → notifications → help → avatar+name (visible name on desktop, like reference).
+- Avatar: 36px rounded-full with role label below (`text-[10px] text-muted-foreground` "Agency").
 
-### 4. Confirm Google button label
-`src/pages/auth/Signup.tsx`
-- Verify label resolves to "Sign up with Google" (no "Business" suffix). Both translation keys already fall back to "Sign up with Google" — leave as-is.
+### 4. Dashboard page — pastel metric cards + softer empty states
+- **Metric cards** get the reference's signature pastel icon tile in the top-right corner:
+  - Wallet → lime tile (`bg-primary/15`), `Wallet` icon `text-primary`.
+  - Pending → amber tile (`bg-warning/15`), `Clock`.
+  - This month → blue tile (`bg-info/15`), `Calendar`.
+  - Revenue → emerald tile (`bg-success/15`), `TrendingUp`.
+  - Card: `rounded-2xl p-6`, label uppercase 11px tracking-wider, value 30px bold, optional delta line below ("+12% vs last month" — only when data available; never fake).
+- **Two-column section**: "Today's schedule" (3/5) + "Quick actions" stack (2/5) — keep, but:
+  - Quick action tiles get pastel icon tiles too (rounded-2xl, 48×48), label below, hover lifts shadow.
+  - Today's schedule: rows get more vertical padding (py-4), avatar+bike thumbnail in rounded-xl, status chip rounded-full.
+- **Empty states**: keep the friendly illustration approach from the reference — large soft-tinted circle behind icon, headline + helper copy, primary CTA pill.
 
-## Out of scope
-- Header "More → Agencies" navigation works as-is.
-- The Google sign-in flow itself is untouched (it's the real Lovable Cloud OAuth, not a mock).
+### 5. Mobile bottom-nav refinements
+- Active tab gets a **lime pill** behind the icon (rounded-2xl), label stays below — matches the modern app feel.
+- Bottom nav itself sits inside `mx-3 mb-3 rounded-2xl` floating bar with `shadow-lg` (instead of edge-to-edge).
+
+### 6. Trial / unverified banners
+- Switch from edge-to-edge stripes to **rounded-2xl pills** that sit inside the content area (`max-w-7xl mx-auto`), with a leading icon tile. Less alarming, more polished.
 
 ## Files touched
-- `src/hooks/useTheme.ts` — drop system-preference branch
-- `src/components/auth/AuthLayout.tsx` — theme-aware logo + semantic colors
-- `src/pages/auth/Signup.tsx` — semantic colors throughout
-- `src/pages/auth/Login.tsx` — semantic colors throughout
+- `src/index.css` — `--radius` to 1rem, lighter tinted background variable for agency canvas
+- `src/components/agency/Sidebar.tsx` — floating panel, pill nav with icon tiles, profile block
+- `src/components/agency/Header.tsx` — greeting chip, rounded-full search/wallet, named avatar
+- `src/components/agency/AgencyShell.tsx` — canvas tint, banner pill style, floating-sidebar layout (sidebar margin instead of border-r)
+- `src/components/agency/MobileNav.tsx` — floating bottom bar with lime active pill
+- `src/pages/agency/Dashboard.tsx` — pastel metric tiles, softer cards, refined quick actions
+
+## Out of scope (explicitly)
+- Brand color change — we keep lime. The reference's violet is *not* adopted.
+- Page-level features, copy, or data flows — UI only.
+- Other agency sub-pages (Bookings, Motorbikes, etc.). They inherit the new tokens automatically (radius, canvas) but no per-page rework in this pass. We can tackle them next once you approve the language here.
+
+## What you'll see after
+A calmer, more spacious, more friendly dashboard that feels like a 2026 SaaS tool: floating rounded sidebar, pastel icon tiles everywhere, generous padding, no harsh borders, lime kept as the brand accent.
