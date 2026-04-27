@@ -415,6 +415,17 @@ export const Header = memo(() => {
                     )}
                   </Button>
                 )}
+                {isAdmin && (
+                  <Button
+                    variant="default"
+                    size="sm"
+                    className="h-10 gap-1.5 rounded-full px-3 font-semibold"
+                    onClick={() => navigate("/admin/panel")}
+                  >
+                    <ShieldCheck className="h-4 w-4" />
+                    {t('header.adminPanel') || 'Admin'}
+                  </Button>
+                )}
                 <Button
                   variant="outline"
                   size="icon"
