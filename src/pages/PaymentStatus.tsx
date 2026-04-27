@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate, Link } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Card, CardContent } from "@/components/ui/card";
@@ -41,7 +41,7 @@ export default function PaymentStatus() {
     outcomeHint === "error" ? "failed" : "processing",
   );
   const [elapsed, setElapsed] = useState(0);
-  const stopRef = useRef(false);
+  
 
   useEffect(() => {
     if (!pid) {
