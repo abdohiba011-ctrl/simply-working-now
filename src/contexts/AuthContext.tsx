@@ -246,7 +246,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const signup = async (email: string, password: string, name: string, role: "user" | "business") => {
+  const signup = async (email: string, password: string, name: string, role: "renter" | "business") => {
     const rateLimitCheck = checkAndRecordRateLimit('signup', email, false);
     if (!rateLimitCheck.allowed) {
       throw new Error(rateLimitCheck.message || 'Too many signup attempts');
@@ -275,7 +275,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (data?.user && role === "business") {
       const { error: roleError } = await supabase
         .from('user_roles')
-        .insert({ user_id: data.user.id, role: 'business' });
+        .insert({ user_id: data.user.id, role: 'agency' });
       
       if (roleError) throw roleError;
     }
