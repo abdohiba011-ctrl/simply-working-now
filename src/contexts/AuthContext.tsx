@@ -272,7 +272,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     clearRateLimitState('signup', email);
 
     // Add business role if user selected business account type
-    if (data?.user && role === "business") {
+    if (data?.user && role === "agency") {
       const { error: roleError } = await supabase
         .from('user_roles')
         .insert({ user_id: data.user.id, role: 'agency' });
