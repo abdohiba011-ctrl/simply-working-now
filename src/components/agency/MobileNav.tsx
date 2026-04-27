@@ -37,29 +37,42 @@ interface Props {
 
 export const MobileNav = ({ open, onOpenChange }: Props) => (
   <>
-    {/* Bottom tab bar */}
-    <nav className="fixed inset-x-0 bottom-0 z-40 flex h-16 items-center justify-around border-t border-border bg-card lg:hidden">
+    {/* Floating bottom tab bar */}
+    <nav className="fixed inset-x-3 bottom-3 z-40 flex items-center justify-around rounded-2xl border border-border bg-card/95 px-2 py-1.5 shadow-lg backdrop-blur lg:hidden">
       {TABS.map((tab) => (
         <NavLink
           key={tab.to}
           to={tab.to}
           className={({ isActive }) =>
             cn(
-              "flex flex-1 flex-col items-center gap-0.5 py-2 text-[10px] font-medium",
-              isActive ? "text-primary" : "text-muted-foreground",
+              "flex flex-1 flex-col items-center gap-0.5 rounded-xl py-1.5 text-[10px] font-medium transition-colors",
+              isActive ? "text-foreground" : "text-muted-foreground",
             )
           }
         >
-          <tab.icon className="h-5 w-5" />
-          {tab.label}
+          {({ isActive }) => (
+            <>
+              <span
+                className={cn(
+                  "flex h-9 w-9 items-center justify-center rounded-xl transition-colors",
+                  isActive ? "bg-primary/25" : "bg-transparent",
+                )}
+              >
+                <tab.icon className="h-[18px] w-[18px]" />
+              </span>
+              <span>{tab.label}</span>
+            </>
+          )}
         </NavLink>
       ))}
       <button
         onClick={() => onOpenChange(true)}
-        className="flex flex-1 flex-col items-center gap-0.5 py-2 text-[10px] font-medium text-muted-foreground"
+        className="flex flex-1 flex-col items-center gap-0.5 rounded-xl py-1.5 text-[10px] font-medium text-muted-foreground"
       >
-        <MoreHorizontal className="h-5 w-5" />
-        More
+        <span className="flex h-9 w-9 items-center justify-center rounded-xl">
+          <MoreHorizontal className="h-[18px] w-[18px]" />
+        </span>
+        <span>More</span>
       </button>
     </nav>
 
@@ -77,12 +90,19 @@ export const MobileNav = ({ open, onOpenChange }: Props) => (
               onClick={() => onOpenChange(false)}
               className={({ isActive }) =>
                 cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors hover:bg-muted",
-                  isActive && "bg-primary/15 text-foreground",
+                  "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
+                  isActive ? "bg-primary/15 text-foreground" : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
                 )
               }
             >
-              <item.icon className="h-4 w-4" />
+              <span
+                className={cn(
+                  "flex h-8 w-8 items-center justify-center rounded-xl",
+                  "bg-muted text-muted-foreground",
+                )}
+              >
+                <item.icon className="h-4 w-4" />
+              </span>
               {item.label}
             </NavLink>
           ))}
