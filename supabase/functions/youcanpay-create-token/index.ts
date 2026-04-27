@@ -123,7 +123,16 @@ Deno.serve(async (req) => {
       },
     };
 
-    const ycResp = await fetch("https://youcanpay.com/sandbox/api/tokenize", {
+    // Detect environment from the public key. YouCan Pay uses
+    //   pub_sandbox_xxx / pri_sandbox_xxx  → sandbox endpoint
+    //   pub_xxx         / pri_xxx          → live endpoint
+    const isSandboxKey = PUBLIC_KEY.startsWith("pub_sandbox_");
+    const tokenizeUrl = isSandboxKey
+      ? "https://youcanpay.com/sandbox/api/tokenize"
+      : "https://youcanpay.com/api/tokenize";
+    console.log("youcanpay-create-token using endpoint:", tokenizeUrl, "orderId:", orderId);
+
+    const ycResp = await fetch(tokenizeUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(ycPayload),
@@ -164,13 +173,12 @@ Deno.serve(async (req) => {
     // The official integration is to embed `ycpay.js` in our own page and
     // call `ycPay.pay(tokenId)` from a button. We return the token + public
     // key so the frontend can render the embedded form.
-    const isSandbox = PUBLIC_KEY.startsWith("pub_sandbox_");
     return new Response(
       JSON.stringify({
         token_id: tokenId,
         payment_id: orderId,
         public_key: PUBLIC_KEY,
-        is_sandbox: isSandbox,
+        is_sandbox: isSandboxKey,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );

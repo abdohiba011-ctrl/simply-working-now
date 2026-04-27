@@ -1,47 +1,115 @@
 // YouCanPay webhook receiver — confirms payments, credits wallets,
 // updates subscriptions and bookings.
+//
+// Security: verifies HMAC-SHA256 signature using YOUCANPAY_PRIVATE_KEY.
+// YouCan Pay sends the signature either as `x-youcan-signature` header,
+// `x-ycp-signature` header, or as `signature` in the payload.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-youcan-signature, x-ycp-signature",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
+
+async function hmacSha256Hex(secret: string, data: string): Promise<string> {
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    "raw",
+    enc.encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  const sig = await crypto.subtle.sign("HMAC", key, enc.encode(data));
+  return Array.from(new Uint8Array(sig))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let out = 0;
+  for (let i = 0; i < a.length; i++) out |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return out === 0;
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const PRIVATE_KEY = Deno.env.get("YOUCANPAY_PRIVATE_KEY") || "";
     const admin = createClient(SUPABASE_URL, SERVICE_ROLE);
 
-    // YouCan Pay sandbox can post either JSON or form-encoded bodies.
+    // Read raw body once so we can verify the signature against the exact bytes.
+    const rawBody = await req.text();
     const contentType = (req.headers.get("content-type") || "").toLowerCase();
+    const sourceIp =
+      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      req.headers.get("cf-connecting-ip") ||
+      "unknown";
+    const sigHeader =
+      req.headers.get("x-youcan-signature") ||
+      req.headers.get("x-ycp-signature") ||
+      "";
+
     let payload: Record<string, any> = {};
     try {
       if (contentType.includes("application/json")) {
-        payload = await req.json();
+        payload = rawBody ? JSON.parse(rawBody) : {};
       } else if (
         contentType.includes("application/x-www-form-urlencoded") ||
         contentType.includes("multipart/form-data")
       ) {
-        const form = await req.formData();
-        for (const [k, v] of form.entries()) payload[k] = typeof v === "string" ? v : String(v);
+        const sp = new URLSearchParams(rawBody);
+        sp.forEach((v, k) => { payload[k] = v; });
       } else {
-        // Fallback: try JSON, then raw text.
-        const raw = await req.text();
-        try { payload = JSON.parse(raw); }
+        try { payload = JSON.parse(rawBody); }
         catch {
-          // Try urlencoded as a last resort
           try {
-            const sp = new URLSearchParams(raw);
+            const sp = new URLSearchParams(rawBody);
             sp.forEach((v, k) => { payload[k] = v; });
-          } catch { payload = { raw }; }
+          } catch { payload = { raw: rawBody }; }
         }
       }
     } catch (e) {
       console.error("youcanpay-webhook body parse failed", e);
     }
-    console.log("youcanpay-webhook payload:", JSON.stringify(payload), "content-type:", contentType);
+
+    // Diagnostic log — helps confirm whether YouCan is actually reaching us.
+    console.log("youcanpay-webhook hit", JSON.stringify({
+      sourceIp,
+      contentType,
+      hasSigHeader: !!sigHeader,
+      payloadKeys: Object.keys(payload),
+      orderId: payload.order_id || payload.orderId || null,
+      status: payload.status || payload.event || null,
+    }));
+
+    // Verify signature. Accept either:
+    //  (a) HMAC-SHA256(rawBody, PRIVATE_KEY) === header, or
+    //  (b) signature field inside payload === HMAC of order_id|status (sandbox-style).
+    // If neither matches, reject — but allow callers without any signature ONLY in
+    // explicit dev mode (YOUCANPAY_WEBHOOK_INSECURE=1). Default is strict.
+    const insecure = Deno.env.get("YOUCANPAY_WEBHOOK_INSECURE") === "1";
+    let signatureOk = false;
+    if (PRIVATE_KEY && rawBody) {
+      const expected = await hmacSha256Hex(PRIVATE_KEY, rawBody);
+      const candidate = (sigHeader || payload.signature || "").toString().toLowerCase();
+      if (candidate && timingSafeEqual(expected.toLowerCase(), candidate)) {
+        signatureOk = true;
+      }
+    }
+    if (!signatureOk && !insecure) {
+      console.warn("youcanpay-webhook signature mismatch", {
+        sourceIp,
+        receivedSig: sigHeader ? sigHeader.slice(0, 12) + "…" : "(none)",
+      });
+      return new Response(JSON.stringify({ error: "invalid signature" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     // YouCanPay typically sends order_id, transaction_id, status
     const orderId = payload.order_id || payload.orderId || payload.metadata?.order_id;
@@ -62,6 +130,13 @@ Deno.serve(async (req) => {
     if (!payment) {
       return new Response(JSON.stringify({ error: "payment not found" }), {
         status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Idempotency — once paid, never re-process credits/inserts.
+    if (payment.status === "paid") {
+      return new Response(JSON.stringify({ ok: true, already: true }), {
+        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
