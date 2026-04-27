@@ -145,9 +145,14 @@ export default function PayYouCan() {
       });
   };
 
+  // Hide the renter Header when this payment was initiated from the agency
+  // dashboard (success path lives under /agency/...). This keeps agencies
+  // visually inside the agency context during top-up.
+  const isAgencyContext = (successPath || "").startsWith("/agency");
+
   return (
     <div className="min-h-screen bg-background">
-      <Header />
+      {!isAgencyContext && <Header />}
       <div className="container mx-auto px-4 py-8 max-w-2xl">
         <Button
           variant="outline"
