@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuthStore } from "@/stores/useAuthStore";
-import { supabase } from "@/integrations/supabase/client";
+
 import { COMMON_PASSWORDS, isResetTokenValid, type AuthError } from "@/lib/mockAuth";
 import { cn } from "@/lib/utils";
 
@@ -94,8 +94,8 @@ export default function ResetPasswordNew() {
   const [params] = useSearchParams();
   const isLoading = useAuthStore((s) => s.isLoading);
 
-  // Token from our internal OTP flow (legacy). If absent, we rely on the
-  // recovery session that Supabase set up when the user clicked the email link.
+  // Motonita uses a strict 6-digit OTP flow. The token is issued only after
+  // the user successfully verifies the code on /reset-password/verify.
   const internalToken = params.get("token") ?? "";
 
   const [showPassword, setShowPassword] = useState(false);
@@ -108,11 +108,11 @@ export default function ResetPasswordNew() {
     defaultValues: { password: "", confirmPassword: "" },
   });
 
-  // For the legacy internal-token flow: validate token on mount.
-  // For the email-link flow, Supabase auto-establishes a recovery session
-  // from the URL hash, so no validation is needed here.
+  // OTP-only flow: the token must be present and valid. If not, send the
+  // user back to /forgot-password to request a fresh code. Any old recovery
+  // link that lands here without a token is rejected.
   useEffect(() => {
-    if (internalToken && !isResetTokenValid(internalToken)) {
+    if (!internalToken || !isResetTokenValid(internalToken)) {
       toast.error(
         t("mockAuth.reset_link_expired", {
           defaultValue: "Your reset code expired. Please request a new one.",
@@ -150,28 +150,10 @@ export default function ResetPasswordNew() {
   const onSubmit = async (values: FormValues) => {
     setServerError(null);
     try {
-      if (internalToken) {
-        const setNewPassword = useAuthStore.getState().setNewPassword;
-        await setNewPassword(internalToken, values.password);
-      } else {
-        // Email-link recovery flow: Supabase already established a session.
-        const { error } = await supabase.auth.updateUser({
-          password: values.password,
-        });
-        if (error) {
-          if (/auth session missing|jwt|expired/i.test(error.message)) {
-            toast.error(
-              t("mockAuth.reset_link_expired", {
-                defaultValue:
-                  "Your reset code expired. Please request a new one.",
-              }),
-            );
-            navigate("/forgot-password", { replace: true });
-            return;
-          }
-          throw error;
-        }
-      }
+      // OTP-only path: we always have an internalToken issued after the
+      // user verified their 6-digit code on /reset-password/verify.
+      const setNewPassword = useAuthStore.getState().setNewPassword;
+      await setNewPassword(internalToken, values.password);
       toast.success(
         t("mockAuth.password_updated", { defaultValue: "Password updated!" }),
       );
