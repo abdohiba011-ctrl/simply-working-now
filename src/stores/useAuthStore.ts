@@ -27,6 +27,7 @@ import {
 
 const LAST_ROLE_KEY = "motonita_last_active_role";
 const REMEMBER_ME_KEY = "motonita_auth_remember";
+const ADMIN_CACHE_KEY = "motonita_is_admin";
 
 function readLastRole(): AppRole | null {
   try {
@@ -45,10 +46,31 @@ function writeLastRole(role: AppRole): void {
   }
 }
 
+export function readCachedIsAdmin(userId?: string | null): boolean {
+  if (!userId) return false;
+  try {
+    const raw = localStorage.getItem(ADMIN_CACHE_KEY);
+    if (!raw) return false;
+    const parsed = JSON.parse(raw) as { userId: string; isAdmin: boolean };
+    return parsed.userId === userId && !!parsed.isAdmin;
+  } catch {
+    return false;
+  }
+}
+
+function writeCachedIsAdmin(userId: string, isAdmin: boolean): void {
+  try {
+    localStorage.setItem(ADMIN_CACHE_KEY, JSON.stringify({ userId, isAdmin }));
+  } catch {
+    // ignore
+  }
+}
+
 function clearLastRole(): void {
   try {
     localStorage.removeItem(LAST_ROLE_KEY);
     localStorage.removeItem(REMEMBER_ME_KEY);
+    localStorage.removeItem(ADMIN_CACHE_KEY);
   } catch {
     // ignore
   }
@@ -118,7 +140,7 @@ async function loadAuthUserModel(authUser: User): Promise<MockUser> {
     authUser.email?.split("@")[0] ||
     "User";
 
-  return {
+  const model: MockUser = {
     id: authUser.id,
     email: authUser.email ?? profile?.email ?? "",
     phone: profile?.phone ?? authUser.phone ?? null,
@@ -153,6 +175,8 @@ async function loadAuthUserModel(authUser: User): Promise<MockUser> {
     suspended: !!profile?.is_frozen,
     isAdmin: roles.includes("admin"),
   };
+  writeCachedIsAdmin(model.id, !!model.isAdmin);
+  return model;
 }
 
 // ---------------------------------------------------------------------
