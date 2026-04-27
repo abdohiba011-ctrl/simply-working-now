@@ -1,55 +1,59 @@
-## Diagnosis
+# Fix All Remaining Issues — QA Sweep Round 2
 
-The app uses **Lovable Cloud Auth (managed OAuth)** — confirmed in `src/components/auth/GoogleSignInButton.tsx` and `src/pages/Auth.tsx`:
+## Goal
+Continue the QA pass started last round. Audit remaining flows that weren't fully exercised, hunt for runtime bugs, fix everything found.
 
-```ts
-await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
-```
+## Scope
 
-This routes through Lovable's broker (`/~oauth/initiate` → `oauth.lovable.app/callback` → back to `redirect_uri`). I verified the broker returns `302` (healthy) on all three domains: `motonita.ma`, `simply-working-now.lovable.app`, and the preview.
+### 1. Auth (round 2 verification)
+- Verify `Login.tsx`, `Signup.tsx`, `ForgotPassword.tsx`, `ResetPassword.tsx` all wire to Supabase correctly
+- Verify Google OAuth via `lovable.auth.signInWithOAuth` works on `motonita.ma` (production)
+- Check `OAuthHashWatcher` properly clears hash + creates session
+- Confirm `handle_new_user` trigger creates profile + renter wallet on signup
+- Check session persistence + `onAuthStateChange` listener order
 
-### What `failed to exchange authorization code` actually means here
+### 2. Renter flow (round 2 — full end-to-end)
+- Search → bike detail → date picker → hold creation (`create_bike_hold` RPC)
+- Hold expiry handling on `Checkout.tsx`
+- YouCan Pay 10 MAD booking fee → `PaymentStatus` polling → `Confirmation`
+- Booking creation via `promote_hold_to_booking` RPC
+- Renter wallet credit via `credit_renter_wallet` RPC after successful payment
+- Booking list + cancellation
+- Chat unlock after booking + message audit triggers (phone/WhatsApp detection)
 
-This error is **not** a misconfiguration in your Google Cloud project or in Supabase. With Lovable Cloud managed OAuth, you do **not** configure Google credentials — Lovable manages them. The error appears specifically when:
+### 3. Agency flow (NEW this round)
+- Agency signup → `handle_new_agency_role` trigger → trial subscription
+- Bike listing CRUD (respecting plan limits: free=3, pro=unlimited)
+- Wallet top-up via YouCan Pay
+- Booking confirmation → `confirm_booking` RPC → 50 MAD wallet deduction
+- Booking decline / reject flow
+- Subscription downgrade via `request_plan_downgrade`
+- Subscription lifecycle (trialing → past_due → locked) display
 
-1. **The Lovable iframe preview proxy intercepts the token exchange POST** (a known platform-level issue with `id-preview--*.lovable.app`). It does **not** happen on the published domain or `motonita.ma`.
-2. The browser already had stale OAuth `#error=...` hash from a prior failed attempt and the user re-loaded.
+### 4. Admin / shared
+- Verify RLS policies don't break legitimate writes (especially `bookings_protect_sensitive_fields`)
+- TypeScript clean check (`tsc --noEmit`)
+- Check edge function logs for recent errors
+- Check auth logs for `failed to exchange authorization code` recurrence
+- Scan all `console.error` / `TODO` / `FIXME` markers in `src/`
+- Verify all routes in `App.tsx` resolve to existing pages
+- Check i18n: no hardcoded user-facing strings introduced in last round's edits
 
-Per Lovable's own guidance: **the fix is to test on the published / custom domain, not the preview**.
+## Approach
 
-### What we should NOT do
+1. Run automated checks first (tsc, edge function logs, auth logs, code scan) — cheap signal.
+2. Read the agency flow files (Dashboard, BikeForm, WalletTopup, BookingConfirm) for logic bugs.
+3. Read renter checkout chain end-to-end for state-machine bugs.
+4. For each bug found: fix in code, re-verify, move on.
+5. Skip browser testing unless a bug is suspected but unconfirmed from code reading.
 
-- ❌ Switch to `supabase.auth.signInWithOAuth` directly — would break the managed flow.
-- ❌ Add Supabase callback URLs to Google Cloud — managed OAuth doesn't use your Google project.
-- ❌ Edit `src/integrations/lovable/index.ts` — auto-generated, not user-editable.
+## Deliverable
+- List of every issue found + how it was fixed
+- Confirmation `tsc --noEmit` passes
+- Summary of any issues that need user action (DNS, secrets, manual config)
 
-## Plan (changes to make)
-
-### 1. Friendlier error UX in `GoogleSignInButton` and `OAuthHashWatcher`
-When the `failed to exchange authorization code` error returns, show a clearer message that tells the user to retry on `motonita.ma` (instead of the technical string). `OAuthHashWatcher.tsx` already has partial handling — extend it to also detect this on the **search params** branch and offer a one-click "Open on motonita.ma" action when we detect the user is on the preview/lovableproject domain.
-
-### 2. Force OAuth onto the canonical domain when user is on `lovableproject.com`
-In `GoogleSignInButton.onClick`, detect if `window.location.hostname.endsWith('lovableproject.com')` (the iframe-preview host known to break the exchange) and, if so, redirect the user to `https://motonita.ma/login` first instead of starting OAuth from the broken host. This eliminates the error class entirely for end users hitting the staging URL.
-
-### 3. Sanity-check Lovable Cloud auth settings (no code change, verification only)
-After approval, I will run `cloud_status` and check the auth provider is enabled. **No Supabase Site URL or redirect URL changes are needed** for managed OAuth — those settings only apply if the app called `supabase.auth.signInWithOAuth` directly, which it does not.
-
-### 4. Verify on production
-Once the above ships, I'll confirm with a clean network trace from `https://motonita.ma/login → Continue with Google → google.com → /~oauth/callback → motonita.ma/` that a session is established.
-
-## Files to change
-
-- `src/components/auth/GoogleSignInButton.tsx` — host guard + better error toast.
-- `src/components/OAuthHashWatcher.tsx` — extend hash/search error detection, add CTA when on preview host.
-
-## Files explicitly NOT changed
-
-- `src/integrations/lovable/index.ts` (auto-generated).
-- `src/integrations/supabase/client.ts` (auto-generated).
-- Any Supabase auth provider config (irrelevant to managed OAuth).
-
-## Expected result
-
-- Users on `motonita.ma` / `www.motonita.ma`: Google login works end-to-end (already does — broker is healthy).
-- Users who land on the preview host: get redirected to `motonita.ma/login` so they never hit the iframe proxy bug.
-- If an OAuth error ever does come back, they see a clear message instead of a raw URL hash.
+## Out of scope
+- New features
+- Visual redesigns
+- Performance optimization (unless it causes a bug)
+- Anything touching the locked business model rules
