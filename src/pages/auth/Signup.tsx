@@ -536,7 +536,7 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
                 <>
                   {/* Strength bar */}
                   <div className="mt-2 flex items-center gap-2">
-                    <div className="flex-1 h-1.5 rounded-full bg-[#163300]/10 overflow-hidden">
+                    <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
                       <div
                         className="h-full transition-all duration-200"
                         style={{
@@ -546,8 +546,12 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
                       />
                     </div>
                     <span
-                      className="text-xs font-medium"
-                      style={{ color: strength.color === "#9FE870" ? "#163300" : strength.color }}
+                      className="text-xs font-medium text-foreground"
+                      style={
+                        strength.color === "#9FE870" || strength.color === "transparent"
+                          ? undefined
+                          : { color: strength.color }
+                      }
                     >
                       {strength.label}
                     </span>
@@ -560,9 +564,8 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
                         key={r.id}
                         className={cn(
                           "flex items-center gap-1.5 text-xs",
-                          r.ok ? "" : "text-muted-foreground",
+                          r.ok ? "text-foreground" : "text-muted-foreground",
                         )}
-                        style={{ color: r.ok ? "#163300" : undefined }}
                       >
                         {r.ok ? (
                           <Check className="h-3 w-3" style={{ color: "#9FE870" }} />
@@ -604,7 +607,7 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
 
             {/* Business-only fields */}
             {role === "agency" ? (
-              <div className="space-y-4 pt-2 border-t border-[#163300]/10">
+              <div className="space-y-4 pt-2 border-t border-border">
                 <Field
                   id="businessName"
                   label={t("mockAuth.business_name", { defaultValue: "Business name" })}
@@ -798,12 +801,9 @@ function RoleCard({
       className={cn(
         "h-32 rounded-lg border-2 p-4 text-left transition-all flex flex-col gap-2",
         selected
-          ? "bg-[#9FE870]/5"
-          : "bg-white hover:bg-[#163300]/5",
+          ? "bg-[#9FE870]/10 border-[#9FE870]"
+          : "bg-card hover:bg-muted border-border",
       )}
-      style={{
-        borderColor: selected ? "#9FE870" : "rgba(22,51,0,0.1)",
-      }}
     >
       {icon}
       <div>
