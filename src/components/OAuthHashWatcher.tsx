@@ -2,17 +2,24 @@ import { useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "sonner";
 
+import { PRIMARY_PRODUCTION_ORIGIN } from "@/lib/oauthDomain";
+
 /**
- * Watches the URL hash for OAuth callback artifacts on ANY route — not
- * just /auth. The Lovable OAuth broker can land users back on the site
- * root with `#error=...` or `#access_token=...` if `redirect_uri` was
- * `window.location.origin`. We surface the error and clean the URL so
- * users do not see stale OAuth state in their address bar.
+ * Watches the URL hash AND query string for OAuth callback artifacts on
+ * any route. The Lovable OAuth broker can land users back on the site
+ * with `#error=...`, `?error=...`, or `#access_token=...` if something
+ * went wrong (or, in the case of tokens, succeeded). We surface a clear
+ * error and clean the URL so users do not see stale OAuth state.
  *
  * Tokens (`access_token`) are consumed by the supabase client itself
- * (detectSessionInUrl). We only need to handle the error case here and
- * tidy up afterwards.
+ * (detectSessionInUrl). We only handle errors and tidy up afterwards.
  */
+function isPreviewHost(): boolean {
+  if (typeof window === "undefined") return false;
+  const h = window.location.hostname;
+  return h.endsWith("lovableproject.com") || h.startsWith("id-preview--");
+}
+
 export function OAuthHashWatcher() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -26,14 +33,35 @@ export function OAuthHashWatcher() {
 
     const showError = (raw: string) => {
       const decoded = decodeURIComponent(raw.replace(/\+/g, " "));
-      if (/exchange authorization code/i.test(decoded)) {
+      const isExchange = /exchange authorization code/i.test(decoded);
+
+      if (isExchange && isPreviewHost()) {
+        // Iframe preview proxy intercepts the token exchange. Offer the
+        // user a one-click hop to the production origin where it works.
+        toast.error(
+          "Google sign-in could not finish in the preview. Open the live site to try again.",
+          {
+            duration: 10000,
+            action: {
+              label: "Open motonita.ma",
+              onClick: () => {
+                window.location.assign(`${PRIMARY_PRODUCTION_ORIGIN}/login`);
+              },
+            },
+          },
+        );
+        return;
+      }
+
+      if (isExchange) {
         toast.error(
           "Google sign-in could not finish. Please try again or use email sign-in.",
           { duration: 7000 },
         );
-      } else {
-        toast.error(decoded);
+        return;
       }
+
+      toast.error(decoded);
     };
 
     if (hash.includes("error=") && !hasTokens) {
