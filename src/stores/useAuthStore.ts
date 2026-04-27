@@ -175,11 +175,8 @@ async function loadAuthUserModel(authUser: User): Promise<MockUser> {
     suspended: !!profile?.is_frozen,
     isAdmin: roles.includes("admin"),
   };
-}
-
-function persistAdminFlag(user: MockUser): MockUser {
-  writeCachedIsAdmin(user.id, !!user.isAdmin);
-  return user;
+  writeCachedIsAdmin(model.id, !!model.isAdmin);
+  return model;
 }
 
 // ---------------------------------------------------------------------
