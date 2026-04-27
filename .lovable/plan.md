@@ -1,74 +1,43 @@
-## Goal
+You’re right. The current frontend asks for a 6-digit reset code, but the password reset request is still using the backend’s default password recovery email path, which can produce a reset-link email when the custom auth email hook is not active or while the email domain is still pending. That is why you saw a link. The logic is inconsistent and needs to be fixed at the source.
 
-Finalize the agency auth rework: silence the missing-translation warnings, then run a full live test of `/agency/signup`, `/agency/login`, and the global radio/checkbox change.
+Plan to make password reset OTP-only everywhere:
 
-## What changes
+1. Replace the reset-link trigger
+   - Stop using the default password recovery email method for `/forgot-password`.
+   - Use an OTP-only auth request instead, configured to send a 6-digit code and not create new users.
+   - Keep the user on the Motonita reset-code screen after submitting their email.
 
-### 1. Add `agencyAuth` translation block to all three locale files
+2. Verify the OTP correctly
+   - Update `/reset-password/verify` so the 6-digit code is verified as the same OTP type that was sent.
+   - After a valid code, allow the user to continue to `/reset-password/new` and set the new password.
+   - Keep the flow: email → 6-digit code → new password. No clickable reset link.
 
-Insert a new `"agencyAuth": { ... }` block just before `"mockAuth"` in `src/locales/en.json`, `src/locales/fr.json`, and `src/locales/ar.json`.
+3. Remove legacy reset-link handling
+   - Remove the fallback path in `ResetPasswordNew.tsx` that accepts a clicked recovery link/session.
+   - Update comments and error messages from “reset link” to “reset code”.
+   - Add a guard so old recovery-link URLs redirect back to `/forgot-password` instead of acting as a valid reset path.
 
-**Keys** (all 9):
-- `back_to_home`, `email`, `next`, `back`, `brand_name`, `neighborhood`, `step1_subtitle`, `step2_subtitle`, `image_alt`, `tagline`, `tagline_sub`
+4. Fix the email templates that can still show links
+   - Update auth email templates so password reset and magic-link style emails display only `{token}` as a 6-digit code.
+   - Remove button/link wording from reset-related email copy.
+   - Keep Motonita branding: white email background, forest text, lime code box.
 
-**English** — keep current `defaultValue` strings.
+5. Deploy and test the email function
+   - Redeploy the auth email handler after the template changes.
+   - Test the reset flow from `/forgot-password` and confirm:
+     - the UI shows six OTP boxes,
+     - the sent email contains a 6-digit code only,
+     - no “Reset Password” button/link appears,
+     - entering the code allows setting a new password,
+     - “Wrong email?” returns to `/forgot-password`.
 
-**French** — example:
-- `back_to_home`: "Retour à l'accueil"
-- `next`: "Continuer" / `back`: "Retour"
-- `brand_name`: "Nom de l'entreprise / marque"
-- `neighborhood`: "Quartier"
-- `tagline`: "« Frais fixes, zéro commission. Gardez 100 % de chaque location. »"
-
-**Arabic** (RTL) — example:
-- `back_to_home`: "العودة إلى الرئيسية"
-- `next`: "متابعة" / `back`: "رجوع"
-- `brand_name`: "اسم النشاط / العلامة التجارية"
-- `neighborhood`: "الحي"
-- `tagline`: «رسوم ثابتة، بدون عمولة. احتفظ بـ 100٪ من كل تأجير.»
-
-### 2. Live test in the browser preview
-
-Run through these flows and report findings:
-
-1. **/agency/signup — Step 1**
-   - Confirm split layout renders (bike image left, form right).
-   - Confirm "Back to home" link, header-style language switcher, stepper at "1/2".
-   - Try invalid data → validation errors render.
-   - Fill valid data → "Continue" advances to Step 2.
-
-2. **/agency/signup — Step 2**
-   - Confirm business name, type, city, neighborhood fields.
-   - Pick "Casablanca" → neighborhood becomes a dropdown with the 10 Casablanca neighborhoods.
-   - Pick a city not in the map (e.g., "Other") → neighborhood becomes a free-text input.
-   - "Back" returns to Step 1 with state preserved.
-   - Accept terms checkbox shows the new `rounded-md` style.
-
-3. **/agency/login**
-   - Renders in the split layout.
-   - Email + password validation works; forgot password link present.
-
-4. **Global radio test** — visit a page with radios (e.g., `/profile` or filters) and confirm they're now square with a check indicator.
-
-5. **Language switcher**
-   - Switch to FR → labels translate, no missing-key warnings.
-   - Switch to AR → layout flips RTL, image stays on the left visually but logical positioning is correct.
-
-6. **Renter `/signup` and `/login`** — unchanged single-column `AuthLayout`.
-
-Skip the actual "Create account" submit (would create a real Supabase user) — stop at the validation step unless the user explicitly asks.
-
-## Technical notes
-
-- No code changes needed beyond the three locale files.
-- After saving locales, the Vite HMR will reload — the `missingKeyHandler` warnings should disappear.
-
-## Files
-
-**Modified**
-- `src/locales/en.json` (insert `agencyAuth` block)
-- `src/locales/fr.json` (insert `agencyAuth` block)
-- `src/locales/ar.json` (insert `agencyAuth` block)
-
-**Untouched**
-- All component code already shipped in the previous turn.
+Technical details:
+- Main files to update:
+  - `src/stores/useAuthStore.ts`
+  - `src/pages/auth/ResetPasswordVerify.tsx`
+  - `src/pages/auth/ResetPasswordNew.tsx`
+  - `supabase/functions/_shared/email-templates/recovery.tsx`
+  - `supabase/functions/_shared/email-templates/magic-link.tsx`
+  - `supabase/functions/auth-email-hook/index.ts`
+- Also audit routes in `src/App.tsx` for any old `/reset-password` link destination.
+- The email domain currently shows as pending, so default emails may still be used until Cloud email setup finishes. The code fix will remove the link trigger from the app and make the custom templates OTP-only when active.

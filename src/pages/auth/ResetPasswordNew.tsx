@@ -94,8 +94,8 @@ export default function ResetPasswordNew() {
   const [params] = useSearchParams();
   const isLoading = useAuthStore((s) => s.isLoading);
 
-  // Token from our internal OTP flow (legacy). If absent, we rely on the
-  // recovery session that Supabase set up when the user clicked the email link.
+  // Motonita uses a strict 6-digit OTP flow. The token is issued only after
+  // the user successfully verifies the code on /reset-password/verify.
   const internalToken = params.get("token") ?? "";
 
   const [showPassword, setShowPassword] = useState(false);
