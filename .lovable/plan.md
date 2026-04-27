@@ -1,72 +1,96 @@
 ## Goal
 
-A clean, professional, email-only auth flow with no Google sign-in anywhere. Three flows, all using your branded `notify.motonita.ma` emails:
+Rework the **agency** signup/login experience (`/agency/signup`, `/agency/login`) to be a polished split-screen flow inspired by the Nucleus reference, while keeping the existing email + 6-digit OTP auth model. Plus global UI fixes for radios/checkboxes.
 
-1. **Sign up** → email + password + confirm password → 6-digit code emailed → enter code → logged in
-2. **Log in** → email + password → logged in (blocked with "Verify your email" message if not yet verified)
-3. **Forgot password** → email → 6-digit code emailed → enter code → set new password → logged in
+## What changes
 
-## Heads-up
+### 1. Square radios & checkboxes (global)
 
-A *huge* amount of this is already built and working — your project already has the OTP signup verification page, forgot-password page, reset-verify page, reset-new-password page, and the Motonita-branded emails (deployed last turn). The actual changes needed are smaller than the request implies. I'm being explicit about what stays, what goes, and what gets touched so you know exactly what's happening.
+- `src/components/ui/radio-group.tsx`: replace circular `RadioGroupItem` (`aspect-square ... rounded-full`) with a **rounded square** (`rounded-md`), and swap the inner `Circle` indicator for a `Check` icon (lucide).
+- `src/components/ui/checkbox.tsx`: bump corners from `rounded-sm` to `rounded-md` for visual consistency. (Already square, just softer corners.)
 
-## What's already in place (kept as-is)
+This affects everywhere radios/checkboxes are used (forms, filters, etc.) — desired per request.
 
-- ✅ `/signup` & `/agency/signup` — email + password + confirm password forms with strength meter, password rules, terms checkbox
-- ✅ `/verify-email?email=...` — 6-digit OTP input, resend with cooldown, change-email link
-- ✅ `/login` & `/agency/login` — email/phone + password
-- ✅ `/forgot-password` — email entry → triggers OTP send
-- ✅ `/reset-password/verify` — 6-digit OTP for password reset
-- ✅ `/reset-password/new` — set new password after verifying
-- ✅ `useAuthStore` already calls `supabase.auth.signUp`, `verifyOtp({type:'signup'})`, `resetPasswordForEmail`, `verifyOtp({type:'recovery'})`, `signInWithPassword` correctly
-- ✅ Branded emails (recovery, signup, magic-link, invite, email-change, reauthentication) shipping from `notify.motonita.ma` with Motonita forest+lime brand, 6-digit code box, brand header & footer
+### 2. New shared `AgencyAuthLayout` (split screen)
 
-## Changes — Remove every Google touch-point
+Create `src/components/auth/AgencyAuthLayout.tsx`:
 
-### 1. Strip Google from auth pages (UI + handlers)
+```text
+┌─────────────────────────┬──────────────────────────┐
+│                         │  ← Back to home          │
+│   Bike image (cover)    │  [Logo]      [🌐 Lang ▾] │
+│                         │                          │
+│   Overlay: Motonita     │      <form children>     │
+│   tagline / quote       │                          │
+└─────────────────────────┴──────────────────────────┘
+```
 
-- `src/pages/auth/Login.tsx` — remove `<GoogleSignInButton />` block, the "OR" divider, the `import GoogleSignInButton`, and the "this account uses Google" error branch
-- `src/pages/auth/Signup.tsx` — remove `<GoogleSignInButton />` block and "OR" divider, the import, and the `oauth_only` `checkAccountMethod` branch (no longer reachable in pure password flow)
-- `src/pages/auth/AgencyLogin.tsx` — same treatment
-- `src/pages/auth/AgencySignup.tsx` — same treatment
-- `src/pages/Auth.tsx` (legacy unified auth page) — remove `handleGoogleSignIn`, the "Continue with Google" button, the troubleshooting accordion, and OAuth error redirect handling
-- `src/components/auth/GoogleSignInButton.tsx` — delete file
-- `src/integrations/lovable/index.ts` — leave intact (the Lovable SDK; we just stop calling `signInWithOAuth`)
-- Localization keys for `googleSignIn*`, `signUpWithGoogle*`, `continueWithGoogle*`, `completingGoogle` — leave the strings (harmless), or remove on request
+- **Left panel (≥ md)**: full-height image (the yellow R6 bike the user uploaded → copied to `src/assets/auth-agency-bike.jpg`), with a dark gradient overlay and a Motonita quote/tagline at the bottom (forest text on lime accent dot — matches brand). Hidden under md.
+- **Right panel**: white/card background, max-width ~480px content column, with a top bar containing:
+  - **"← Back to home"** link (`/`) on the left.
+  - **Logo** (small).
+  - **Language dropdown** that **reuses the exact same `Select` component used in `Header.tsx`** (EN/FR/AR with flags, RTL-aware).
+- The renter `AuthLayout` stays as-is. Only agency pages adopt the split layout.
 
-### 2. Enforce email confirmation server-side
+### 3. Agency Signup as a 2-step wizard
 
-Use the auth-config tool to disable Supabase's auto-confirm so the 6-digit code is always required for new signups. Without this, signups could log in instantly without verifying. After this change:
+Rewrite `src/pages/auth/Signup.tsx` (when `defaultRole === "agency"`) to render inside `AgencyAuthLayout` with a stepper:
 
-- New signup → no session returned → user routed to `/verify-email`
-- Login attempt before verification → blocked with "Please verify your email first — check your inbox for the 6-digit code" + a "Resend code" link
+**Step indicator** at the top: `(1) Account · (2) Business`
 
-The store already handles both cases — this just guarantees the verify step runs every time.
+- **Step 1 — Account**
+  - Full name
+  - Email
+  - Phone (Moroccan format, required for agency)
+  - Password (with strength meter — already exists)
+  - Confirm password
+  - "Next" button → validates only step-1 fields via `form.trigger([...])` before advancing.
 
-### 3. Polish copy & consistency
+- **Step 2 — Business**
+  - Business / brand name
+  - Business type (`Select`)
+  - City (`Select` — uses existing `CITIES`)
+  - **Neighborhood** (`Select`, dependent on city — populated from existing `moroccoRegions` data in `src/data/moroccoRegions.ts`; falls back to a free-text input if the selected city has no neighborhood list)
+  - Accept terms checkbox
+  - "Back" + "Create account" buttons
 
-- Login page: replace "Email or phone" label with just **"Email"** (the request was email-only). Phone login stays disabled in this round; the existing phone normalization code is kept but unused.
-- Signup pages: confirm the "Confirm password" field is visible and validates equality (already done — just verifying)
-- VerifyEmail page: tighten the headline to **"Confirm your email"** and subtitle to **"We sent a 6-digit code to {email}. Enter it below to activate your account."**
-- ForgotPassword page: align copy with the same tone
-- All button colors stay on Motonita brand (lime + forest)
+On submit:
+- Call existing `signup()` with `role: "agency"`.
+- Navigate to `/verify-email?email=...` (already implemented). Copy on that page already says "Confirm your email — enter the 6-digit code we sent".
 
-### 4. Visual polish (light pass, not a redesign)
+The renter signup (`/signup`) keeps its current single-page form unchanged.
 
-- Remove the now-unused "OR" dividers
-- Center the form a bit tighter without the OAuth column
-- Keep the existing AuthLayout, password strength meter, and 6-digit OTP box (already on-brand)
+### 4. Agency Login redesign
 
-## Out of Scope
+Update `src/pages/auth/Login.tsx` to render inside `AgencyAuthLayout` when `context === "agency"`. Functionality unchanged (email + password, lockouts, error hints, forgot password link). Just the new layout + header (back-to-home, language switcher).
 
-- Phone/SMS login (kept disabled but code untouched in case you want it later)
-- Apple / SAML / any other social provider
-- Multi-language polish for newly-changed copy (i18n keys updated; FR/AR translations can be added later if you want)
-- Switching to a third-party email provider (Resend) — emails already ship from your domain via Lovable's built-in system
+Renter login stays in the current `AuthLayout`.
 
-## Technical Notes
+### 5. Translations
 
-- All edits are inside `src/pages/auth/*` and `src/pages/Auth.tsx`; one file deletion (`GoogleSignInButton.tsx`)
-- One backend change: turn off auto-confirm via the auth-config tool (no migration, no edge function)
-- No DB schema changes, no RLS changes, no new tables
-- Memory note: the existing memory says "auto email confirmation" — I'll update that memory rule to "6-digit OTP required for signup, password reset, and reauthentication"
+Add new i18n keys to `src/locales/{en,fr,ar}.json`:
+- `agencyAuth.back_to_home`, `agencyAuth.step1_title`, `agencyAuth.step2_title`, `agencyAuth.next`, `agencyAuth.back`, `agencyAuth.brand_name`, `agencyAuth.neighborhood`, `agencyAuth.tagline` (for the left panel), etc.
+
+## Technical notes
+
+- New asset: copy `user-uploads://237b32550d6e6cbccdd73f6c103544c6.jpg` → `src/assets/auth-agency-bike.jpg`, imported as ES module.
+- Reuse the existing `Select` from `@/components/ui/select` for the language dropdown so it visually matches the header.
+- Wizard state managed locally (`useState<1 | 2>(1)`), all fields stay in one `react-hook-form` instance — schema unchanged.
+- RTL: layout uses logical Tailwind classes (`me-*`, `ms-*`, `text-start`) so the split mirrors correctly when AR is selected.
+- No database / auth flow changes — just UI restructure. Email + 6-digit OTP confirmation flow stays exactly as today.
+
+## Files
+
+**Created**
+- `src/components/auth/AgencyAuthLayout.tsx`
+- `src/assets/auth-agency-bike.jpg` (from upload)
+
+**Modified**
+- `src/components/ui/radio-group.tsx` (square + check indicator)
+- `src/components/ui/checkbox.tsx` (rounded-md)
+- `src/pages/auth/Signup.tsx` (wizard + agency layout switch)
+- `src/pages/auth/Login.tsx` (agency layout switch)
+- `src/locales/en.json`, `fr.json`, `ar.json` (new keys)
+
+**Untouched**
+- Renter `/signup`, `/login`, `AuthLayout`, auth store, Supabase config, email templates.
