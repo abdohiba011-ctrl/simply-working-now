@@ -140,7 +140,7 @@ async function loadAuthUserModel(authUser: User): Promise<MockUser> {
     authUser.email?.split("@")[0] ||
     "User";
 
-  return {
+  const model: MockUser = {
     id: authUser.id,
     email: authUser.email ?? profile?.email ?? "",
     phone: profile?.phone ?? authUser.phone ?? null,
