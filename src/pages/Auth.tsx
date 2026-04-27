@@ -471,7 +471,54 @@ const Auth = () => {
                     {isSignup ? t('auth.signUpWithGoogle') : t('auth.continueWithGoogle')}
                   </Button>
 
-
+                  <details className="mt-3 text-xs text-muted-foreground">
+                    <summary className="cursor-pointer select-none hover:text-foreground">
+                      Google sign-in not working? Test on the live site
+                    </summary>
+                    <div className="mt-3 space-y-3 rounded-md border border-border bg-muted/40 p-3">
+                      <div>
+                        <p className="font-medium text-foreground mb-1">Production test steps</p>
+                        <ol className="list-decimal pl-5 space-y-1">
+                          <li>Open a new incognito / private window.</li>
+                          <li>
+                            Go to{" "}
+                            <a
+                              href="https://motonita.ma/auth"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-primary underline"
+                            >
+                              https://motonita.ma/auth
+                            </a>
+                            .
+                          </li>
+                          <li>Click <strong>Continue with Google</strong>.</li>
+                          <li>Choose your Google account.</li>
+                          <li>You should land back on motonita.ma, signed in.</li>
+                        </ol>
+                      </div>
+                      <div>
+                        <p className="font-medium text-foreground mb-1">If it still fails, verify these in Google Cloud Console</p>
+                        <p className="mb-1">Authorized JavaScript origins:</p>
+                        <ul className="list-disc pl-5 space-y-0.5 break-all">
+                          <li><code>https://motonita.ma</code></li>
+                          <li><code>https://www.motonita.ma</code></li>
+                          <li><code>https://simply-working-now.lovable.app</code></li>
+                          <li><code>https://oauth.lovable.app</code></li>
+                        </ul>
+                        <p className="mt-2 mb-1">Authorized redirect URIs:</p>
+                        <ul className="list-disc pl-5 space-y-0.5 break-all">
+                          <li><code>https://motonita.ma/~oauth/callback</code></li>
+                          <li><code>https://www.motonita.ma/~oauth/callback</code></li>
+                          <li><code>https://simply-working-now.lovable.app/~oauth/callback</code></li>
+                          <li><code>https://oauth.lovable.app/callback</code></li>
+                        </ul>
+                      </div>
+                      <p>
+                        Also make sure the OAuth consent screen Publishing status is set to <strong>In production</strong> (not Testing).
+                      </p>
+                    </div>
+                  </details>
 
 
                   <div className="relative my-6">
