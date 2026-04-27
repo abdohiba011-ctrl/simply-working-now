@@ -13,6 +13,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { LogoutConfirmDialog } from "@/components/LogoutConfirmDialog";
 import { AnnouncementBanner } from "@/components/AnnouncementBanner";
+import { RoleStatusIndicator } from "@/components/RoleStatusIndicator";
 import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
@@ -452,6 +453,7 @@ export const Header = memo(() => {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56 bg-popover/95 backdrop-blur-sm border shadow-lg z-[200]">
                   <DropdownMenuLabel>{t('header.myAccount')}</DropdownMenuLabel>
+                  <RoleStatusIndicator />
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => navigate("/profile")}>
                     <User className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
@@ -623,6 +625,9 @@ export const Header = memo(() => {
               {/* Account Section */}
               {isAuthenticated ? (
                 <>
+                  <div className="mx-2 mb-1 rounded-md border bg-muted/30">
+                    <RoleStatusIndicator />
+                  </div>
                   <Button variant="outline" size="lg" className="justify-start gap-2 text-base min-h-[44px] mx-2" onClick={() => { navigate("/profile"); setIsMenuOpen(false); }}>
                     <User className="h-5 w-5" />
                     {t('header.profile')}
