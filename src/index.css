@@ -125,6 +125,9 @@ All colors MUST be HSL.
     --sidebar-accent-foreground: 0 0% 98%;
     --sidebar-border: 216 19% 24%;
     --sidebar-ring: 96 73% 67%;
+
+    /* Agency canvas — slightly lighter than card so cards visibly float */
+    --agency-canvas: 216 19% 9%;
   }
 }
 
