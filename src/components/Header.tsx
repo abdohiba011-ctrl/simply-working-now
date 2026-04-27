@@ -42,14 +42,17 @@ export const Header = memo(() => {
   const [unreadMessages, setUnreadMessages] = useState(0);
   const [isScrolled, setIsScrolled] = useState(false);
   const { language, setLanguage, t } = useLanguage();
-  const { user, isAuthenticated, logout, hasRole } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading, logout, hasRole } = useAuth();
   const navigate = useNavigate();
   const isBusiness = hasRole('business');
   const isAdmin = hasRole('admin');
   const isRenter = isAuthenticated && !isBusiness && !isAdmin;
   const storeUser = useAuthStore((s) => s.user);
+  const storeIsAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const storeIsLoading = useAuthStore((s) => s.isLoading);
+  const checkAuthStore = useAuthStore((s) => s.checkAuth);
   const switchRoleStore = useAuthStore((s) => s.switchRole);
-  const hasAgencyRole = !!storeUser?.roles?.agency?.active;
+  const hasAgencyRole = isBusiness || !!storeUser?.roles?.agency?.active;
   const handleSwitchToAgency = useCallback(() => {
     switchRoleStore("agency");
     setIsMenuOpen(false);
@@ -78,6 +81,12 @@ export const Header = memo(() => {
       fetchUnreadMessages();
     }
   }, [user]);
+
+  useEffect(() => {
+    if (isAuthenticated && !authLoading && !storeIsAuthenticated && !storeIsLoading) {
+      checkAuthStore();
+    }
+  }, [authLoading, checkAuthStore, isAuthenticated, storeIsAuthenticated, storeIsLoading]);
 
   // Realtime: bump unread message count when a new message arrives in any of
   // the user's bookings.
