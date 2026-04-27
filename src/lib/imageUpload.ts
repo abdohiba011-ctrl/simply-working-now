@@ -64,7 +64,9 @@ export const uploadBikeImage = async (
     const { data, error } = await supabase.storage
       .from('bike-images')
       .upload(filename, file, {
-        cacheControl: '3600',
+        // 1 year — filenames are unique (timestamp + random), so cached files
+        // never go stale. Browsers + CDN can keep them indefinitely.
+        cacheControl: '31536000',
         upsert: false
       });
 

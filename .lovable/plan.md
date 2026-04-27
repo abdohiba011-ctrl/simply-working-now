@@ -1,47 +1,62 @@
-## Plan to fix login, registration, and forgot-password QA
 
-I’ll fix the auth area as one clean, dedicated Motonita experience — no two-sided green hero page like the screenshot.
+## Problem confirmed
 
-### 1. Remove the split auth layout everywhere
-- Replace the current two-column `AuthLayout` with a single centered auth card/page.
-- Keep the Motonita logo, language selector, and clean Wise-style branding.
-- Apply it to login, signup, forgot password, OTP verification, and new password pages.
-- Ensure mobile works cleanly at 375px and Arabic RTL still behaves correctly.
+I inspected the live site (`motonita.ma`). Every hashed Vite asset (city images, logos, JS, CSS) is being served with **no `Cache-Control` header**. Example response for `/assets/city-fes-B3ZXorls.avif`:
 
-### 2. Make forgot password a true 6-digit OTP flow
-- Keep `/forgot-password` as the only starting page for password reset.
-- User enters email → receives a 6-digit code → enters code → sets new password.
-- Remove the confusing password reset link/button experience from the recovery email.
-- Update wording everywhere to say “code” / “6-digit code”, not “reset link”.
-- Make the OTP screen and new password screen feel like one dedicated flow, not separate unrelated pages.
+```
+content-type: image/avif
+etag: "eccad961ca0168cdaf051a7b0ae18196"
+content-length: 44821
+(no cache-control header)
+```
 
-### 3. Send auth emails from Motonita’s email domain
-- Your custom domain `motonita.ma` exists, but the email sender domain is not currently configured for sending.
-- To send password reset and verification emails from your Motonita email domain instead of the default `no-reply@auth.lovable.cloud`, I’ll start the email sender setup for `motonita.ma` / `notify.motonita.ma`.
-- If DNS setup is required, I’ll show the Cloud email setup dialog and continue after it’s configured.
-- Once active, reset emails should show Motonita branding and sender domain, with only the 6-digit code.
+Without a `Cache-Control` header, the browser revalidates each file on every visit — that's exactly why you see images "lazy loading again" each time. They should be cached for a year because the filename already contains a content hash (`-B3ZXorls`).
 
-### 4. Fix “Remember me” so it has visible behavior
-- Save the user’s email/phone when “Remember me” is checked and prefill it on the next visit.
-- If “Remember me” is not checked, clear the saved identifier.
-- Add session-handling logic so the checkbox actually controls whether the login is kept across browser restarts as much as the current Cloud auth client allows.
-- Update label wording if needed so users understand what it does.
+A second amplifier: our React `ResponsiveImage` / `OptimizedImage` components always start with `opacity: 0` and an `animate-pulse` skeleton until the `onLoad` event fires. Even when an image is in the disk cache, the skeleton flashes for ~50–100 ms, which makes the page *look* like everything is reloading from scratch.
 
-### 5. QA login and signup flows
-I’ll review and test:
-- Login with email/password
-- Login with Google account messaging
-- Wrong password messaging
-- Account exists / duplicate registration handling
-- Signup renter flow
-- Signup agency flow
-- Forgot password → OTP → new password
-- Resend code cooldown
-- Auth pages in English, French, Arabic
-- Desktop and mobile layout
+## Fix plan
 
-### Technical details
-- I’ll update `AuthLayout`, the login/signup/reset pages, and i18n text files.
-- I’ll adjust the auth recovery email template so it renders a 6-digit code, not a reset button/link.
-- I’ll update the auth email hook sender/site naming so emails say Motonita and use the configured sender domain.
-- I’ll add or update tests/smoke checks for the auth pages, then run the project tests and build checks after implementation.
+**1. Force long-lived caching for hashed assets and city/bike images**
+
+- Add a `public/_headers` file (Lovable + Cloudflare honor it) with:
+  - `/assets/*` → `Cache-Control: public, max-age=31536000, immutable`
+  - `/*.svg`, `/*.avif`, `/*.webp`, `/*.jpg`, `/*.png` → `Cache-Control: public, max-age=31536000, immutable`
+  - `/` and `/index.html` → keep `no-cache` (so deploys go live instantly)
+- Increase the upload `cacheControl` in `src/lib/imageUpload.ts` from `'3600'` (1 hour) to `'31536000'` (1 year) so user-uploaded bike images on Supabase Storage are also cached long-term.
+
+**2. Stop the "fade-in flash" when the image is already cached**
+
+Update `src/components/ui/responsive-image.tsx` and `src/components/ui/optimized-image.tsx`:
+- On mount, set `isLoaded = true` immediately if `imgRef.current.complete` (image is in browser cache → no fade-in needed).
+- For `priority` images, render the `<img>` synchronously without the `opacity-0 → opacity-100` transition.
+- Keep IntersectionObserver lazy-loading only for images that are **not in viewport AND not already cached**.
+
+**3. Preload the homepage hero/city images on first paint**
+
+- In `index.html`, add `<link rel="preload" as="image" href="/assets/...">` for the first hero city image (use Vite's `?url` import in `HeroSection` to inject preload hints at runtime via `react-helmet`-style `<link rel="preload">` for the *current* rotating city).
+- Already-imported city images are bundled and hashed — once cached, they will not be refetched.
+
+**4. Persist remembered images via the HTTP cache (no localStorage hack)**
+
+The right answer for "do not reload images on the same browser/IP" is HTTP caching, not custom storage. Steps 1–3 achieve this. We will NOT base64-stuff images into localStorage (would explode quotas).
+
+**5. Verify after deploy**
+
+- Re-run a request against `motonita.ma/assets/<hashed>.avif` and confirm the response now contains `cache-control: public, max-age=31536000, immutable`.
+- Reload the homepage twice and verify in DevTools Network tab that images come from `(disk cache)` on the second visit instead of refetching.
+
+## Files I will touch
+
+- `public/_headers` (new) — CDN cache headers for static assets.
+- `src/lib/imageUpload.ts` — bump Supabase Storage `cacheControl` to 1 year.
+- `src/components/ui/responsive-image.tsx` — instant-show when image is already cached, remove fade-flash for priority images.
+- `src/components/ui/optimized-image.tsx` — same fix.
+- `index.html` — add preload hints for the first hero image.
+
+## What I will NOT do
+
+- No service worker / PWA install — overkill for this issue and adds maintenance.
+- No changes to the database schema.
+- No new dependencies.
+
+After this, returning visitors on the same browser will see images load from disk cache instantly (no skeleton, no spinner), exactly as you described.
