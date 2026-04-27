@@ -62,7 +62,7 @@ interface AuthContextType {
   isLoading: boolean;
   userRoles: string[];
   login: (email: string, password: string, rememberMe?: boolean) => Promise<void>;
-  signup: (email: string, password: string, name: string, role: "user" | "business") => Promise<void>;
+  signup: (email: string, password: string, name: string, role: "renter" | "agency") => Promise<void>;
   logout: () => Promise<void>;
   hasRole: (role: string) => boolean;
   refreshRoles: () => Promise<string[]>;
