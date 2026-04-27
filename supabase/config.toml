@@ -3,6 +3,7 @@ project_id = "impgemzhqvbxitsxxczm"
 [functions]
   [functions.auth-email-hook]
     verify_jwt = false
+    import_map = "./functions/auth-email-hook/deno.json"
   [functions.check-account-method]
     verify_jwt = false
   [functions.generate-receipt]
