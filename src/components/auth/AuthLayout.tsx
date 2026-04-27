@@ -2,7 +2,9 @@ import { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useLanguageStore } from "@/stores/useLanguageStore";
-import logoUrl from "@/assets/motonita-logo.svg";
+import { useTheme } from "@/hooks/useTheme";
+import logoLight from "@/assets/motonita-logo.svg";
+import logoDark from "@/assets/motonita-logo-dark.svg";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,6 +35,8 @@ export function AuthLayout({ children }: AuthLayoutProps) {
   const { i18n } = useTranslation();
   const setLanguage = useLanguageStore((s) => s.setLanguage);
   const currentLang = LANGS.find((l) => l.code === i18n.language) ?? LANGS[0];
+  const { theme } = useTheme();
+  const logoUrl = theme === "dark" ? logoDark : logoLight;
 
   const handleLangChange = (code: "en" | "fr" | "ar") => {
     setLanguage(code);
@@ -73,8 +77,7 @@ export function AuthLayout({ children }: AuthLayoutProps) {
       {/* Centered card */}
       <main className="flex-1 flex items-start sm:items-center justify-center px-4 py-8 sm:py-12">
         <div className="w-full max-w-[440px]">
-          <div className="rounded-xl border bg-card text-card-foreground shadow-sm px-6 py-8 sm:px-8 sm:py-10"
-               style={{ borderColor: "rgba(22,51,0,0.08)" }}>
+          <div className="rounded-xl border border-border bg-card text-card-foreground shadow-sm px-6 py-8 sm:px-8 sm:py-10">
             {children}
           </div>
         </div>

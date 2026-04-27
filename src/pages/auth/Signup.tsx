@@ -374,12 +374,12 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
               {t("mockAuth.agency_pill", { defaultValue: "For rental agencies" })}
             </span>
           ) : null}
-          <h1 className="text-2xl font-bold tracking-tight" style={{ color: "#163300" }}>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">
             {isAgencyFlow
               ? t("mockAuth.create_agency_account", { defaultValue: "Create your agency account" })
               : t("mockAuth.create_account", { defaultValue: "Create your account" })}
           </h1>
-          <p className="text-sm" style={{ color: "rgba(22,51,0,0.7)" }}>
+          <p className="text-sm text-muted-foreground">
             {isAgencyFlow
               ? t("mockAuth.agency_subtitle", {
                   defaultValue:
@@ -403,13 +403,12 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
 
         {/* Agency flow shows a small renter cross-link; renter flow shows nothing (no toggle) */}
         {isAgencyFlow ? (
-          <p className="text-xs" style={{ color: "rgba(22,51,0,0.6)" }}>
+          <p className="text-xs text-muted-foreground">
             {t("mockAuth.not_business_prefix", { defaultValue: "Just want to rent a bike?" })}{" "}
             <button
               type="button"
               onClick={() => navigate("/signup")}
-              className="font-semibold underline underline-offset-2 hover:opacity-80"
-              style={{ color: "#163300" }}
+              className="font-semibold underline underline-offset-2 hover:opacity-80 text-foreground"
             >
               {t("mockAuth.not_business_link", { defaultValue: "Sign up as a renter instead" })}
             </button>
@@ -432,10 +431,10 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
             />
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" style={{ borderColor: "rgba(22,51,0,0.1)" }} />
+                <span className="w-full border-t border-border" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-white px-2" style={{ color: "rgba(22,51,0,0.55)" }}>
+                <span className="bg-card px-2 text-muted-foreground text-muted-foreground/80">
                   {t("mockAuth.or", { defaultValue: "or" })}
                 </span>
               </div>
@@ -485,7 +484,7 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
               label={
                 <>
                   {t("mockAuth.phone", { defaultValue: "Phone" })}{" "}
-                  <span className="text-xs font-normal" style={{ color: "rgba(22,51,0,0.55)" }}>
+                  <span className="text-xs font-normal text-muted-foreground/80">
                     {role === "agency"
                       ? t("mockAuth.required", { defaultValue: "(required)" })
                       : t("mockAuth.optional", { defaultValue: "(optional)" })}
@@ -537,7 +536,7 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
                 <>
                   {/* Strength bar */}
                   <div className="mt-2 flex items-center gap-2">
-                    <div className="flex-1 h-1.5 rounded-full bg-[#163300]/10 overflow-hidden">
+                    <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
                       <div
                         className="h-full transition-all duration-200"
                         style={{
@@ -547,8 +546,12 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
                       />
                     </div>
                     <span
-                      className="text-xs font-medium"
-                      style={{ color: strength.color === "#9FE870" ? "#163300" : strength.color }}
+                      className="text-xs font-medium text-foreground"
+                      style={
+                        strength.color === "#9FE870" || strength.color === "transparent"
+                          ? undefined
+                          : { color: strength.color }
+                      }
                     >
                       {strength.label}
                     </span>
@@ -561,9 +564,8 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
                         key={r.id}
                         className={cn(
                           "flex items-center gap-1.5 text-xs",
-                          r.ok ? "" : "text-muted-foreground",
+                          r.ok ? "text-foreground" : "text-muted-foreground",
                         )}
-                        style={{ color: r.ok ? "#163300" : undefined }}
                       >
                         {r.ok ? (
                           <Check className="h-3 w-3" style={{ color: "#9FE870" }} />
@@ -605,7 +607,7 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
 
             {/* Business-only fields */}
             {role === "agency" ? (
-              <div className="space-y-4 pt-2 border-t border-[#163300]/10">
+              <div className="space-y-4 pt-2 border-t border-border">
                 <Field
                   id="businessName"
                   label={t("mockAuth.business_name", { defaultValue: "Business name" })}
@@ -705,14 +707,13 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
                     })
                   }
                 />
-                <span className="text-sm" style={{ color: "#163300" }}>
+                <span className="text-sm text-foreground">
                   {t("mockAuth.agree_terms_prefix", { defaultValue: "I agree to Motonita's" })}{" "}
                   <a
                     href="/terms"
                     target="_blank"
                     rel="noreferrer"
-                    className="underline"
-                    style={{ color: "#163300" }}
+                    className="underline text-foreground"
                   >
                     {t("mockAuth.terms_of_service", { defaultValue: "Terms of Service" })}
                   </a>{" "}
@@ -721,8 +722,7 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
                     href="/privacy-policy"
                     target="_blank"
                     rel="noreferrer"
-                    className="underline"
-                    style={{ color: "#163300" }}
+                    className="underline text-foreground"
                   >
                     {t("mockAuth.privacy_policy", { defaultValue: "Privacy Policy" })}
                   </a>
@@ -740,7 +740,7 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
                   checked={!!form.watch("marketingOptIn")}
                   onCheckedChange={(v) => form.setValue("marketingOptIn", Boolean(v))}
                 />
-                <span className="text-sm" style={{ color: "rgba(22,51,0,0.75)" }}>
+                <span className="text-sm text-muted-foreground">
                   {t("mockAuth.send_updates", {
                     defaultValue: "Send me product updates and tips",
                   })}
@@ -766,12 +766,11 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
           </form>
         ) : null}
 
-        <p className="text-center text-sm" style={{ color: "rgba(22,51,0,0.75)" }}>
+        <p className="text-center text-sm text-muted-foreground">
           {t("mockAuth.already_account", { defaultValue: "Already have an account?" })}{" "}
           <Link
             to="/login"
-            className="font-medium hover:underline"
-            style={{ color: "#163300" }}
+            className="font-medium hover:underline text-foreground"
           >
             {t("mockAuth.login", { defaultValue: "Log in" })}
           </Link>
@@ -802,19 +801,16 @@ function RoleCard({
       className={cn(
         "h-32 rounded-lg border-2 p-4 text-left transition-all flex flex-col gap-2",
         selected
-          ? "bg-[#9FE870]/5"
-          : "bg-white hover:bg-[#163300]/5",
+          ? "bg-[#9FE870]/10 border-[#9FE870]"
+          : "bg-card hover:bg-muted border-border",
       )}
-      style={{
-        borderColor: selected ? "#9FE870" : "rgba(22,51,0,0.1)",
-      }}
     >
       {icon}
       <div>
-        <div className="text-base font-semibold" style={{ color: "#163300" }}>
+        <div className="text-base font-semibold text-foreground">
           {title}
         </div>
-        <div className="text-xs" style={{ color: "rgba(22,51,0,0.65)" }}>
+        <div className="text-xs text-muted-foreground">
           {subtitle}
         </div>
       </div>
@@ -835,7 +831,7 @@ function Field({
 }) {
   return (
     <div className="space-y-1.5">
-      <Label htmlFor={id} className="text-sm" style={{ color: "#163300" }}>
+      <Label htmlFor={id} className="text-sm text-foreground">
         {label}
       </Label>
       {children}
