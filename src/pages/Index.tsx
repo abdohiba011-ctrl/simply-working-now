@@ -6,6 +6,7 @@ import { TopCitiesSection } from "@/components/TopCitiesSection";
 import { HowItWorksSection } from "@/components/HowItWorksSection";
 import { FAQSection } from "@/components/FAQSection";
 import { CitiesAvailableSection } from "@/components/CitiesAvailableSection";
+import { TestimonialsSection } from "@/components/TestimonialsSection";
 import { Footer } from "@/components/Footer";
 import { PrivacyPolicyPopup } from "@/components/PrivacyPolicyPopup";
 import { VerificationBanner } from "@/components/VerificationBanner";
@@ -44,6 +45,9 @@ const Index = () => {
         </div>
         <div className="content-visibility-auto">
           <CitiesAvailableSection />
+        </div>
+        <div className="content-visibility-auto">
+          <TestimonialsSection />
         </div>
       </main>
       <Footer />

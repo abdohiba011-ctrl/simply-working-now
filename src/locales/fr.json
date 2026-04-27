@@ -2625,5 +2625,29 @@
     "cta_sub": "Cela prend 30 secondes. Partagez votre lien et gagnez à chaque ami qui roule.",
     "cta_help": "Besoin d'aide ? Contactez-nous à contact@motonita.ma",
     "toast_placeholder": "Votre lien de parrainage apparaîtra ici une fois le tableau de bord terminé"
+  },
+  "testimonials": {
+    "trustBadge": "Approuvé par les conducteurs partout au Maroc",
+    "title": "Histoires réelles de conducteurs Motonita",
+    "subtitle": "Découvrez pourquoi les loueurs partout au Maroc font confiance à Motonita pour trouver motos et scooters plus rapidement, plus facilement et en toute confiance.",
+    "tabs": {
+      "all": "Tous",
+      "text": "Texte",
+      "audio": "Audio",
+      "video": "Vidéo"
+    },
+    "verified": "Locataire vérifié",
+    "audioComingSoon": "Témoignage audio bientôt disponible",
+    "videoComingSoon": "Vidéo bientôt disponible",
+    "playAudio": "Lire le témoignage audio",
+    "pauseAudio": "Mettre en pause le témoignage audio",
+    "playVideo": "Lire le témoignage vidéo",
+    "closeVideo": "Fermer la vidéo",
+    "cta": {
+      "title": "Prêt à trouver votre prochaine balade ?",
+      "text": "Découvrez les motos et scooters disponibles près de chez vous et réservez en toute confiance.",
+      "primary": "Trouver une moto",
+      "secondary": "Comment fonctionne Motonita"
+    }
   }
 }
