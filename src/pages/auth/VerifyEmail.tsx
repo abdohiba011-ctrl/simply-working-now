@@ -192,7 +192,7 @@ export default function VerifyEmail() {
             <MailCheck className="h-9 w-9" style={{ color: "#9FE870" }} />
           </div>
           <h1 className="text-2xl font-bold tracking-tight" style={{ color: "#163300" }}>
-            {t("mockAuth.check_email", { defaultValue: "Check your email" })}
+            {t("mockAuth.confirm_your_email", { defaultValue: "Confirm your email" })}
           </h1>
           <p className="text-sm" style={{ color: "rgba(22,51,0,0.7)" }}>
             {t("mockAuth.code_sent_to", {
@@ -201,7 +201,7 @@ export default function VerifyEmail() {
             <span className="font-semibold" style={{ color: "#163300" }}>
               {email || "your email"}
             </span>
-            . {t("mockAuth.enter_below", { defaultValue: "Enter it below to verify your account." })}
+            . {t("mockAuth.enter_below_activate", { defaultValue: "Enter it below to activate your account." })}
           </p>
         </div>
 

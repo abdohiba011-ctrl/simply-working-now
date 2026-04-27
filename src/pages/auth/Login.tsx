@@ -25,7 +25,6 @@ import {
   queueBecomeBusinessPrompt,
   type LoginContext,
 } from "@/lib/routeAfterAuth";
-import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { checkAccountMethod, type AccountMethodStatus } from "@/lib/checkAccountMethod";
 
 const PHONE_REGEX = /^(\+212|00212|0)[67]\d{8}$/;
@@ -225,21 +224,7 @@ export default function Login({ context = "renter" }: LoginProps) {
             <div className="flex items-start gap-2">
               <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
               <div className="flex-1 space-y-2">
-                {accountHint === "oauth_only" ? (
-                  <>
-                    <p className="font-semibold">
-                      {t("mockAuth.account_uses_google_title", {
-                        defaultValue: "This account was created with Google",
-                      })}
-                    </p>
-                    <p className="text-xs">
-                      {t("mockAuth.account_uses_google_body", {
-                        defaultValue:
-                          "There's no password on file. Please use the \"Continue with Google\" button below to sign in.",
-                      })}
-                    </p>
-                  </>
-                ) : accountHint === "not_found" ? (
+                {accountHint === "not_found" ? (
                   <>
                     <p className="font-semibold">
                       {t("mockAuth.no_account_title", {
@@ -305,20 +290,6 @@ export default function Login({ context = "renter" }: LoginProps) {
             </div>
           </div>
         ) : null}
-
-        <div className="space-y-3">
-          <GoogleSignInButton />
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-border" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card px-2 text-muted-foreground text-muted-foreground/80">
-                {t("mockAuth.or", { defaultValue: "or" })}
-              </span>
-            </div>
-          </div>
-        </div>
 
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" noValidate>
           {/* Identifier */}
