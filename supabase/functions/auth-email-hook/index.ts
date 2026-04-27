@@ -19,7 +19,7 @@ const corsHeaders = {
 const EMAIL_SUBJECTS: Record<string, string> = {
   signup: 'Confirm your Motonita account',
   invite: "You've been invited to Motonita",
-  magiclink: 'Your Motonita login link',
+  magiclink: 'Your Motonita login code',
   recovery: 'Reset your Motonita password',
   email_change: 'Confirm your new Motonita email',
   reauthentication: 'Your Motonita verification code',
@@ -57,7 +57,7 @@ const SAMPLE_DATA: Record<string, object> = {
   },
   magiclink: {
     siteName: SITE_NAME,
-    confirmationUrl: SAMPLE_PROJECT_URL,
+    token: '123456',
   },
   recovery: {
     siteName: SITE_NAME,
