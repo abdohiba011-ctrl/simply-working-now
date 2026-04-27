@@ -1,6 +1,7 @@
-import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
+import { createContext, useContext, useState, useEffect, ReactNode, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from "@supabase/supabase-js";
+import { useAuthStore } from "@/stores/useAuthStore";
 
 // Rate limit configuration
 const RATE_LIMITS = {
@@ -64,6 +65,8 @@ interface AuthContextType {
   signup: (email: string, password: string, name: string, role: "user" | "business") => Promise<void>;
   logout: () => Promise<void>;
   hasRole: (role: string) => boolean;
+  refreshRoles: () => Promise<string[]>;
+  isRefreshingRoles: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -81,6 +84,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [userRoles, setUserRoles] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshingRoles, setIsRefreshingRoles] = useState(false);
+  const userRef = useRef<User | null>(null);
+  userRef.current = user;
 
   const fetchUserRoles = async (userId: string): Promise<string[]> => {
     try {
@@ -99,6 +105,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return [];
     }
   };
+
+  const refreshRoles = useCallback(async (): Promise<string[]> => {
+    const u = userRef.current;
+    if (!u) {
+      setUserRoles([]);
+      return [];
+    }
+    setIsRefreshingRoles(true);
+    try {
+      const roles = await fetchUserRoles(u.id);
+      // Also re-sync the parallel zustand store so the avatar dropdown reflects roles immediately.
+      try {
+        await useAuthStore.getState().checkAuth();
+      } catch (e) {
+        console.warn('useAuthStore.checkAuth failed during refreshRoles', e);
+      }
+      return roles;
+    } finally {
+      setIsRefreshingRoles(false);
+    }
+  }, []);
 
   useEffect(() => {
     // Set up auth state listener first
@@ -192,7 +219,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       throw new Error(rateLimitCheck.message || 'Too many login attempts');
     }
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data: signInData, error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
       const failedCheck = checkAndRecordRateLimit('login', email, true);
@@ -208,6 +235,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       sessionStorage.setItem('sessionOnly', 'true');
     } else {
       sessionStorage.removeItem('sessionOnly');
+    }
+
+    // Force role hydration before resolving so role-gated UI updates immediately.
+    if (signInData?.user) {
+      userRef.current = signInData.user;
+      await fetchUserRoles(signInData.user.id);
+      try { await useAuthStore.getState().checkAuth(); } catch { /* ignore */ }
     }
   };
 
@@ -265,7 +299,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       login, 
       signup, 
       logout,
-      hasRole 
+      hasRole,
+      refreshRoles,
+      isRefreshingRoles,
     }}>
       {children}
     </AuthContext.Provider>
