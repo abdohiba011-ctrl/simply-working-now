@@ -280,6 +280,23 @@ const Auth = () => {
   // page (6-digit OTP flow). The button on this page just redirects there.
 
   const handleGoogleSignIn = useCallback(async () => {
+    // Hard guard: the Lovable iframe preview proxy intercepts the OAuth
+    // token exchange and produces "failed to exchange authorization code".
+    // Hop the user onto the production origin where the flow works.
+    if (typeof window !== "undefined") {
+      const host = window.location.hostname;
+      const isPreview =
+        host.endsWith("lovableproject.com") || host.startsWith("id-preview--");
+      if (isPreview) {
+        const target = `${PRIMARY_PRODUCTION_ORIGIN}/auth${window.location.search}`;
+        toast.message("Opening sign-in on motonita.ma…", {
+          description: "Google sign-in must run on the live domain.",
+        });
+        window.location.assign(target);
+        return;
+      }
+    }
+
     setIsLoading(true);
     try {
       // Standard same-origin Google flow. The Lovable Cloud auth helper
@@ -291,9 +308,16 @@ const Auth = () => {
       });
 
       if (result.error) {
-        const msg = getErrMsg(result.error) || t('auth.googleSignInFailed');
+        const raw = getErrMsg(result.error) || "";
         console.error("[OAuth] Initiation error:", result.error);
-        toast.error(msg);
+        if (/exchange authorization code/i.test(raw)) {
+          toast.error(
+            "Google sign-in could not finish. Open https://motonita.ma/auth in a new incognito window and try again.",
+            { duration: 8000 },
+          );
+        } else {
+          toast.error(raw || t('auth.googleSignInFailed'));
+        }
         setIsLoading(false);
         return;
       }
@@ -307,9 +331,16 @@ const Auth = () => {
       playSuccessSound();
       toast.success(t('auth.googleSignInSuccess'));
     } catch (error: unknown) {
-      const msg = getErrMsg(error) || t('auth.googleSignInFailed');
+      const raw = getErrMsg(error) || "";
       console.error("[OAuth] Exception:", error);
-      toast.error(msg);
+      if (/exchange authorization code/i.test(raw)) {
+        toast.error(
+          "Google sign-in could not finish. Open https://motonita.ma/auth in a new incognito window and try again.",
+          { duration: 8000 },
+        );
+      } else {
+        toast.error(raw || t('auth.googleSignInFailed'));
+      }
       setIsLoading(false);
     }
   }, [t]);
