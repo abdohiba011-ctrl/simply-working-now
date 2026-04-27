@@ -44,6 +44,80 @@ export type Database = {
         }
         Relationships: []
       }
+      agencies: {
+        Row: {
+          address: string | null
+          bio: string | null
+          business_name: string
+          city: string | null
+          created_at: string
+          ice: string | null
+          id: string
+          is_locked: boolean | null
+          is_verified: boolean | null
+          logo_url: string | null
+          phone: string | null
+          primary_neighborhood: string | null
+          profile_id: string
+          rc: string | null
+          subscription_plan: string | null
+          trial_ends_at: string | null
+          trial_started_at: string | null
+          updated_at: string
+          verification_status: string | null
+        }
+        Insert: {
+          address?: string | null
+          bio?: string | null
+          business_name: string
+          city?: string | null
+          created_at?: string
+          ice?: string | null
+          id?: string
+          is_locked?: boolean | null
+          is_verified?: boolean | null
+          logo_url?: string | null
+          phone?: string | null
+          primary_neighborhood?: string | null
+          profile_id: string
+          rc?: string | null
+          subscription_plan?: string | null
+          trial_ends_at?: string | null
+          trial_started_at?: string | null
+          updated_at?: string
+          verification_status?: string | null
+        }
+        Update: {
+          address?: string | null
+          bio?: string | null
+          business_name?: string
+          city?: string | null
+          created_at?: string
+          ice?: string | null
+          id?: string
+          is_locked?: boolean | null
+          is_verified?: boolean | null
+          logo_url?: string | null
+          phone?: string | null
+          primary_neighborhood?: string | null
+          profile_id?: string
+          rc?: string | null
+          subscription_plan?: string | null
+          trial_ends_at?: string | null
+          trial_started_at?: string | null
+          updated_at?: string
+          verification_status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agencies_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agency_subscriptions: {
         Row: {
           cancel_at_period_end: boolean | null
@@ -698,13 +772,6 @@ export type Database = {
             referencedRelation: "bookings"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "booking_events_booking_id_fkey"
-            columns: ["booking_id"]
-            isOneToOne: false
-            referencedRelation: "business_bookings_view"
-            referencedColumns: ["id"]
-          },
         ]
       }
       booking_messages: {
@@ -785,13 +852,6 @@ export type Database = {
             referencedRelation: "bookings"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "booking_notes_booking_id_fkey"
-            columns: ["booking_id"]
-            isOneToOne: false
-            referencedRelation: "business_bookings_view"
-            referencedColumns: ["id"]
-          },
         ]
       }
       booking_payments: {
@@ -861,13 +921,6 @@ export type Database = {
             columns: ["booking_id"]
             isOneToOne: false
             referencedRelation: "bookings"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "booking_payments_booking_id_fkey"
-            columns: ["booking_id"]
-            isOneToOne: false
-            referencedRelation: "business_bookings_view"
             referencedColumns: ["id"]
           },
         ]
@@ -1035,13 +1088,6 @@ export type Database = {
             columns: ["bike_id"]
             isOneToOne: false
             referencedRelation: "bikes"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "bookings_bike_id_fkey"
-            columns: ["bike_id"]
-            isOneToOne: false
-            referencedRelation: "bikes_owner_view"
             referencedColumns: ["id"]
           },
           {
@@ -1441,112 +1487,52 @@ export type Database = {
       }
       profiles: {
         Row: {
-          address: string | null
           avatar_url: string | null
-          business_address: string | null
-          business_email: string | null
-          business_logo_url: string | null
-          business_name: string | null
-          business_phone: string | null
-          business_registration: string | null
-          business_type: string | null
+          blocked_reason: string | null
           created_at: string
-          date_of_birth: string | null
-          email: string | null
-          family_name_on_id: string | null
-          first_name_on_id: string | null
-          frozen_reason: string | null
-          full_name_on_id: string | null
+          email: string
+          email_verified: boolean | null
+          full_name: string | null
           id: string
-          id_back_image_url: string | null
-          id_card_number: string | null
-          id_front_image_url: string | null
-          is_frozen: boolean | null
-          is_verified: boolean | null
-          last_active_at: string | null
-          name: string | null
-          nationality: string | null
+          is_blocked: boolean | null
+          last_login_at: string | null
           phone: string | null
           phone_verified: boolean | null
-          rejection_reason: string | null
-          selfie_with_id_url: string | null
-          subscription_plan: string | null
-          trust_score: number | null
+          preferred_language: string | null
           updated_at: string
-          user_type: string | null
-          verification_status: string | null
+          user_id: string
         }
         Insert: {
-          address?: string | null
           avatar_url?: string | null
-          business_address?: string | null
-          business_email?: string | null
-          business_logo_url?: string | null
-          business_name?: string | null
-          business_phone?: string | null
-          business_registration?: string | null
-          business_type?: string | null
+          blocked_reason?: string | null
           created_at?: string
-          date_of_birth?: string | null
-          email?: string | null
-          family_name_on_id?: string | null
-          first_name_on_id?: string | null
-          frozen_reason?: string | null
-          full_name_on_id?: string | null
-          id: string
-          id_back_image_url?: string | null
-          id_card_number?: string | null
-          id_front_image_url?: string | null
-          is_frozen?: boolean | null
-          is_verified?: boolean | null
-          last_active_at?: string | null
-          name?: string | null
-          nationality?: string | null
+          email: string
+          email_verified?: boolean | null
+          full_name?: string | null
+          id?: string
+          is_blocked?: boolean | null
+          last_login_at?: string | null
           phone?: string | null
           phone_verified?: boolean | null
-          rejection_reason?: string | null
-          selfie_with_id_url?: string | null
-          subscription_plan?: string | null
-          trust_score?: number | null
+          preferred_language?: string | null
           updated_at?: string
-          user_type?: string | null
-          verification_status?: string | null
+          user_id: string
         }
         Update: {
-          address?: string | null
           avatar_url?: string | null
-          business_address?: string | null
-          business_email?: string | null
-          business_logo_url?: string | null
-          business_name?: string | null
-          business_phone?: string | null
-          business_registration?: string | null
-          business_type?: string | null
+          blocked_reason?: string | null
           created_at?: string
-          date_of_birth?: string | null
-          email?: string | null
-          family_name_on_id?: string | null
-          first_name_on_id?: string | null
-          frozen_reason?: string | null
-          full_name_on_id?: string | null
+          email?: string
+          email_verified?: boolean | null
+          full_name?: string | null
           id?: string
-          id_back_image_url?: string | null
-          id_card_number?: string | null
-          id_front_image_url?: string | null
-          is_frozen?: boolean | null
-          is_verified?: boolean | null
-          last_active_at?: string | null
-          name?: string | null
-          nationality?: string | null
+          is_blocked?: boolean | null
+          last_login_at?: string | null
           phone?: string | null
           phone_verified?: boolean | null
-          rejection_reason?: string | null
-          selfie_with_id_url?: string | null
-          subscription_plan?: string | null
-          trust_score?: number | null
+          preferred_language?: string | null
           updated_at?: string
-          user_type?: string | null
-          verification_status?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -1833,20 +1819,59 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          is_active: boolean | null
           role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
         Insert: {
           created_at?: string
           id?: string
+          is_active?: boolean | null
           role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
         Update: {
           created_at?: string
           id?: string
+          is_active?: boolean | null
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      verification_codes: {
+        Row: {
+          attempts: number
+          code: string
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          max_attempts: number
+          purpose: string
+          used_at: string | null
+        }
+        Insert: {
+          attempts?: number
+          code: string
+          created_at?: string
+          email: string
+          expires_at: string
+          id?: string
+          max_attempts?: number
+          purpose: string
+          used_at?: string | null
+        }
+        Update: {
+          attempts?: number
+          code?: string
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          max_attempts?: number
+          purpose?: string
+          used_at?: string | null
         }
         Relationships: []
       }
@@ -1912,53 +1937,6 @@ export type Database = {
       }
     }
     Views: {
-      bikes_owner_view: {
-        Row: {
-          available: boolean | null
-          bike_type_id: string | null
-          condition: string | null
-          created_at: string | null
-          id: string | null
-          license_plate: string | null
-          location: string | null
-          notes: string | null
-          owner_id: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          available?: boolean | null
-          bike_type_id?: string | null
-          condition?: string | null
-          created_at?: string | null
-          id?: string | null
-          license_plate?: string | null
-          location?: string | null
-          notes?: string | null
-          owner_id?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          available?: boolean | null
-          bike_type_id?: string | null
-          condition?: string | null
-          created_at?: string | null
-          id?: string | null
-          license_plate?: string | null
-          location?: string | null
-          notes?: string | null
-          owner_id?: string | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "bikes_bike_type_id_fkey"
-            columns: ["bike_type_id"]
-            isOneToOne: false
-            referencedRelation: "bike_types"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       bikes_public: {
         Row: {
           available: boolean | null
@@ -1996,142 +1974,6 @@ export type Database = {
             columns: ["bike_type_id"]
             isOneToOne: false
             referencedRelation: "bike_types"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      business_bookings_view: {
-        Row: {
-          admin_status: string | null
-          amount_paid: number | null
-          assigned_at: string | null
-          assigned_to_business: string | null
-          bike_id: string | null
-          booking_status: string | null
-          cancelled_at: string | null
-          confirmed_at: string | null
-          contract_status: string | null
-          contract_url: string | null
-          created_at: string | null
-          customer_email: string | null
-          customer_name: string | null
-          customer_phone: string | null
-          delivery_fee: number | null
-          delivery_location: string | null
-          delivery_method: string | null
-          helmet_included: boolean | null
-          id: string | null
-          insurance_included: boolean | null
-          payment_method: string | null
-          payment_status: string | null
-          pickup_date: string | null
-          pickup_location: string | null
-          pickup_time: string | null
-          return_date: string | null
-          return_location: string | null
-          return_time: string | null
-          signed_contract_url: string | null
-          source: string | null
-          special_requests: string | null
-          total_days: number | null
-          total_price: number | null
-          updated_at: string | null
-          user_id: string | null
-        }
-        Insert: {
-          admin_status?: string | null
-          amount_paid?: number | null
-          assigned_at?: string | null
-          assigned_to_business?: string | null
-          bike_id?: string | null
-          booking_status?: string | null
-          cancelled_at?: string | null
-          confirmed_at?: string | null
-          contract_status?: string | null
-          contract_url?: string | null
-          created_at?: string | null
-          customer_email?: string | null
-          customer_name?: string | null
-          customer_phone?: string | null
-          delivery_fee?: number | null
-          delivery_location?: string | null
-          delivery_method?: string | null
-          helmet_included?: boolean | null
-          id?: string | null
-          insurance_included?: boolean | null
-          payment_method?: string | null
-          payment_status?: string | null
-          pickup_date?: string | null
-          pickup_location?: string | null
-          pickup_time?: string | null
-          return_date?: string | null
-          return_location?: string | null
-          return_time?: string | null
-          signed_contract_url?: string | null
-          source?: string | null
-          special_requests?: string | null
-          total_days?: number | null
-          total_price?: number | null
-          updated_at?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          admin_status?: string | null
-          amount_paid?: number | null
-          assigned_at?: string | null
-          assigned_to_business?: string | null
-          bike_id?: string | null
-          booking_status?: string | null
-          cancelled_at?: string | null
-          confirmed_at?: string | null
-          contract_status?: string | null
-          contract_url?: string | null
-          created_at?: string | null
-          customer_email?: string | null
-          customer_name?: string | null
-          customer_phone?: string | null
-          delivery_fee?: number | null
-          delivery_location?: string | null
-          delivery_method?: string | null
-          helmet_included?: boolean | null
-          id?: string | null
-          insurance_included?: boolean | null
-          payment_method?: string | null
-          payment_status?: string | null
-          pickup_date?: string | null
-          pickup_location?: string | null
-          pickup_time?: string | null
-          return_date?: string | null
-          return_location?: string | null
-          return_time?: string | null
-          signed_contract_url?: string | null
-          source?: string | null
-          special_requests?: string | null
-          total_days?: number | null
-          total_price?: number | null
-          updated_at?: string | null
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "bookings_bike_id_fkey"
-            columns: ["bike_id"]
-            isOneToOne: false
-            referencedRelation: "bikes"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "bookings_bike_id_fkey"
-            columns: ["bike_id"]
-            isOneToOne: false
-            referencedRelation: "bikes_owner_view"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "bookings_bike_id_fkey"
-            columns: ["bike_id"]
-            isOneToOne: false
-            referencedRelation: "bikes_public"
             referencedColumns: ["id"]
           },
         ]
@@ -2236,7 +2078,7 @@ export type Database = {
       request_plan_downgrade: { Args: never; Returns: Json }
     }
     Enums: {
-      app_role: "admin" | "business" | "user"
+      app_role: "renter" | "agency" | "admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2364,7 +2206,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "business", "user"],
+      app_role: ["renter", "agency", "admin"],
     },
   },
 } as const
