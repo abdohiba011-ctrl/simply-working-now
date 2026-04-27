@@ -1,74 +1,72 @@
 ## Goal
 
-Wire up branded, Motonita-styled auth emails for the entire flow — forgot password (6-digit code), signup verification (6-digit code), magic link, invite, email change, and reauthentication — all sent from `notify.motonita.ma` via Lovable's built-in email infrastructure (no Resend account needed).
+A clean, professional, email-only auth flow with no Google sign-in anywhere. Three flows, all using your branded `notify.motonita.ma` emails:
 
-## Heads-up about Resend
+1. **Sign up** → email + password + confirm password → 6-digit code emailed → enter code → logged in
+2. **Log in** → email + password → logged in (blocked with "Verify your email" message if not yet verified)
+3. **Forgot password** → email → 6-digit code emailed → enter code → set new password → logged in
 
-You linked `resend.com`. Lovable already has a built-in transactional email system that works exactly the same way — no API key, no signup, no monthly fee — and your domain `notify.motonita.ma` is already configured for it. I'll use the built-in system. If you specifically want to switch to Resend later, we'd need to remove the NS delegation at your registrar first; happy to do that on request, but it's not necessary.
+## Heads-up
 
-## Current State
+A *huge* amount of this is already built and working — your project already has the OTP signup verification page, forgot-password page, reset-verify page, reset-new-password page, and the Motonita-branded emails (deployed last turn). The actual changes needed are smaller than the request implies. I'm being explicit about what stays, what goes, and what gets touched so you know exactly what's happening.
 
-- ✅ `notify.motonita.ma` configured (DNS still verifying — emails activate automatically once DNS is green)
-- ✅ `auth-email-hook` edge function exists and routes all 6 auth event types
-- ✅ All 6 template files exist in `supabase/functions/_shared/email-templates/`
-- ✅ Frontend pages exist: `ForgotPassword.tsx`, `ResetPasswordVerify.tsx`, `ResetPasswordNew.tsx`, `VerifyEmail.tsx` (already using `verifyOtp` for 6-digit codes)
-- ✅ `useAuthStore` already calls `resetPasswordForEmail` and `verifyOtp` correctly
-- ⚠️ Only `recovery.tsx` and `signup.tsx` have Motonita styling. The other 4 templates still use generic black/Arial defaults.
+## What's already in place (kept as-is)
 
-## Changes
+- ✅ `/signup` & `/agency/signup` — email + password + confirm password forms with strength meter, password rules, terms checkbox
+- ✅ `/verify-email?email=...` — 6-digit OTP input, resend with cooldown, change-email link
+- ✅ `/login` & `/agency/login` — email/phone + password
+- ✅ `/forgot-password` — email entry → triggers OTP send
+- ✅ `/reset-password/verify` — 6-digit OTP for password reset
+- ✅ `/reset-password/new` — set new password after verifying
+- ✅ `useAuthStore` already calls `supabase.auth.signUp`, `verifyOtp({type:'signup'})`, `resetPasswordForEmail`, `verifyOtp({type:'recovery'})`, `signInWithPassword` correctly
+- ✅ Branded emails (recovery, signup, magic-link, invite, email-change, reauthentication) shipping from `notify.motonita.ma` with Motonita forest+lime brand, 6-digit code box, brand header & footer
 
-### 1. Re-style 4 remaining email templates with Motonita brand
+## Changes — Remove every Google touch-point
 
-Apply the same brand system already used in `recovery.tsx` to:
+### 1. Strip Google from auth pages (UI + handlers)
 
-- `magic-link.tsx` — login link email
-- `invite.tsx` — agency team invitation email
-- `email-change.tsx` — confirm new email address
-- `reauthentication.tsx` — sensitive-action 6-digit code
+- `src/pages/auth/Login.tsx` — remove `<GoogleSignInButton />` block, the "OR" divider, the `import GoogleSignInButton`, and the "this account uses Google" error branch
+- `src/pages/auth/Signup.tsx` — remove `<GoogleSignInButton />` block and "OR" divider, the import, and the `oauth_only` `checkAccountMethod` branch (no longer reachable in pure password flow)
+- `src/pages/auth/AgencyLogin.tsx` — same treatment
+- `src/pages/auth/AgencySignup.tsx` — same treatment
+- `src/pages/Auth.tsx` (legacy unified auth page) — remove `handleGoogleSignIn`, the "Continue with Google" button, the troubleshooting accordion, and OAuth error redirect handling
+- `src/components/auth/GoogleSignInButton.tsx` — delete file
+- `src/integrations/lovable/index.ts` — leave intact (the Lovable SDK; we just stop calling `signInWithOAuth`)
+- Localization keys for `googleSignIn*`, `signUpWithGoogle*`, `continueWithGoogle*`, `completingGoogle` — leave the strings (harmless), or remove on request
 
-Brand tokens applied to every template:
-- Background: white `#ffffff`
-- Body text: forest `#163300`
-- Muted text: `rgba(22, 51, 0, 0.7)`
-- Footer text: `rgba(22, 51, 0, 0.55)`
-- Primary CTA button: lime `#9FE870` background, forest `#163300` text, `border-radius: 12px`
-- 6-digit code box: lime tint `rgba(159, 232, 112, 0.18)` background, forest border, large mono font with letter-spacing
-- Font: Inter stack with system fallbacks
-- Container: 480px max-width, 32px padding
+### 2. Enforce email confirmation server-side
 
-### 2. Add Motonita logo header to all 6 templates
+Use the auth-config tool to disable Supabase's auto-confirm so the 6-digit code is always required for new signups. Without this, signups could log in instantly without verifying. After this change:
 
-- Use the existing `favicon.svg` (or upload a wider wordmark to a new `email-assets` storage bucket if you prefer — let me know)
-- Add a small logo + "Motonita" wordmark at the top of every template (forest text, lime accent dot)
-- Footer: "Motonita SARLAU · Casablanca · motonita.ma" in muted forest
+- New signup → no session returned → user routed to `/verify-email`
+- Login attempt before verification → blocked with "Please verify your email first — check your inbox for the 6-digit code" + a "Resend code" link
 
-### 3. Localize subject lines and copy
+The store already handles both cases — this just guarantees the verify step runs every time.
 
-Subjects already exist in the hook. Refine for clarity:
-- `signup` → "Confirm your Motonita account"
-- `recovery` → "Reset your Motonita password"
-- `magiclink` → "Your Motonita login link"
-- `invite` → "You've been invited to Motonita"
-- `email_change` → "Confirm your new Motonita email"
-- `reauthentication` → "Your Motonita verification code"
+### 3. Polish copy & consistency
 
-Copy stays in English (matches default site language). Arabic/French versions are out of scope for this round — happy to add multi-language detection later if you want it.
+- Login page: replace "Email or phone" label with just **"Email"** (the request was email-only). Phone login stays disabled in this round; the existing phone normalization code is kept but unused.
+- Signup pages: confirm the "Confirm password" field is visible and validates equality (already done — just verifying)
+- VerifyEmail page: tighten the headline to **"Confirm your email"** and subtitle to **"We sent a 6-digit code to {email}. Enter it below to activate your account."**
+- ForgotPassword page: align copy with the same tone
+- All button colors stay on Motonita brand (lime + forest)
 
-### 4. Redeploy the auth-email-hook
+### 4. Visual polish (light pass, not a redesign)
 
-After template edits, redeploy so Supabase serves the new code (edge functions don't auto-pick up template changes).
+- Remove the now-unused "OR" dividers
+- Center the form a bit tighter without the OAuth column
+- Keep the existing AuthLayout, password strength meter, and 6-digit OTP box (already on-brand)
 
-## Out of Scope (ask if you want any of these)
+## Out of Scope
 
-- Switching to Resend instead of Lovable's built-in email
-- Arabic / French versions of the email templates
-- Custom email-assets storage bucket with a PNG/SVG wordmark logo (currently planning to use `favicon.svg`)
-- Changing the 6-digit code length, expiry, or rate limits (Supabase defaults stay)
-- Welcome / onboarding emails (those are transactional, not auth — separate setup)
+- Phone/SMS login (kept disabled but code untouched in case you want it later)
+- Apple / SAML / any other social provider
+- Multi-language polish for newly-changed copy (i18n keys updated; FR/AR translations can be added later if you want)
+- Switching to a third-party email provider (Resend) — emails already ship from your domain via Lovable's built-in system
 
 ## Technical Notes
 
-- All edits stay inside `supabase/functions/_shared/email-templates/*.tsx` and one redeploy of `auth-email-hook`
-- No DB migrations, no new edge functions, no new env vars
-- Email body background must remain white (#ffffff) per email client compatibility — dark mode of the app does NOT carry into emails
-- Once DNS for `notify.motonita.ma` finishes verifying, emails ship automatically; until then, default Lovable templates are sent as a fallback
+- All edits are inside `src/pages/auth/*` and `src/pages/Auth.tsx`; one file deletion (`GoogleSignInButton.tsx`)
+- One backend change: turn off auto-confirm via the auth-config tool (no migration, no edge function)
+- No DB schema changes, no RLS changes, no new tables
+- Memory note: the existing memory says "auto email confirmation" — I'll update that memory rule to "6-digit OTP required for signup, password reset, and reauthentication"
