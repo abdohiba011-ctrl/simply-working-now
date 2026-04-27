@@ -299,7 +299,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       login, 
       signup, 
       logout,
-      hasRole 
+      hasRole,
+      refreshRoles,
+      isRefreshingRoles,
     }}>
       {children}
     </AuthContext.Provider>
