@@ -134,7 +134,16 @@ const Checkout = () => {
       }
 
       // 3. Navigate to in-app embedded YouCan Pay form (no popup, no iframe).
-      const successPath = `/thank-you?type=booking&bookingId=${bookingId}&needsVerification=${needsVerification}`;
+      const confirmationParams = new URLSearchParams({
+        bookingId: String(bookingId),
+        bikeName,
+        pickup: pickup || '',
+        end: end || '',
+        total: String(rentalSubtotal),
+        payment: 'card',
+        needsVerification,
+      });
+      const successPath = `/confirmation?${confirmationParams.toString()}`;
       const errorPath = `/checkout?${searchParams.toString()}&yc=error`;
       const qs = new URLSearchParams({
         token: tokenResp.token_id,

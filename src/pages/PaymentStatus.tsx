@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate, Link } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Card, CardContent } from "@/components/ui/card";
@@ -41,7 +41,7 @@ export default function PaymentStatus() {
     outcomeHint === "error" ? "failed" : "processing",
   );
   const [elapsed, setElapsed] = useState(0);
-  const stopRef = useRef(false);
+  
 
   useEffect(() => {
     if (!pid) {
@@ -50,25 +50,25 @@ export default function PaymentStatus() {
     }
     if (phase !== "processing") return;
 
-    stopRef.current = false;
+    let cancelled = false;
+    let timer: number | undefined;
     const start = Date.now();
 
     const tick = async () => {
-      if (stopRef.current) return;
+      if (cancelled) return;
       const { data } = await supabase
         .from("youcanpay_payments")
         .select("status")
         .eq("id", pid)
         .maybeSingle();
+      if (cancelled) return;
 
       const status = (data?.status || "").toLowerCase();
       if (status === "paid" || status === "succeeded" || status === "completed") {
-        stopRef.current = true;
         setPhase("succeeded");
         return;
       }
       if (status === "failed" || status === "cancelled" || status === "canceled") {
-        stopRef.current = true;
         setPhase("failed");
         return;
       }
@@ -76,17 +76,19 @@ export default function PaymentStatus() {
       const e = Date.now() - start;
       setElapsed(e);
       if (e >= POLL_TIMEOUT_MS) {
-        stopRef.current = true;
         setPhase("timeout");
         return;
       }
-      setTimeout(tick, POLL_INTERVAL_MS);
+      timer = window.setTimeout(tick, POLL_INTERVAL_MS);
     };
 
     tick();
     return () => {
-      stopRef.current = true;
+      cancelled = true;
+      if (timer) window.clearTimeout(timer);
     };
+    // We intentionally re-run only when pid changes or phase transitions
+    // back to "processing" (e.g. user clicked "Check again").
   }, [pid, phase]);
 
   // Auto-forward on success after a short beat so the user sees confirmation.

@@ -17,6 +17,7 @@ const Confirmation = () => {
   const { t, isRTL } = useLanguage();
   const [isGeneratingContract, setIsGeneratingContract] = useState(false);
   const [contractHtml, setContractHtml] = useState<string | null>(null);
+  const [contractAvailable, setContractAvailable] = useState(true);
   const [verificationStatus, setVerificationStatus] = useState<string | null>(null);
 
   const bookingId = searchParams.get("bookingId");
@@ -62,9 +63,13 @@ const Confirmation = () => {
 
       if (data?.contractHtml) {
         setContractHtml(data.contractHtml);
+      } else {
+        setContractAvailable(false);
       }
     } catch (error) {
-      console.error("Error generating contract:", error);
+      // Contract generation is optional — agency provides physical contract at pickup.
+      console.warn("Contract not available yet:", error);
+      setContractAvailable(false);
     } finally {
       setIsGeneratingContract(false);
     }
@@ -273,51 +278,56 @@ const Confirmation = () => {
                 </p>
               </div>
 
-              {/* Contract Download Section - Last */}
-              <div className="bg-muted/50 border border-border rounded-lg p-6 mb-8">
-                <div className="flex items-center justify-center gap-3 mb-4">
-                  <FileText className="h-6 w-6 text-foreground" />
-                  <h2 className="font-semibold text-lg text-foreground">{t("confirmationPage.rentalContract")}</h2>
-                </div>
-                <p className="text-sm text-muted-foreground mb-4">
-                  {t("confirmationPage.downloadContractDesc")}
-                </p>
-                {isGeneratingContract && (
-                  <p className="text-sm text-muted-foreground mb-4 flex items-center justify-center gap-2">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    {t("confirmationPage.generatingContract")}
+              {/* Contract Download Section - Last. Only shown if our backend
+                  produced an HTML contract; otherwise the agency provides the
+                  paper contract at pickup, so a perpetually-disabled button
+                  here would just confuse the user. */}
+              {contractAvailable && (
+                <div className="bg-muted/50 border border-border rounded-lg p-6 mb-8">
+                  <div className="flex items-center justify-center gap-3 mb-4">
+                    <FileText className="h-6 w-6 text-foreground" />
+                    <h2 className="font-semibold text-lg text-foreground">{t("confirmationPage.rentalContract")}</h2>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    {t("confirmationPage.downloadContractDesc")}
                   </p>
-                )}
-                <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                  <Button
-                    variant="outline"
-                    onClick={openContractInNewTab}
-                    disabled={isGeneratingContract || !contractHtml}
-                    className="gap-2"
-                    data-testid="view-contract-btn"
-                  >
-                    {isGeneratingContract ? (
+                  {isGeneratingContract && (
+                    <p className="text-sm text-muted-foreground mb-4 flex items-center justify-center gap-2">
                       <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <FileText className="h-4 w-4" />
-                    )}
-                    {t("confirmationPage.viewContract")}
-                  </Button>
-                  <Button
-                    onClick={downloadContract}
-                    disabled={isGeneratingContract || !contractHtml}
-                    className="gap-2 bg-foreground text-background hover:bg-foreground/90"
-                    data-testid="download-contract-btn"
-                  >
-                    {isGeneratingContract ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Download className="h-4 w-4" />
-                    )}
-                    {t("confirmationPage.downloadContract")}
-                  </Button>
+                      {t("confirmationPage.generatingContract")}
+                    </p>
+                  )}
+                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                    <Button
+                      variant="outline"
+                      onClick={openContractInNewTab}
+                      disabled={isGeneratingContract || !contractHtml}
+                      className="gap-2"
+                      data-testid="view-contract-btn"
+                    >
+                      {isGeneratingContract ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <FileText className="h-4 w-4" />
+                      )}
+                      {t("confirmationPage.viewContract")}
+                    </Button>
+                    <Button
+                      onClick={downloadContract}
+                      disabled={isGeneratingContract || !contractHtml}
+                      className="gap-2 bg-foreground text-background hover:bg-foreground/90"
+                      data-testid="download-contract-btn"
+                    >
+                      {isGeneratingContract ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Download className="h-4 w-4" />
+                      )}
+                      {t("confirmationPage.downloadContract")}
+                    </Button>
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div className="space-y-4">
                 <Button 
