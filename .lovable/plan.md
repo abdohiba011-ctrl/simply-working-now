@@ -1,96 +1,74 @@
 ## Goal
 
-Rework the **agency** signup/login experience (`/agency/signup`, `/agency/login`) to be a polished split-screen flow inspired by the Nucleus reference, while keeping the existing email + 6-digit OTP auth model. Plus global UI fixes for radios/checkboxes.
+Finalize the agency auth rework: silence the missing-translation warnings, then run a full live test of `/agency/signup`, `/agency/login`, and the global radio/checkbox change.
 
 ## What changes
 
-### 1. Square radios & checkboxes (global)
+### 1. Add `agencyAuth` translation block to all three locale files
 
-- `src/components/ui/radio-group.tsx`: replace circular `RadioGroupItem` (`aspect-square ... rounded-full`) with a **rounded square** (`rounded-md`), and swap the inner `Circle` indicator for a `Check` icon (lucide).
-- `src/components/ui/checkbox.tsx`: bump corners from `rounded-sm` to `rounded-md` for visual consistency. (Already square, just softer corners.)
+Insert a new `"agencyAuth": { ... }` block just before `"mockAuth"` in `src/locales/en.json`, `src/locales/fr.json`, and `src/locales/ar.json`.
 
-This affects everywhere radios/checkboxes are used (forms, filters, etc.) — desired per request.
+**Keys** (all 9):
+- `back_to_home`, `email`, `next`, `back`, `brand_name`, `neighborhood`, `step1_subtitle`, `step2_subtitle`, `image_alt`, `tagline`, `tagline_sub`
 
-### 2. New shared `AgencyAuthLayout` (split screen)
+**English** — keep current `defaultValue` strings.
 
-Create `src/components/auth/AgencyAuthLayout.tsx`:
+**French** — example:
+- `back_to_home`: "Retour à l'accueil"
+- `next`: "Continuer" / `back`: "Retour"
+- `brand_name`: "Nom de l'entreprise / marque"
+- `neighborhood`: "Quartier"
+- `tagline`: "« Frais fixes, zéro commission. Gardez 100 % de chaque location. »"
 
-```text
-┌─────────────────────────┬──────────────────────────┐
-│                         │  ← Back to home          │
-│   Bike image (cover)    │  [Logo]      [🌐 Lang ▾] │
-│                         │                          │
-│   Overlay: Motonita     │      <form children>     │
-│   tagline / quote       │                          │
-└─────────────────────────┴──────────────────────────┘
-```
+**Arabic** (RTL) — example:
+- `back_to_home`: "العودة إلى الرئيسية"
+- `next`: "متابعة" / `back`: "رجوع"
+- `brand_name`: "اسم النشاط / العلامة التجارية"
+- `neighborhood`: "الحي"
+- `tagline`: «رسوم ثابتة، بدون عمولة. احتفظ بـ 100٪ من كل تأجير.»
 
-- **Left panel (≥ md)**: full-height image (the yellow R6 bike the user uploaded → copied to `src/assets/auth-agency-bike.jpg`), with a dark gradient overlay and a Motonita quote/tagline at the bottom (forest text on lime accent dot — matches brand). Hidden under md.
-- **Right panel**: white/card background, max-width ~480px content column, with a top bar containing:
-  - **"← Back to home"** link (`/`) on the left.
-  - **Logo** (small).
-  - **Language dropdown** that **reuses the exact same `Select` component used in `Header.tsx`** (EN/FR/AR with flags, RTL-aware).
-- The renter `AuthLayout` stays as-is. Only agency pages adopt the split layout.
+### 2. Live test in the browser preview
 
-### 3. Agency Signup as a 2-step wizard
+Run through these flows and report findings:
 
-Rewrite `src/pages/auth/Signup.tsx` (when `defaultRole === "agency"`) to render inside `AgencyAuthLayout` with a stepper:
+1. **/agency/signup — Step 1**
+   - Confirm split layout renders (bike image left, form right).
+   - Confirm "Back to home" link, header-style language switcher, stepper at "1/2".
+   - Try invalid data → validation errors render.
+   - Fill valid data → "Continue" advances to Step 2.
 
-**Step indicator** at the top: `(1) Account · (2) Business`
+2. **/agency/signup — Step 2**
+   - Confirm business name, type, city, neighborhood fields.
+   - Pick "Casablanca" → neighborhood becomes a dropdown with the 10 Casablanca neighborhoods.
+   - Pick a city not in the map (e.g., "Other") → neighborhood becomes a free-text input.
+   - "Back" returns to Step 1 with state preserved.
+   - Accept terms checkbox shows the new `rounded-md` style.
 
-- **Step 1 — Account**
-  - Full name
-  - Email
-  - Phone (Moroccan format, required for agency)
-  - Password (with strength meter — already exists)
-  - Confirm password
-  - "Next" button → validates only step-1 fields via `form.trigger([...])` before advancing.
+3. **/agency/login**
+   - Renders in the split layout.
+   - Email + password validation works; forgot password link present.
 
-- **Step 2 — Business**
-  - Business / brand name
-  - Business type (`Select`)
-  - City (`Select` — uses existing `CITIES`)
-  - **Neighborhood** (`Select`, dependent on city — populated from existing `moroccoRegions` data in `src/data/moroccoRegions.ts`; falls back to a free-text input if the selected city has no neighborhood list)
-  - Accept terms checkbox
-  - "Back" + "Create account" buttons
+4. **Global radio test** — visit a page with radios (e.g., `/profile` or filters) and confirm they're now square with a check indicator.
 
-On submit:
-- Call existing `signup()` with `role: "agency"`.
-- Navigate to `/verify-email?email=...` (already implemented). Copy on that page already says "Confirm your email — enter the 6-digit code we sent".
+5. **Language switcher**
+   - Switch to FR → labels translate, no missing-key warnings.
+   - Switch to AR → layout flips RTL, image stays on the left visually but logical positioning is correct.
 
-The renter signup (`/signup`) keeps its current single-page form unchanged.
+6. **Renter `/signup` and `/login`** — unchanged single-column `AuthLayout`.
 
-### 4. Agency Login redesign
-
-Update `src/pages/auth/Login.tsx` to render inside `AgencyAuthLayout` when `context === "agency"`. Functionality unchanged (email + password, lockouts, error hints, forgot password link). Just the new layout + header (back-to-home, language switcher).
-
-Renter login stays in the current `AuthLayout`.
-
-### 5. Translations
-
-Add new i18n keys to `src/locales/{en,fr,ar}.json`:
-- `agencyAuth.back_to_home`, `agencyAuth.step1_title`, `agencyAuth.step2_title`, `agencyAuth.next`, `agencyAuth.back`, `agencyAuth.brand_name`, `agencyAuth.neighborhood`, `agencyAuth.tagline` (for the left panel), etc.
+Skip the actual "Create account" submit (would create a real Supabase user) — stop at the validation step unless the user explicitly asks.
 
 ## Technical notes
 
-- New asset: copy `user-uploads://237b32550d6e6cbccdd73f6c103544c6.jpg` → `src/assets/auth-agency-bike.jpg`, imported as ES module.
-- Reuse the existing `Select` from `@/components/ui/select` for the language dropdown so it visually matches the header.
-- Wizard state managed locally (`useState<1 | 2>(1)`), all fields stay in one `react-hook-form` instance — schema unchanged.
-- RTL: layout uses logical Tailwind classes (`me-*`, `ms-*`, `text-start`) so the split mirrors correctly when AR is selected.
-- No database / auth flow changes — just UI restructure. Email + 6-digit OTP confirmation flow stays exactly as today.
+- No code changes needed beyond the three locale files.
+- After saving locales, the Vite HMR will reload — the `missingKeyHandler` warnings should disappear.
 
 ## Files
 
-**Created**
-- `src/components/auth/AgencyAuthLayout.tsx`
-- `src/assets/auth-agency-bike.jpg` (from upload)
-
 **Modified**
-- `src/components/ui/radio-group.tsx` (square + check indicator)
-- `src/components/ui/checkbox.tsx` (rounded-md)
-- `src/pages/auth/Signup.tsx` (wizard + agency layout switch)
-- `src/pages/auth/Login.tsx` (agency layout switch)
-- `src/locales/en.json`, `fr.json`, `ar.json` (new keys)
+- `src/locales/en.json` (insert `agencyAuth` block)
+- `src/locales/fr.json` (insert `agencyAuth` block)
+- `src/locales/ar.json` (insert `agencyAuth` block)
 
 **Untouched**
-- Renter `/signup`, `/login`, `AuthLayout`, auth store, Supabase config, email templates.
+- All component code already shipped in the previous turn.

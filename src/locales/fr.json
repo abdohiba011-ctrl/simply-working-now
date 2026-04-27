@@ -2412,6 +2412,19 @@
     "goToHome": "Aller à l'accueil",
     "persistsMessage": "Si ce problème persiste, veuillez contacter le support."
   },
+  "agencyAuth": {
+    "back_to_home": "Retour à l'accueil",
+    "email": "E-mail",
+    "next": "Continuer",
+    "back": "Retour",
+    "brand_name": "Nom de l'entreprise / marque",
+    "neighborhood": "Quartier",
+    "step1_subtitle": "Étape 1 sur 2 — Votre compte",
+    "step2_subtitle": "Étape 2 sur 2 — Votre activité",
+    "image_alt": "Moto sportive jaune dans une rue de ville",
+    "tagline": "« Frais fixes, zéro commission. Gardez 100 % de chaque location. »",
+    "tagline_sub": "La première marketplace marocaine de location de motos entre particuliers."
+  },
   "mockAuth": {
     "welcome_back": "Bon retour",
     "login_continue": "Connectez-vous pour continuer sur Motonita",

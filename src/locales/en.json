@@ -2413,6 +2413,19 @@
     "goToHome": "Go to Home",
     "persistsMessage": "If this problem persists, please contact support."
   },
+  "agencyAuth": {
+    "back_to_home": "Back to home",
+    "email": "Email",
+    "next": "Continue",
+    "back": "Back",
+    "brand_name": "Business / brand name",
+    "neighborhood": "Neighborhood",
+    "step1_subtitle": "Step 1 of 2 — Your account details",
+    "step2_subtitle": "Step 2 of 2 — Your business",
+    "image_alt": "Yellow sportbike on a city street",
+    "tagline": "“Flat fees, no commission. Keep 100% of every rental.”",
+    "tagline_sub": "Morocco's first peer-to-peer motorbike rental marketplace."
+  },
   "mockAuth": {
     "welcome_back": "Welcome back",
     "login_continue": "Log in to continue to Motonita",
