@@ -1,69 +1,175 @@
-## Goal
+# Agency Side Overhaul
 
-Make role-based UI (Admin Panel, Switch to Agency) appear reliably right after login, prevent the `admin_employees` ↔ `user_roles` desync from happening again, and tighten linter-flagged SECURITY DEFINER functions.
+A senior-level pass on the agency dashboard. Focus areas: motorbikes (gallery + uploads), messages (proper inbox UX), bookings polish, wallet top-up scoping, notifications, theme toggle, and profile logo upload.
 
-## 1. Auto-sync `admin_employees` → `user_roles`
+---
 
-Add a database trigger so the two tables can never drift again.
+## 1. Motorbikes — list & detail
 
-- New trigger function `public.sync_admin_role_to_user_roles()` (SECURITY DEFINER, `search_path=public`):
-  - On INSERT into `admin_employees` → INSERT `(user_id, 'admin')` into `user_roles` (ON CONFLICT DO NOTHING).
-  - On DELETE from `admin_employees` → DELETE matching `user_roles` row (only if user has no other source of admin).
-- Trigger `trg_admin_employees_sync_roles` AFTER INSERT OR DELETE on `admin_employees`.
-- Backfill: re-run the insert for any current admin missing the role (idempotent).
+**Motorbikes list page**
+- Add a Grid / Table view toggle (persisted in URL `?view=grid|table`)
+- Grid: existing card style, polished
+- Table: columns — image thumb, name, engine/trans, daily price, status, bookings count, last booked, actions (View, Edit, Public)
+- Keep search + add motorbike button
 
-Self-test view/function `public.admin_role_sync_status()` returning rows where `admin_employees.user_id` has no matching `user_roles.role='admin'`. Empty result = healthy. Used by:
-- Admin panel "System health" card (read-only).
-- Optional: a daily check we can call manually.
+**Motorbike detail page**
+- Image gallery: main image hero + thumbnail strip; click to swap; lightbox on click
+- Remove the Rating and Reviews stat cards (per request)
+- Keep: Daily price + Status cards, Description
+- "Public view" button opens `/bikes/:id` in a new tab — verify route works (it points to `BikeDetails` route)
+- "Edit" goes to wizard
 
-## 2. Triage SECURITY DEFINER linter warnings
+---
 
-The linter flagged 44 warnings (categories 0028 anon-callable, 0029 authenticated-callable). Audit each `SECURITY DEFINER` function and apply one of three actions:
+## 2. Image management (the big one)
 
-| Function | Action |
-|---|---|
-| `has_role`, `is_super_admin` | Keep DEFINER (used in RLS); REVOKE EXECUTE FROM `anon`. Keep `authenticated`. |
-| `create_bike_hold`, `promote_hold_to_booking`, `confirm_booking`, `request_plan_downgrade`, `credit_renter_wallet`, `log_audit_event` | Keep DEFINER + auth check inside (already present); REVOKE EXECUTE FROM `anon`. |
-| `bookings_*`, `profiles_*`, `booking_messages_*`, `audit_booking_message`, `update_updated_at_column`, `handle_new_user`, `handle_new_agency_role`, `guard_user_roles_write`, `enforce_subscription_lifecycle`, `sync_admin_role_to_user_roles` (new) | Trigger / internal only — REVOKE EXECUTE FROM `PUBLIC`, `anon`, `authenticated`. |
-| `enqueue_email`, `read_email_batch`, `delete_email`, `move_to_dlq` | Service-role only — REVOKE EXECUTE FROM `PUBLIC`, `anon`, `authenticated`. |
+**Replace URL inputs with real uploads.** Use the existing public `bike-images` storage bucket.
 
-Result: anon cannot RPC-call any SECURITY DEFINER function; authenticated keeps only the few RPCs the app actually invokes from the browser.
+New reusable component `MotorbikeImageManager`:
+- Drag-and-drop or click-to-add multiple images
+- Live thumbnail previews with progress bars during upload
+- Per-image actions: **Set as primary**, **Replace**, **Delete**
+- Reorder via drag (saves `display_order`)
+- Hard cap at 8 images per bike, 5 MB each, JPG/PNG/WebP only
+- Client-side compression (reuse `src/lib/imageCompression.ts`)
+- **Privacy notice banner** at the top: *"Don't include your agency logo, watermarks, or contact info in your motorbike photos — renters discover and book through Motonita only."*
 
-## 3. Force role refresh after login
+**Storage model**
+- Primary image → `bike_types.main_image_url` (the one flagged primary)
+- Additional images → existing `bike_type_images` table (`bike_type_id`, `image_url`, `display_order`)
+- Files saved to `bike-images/{owner_id}/{bike_type_id}/{uuid}.{ext}`
 
-`AuthContext`:
-- Expose new method `refreshRoles()` that re-runs `fetchUserRoles(user.id)` and also calls `useAuthStore.getState().checkAuth()`.
-- After successful `login()` and `signup()`, await `refreshRoles()` before resolving so the dropdown reflects roles immediately.
-- On `SIGNED_IN` event, call `refreshRoles()` (currently roles are fetched but the parallel `useAuthStore` may lag).
+**Storage RLS** (migration)
+- Owners can insert/update/delete objects in `bike-images` under their own folder
+- Public can read (bucket already public)
 
-## 4. "Role status" indicator in profile dropdown
+**Motorbike wizard**
+- Replace the "Main image URL" input with the new `MotorbikeImageManager` (works in both create and edit modes; in create mode, defer image upload until the bike row exists, OR create the row first then attach — we'll create the row first on Save, then user manages images on the next screen, OR allow staging in memory and uploading on save). Simpler UX: split create into two steps — Save details → land on edit page where image manager is enabled.
+- Keep editable fields: name, description, daily price, engine, transmission, fuel
+- "After saving" toast and stay on edit page so user can manage images
 
-In `Header.tsx` dropdown (under `My Account` label):
+---
 
+## 3. Messages — full UX redesign
+
+Redesigned as a proper inbox (Linear/Front-style):
+
+```text
+┌─────────────────────────────────────────────────────────┐
+│ Messages                              [Search] [Filter] │
+├──────────────┬──────────────────────────────────────────┤
+│ Conversation │  Header: Renter name · booking summary   │
+│ list         │  + status pill + "Open booking" link     │
+│              ├──────────────────────────────────────────┤
+│ ● Renter A   │                                          │
+│   "last msg" │     Message bubbles (own = primary,      │
+│   2m · ●     │     theirs = muted, with timestamps      │
+│              │     grouped by day, read receipts)       │
+│ Renter B     │                                          │
+│   "..."      │                                          │
+│   1h         │                                          │
+│              ├──────────────────────────────────────────┤
+│              │  [Type a message…]    [Send]             │
+└──────────────┴──────────────────────────────────────────┘
 ```
-Role status
-  ● admin     ● agency     ● user
-```
 
-- Each pill shows green if the role is present in `userRoles`, gray otherwise.
-- Small "Refresh" icon button next to it calls `refreshRoles()` and shows a spinner during the call.
-- Same pills mirrored in the mobile menu account section.
-- Tooltip on each pill: "Loaded from user_roles table".
+Improvements over current:
+- Avatars (initials), unread dot, last-message preview, relative time
+- Filter chips: All / Unread / Pending / Confirmed
+- Search across renter name and message body
+- Active thread highlighted; auto-select first unread
+- Sticky composer at bottom of right pane
+- Empty state per pane (no convo selected vs no messages)
+- Mobile: full-screen thread view with back button
+- Realtime: subscribe to `booking_messages` to bump unread + reorder list
 
-This gives you (and any user) instant visual confirmation of which roles are active without DB access.
+---
 
-## 5. Verification
+## 4. Bookings page
 
-After deploy:
-1. You sign out → sign back in.
-2. Open avatar dropdown — Role status pills should show admin + agency green.
-3. "Admin Panel" and "Switch to business" items visible.
-4. Run `SELECT * FROM admin_role_sync_status()` — returns 0 rows.
-5. Re-run Supabase linter — 0028/0029 warnings drop to only the handful of RPCs we intentionally keep callable by `authenticated`.
+Already mostly good. Small additions:
+- Date range filter and "Today / This week / This month" quick chips
+- Column for payment status
+- Export CSV button (client-side from filtered rows)
+- Detail page: confirm "Print" works as-is (do not regress)
 
-## Files to change
+---
 
-- New migration: trigger + sync function + grants/revokes for all SECURITY DEFINER functions + `admin_role_sync_status()`.
-- `src/contexts/AuthContext.tsx` — add `refreshRoles`, await it on login/signup.
-- `src/components/Header.tsx` — Role status pills + refresh button (desktop + mobile).
-- Optional: `src/components/admin/SystemHealthCard.tsx` showing sync status (can defer).
+## 5. Wallet top-up — keep agency on agency side
+
+Bug: clicking "Top up wallet" from agency header sends user to renter `/billing` flow.
+
+Fix:
+- Agency header wallet button → `/agency/finance#wallet` (already correct in code; verify and audit other entry points)
+- Audit `useAgencyStore` / Finance / Wallet pages and the YouCan Pay flow to ensure return URLs are `/agency/finance` or `/agency/wallet/topup-status`, not `/payment-status` (renter)
+- The hosted payment helper `openHostedPayment.ts` likely accepts a return path — pass an agency-scoped one when initiated from agency context
+
+---
+
+## 6. Notifications
+
+- Wire the bell icon in agency Header to a real popover listing the latest 10 notifications for `auth.uid()` from `notifications` table
+- Unread badge count
+- Mark all as read action
+- "View all" → `/agency/settings#notifications` (existing page)
+- Realtime subscription so new notifications appear without refresh
+
+---
+
+## 7. Theme toggle (light/dark)
+
+- Add a theme toggle button (Sun/Moon icon) in the agency Header next to the language selector
+- Reuse existing `useTheme` hook and `next-themes` provider already used in public site
+- Persist choice; respect system default initially
+
+---
+
+## 8. Agency profile — real logo upload
+
+- Replace "Logo URL" input with a `LogoUploader` component
+- Drop zone + preview circle (200×200), Replace and Remove actions
+- Upload to existing `avatars` bucket under `agency-logos/{user_id}/{uuid}.{ext}`
+- Client-side compression, JPG/PNG/WebP, max 2 MB
+- Save resulting URL to `profiles.business_logo_url`
+
+---
+
+## Technical details
+
+**New / changed files**
+- `src/components/agency/MotorbikeImageManager.tsx` (new)
+- `src/components/agency/LogoUploader.tsx` (new)
+- `src/components/agency/NotificationsPopover.tsx` (new)
+- `src/components/agency/ThemeToggle.tsx` (new) — small wrapper
+- `src/components/agency/MessagesInbox.tsx` (new) + sub-components for list/thread/composer
+- `src/pages/agency/Motorbikes.tsx` — grid/table toggle
+- `src/pages/agency/MotorbikeDetail.tsx` — gallery, remove rating/reviews
+- `src/pages/agency/MotorbikeWizard.tsx` — swap URL input for image manager, two-step flow
+- `src/pages/agency/Messages.tsx` — replaced with new inbox layout
+- `src/pages/agency/Profile.tsx` — swap URL input for `LogoUploader`
+- `src/pages/agency/Bookings.tsx` — date filters + CSV export
+- `src/components/agency/Header.tsx` — theme toggle, notifications popover, wallet route audit
+- `src/lib/openHostedPayment.ts` — accept and honor `returnPath` so agency stays on agency
+
+**Database (migration)**
+- Storage RLS for `bike-images` bucket: owners write under their folder, public read
+- Storage RLS for `avatars` bucket: extend to allow uploads under `agency-logos/{auth.uid()}/...`
+- No schema changes — `bike_type_images` table already exists with `display_order`
+
+**Out of scope (will not touch)**
+- Public site, renter flows, admin panel
+- Booking pricing logic / payments backend
+- i18n translation strings — new copy will be added with English defaults; full FR/AR translation can follow
+
+---
+
+## Acceptance
+
+- Motorbikes list switches between grid and table
+- Detail page shows multi-image gallery, no ratings/reviews, "Public view" opens public bike page
+- Editing supports add/replace/delete/reorder/set-primary images via drag-drop, no URL inputs anywhere
+- Messages page feels like a real inbox with avatars, previews, unread, search, sticky composer
+- Top-up wallet from agency stays on agency side
+- Notification bell shows real notifications with unread counter
+- Light/dark toggle in agency header works and persists
+- Profile logo is uploaded, not pasted as URL

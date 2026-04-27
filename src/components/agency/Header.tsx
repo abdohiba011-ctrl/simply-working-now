@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Search, Bell, HelpCircle, Wallet, Menu, ChevronRight } from "lucide-react";
+import { Search, HelpCircle, Wallet, Menu, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useAgencyStore } from "@/stores/useAgencyStore";
 import { useAgencyWallet } from "@/hooks/useAgencyData";
 import { useLanguageStore, Language } from "@/stores/useLanguageStore";
 import {
@@ -13,6 +12,8 @@ import {
 } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 import { UserMenu } from "@/components/auth/UserMenu";
+import { ThemeToggle } from "@/components/agency/ThemeToggle";
+import { NotificationsPopover } from "@/components/agency/NotificationsPopover";
 
 interface HeaderProps {
   onMobileMenu: () => void;
@@ -138,7 +139,7 @@ export const Header = ({ onMobileMenu }: HeaderProps) => {
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {/* Top up wallet */}
+        {/* Top up wallet — keep agency on agency side */}
         <Button
           variant="outline"
           size="sm"
@@ -150,11 +151,11 @@ export const Header = ({ onMobileMenu }: HeaderProps) => {
           <span className="hidden text-xs text-muted-foreground sm:inline">Top up</span>
         </Button>
 
+        {/* Theme toggle */}
+        <ThemeToggle />
+
         {/* Notifications */}
-        <Button variant="ghost" size="icon" className="relative" aria-label="Notifications">
-          <Bell className="h-5 w-5" />
-          <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-primary" />
-        </Button>
+        <NotificationsPopover />
 
         {/* Help */}
         <Button variant="ghost" size="icon" aria-label="Help" onClick={() => navigate("/agency/settings#help")}>
