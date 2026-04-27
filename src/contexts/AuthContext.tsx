@@ -82,39 +82,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [userRoles, setUserRoles] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    // Set up auth state listener first
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        // Fetch user roles when authenticated
-        if (session?.user) {
-          setTimeout(() => {
-            fetchUserRoles(session.user.id);
-          }, 0);
-        } else {
-          setUserRoles([]);
-        }
-      }
-    );
-
-    // Then check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        fetchUserRoles(session.user.id);
-      }
-      setIsLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  const fetchUserRoles = async (userId: string) => {
+  const fetchUserRoles = async (userId: string): Promise<string[]> => {
     try {
       const { data, error } = await supabase
         .from('user_roles')
@@ -122,12 +90,52 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         .eq('user_id', userId);
       
       if (error) throw error;
-      setUserRoles(data?.map(r => r.role) || []);
+      const roles = data?.map(r => r.role) || [];
+      setUserRoles(roles);
+      return roles;
     } catch (error) {
       console.error('Error fetching user roles:', error);
       setUserRoles([]);
+      return [];
     }
   };
+
+  useEffect(() => {
+    // Set up auth state listener first
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setIsLoading(true);
+        setSession(session);
+        setUser(session?.user ?? null);
+        
+        // Fetch user roles before allowing role-gated UI/routes to render.
+        if (session?.user) {
+          setTimeout(async () => {
+            await fetchUserRoles(session.user.id);
+            setIsLoading(false);
+          }, 0);
+        } else {
+          setUserRoles([]);
+          setIsLoading(false);
+        }
+      }
+    );
+
+    // Then check for existing session
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      
+      if (session?.user) {
+        await fetchUserRoles(session.user.id);
+      } else {
+        setUserRoles([]);
+      }
+      setIsLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   // Check and record rate limit for auth actions
   const checkAndRecordRateLimit = useCallback((
