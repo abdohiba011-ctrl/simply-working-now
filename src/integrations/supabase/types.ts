@@ -1487,6 +1487,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          address: string | null
           address_line: string | null
           avatar_url: string | null
           bio: string | null
@@ -1504,18 +1505,26 @@ export type Database = {
           date_of_birth: string | null
           email: string
           email_verified: boolean | null
+          family_name_on_id: string | null
+          first_name_on_id: string | null
           frozen_reason: string | null
           full_name: string | null
+          full_name_on_id: string | null
+          gender: string | null
           ice: string | null
           id: string
+          id_back_image_url: string | null
           id_card_back_url: string | null
           id_card_number: string | null
           id_card_url: string | null
+          id_front_image_url: string | null
           is_blocked: boolean | null
           is_frozen: boolean | null
           is_verified: boolean | null
           last_login_at: string | null
+          license_back_image_url: string | null
           license_back_url: string | null
+          license_front_image_url: string | null
           license_url: string | null
           loyalty_points: number | null
           name: string | null
@@ -1524,8 +1533,12 @@ export type Database = {
           phone_verified: boolean | null
           preferred_language: string | null
           rc: string | null
+          rejected_at: string | null
+          rejected_by: string | null
           rejection_reason: string | null
+          selfie_image_url: string | null
           selfie_url: string | null
+          submitted_at: string | null
           trust_score: number | null
           trust_tier: string | null
           updated_at: string
@@ -1536,6 +1549,7 @@ export type Database = {
           verified_by: string | null
         }
         Insert: {
+          address?: string | null
           address_line?: string | null
           avatar_url?: string | null
           bio?: string | null
@@ -1553,18 +1567,26 @@ export type Database = {
           date_of_birth?: string | null
           email: string
           email_verified?: boolean | null
+          family_name_on_id?: string | null
+          first_name_on_id?: string | null
           frozen_reason?: string | null
           full_name?: string | null
+          full_name_on_id?: string | null
+          gender?: string | null
           ice?: string | null
           id?: string
+          id_back_image_url?: string | null
           id_card_back_url?: string | null
           id_card_number?: string | null
           id_card_url?: string | null
+          id_front_image_url?: string | null
           is_blocked?: boolean | null
           is_frozen?: boolean | null
           is_verified?: boolean | null
           last_login_at?: string | null
+          license_back_image_url?: string | null
           license_back_url?: string | null
+          license_front_image_url?: string | null
           license_url?: string | null
           loyalty_points?: number | null
           name?: string | null
@@ -1573,8 +1595,12 @@ export type Database = {
           phone_verified?: boolean | null
           preferred_language?: string | null
           rc?: string | null
+          rejected_at?: string | null
+          rejected_by?: string | null
           rejection_reason?: string | null
+          selfie_image_url?: string | null
           selfie_url?: string | null
+          submitted_at?: string | null
           trust_score?: number | null
           trust_tier?: string | null
           updated_at?: string
@@ -1585,6 +1611,7 @@ export type Database = {
           verified_by?: string | null
         }
         Update: {
+          address?: string | null
           address_line?: string | null
           avatar_url?: string | null
           bio?: string | null
@@ -1602,18 +1629,26 @@ export type Database = {
           date_of_birth?: string | null
           email?: string
           email_verified?: boolean | null
+          family_name_on_id?: string | null
+          first_name_on_id?: string | null
           frozen_reason?: string | null
           full_name?: string | null
+          full_name_on_id?: string | null
+          gender?: string | null
           ice?: string | null
           id?: string
+          id_back_image_url?: string | null
           id_card_back_url?: string | null
           id_card_number?: string | null
           id_card_url?: string | null
+          id_front_image_url?: string | null
           is_blocked?: boolean | null
           is_frozen?: boolean | null
           is_verified?: boolean | null
           last_login_at?: string | null
+          license_back_image_url?: string | null
           license_back_url?: string | null
+          license_front_image_url?: string | null
           license_url?: string | null
           loyalty_points?: number | null
           name?: string | null
@@ -1622,8 +1657,12 @@ export type Database = {
           phone_verified?: boolean | null
           preferred_language?: string | null
           rc?: string | null
+          rejected_at?: string | null
+          rejected_by?: string | null
           rejection_reason?: string | null
+          selfie_image_url?: string | null
           selfie_url?: string | null
+          submitted_at?: string | null
           trust_score?: number | null
           trust_tier?: string | null
           updated_at?: string
