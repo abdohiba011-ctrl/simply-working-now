@@ -1,7 +1,6 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,7 +17,7 @@ import {
   Shield,
   User as UserIcon,
 } from "lucide-react";
-import { useAuthStore } from "@/stores/useAuthStore";
+import { useAuthStore, readCachedIsAdmin } from "@/stores/useAuthStore";
 import { useLanguageStore } from "@/stores/useLanguageStore";
 import { LogoutConfirmDialog } from "@/components/auth/LogoutConfirmDialog";
 import enLocale from "@/locales/en.json";
@@ -47,33 +46,14 @@ export function UserMenu({ align = "end" }: Props) {
   const switchRole = useAuthStore((s) => s.switchRole);
 
   const [logoutOpen, setLogoutOpen] = useState(false);
-  const [isDbAdmin, setIsDbAdmin] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      const { data } = await supabase.auth.getUser();
-      const uid = data.user?.id;
-      if (!uid) return;
-      const { data: roles } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", uid);
-      if (!cancelled) {
-        setIsDbAdmin(!!roles?.some((r) => r.role === "admin"));
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   if (!user) return null;
 
   const hasRenter = !!user.roles.renter?.active;
   const hasAgency = !!user.roles.agency?.active;
   const canSwitchRoles = hasRenter && hasAgency;
-  const showAdmin = user.isAdmin || isDbAdmin;
+  // Use store value if loaded; fall back to localStorage cache for instant render on refresh.
+  const showAdmin = user.isAdmin || readCachedIsAdmin(user.id);
 
   const handleSwitchRole = () => {
     const target = currentRole === "agency" ? "renter" : "agency";
