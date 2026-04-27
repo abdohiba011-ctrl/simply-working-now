@@ -3,6 +3,8 @@
 import * as React from 'npm:react@18.3.1'
 import { Section, Text } from 'npm:@react-email/components@0.0.22'
 
+// Motonita shared brand tokens for all auth emails.
+// Body background must remain white per email-client compatibility.
 export const brand = {
   bg: '#ffffff',
   forest: '#163300',
@@ -73,6 +75,7 @@ export const styles = {
     lineHeight: '1.5',
     margin: '24px 0 0',
   },
+  // Brand header
   headerWrap: {
     padding: '0 0 24px',
     borderBottom: `1px solid ${brand.forestBorder}`,
