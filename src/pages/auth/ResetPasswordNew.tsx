@@ -150,28 +150,10 @@ export default function ResetPasswordNew() {
   const onSubmit = async (values: FormValues) => {
     setServerError(null);
     try {
-      if (internalToken) {
-        const setNewPassword = useAuthStore.getState().setNewPassword;
-        await setNewPassword(internalToken, values.password);
-      } else {
-        // Email-link recovery flow: Supabase already established a session.
-        const { error } = await supabase.auth.updateUser({
-          password: values.password,
-        });
-        if (error) {
-          if (/auth session missing|jwt|expired/i.test(error.message)) {
-            toast.error(
-              t("mockAuth.reset_link_expired", {
-                defaultValue:
-                  "Your reset code expired. Please request a new one.",
-              }),
-            );
-            navigate("/forgot-password", { replace: true });
-            return;
-          }
-          throw error;
-        }
-      }
+      // OTP-only path: we always have an internalToken issued after the
+      // user verified their 6-digit code on /reset-password/verify.
+      const setNewPassword = useAuthStore.getState().setNewPassword;
+      await setNewPassword(internalToken, values.password);
       toast.success(
         t("mockAuth.password_updated", { defaultValue: "Password updated!" }),
       );
