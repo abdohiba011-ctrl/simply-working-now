@@ -1495,6 +1495,7 @@ export type Database = {
           business_address: string | null
           business_city: string | null
           business_description: string | null
+          business_email: string | null
           business_logo_url: string | null
           business_name: string | null
           business_phone: string | null
@@ -1521,6 +1522,7 @@ export type Database = {
           is_blocked: boolean | null
           is_frozen: boolean | null
           is_verified: boolean | null
+          last_active_at: string | null
           last_login_at: string | null
           license_back_image_url: string | null
           license_back_url: string | null
@@ -1538,6 +1540,7 @@ export type Database = {
           rejection_reason: string | null
           selfie_image_url: string | null
           selfie_url: string | null
+          selfie_with_id_url: string | null
           submitted_at: string | null
           trust_score: number | null
           trust_tier: string | null
@@ -1557,6 +1560,7 @@ export type Database = {
           business_address?: string | null
           business_city?: string | null
           business_description?: string | null
+          business_email?: string | null
           business_logo_url?: string | null
           business_name?: string | null
           business_phone?: string | null
@@ -1583,6 +1587,7 @@ export type Database = {
           is_blocked?: boolean | null
           is_frozen?: boolean | null
           is_verified?: boolean | null
+          last_active_at?: string | null
           last_login_at?: string | null
           license_back_image_url?: string | null
           license_back_url?: string | null
@@ -1600,6 +1605,7 @@ export type Database = {
           rejection_reason?: string | null
           selfie_image_url?: string | null
           selfie_url?: string | null
+          selfie_with_id_url?: string | null
           submitted_at?: string | null
           trust_score?: number | null
           trust_tier?: string | null
@@ -1619,6 +1625,7 @@ export type Database = {
           business_address?: string | null
           business_city?: string | null
           business_description?: string | null
+          business_email?: string | null
           business_logo_url?: string | null
           business_name?: string | null
           business_phone?: string | null
@@ -1645,6 +1652,7 @@ export type Database = {
           is_blocked?: boolean | null
           is_frozen?: boolean | null
           is_verified?: boolean | null
+          last_active_at?: string | null
           last_login_at?: string | null
           license_back_image_url?: string | null
           license_back_url?: string | null
@@ -1662,6 +1670,7 @@ export type Database = {
           rejection_reason?: string | null
           selfie_image_url?: string | null
           selfie_url?: string | null
+          selfie_with_id_url?: string | null
           submitted_at?: string | null
           trust_score?: number | null
           trust_tier?: string | null
