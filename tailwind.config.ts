@@ -60,6 +60,7 @@ export default {
           foreground: "hsl(var(--card-foreground))",
         },
         "agency-canvas": "hsl(var(--agency-canvas))",
+        sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
           primary: "hsl(var(--sidebar-primary))",
