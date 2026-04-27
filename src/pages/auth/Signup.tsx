@@ -6,7 +6,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
 import {
-  Bike,
   Building2,
   Eye,
   EyeOff,
@@ -14,9 +13,11 @@ import {
   Loader2,
   Check,
   X,
+  ArrowLeft,
 } from "lucide-react";
 
 import { AuthLayout } from "@/components/auth/AuthLayout";
+import { AgencyAuthLayout } from "@/components/auth/AgencyAuthLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -56,6 +57,27 @@ const CITIES = [
   "Other",
 ];
 
+// Neighborhoods by city (per project knowledge). Cities not listed fall back to free text.
+const NEIGHBORHOODS: Record<string, string[]> = {
+  Casablanca: [
+    "Anfa",
+    "Maârif",
+    "Derb Sultan",
+    "Sidi Maârouf",
+    "Aïn Diab",
+    "Gauthier",
+    "Bourgogne",
+    "Hay Hassani",
+    "Sidi Bernoussi",
+    "Ain Sebaa",
+  ],
+  Marrakech: ["Guéliz", "Médina", "Hivernage", "Palmeraie", "Daoudiate", "Agdal"],
+  Rabat: ["Agdal", "Hassan", "Souissi", "Médina", "Hay Riad"],
+  Tangier: ["Malabata", "Centre-Ville", "Marshan", "Iberia", "Playa"],
+  Agadir: ["Centre-Ville", "Founty", "Talborjt"],
+  Fes: ["Médina (Fes el-Bali)", "Ville Nouvelle", "Fes el-Jdid", "Aïn Chkef"],
+};
+
 const BUSINESS_TYPES = [
   { value: "individual", label: "Individual owner (1 bike)" },
   { value: "small", label: "Small agency (2-5 bikes)" },
@@ -63,10 +85,7 @@ const BUSINESS_TYPES = [
   { value: "other", label: "Other" },
 ];
 
-const NUM_BIKES = ["1", "2-5", "6-10", "10+"];
-
 function formatMoroccanPhone(value: string): string {
-  // Strip everything except digits and leading +
   const digits = value.replace(/[^\d+]/g, "");
   if (!digits) return "";
   let core = digits;
@@ -74,13 +93,10 @@ function formatMoroccanPhone(value: string): string {
   else if (core.startsWith("212") && !core.startsWith("+")) core = "+" + core;
   else if (core.startsWith("0")) core = "+212" + core.slice(1);
 
-  if (!core.startsWith("+212")) {
-    // Not normalisable yet — return as-is
-    return digits.slice(0, 13);
-  }
-  const rest = core.slice(4); // after +212
+  if (!core.startsWith("+212")) return digits.slice(0, 13);
+  const rest = core.slice(4);
   const grouped = [
-    rest.slice(0, 1), // 6 or 7
+    rest.slice(0, 1),
     rest.slice(1, 3),
     rest.slice(3, 5),
     rest.slice(5, 7),
@@ -100,11 +116,7 @@ function buildSchema(role: "renter" | "agency") {
         .min(2, "Please enter your full name")
         .max(100, "Name is too long"),
       email: z.string().email("Enter a valid email").max(255),
-      phone: z
-        .string()
-        .trim()
-        .optional()
-        .or(z.literal("")),
+      phone: z.string().trim().optional().or(z.literal("")),
       password: z.string().min(8, "Password must be at least 8 characters"),
       confirmPassword: z.string(),
       acceptTerms: z.literal(true, {
@@ -114,10 +126,9 @@ function buildSchema(role: "renter" | "agency") {
       businessName: z.string().optional(),
       businessType: z.string().optional(),
       city: z.string().optional(),
-      numBikes: z.string().optional(),
+      neighborhood: z.string().optional(),
     })
     .superRefine((data, ctx) => {
-      // password match
       if (data.password !== data.confirmPassword) {
         ctx.addIssue({
           path: ["confirmPassword"],
@@ -125,8 +136,6 @@ function buildSchema(role: "renter" | "agency") {
           message: "Passwords don't match",
         });
       }
-
-      // password complexity
       const pw = data.password;
       if (!/[A-Z]/.test(pw))
         ctx.addIssue({
@@ -152,7 +161,6 @@ function buildSchema(role: "renter" | "agency") {
           code: z.ZodIssueCode.custom,
           message: "This password is too common",
         });
-      // can't contain email local-part or name
       const emailLocal = data.email.split("@")[0]?.toLowerCase();
       if (emailLocal && emailLocal.length >= 3 && pw.toLowerCase().includes(emailLocal))
         ctx.addIssue({
@@ -171,7 +179,6 @@ function buildSchema(role: "renter" | "agency") {
           message: "Password can't contain your name",
         });
 
-      // phone — required for agency, optional for renter
       const phone = (data.phone ?? "").replace(/\s+/g, "");
       if (role === "agency" && !phone) {
         ctx.addIssue({
@@ -188,7 +195,6 @@ function buildSchema(role: "renter" | "agency") {
         });
       }
 
-      // business-only fields
       if (role === "agency") {
         if (!data.businessName || data.businessName.trim().length < 2)
           ctx.addIssue({
@@ -208,11 +214,11 @@ function buildSchema(role: "renter" | "agency") {
             code: z.ZodIssueCode.custom,
             message: "Select a city",
           });
-        if (!data.numBikes)
+        if (!data.neighborhood || data.neighborhood.trim().length < 2)
           ctx.addIssue({
-            path: ["numBikes"],
+            path: ["neighborhood"],
             code: z.ZodIssueCode.custom,
-            message: "Select an option",
+            message: "Select or enter a neighborhood",
           });
       }
     });
@@ -259,14 +265,14 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const authedUser = useAuthStore((s) => s.user);
 
-  const [role, setRole] = useState<"renter" | "agency" | null>(
-    defaultRole ?? "renter",
-  );
+  const role: "renter" | "agency" = defaultRole ?? "renter";
+  const isAgencyFlow = role === "agency";
+
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
+  const [step, setStep] = useState<1 | 2>(1);
 
-  // Already logged in? send them to their dashboard.
   useEffect(() => {
     if (isAuthenticated && authedUser) {
       navigateAfterAuth(navigate, authedUser, defaultRole);
@@ -274,7 +280,7 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated]);
 
-  const schema = useMemo(() => buildSchema(role ?? "renter"), [role]);
+  const schema = useMemo(() => buildSchema(role), [role]);
 
   const form = useForm<SignupValues>({
     resolver: zodResolver(schema),
@@ -290,27 +296,30 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
       businessName: "",
       businessType: "",
       city: "",
-      numBikes: "",
+      neighborhood: "",
     },
   });
-
-  // Re-run validation when the role changes
-  useEffect(() => {
-    if (role) form.trigger();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [role]);
 
   const pwValue = form.watch("password");
   const rules = passwordRules(pwValue ?? "");
   const strength = passwordStrength(pwValue ?? "");
+  const cityValue = form.watch("city");
+  const neighborhoodOptions = cityValue ? NEIGHBORHOODS[cityValue] ?? [] : [];
+
+  const handleNext = async () => {
+    const ok = await form.trigger([
+      "name",
+      "email",
+      "phone",
+      "password",
+      "confirmPassword",
+    ]);
+    if (ok) setStep(2);
+  };
 
   const onSubmit = async (values: SignupValues) => {
-    if (!role) return;
     setServerError(null);
 
-    // Pre-flight: refuse to create a duplicate account for the same email.
-    // This catches the common typo case (e.g. you already have an account
-    // with that email but added/removed a letter by mistake).
     const existing = await checkAccountMethod(values.email);
     if (existing.status === "has_password") {
       setServerError(
@@ -319,6 +328,7 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
             "An account with this email already exists. Try logging in instead.",
         }),
       );
+      if (isAgencyFlow) setStep(1);
       return;
     }
 
@@ -332,14 +342,14 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
           businessName: values.businessName,
           businessType: values.businessType,
           city: values.city,
-          numBikes: values.numBikes,
+          numBikes: undefined,
           marketingOptIn: values.marketingOptIn,
         },
         role,
       );
       toast.success(
         t("mockAuth.account_created", {
-          defaultValue: "Account created! Check your email to verify.",
+          defaultValue: "Account created! Check your email for the 6-digit code.",
         }),
       );
       navigate(`/verify-email?email=${encodeURIComponent(values.email)}`);
@@ -349,13 +359,12 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
     }
   };
 
-  const isAgencyFlow = defaultRole === "agency";
-
-  return (
-    <AuthLayout>
-      <div className="space-y-6">
-        <div className="space-y-2">
-          {isAgencyFlow ? (
+  // ---------------- AGENCY (split-screen wizard) ----------------
+  if (isAgencyFlow) {
+    return (
+      <AgencyAuthLayout>
+        <div className="space-y-6">
+          <div className="space-y-2">
             <span
               className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider"
               style={{ backgroundColor: "rgba(159,232,112,0.2)", color: "#163300" }}
@@ -363,217 +372,129 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
               <Building2 className="h-3 w-3" />
               {t("mockAuth.agency_pill", { defaultValue: "For rental agencies" })}
             </span>
-          ) : null}
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">
-            {isAgencyFlow
-              ? t("mockAuth.create_agency_account", { defaultValue: "Create your agency account" })
-              : t("mockAuth.create_account", { defaultValue: "Create your account" })}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {isAgencyFlow
-              ? t("mockAuth.agency_subtitle", {
-                  defaultValue:
-                    "List your motorbikes and start earning. Includes a 30-day free Pro trial — no card required.",
-                })
-              : t("mockAuth.join_motonita", {
-                  defaultValue: "Join Morocco's peer-to-peer motorbike marketplace",
-                })}
-          </p>
-        </div>
-
-        {serverError ? (
-          <div
-            role="alert"
-            className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 flex items-start gap-2"
-          >
-            <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
-            <span>{serverError}</span>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">
+              {t("mockAuth.create_agency_account", {
+                defaultValue: "Create your agency account",
+              })}
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              {step === 1
+                ? t("agencyAuth.step1_subtitle", {
+                    defaultValue: "Step 1 of 2 — Your account details",
+                  })
+                : t("agencyAuth.step2_subtitle", {
+                    defaultValue: "Step 2 of 2 — Your business",
+                  })}
+            </p>
           </div>
-        ) : null}
 
-        {/* Agency flow shows a small renter cross-link; renter flow shows nothing (no toggle) */}
-        {isAgencyFlow ? (
-          <p className="text-xs text-muted-foreground">
-            {t("mockAuth.not_business_prefix", { defaultValue: "Just want to rent a bike?" })}{" "}
-            <button
-              type="button"
-              onClick={() => navigate("/signup")}
-              className="font-semibold underline underline-offset-2 hover:opacity-80 text-foreground"
+          {/* Stepper */}
+          <Stepper step={step} />
+
+          {serverError ? (
+            <div
+              role="alert"
+              className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 flex items-start gap-2"
             >
-              {t("mockAuth.not_business_link", { defaultValue: "Sign up as a renter instead" })}
-            </button>
-          </p>
-        ) : null}
+              <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
+              <span>{serverError}</span>
+            </div>
+          ) : null}
 
-        {/* Step 2 — form (fade in) */}
-        {role ? (
           <form
             onSubmit={form.handleSubmit(onSubmit)}
-            className="space-y-4 animate-in fade-in duration-200"
+            className="space-y-4"
             noValidate
           >
-            {/* Full name */}
-            <Field
-              id="name"
-              label={t("mockAuth.full_name", { defaultValue: "Full name" })}
-              error={form.formState.errors.name?.message}
-            >
-              <Input
-                id="name"
-                autoComplete="name"
-                className="h-10 rounded-md text-sm"
-                {...form.register("name")}
-              />
-            </Field>
+            {step === 1 ? (
+              <div className="space-y-4 animate-in fade-in duration-200">
+                <Field
+                  id="name"
+                  label={t("mockAuth.full_name", { defaultValue: "Full name" })}
+                  error={form.formState.errors.name?.message}
+                >
+                  <Input
+                    id="name"
+                    autoComplete="name"
+                    className="h-10 rounded-md text-sm"
+                    {...form.register("name")}
+                  />
+                </Field>
 
-            {/* Email */}
-            <Field
-              id="email"
-              label={t("mockAuth.email_or_phone", { defaultValue: "Email" }).split(" ")[0]}
-              error={form.formState.errors.email?.message}
-            >
-              <Input
-                id="email"
-                type="email"
-                autoComplete="email"
-                className="h-10 rounded-md text-sm"
-                {...form.register("email")}
-              />
-            </Field>
+                <Field
+                  id="email"
+                  label={t("agencyAuth.email", { defaultValue: "Email" })}
+                  error={form.formState.errors.email?.message}
+                >
+                  <Input
+                    id="email"
+                    type="email"
+                    autoComplete="email"
+                    className="h-10 rounded-md text-sm"
+                    {...form.register("email")}
+                  />
+                </Field>
 
-            {/* Phone */}
-            <Field
-              id="phone"
-              label={
-                <>
-                  {t("mockAuth.phone", { defaultValue: "Phone" })}{" "}
-                  <span className="text-xs font-normal text-muted-foreground/80">
-                    {role === "agency"
-                      ? t("mockAuth.required", { defaultValue: "(required)" })
-                      : t("mockAuth.optional", { defaultValue: "(optional)" })}
-                  </span>
-                </>
-              }
-              error={form.formState.errors.phone?.message}
-            >
-              <Input
-                id="phone"
-                type="tel"
-                autoComplete="tel"
-                placeholder="+212 6..."
-                className="h-10 rounded-md text-sm"
-                value={form.watch("phone")}
-                onChange={(e) =>
-                  form.setValue("phone", formatMoroccanPhone(e.target.value), {
-                    shouldValidate: form.formState.isSubmitted,
-                  })
-                }
-                onBlur={() => form.trigger("phone")}
-              />
-            </Field>
+                <Field
+                  id="phone"
+                  label={t("mockAuth.phone", { defaultValue: "Phone" })}
+                  error={form.formState.errors.phone?.message}
+                >
+                  <Input
+                    id="phone"
+                    type="tel"
+                    autoComplete="tel"
+                    placeholder="+212 6..."
+                    className="h-10 rounded-md text-sm"
+                    value={form.watch("phone")}
+                    onChange={(e) =>
+                      form.setValue("phone", formatMoroccanPhone(e.target.value), {
+                        shouldValidate: form.formState.isSubmitted,
+                      })
+                    }
+                    onBlur={() => form.trigger("phone")}
+                  />
+                </Field>
 
-            {/* Password */}
-            <Field
-              id="password"
-              label={t("mockAuth.password", { defaultValue: "Password" })}
-              error={form.formState.errors.password?.message}
-            >
-              <div className="relative">
-                <Input
+                <PasswordField
                   id="password"
-                  type={showPassword ? "text" : "password"}
-                  autoComplete="new-password"
-                  className="h-10 rounded-md pr-10 text-sm"
-                  {...form.register("password")}
+                  label={t("mockAuth.password", { defaultValue: "Password" })}
+                  error={form.formState.errors.password?.message}
+                  show={showPassword}
+                  onToggle={() => setShowPassword((v) => !v)}
+                  register={form.register("password")}
                 />
-                <button
-                  type="button"
-                  aria-label={showPassword ? "Hide password" : "Show password"}
-                  onClick={() => setShowPassword((v) => !v)}
-                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-foreground"
-                >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
-              </div>
-              {pwValue ? (
-                <>
-                  {/* Strength bar */}
-                  <div className="mt-2 flex items-center gap-2">
-                    <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
-                      <div
-                        className="h-full transition-all duration-200"
-                        style={{
-                          width: `${(strength.score / 3) * 100}%`,
-                          backgroundColor: strength.color,
-                        }}
-                      />
-                    </div>
-                    <span
-                      className="text-xs font-medium text-foreground"
-                      style={
-                        strength.color === "#9FE870" || strength.color === "transparent"
-                          ? undefined
-                          : { color: strength.color }
-                      }
-                    >
-                      {strength.label}
-                    </span>
-                  </div>
+                {pwValue ? (
+                  <StrengthMeter strength={strength} rules={rules} />
+                ) : null}
 
-                  {/* Rules */}
-                  <ul className="mt-2 grid grid-cols-2 gap-1">
-                    {rules.map((r) => (
-                      <li
-                        key={r.id}
-                        className={cn(
-                          "flex items-center gap-1.5 text-xs",
-                          r.ok ? "text-foreground" : "text-muted-foreground",
-                        )}
-                      >
-                        {r.ok ? (
-                          <Check className="h-3 w-3" style={{ color: "#9FE870" }} />
-                        ) : (
-                          <X className="h-3 w-3 text-muted-foreground" />
-                        )}
-                        <span>{r.label}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </>
-              ) : null}
-            </Field>
-
-            {/* Confirm password */}
-            <Field
-              id="confirmPassword"
-              label={t("mockAuth.confirm_password", { defaultValue: "Confirm password" })}
-              error={form.formState.errors.confirmPassword?.message}
-            >
-              <div className="relative">
-                <Input
+                <PasswordField
                   id="confirmPassword"
-                  type={showConfirm ? "text" : "password"}
-                  autoComplete="new-password"
-                  className="h-10 rounded-md pr-10 text-sm"
-                  {...form.register("confirmPassword")}
+                  label={t("mockAuth.confirm_password", {
+                    defaultValue: "Confirm password",
+                  })}
+                  error={form.formState.errors.confirmPassword?.message}
+                  show={showConfirm}
+                  onToggle={() => setShowConfirm((v) => !v)}
+                  register={form.register("confirmPassword")}
                 />
-                <button
-                  type="button"
-                  aria-label={showConfirm ? "Hide password" : "Show password"}
-                  onClick={() => setShowConfirm((v) => !v)}
-                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-foreground"
-                >
-                  {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
-              </div>
-            </Field>
 
-            {/* Business-only fields */}
-            {role === "agency" ? (
-              <div className="space-y-4 pt-2 border-t border-border">
+                <Button
+                  type="button"
+                  onClick={handleNext}
+                  className="w-full h-10 rounded-md text-sm font-semibold mt-2"
+                  style={{ backgroundColor: "#9FE870", color: "#163300" }}
+                >
+                  {t("agencyAuth.next", { defaultValue: "Continue" })}
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-4 animate-in fade-in duration-200">
                 <Field
                   id="businessName"
-                  label={t("mockAuth.business_name", { defaultValue: "Business name" })}
+                  label={t("agencyAuth.brand_name", {
+                    defaultValue: "Business / brand name",
+                  })}
                   error={form.formState.errors.businessName?.message}
                 >
                   <Input
@@ -586,7 +507,9 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
 
                 <Field
                   id="businessType"
-                  label={t("mockAuth.business_type", { defaultValue: "Business type" })}
+                  label={t("mockAuth.business_type", {
+                    defaultValue: "Business type",
+                  })}
                   error={form.formState.errors.businessType?.message}
                 >
                   <Select
@@ -616,7 +539,10 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
                   >
                     <Select
                       value={form.watch("city")}
-                      onValueChange={(v) => form.setValue("city", v, { shouldValidate: true })}
+                      onValueChange={(v) => {
+                        form.setValue("city", v, { shouldValidate: true });
+                        form.setValue("neighborhood", "", { shouldValidate: false });
+                      }}
                     >
                       <SelectTrigger id="city" className="h-10 rounded-md text-sm">
                         <SelectValue placeholder="Select..." />
@@ -632,109 +558,304 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
                   </Field>
 
                   <Field
-                    id="numBikes"
-                    label={t("mockAuth.num_bikes_short", { defaultValue: "Motorbikes" })}
-                    error={form.formState.errors.numBikes?.message}
+                    id="neighborhood"
+                    label={t("agencyAuth.neighborhood", {
+                      defaultValue: "Neighborhood",
+                    })}
+                    error={form.formState.errors.neighborhood?.message}
                   >
-                    <Select
-                      value={form.watch("numBikes")}
-                      onValueChange={(v) =>
-                        form.setValue("numBikes", v, { shouldValidate: true })
-                      }
-                    >
-                      <SelectTrigger id="numBikes" className="h-10 rounded-md text-sm">
-                        <SelectValue placeholder="Select..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {NUM_BIKES.map((n) => (
-                          <SelectItem key={n} value={n}>
-                            {n}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    {neighborhoodOptions.length > 0 ? (
+                      <Select
+                        value={form.watch("neighborhood")}
+                        onValueChange={(v) =>
+                          form.setValue("neighborhood", v, { shouldValidate: true })
+                        }
+                      >
+                        <SelectTrigger
+                          id="neighborhood"
+                          className="h-10 rounded-md text-sm"
+                        >
+                          <SelectValue placeholder="Select..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {neighborhoodOptions.map((n) => (
+                            <SelectItem key={n} value={n}>
+                              {n}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <Input
+                        id="neighborhood"
+                        placeholder={
+                          cityValue
+                            ? "e.g. Centre-Ville"
+                            : "Pick a city first"
+                        }
+                        disabled={!cityValue}
+                        className="h-10 rounded-md text-sm"
+                        {...form.register("neighborhood")}
+                      />
+                    )}
                   </Field>
                 </div>
+
+                {/* Terms */}
+                <div className="space-y-2 pt-2">
+                  <label className="flex items-start gap-2 cursor-pointer">
+                    <Checkbox
+                      className="mt-0.5"
+                      checked={!!form.watch("acceptTerms")}
+                      onCheckedChange={(v) =>
+                        form.setValue("acceptTerms", (v ? true : undefined) as true, {
+                          shouldValidate: true,
+                        })
+                      }
+                    />
+                    <span className="text-sm text-foreground">
+                      {t("mockAuth.agree_terms_prefix", {
+                        defaultValue: "I agree to Motonita's",
+                      })}{" "}
+                      <a href="/terms" target="_blank" rel="noreferrer" className="underline text-foreground">
+                        {t("mockAuth.terms_of_service", { defaultValue: "Terms of Service" })}
+                      </a>{" "}
+                      {t("mockAuth.and", { defaultValue: "and" })}{" "}
+                      <a href="/privacy-policy" target="_blank" rel="noreferrer" className="underline text-foreground">
+                        {t("mockAuth.privacy_policy", { defaultValue: "Privacy Policy" })}
+                      </a>
+                    </span>
+                  </label>
+                  {form.formState.errors.acceptTerms ? (
+                    <p className="text-xs text-red-600 ms-6">
+                      {form.formState.errors.acceptTerms.message}
+                    </p>
+                  ) : null}
+
+                  <label className="flex items-start gap-2 cursor-pointer">
+                    <Checkbox
+                      className="mt-0.5"
+                      checked={!!form.watch("marketingOptIn")}
+                      onCheckedChange={(v) => form.setValue("marketingOptIn", Boolean(v))}
+                    />
+                    <span className="text-sm text-muted-foreground">
+                      {t("mockAuth.send_updates", {
+                        defaultValue: "Send me product updates and tips",
+                      })}
+                    </span>
+                  </label>
+                </div>
+
+                <div className="flex items-center gap-3 pt-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setStep(1)}
+                    className="h-10 rounded-md text-sm font-semibold gap-1.5"
+                  >
+                    <ArrowLeft className="h-4 w-4 rtl:rotate-180" />
+                    {t("agencyAuth.back", { defaultValue: "Back" })}
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={isLoading}
+                    className="flex-1 h-10 rounded-md text-sm font-semibold"
+                    style={{ backgroundColor: "#9FE870", color: "#163300" }}
+                  >
+                    {isLoading ? (
+                      <span className="inline-flex items-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        {t("mockAuth.creating_account", {
+                          defaultValue: "Creating account...",
+                        })}
+                      </span>
+                    ) : (
+                      t("mockAuth.create_account_btn", {
+                        defaultValue: "Create account",
+                      })
+                    )}
+                  </Button>
+                </div>
               </div>
+            )}
+          </form>
+
+          <p className="text-center text-sm text-muted-foreground">
+            {t("mockAuth.already_account", {
+              defaultValue: "Already have an account?",
+            })}{" "}
+            <Link
+              to="/agency/login"
+              className="font-medium hover:underline text-foreground"
+            >
+              {t("mockAuth.login", { defaultValue: "Log in" })}
+            </Link>
+          </p>
+        </div>
+      </AgencyAuthLayout>
+    );
+  }
+
+  // ---------------- RENTER (single page) ----------------
+  return (
+    <AuthLayout>
+      <div className="space-y-6">
+        <div className="space-y-2">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">
+            {t("mockAuth.create_account", { defaultValue: "Create your account" })}
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            {t("mockAuth.join_motonita", {
+              defaultValue: "Join Morocco's peer-to-peer motorbike marketplace",
+            })}
+          </p>
+        </div>
+
+        {serverError ? (
+          <div
+            role="alert"
+            className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 flex items-start gap-2"
+          >
+            <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
+            <span>{serverError}</span>
+          </div>
+        ) : null}
+
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" noValidate>
+          <Field
+            id="name"
+            label={t("mockAuth.full_name", { defaultValue: "Full name" })}
+            error={form.formState.errors.name?.message}
+          >
+            <Input
+              id="name"
+              autoComplete="name"
+              className="h-10 rounded-md text-sm"
+              {...form.register("name")}
+            />
+          </Field>
+
+          <Field
+            id="email"
+            label={t("agencyAuth.email", { defaultValue: "Email" })}
+            error={form.formState.errors.email?.message}
+          >
+            <Input
+              id="email"
+              type="email"
+              autoComplete="email"
+              className="h-10 rounded-md text-sm"
+              {...form.register("email")}
+            />
+          </Field>
+
+          <Field
+            id="phone"
+            label={
+              <>
+                {t("mockAuth.phone", { defaultValue: "Phone" })}{" "}
+                <span className="text-xs font-normal text-muted-foreground/80">
+                  {t("mockAuth.optional", { defaultValue: "(optional)" })}
+                </span>
+              </>
+            }
+            error={form.formState.errors.phone?.message}
+          >
+            <Input
+              id="phone"
+              type="tel"
+              autoComplete="tel"
+              placeholder="+212 6..."
+              className="h-10 rounded-md text-sm"
+              value={form.watch("phone")}
+              onChange={(e) =>
+                form.setValue("phone", formatMoroccanPhone(e.target.value), {
+                  shouldValidate: form.formState.isSubmitted,
+                })
+              }
+              onBlur={() => form.trigger("phone")}
+            />
+          </Field>
+
+          <PasswordField
+            id="password"
+            label={t("mockAuth.password", { defaultValue: "Password" })}
+            error={form.formState.errors.password?.message}
+            show={showPassword}
+            onToggle={() => setShowPassword((v) => !v)}
+            register={form.register("password")}
+          />
+          {pwValue ? <StrengthMeter strength={strength} rules={rules} /> : null}
+
+          <PasswordField
+            id="confirmPassword"
+            label={t("mockAuth.confirm_password", { defaultValue: "Confirm password" })}
+            error={form.formState.errors.confirmPassword?.message}
+            show={showConfirm}
+            onToggle={() => setShowConfirm((v) => !v)}
+            register={form.register("confirmPassword")}
+          />
+
+          <div className="space-y-2 pt-2">
+            <label className="flex items-start gap-2 cursor-pointer">
+              <Checkbox
+                className="mt-0.5"
+                checked={!!form.watch("acceptTerms")}
+                onCheckedChange={(v) =>
+                  form.setValue("acceptTerms", (v ? true : undefined) as true, {
+                    shouldValidate: true,
+                  })
+                }
+              />
+              <span className="text-sm text-foreground">
+                {t("mockAuth.agree_terms_prefix", { defaultValue: "I agree to Motonita's" })}{" "}
+                <a href="/terms" target="_blank" rel="noreferrer" className="underline text-foreground">
+                  {t("mockAuth.terms_of_service", { defaultValue: "Terms of Service" })}
+                </a>{" "}
+                {t("mockAuth.and", { defaultValue: "and" })}{" "}
+                <a href="/privacy-policy" target="_blank" rel="noreferrer" className="underline text-foreground">
+                  {t("mockAuth.privacy_policy", { defaultValue: "Privacy Policy" })}
+                </a>
+              </span>
+            </label>
+            {form.formState.errors.acceptTerms ? (
+              <p className="text-xs text-red-600 ms-6">
+                {form.formState.errors.acceptTerms.message}
+              </p>
             ) : null}
 
-            {/* Terms */}
-            <div className="space-y-2 pt-2">
-              <label className="flex items-start gap-2 cursor-pointer">
-                <Checkbox
-                  className="mt-0.5"
-                  checked={!!form.watch("acceptTerms")}
-                  onCheckedChange={(v) =>
-                    form.setValue("acceptTerms", (v ? true : undefined) as true, {
-                      shouldValidate: true,
-                    })
-                  }
-                />
-                <span className="text-sm text-foreground">
-                  {t("mockAuth.agree_terms_prefix", { defaultValue: "I agree to Motonita's" })}{" "}
-                  <a
-                    href="/terms"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="underline text-foreground"
-                  >
-                    {t("mockAuth.terms_of_service", { defaultValue: "Terms of Service" })}
-                  </a>{" "}
-                  {t("mockAuth.and", { defaultValue: "and" })}{" "}
-                  <a
-                    href="/privacy-policy"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="underline text-foreground"
-                  >
-                    {t("mockAuth.privacy_policy", { defaultValue: "Privacy Policy" })}
-                  </a>
-                </span>
-              </label>
-              {form.formState.errors.acceptTerms ? (
-                <p className="text-xs text-red-600 ml-6">
-                  {form.formState.errors.acceptTerms.message}
-                </p>
-              ) : null}
+            <label className="flex items-start gap-2 cursor-pointer">
+              <Checkbox
+                className="mt-0.5"
+                checked={!!form.watch("marketingOptIn")}
+                onCheckedChange={(v) => form.setValue("marketingOptIn", Boolean(v))}
+              />
+              <span className="text-sm text-muted-foreground">
+                {t("mockAuth.send_updates", { defaultValue: "Send me product updates and tips" })}
+              </span>
+            </label>
+          </div>
 
-              <label className="flex items-start gap-2 cursor-pointer">
-                <Checkbox
-                  className="mt-0.5"
-                  checked={!!form.watch("marketingOptIn")}
-                  onCheckedChange={(v) => form.setValue("marketingOptIn", Boolean(v))}
-                />
-                <span className="text-sm text-muted-foreground">
-                  {t("mockAuth.send_updates", {
-                    defaultValue: "Send me product updates and tips",
-                  })}
-                </span>
-              </label>
-            </div>
-
-            <Button
-              type="submit"
-              disabled={isLoading || !form.formState.isValid}
-              className="w-full h-10 rounded-md text-sm font-semibold"
-              style={{ backgroundColor: "#9FE870", color: "#163300" }}
-            >
-              {isLoading ? (
-                <span className="inline-flex items-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  {t("mockAuth.creating_account", { defaultValue: "Creating account..." })}
-                </span>
-              ) : (
-                t("mockAuth.create_account_btn", { defaultValue: "Create account" })
-              )}
-            </Button>
-          </form>
-        ) : null}
+          <Button
+            type="submit"
+            disabled={isLoading}
+            className="w-full h-10 rounded-md text-sm font-semibold"
+            style={{ backgroundColor: "#9FE870", color: "#163300" }}
+          >
+            {isLoading ? (
+              <span className="inline-flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                {t("mockAuth.creating_account", { defaultValue: "Creating account..." })}
+              </span>
+            ) : (
+              t("mockAuth.create_account_btn", { defaultValue: "Create account" })
+            )}
+          </Button>
+        </form>
 
         <p className="text-center text-sm text-muted-foreground">
           {t("mockAuth.already_account", { defaultValue: "Already have an account?" })}{" "}
-          <Link
-            to="/login"
-            className="font-medium hover:underline text-foreground"
-          >
+          <Link to="/login" className="font-medium hover:underline text-foreground">
             {t("mockAuth.login", { defaultValue: "Log in" })}
           </Link>
         </p>
@@ -743,41 +864,145 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
   );
 }
 
-function RoleCard({
-  selected,
-  onClick,
-  icon,
-  title,
-  subtitle,
+// ============== Subcomponents ==============
+
+function Stepper({ step }: { step: 1 | 2 }) {
+  return (
+    <div className="flex items-center gap-3">
+      <StepDot n={1} active={step === 1} done={step > 1} label="Account" />
+      <div className="flex-1 h-px bg-border" />
+      <StepDot n={2} active={step === 2} done={false} label="Business" />
+    </div>
+  );
+}
+
+function StepDot({
+  n,
+  active,
+  done,
+  label,
 }: {
-  selected: boolean;
-  onClick: () => void;
-  icon: React.ReactNode;
-  title: string;
-  subtitle: string;
+  n: number;
+  active: boolean;
+  done: boolean;
+  label: string;
 }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={selected}
-      className={cn(
-        "h-32 rounded-lg border-2 p-4 text-left transition-all flex flex-col gap-2",
-        selected
-          ? "bg-[#9FE870]/10 border-[#9FE870]"
-          : "bg-card hover:bg-muted border-border",
-      )}
-    >
-      {icon}
-      <div>
-        <div className="text-base font-semibold text-foreground">
-          {title}
-        </div>
-        <div className="text-xs text-muted-foreground">
-          {subtitle}
-        </div>
+    <div className="flex items-center gap-2">
+      <span
+        className={cn(
+          "inline-flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold border",
+          active && "border-transparent text-[#163300]",
+          done && "border-transparent text-[#163300]",
+          !active && !done && "border-border text-muted-foreground bg-background",
+        )}
+        style={
+          active || done
+            ? { backgroundColor: "#9FE870" }
+            : undefined
+        }
+      >
+        {done ? <Check className="h-4 w-4" /> : n}
+      </span>
+      <span
+        className={cn(
+          "text-xs font-medium",
+          active ? "text-foreground" : "text-muted-foreground",
+        )}
+      >
+        {label}
+      </span>
+    </div>
+  );
+}
+
+function PasswordField({
+  id,
+  label,
+  error,
+  show,
+  onToggle,
+  register,
+}: {
+  id: string;
+  label: React.ReactNode;
+  error?: string;
+  show: boolean;
+  onToggle: () => void;
+  register: ReturnType<ReturnType<typeof useForm<SignupValues>>["register"]>;
+}) {
+  return (
+    <Field id={id} label={label} error={error}>
+      <div className="relative">
+        <Input
+          id={id}
+          type={show ? "text" : "password"}
+          autoComplete="new-password"
+          className="h-10 rounded-md pe-10 text-sm"
+          {...register}
+        />
+        <button
+          type="button"
+          aria-label={show ? "Hide password" : "Show password"}
+          onClick={onToggle}
+          className="absolute inset-y-0 end-0 flex items-center pe-3 text-muted-foreground hover:text-foreground"
+        >
+          {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+        </button>
       </div>
-    </button>
+    </Field>
+  );
+}
+
+function StrengthMeter({
+  strength,
+  rules,
+}: {
+  strength: { score: 0 | 1 | 2 | 3; label: string; color: string };
+  rules: { id: string; label: string; ok: boolean }[];
+}) {
+  return (
+    <div>
+      <div className="mt-1 flex items-center gap-2">
+        <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
+          <div
+            className="h-full transition-all duration-200"
+            style={{
+              width: `${(strength.score / 3) * 100}%`,
+              backgroundColor: strength.color,
+            }}
+          />
+        </div>
+        <span
+          className="text-xs font-medium text-foreground"
+          style={
+            strength.color === "#9FE870" || strength.color === "transparent"
+              ? undefined
+              : { color: strength.color }
+          }
+        >
+          {strength.label}
+        </span>
+      </div>
+      <ul className="mt-2 grid grid-cols-2 gap-1">
+        {rules.map((r) => (
+          <li
+            key={r.id}
+            className={cn(
+              "flex items-center gap-1.5 text-xs",
+              r.ok ? "text-foreground" : "text-muted-foreground",
+            )}
+          >
+            {r.ok ? (
+              <Check className="h-3 w-3" style={{ color: "#9FE870" }} />
+            ) : (
+              <X className="h-3 w-3 text-muted-foreground" />
+            )}
+            <span>{r.label}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
