@@ -2146,6 +2146,13 @@ export type Database = {
       }
     }
     Functions: {
+      admin_role_sync_status: {
+        Args: never
+        Returns: {
+          missing_role: string
+          user_id: string
+        }[]
+      }
       confirm_booking: { Args: { _booking_id: string }; Returns: Json }
       create_bike_hold: {
         Args: { _bike_id: string; _pickup: string; _return: string }
