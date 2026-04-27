@@ -32,7 +32,6 @@ import { useAuthStore } from "@/stores/useAuthStore";
 import { COMMON_PASSWORDS } from "@/lib/mockAuth";
 import { cn } from "@/lib/utils";
 import { navigateAfterAuth } from "@/lib/routeAfterAuth";
-import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { checkAccountMethod } from "@/lib/checkAccountMethod";
 
 const PHONE_REGEX = /^(\+212|00212|0)[67]\d{8}$/;
@@ -313,15 +312,6 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
     // This catches the common typo case (e.g. you already have an account
     // with that email but added/removed a letter by mistake).
     const existing = await checkAccountMethod(values.email);
-    if (existing.status === "oauth_only") {
-      setServerError(
-        t("mockAuth.signup_email_oauth", {
-          defaultValue:
-            "An account with this email already exists and uses Google sign-in. Please use \"Continue with Google\" instead.",
-        }),
-      );
-      return;
-    }
     if (existing.status === "has_password") {
       setServerError(
         t("mockAuth.signup_email_taken", {
@@ -413,33 +403,6 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
               {t("mockAuth.not_business_link", { defaultValue: "Sign up as a renter instead" })}
             </button>
           </p>
-        ) : null}
-
-        {/* Google sign-up */}
-        {role ? (
-          <div className="space-y-3">
-            <GoogleSignInButton
-              label={
-                isAgencyFlow
-                  ? t("mockAuth.signup_with_google_business", {
-                      defaultValue: "Sign up with Google",
-                    })
-                  : t("mockAuth.signup_with_google", {
-                      defaultValue: "Sign up with Google",
-                    })
-              }
-            />
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-border" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-card px-2 text-muted-foreground text-muted-foreground/80">
-                  {t("mockAuth.or", { defaultValue: "or" })}
-                </span>
-              </div>
-            </div>
-          </div>
         ) : null}
 
         {/* Step 2 — form (fade in) */}
