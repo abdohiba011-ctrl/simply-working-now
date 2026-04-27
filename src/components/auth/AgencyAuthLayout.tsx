@@ -15,6 +15,7 @@ import {
 
 import logoLight from "@/assets/motonita-logo.svg";
 import logoDark from "@/assets/motonita-logo-dark.svg";
+import logoWhite from "@/assets/motonita-logo-white.svg";
 import bikeImage from "@/assets/auth-agency-bike.jpg";
 
 interface AgencyAuthLayoutProps {
@@ -59,13 +60,13 @@ export function AgencyAuthLayout({ children }: AgencyAuthLayoutProps) {
         {/* Dark gradient overlay so text reads well */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-black/30" />
 
-        {/* Brand badge top-left */}
-        <div className="absolute top-6 start-6 inline-flex items-center gap-2 text-white">
-          <span
-            className="inline-block h-2.5 w-2.5 rounded-full"
-            style={{ backgroundColor: "#9FE870" }}
+        {/* Brand logo top-left */}
+        <div className="absolute top-6 start-6">
+          <img
+            src={logoWhite}
+            alt="Motonita"
+            className="h-7 w-auto"
           />
-          <span className="text-base font-bold tracking-tight">Motonita</span>
         </div>
 
         {/* Quote bottom-left */}
