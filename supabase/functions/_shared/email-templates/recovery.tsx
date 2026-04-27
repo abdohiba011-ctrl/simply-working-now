@@ -1,71 +1,44 @@
 /// <reference types="npm:@types/react@18.3.1" />
 
 import * as React from 'npm:react@18.3.1'
-
 import {
-  Body,
-  Button,
-  Container,
-  Head,
-  Heading,
-  Html,
-  Preview,
-  Text,
+  Body, Container, Head, Heading, Html, Preview, Section, Text,
 } from 'npm:@react-email/components@0.0.22'
+import { BrandHeader, BrandFooter, styles } from './_brand.tsx'
 
 interface RecoveryEmailProps {
   siteName: string
   confirmationUrl: string
+  token?: string
 }
 
-export const RecoveryEmail = ({
-  siteName,
-  confirmationUrl,
-}: RecoveryEmailProps) => (
+export const RecoveryEmail = ({ token }: RecoveryEmailProps) => (
   <Html lang="en" dir="ltr">
     <Head />
-    <Preview>Reset your password for {siteName}</Preview>
-    <Body style={main}>
-      <Container style={container}>
-        <Heading style={h1}>Reset your password</Heading>
-        <Text style={text}>
-          We received a request to reset your password for {siteName}. Click
-          the button below to choose a new password.
+    <Preview>Your Motonita password reset code{token ? `: ${token}` : ''}</Preview>
+    <Body style={styles.main}>
+      <Container style={styles.container}>
+        <BrandHeader />
+        <Heading style={styles.h1}>Reset your password</Heading>
+        <Text style={styles.text}>
+          We received a request to reset your <strong>Motonita</strong> password.
+          Enter the 6-digit code below on the password reset page.
         </Text>
-        <Button style={button} href={confirmationUrl}>
-          Reset Password
-        </Button>
-        <Text style={footer}>
-          If you didn't request a password reset, you can safely ignore this
-          email. Your password will not be changed.
+        {token ? (
+          <Section style={styles.codeWrap}>
+            <Text style={styles.code}>{token}</Text>
+          </Section>
+        ) : null}
+        <Text style={styles.smallNote}>
+          This code expires in 60 minutes. Never share it — the Motonita team will never ask for your code.
         </Text>
+        <Text style={styles.smallNote}>
+          If you didn't request a password reset, you can safely ignore this email — your password will not change.
+        </Text>
+        <BrandFooter />
       </Container>
     </Body>
   </Html>
 )
 
 export default RecoveryEmail
-
-const main = { backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }
-const container = { padding: '20px 25px' }
-const h1 = {
-  fontSize: '22px',
-  fontWeight: 'bold' as const,
-  color: '#000000',
-  margin: '0 0 20px',
-}
-const text = {
-  fontSize: '14px',
-  color: '#55575d',
-  lineHeight: '1.5',
-  margin: '0 0 25px',
-}
-const button = {
-  backgroundColor: '#000000',
-  color: '#ffffff',
-  fontSize: '14px',
-  borderRadius: '8px',
-  padding: '12px 20px',
-  textDecoration: 'none',
-}
-const footer = { fontSize: '12px', color: '#999999', margin: '30px 0 0' }
