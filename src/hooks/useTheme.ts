@@ -4,15 +4,11 @@ type Theme = 'light' | 'dark';
 
 export const useTheme = () => {
   const [theme, setTheme] = useState<Theme>(() => {
-    // Check localStorage first
-    const saved = localStorage.getItem('motonita-theme') as Theme;
-    if (saved) return saved;
-    
-    // Check system preference
-    if (typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      return 'dark';
-    }
-    
+    // Always default to light mode. Only honor an explicit user choice
+    // saved in localStorage — never auto-switch based on the OS preference.
+    if (typeof window === 'undefined') return 'light';
+    const saved = localStorage.getItem('motonita-theme') as Theme | null;
+    if (saved === 'dark' || saved === 'light') return saved;
     return 'light';
   });
 
