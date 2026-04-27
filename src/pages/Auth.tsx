@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -11,7 +11,6 @@ import { signupSchema, loginSchema } from "@/lib/validationSchemas";
 import { z } from "zod";
 import { Eye, EyeOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
 import { Checkbox } from "@/components/ui/checkbox";
 import { safeGetItem } from "@/lib/safeStorage";
 import { PasswordStrengthIndicator } from "@/components/PasswordStrengthIndicator";
@@ -19,7 +18,6 @@ import { PrivacyTermsModal } from "@/components/PrivacyTermsModal";
 import { getUserFriendlyError, getErrMsg } from "@/lib/errorMessages";
 import { playSuccessSound } from "@/lib/soundEffects";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { PRIMARY_PRODUCTION_ORIGIN } from "@/lib/oauthDomain";
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
@@ -92,76 +90,7 @@ const Auth = () => {
     }
   }, [authLoading, isAuthenticated, hasRole, navigate, returnUrl]);
 
-  // Detect tokens in URL hash so we can show a "Signing you in…" interstitial
-  // briefly while the OAuth helper finishes. The Lovable Cloud auth helper
-  // calls supabase.auth.setSession() itself, so we just wait for the session
-  // to appear.
-  const [processingOAuthHash, setProcessingOAuthHash] = useState<boolean>(() => {
-    if (typeof window === "undefined") return false;
-    return /[#&]access_token=/.test(window.location.hash);
-  });
-
-  // Surface clear errors when Google / the OAuth broker returned an error
-  // in the URL (hash or query string). Clean the broken parameters so the
-  // toast doesn't fire again on re-render.
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const hash = window.location.hash || "";
-    const search = window.location.search || "";
-    const hasOAuthTokens = /[#&]access_token=/.test(hash);
-
-    const surfaceError = (raw: string) => {
-      const decoded = decodeURIComponent(raw.replace(/\+/g, " "));
-      if (/exchange authorization code/i.test(decoded)) {
-        toast.error(
-          "Google sign-in could not finish here. Please open the live site (motonita.ma) and try again.",
-          { duration: 7000 },
-        );
-      } else {
-        toast.error(decoded);
-      }
-    };
-
-    if (hash.includes("error=") && !hasOAuthTokens) {
-      const params = new URLSearchParams(hash.slice(1));
-      const err = params.get("error_description") || params.get("error");
-      if (err) surfaceError(err);
-      window.history.replaceState({}, "", window.location.pathname + window.location.search);
-    } else if (search.includes("error=")) {
-      const params = new URLSearchParams(search);
-      const err = params.get("error_description") || params.get("error");
-      if (err) {
-        surfaceError(err);
-        window.history.replaceState({}, "", window.location.pathname);
-      }
-    }
-
-    // Sanity check: if tokens are in the hash but no session shows up
-    // within ~3.5s, surface a clear error and drop the interstitial.
-    if (hasOAuthTokens) {
-      const timer = window.setTimeout(async () => {
-        const { data } = await supabase.auth.getSession();
-        if (!data.session) {
-          console.error("[OAuth] Tokens in URL but no session after 3.5s");
-          toast.error(t('auth.googleSignInFailed') || "Google sign-in didn't complete. Please try again.");
-          setProcessingOAuthHash(false);
-          window.history.replaceState({}, "", window.location.pathname + window.location.search);
-        } else {
-          setProcessingOAuthHash(false);
-        }
-      }, 3500);
-      return () => window.clearTimeout(timer);
-    }
-  }, [t]);
-
-  // Once a session is detected, drop the interstitial so the redirect effect
-  // can take over.
-  useEffect(() => {
-    if (isAuthenticated && processingOAuthHash) {
-      setProcessingOAuthHash(false);
-    }
-  }, [isAuthenticated, processingOAuthHash]);
+  // Email + password flow only — no OAuth interstitial.
 
 
   const handleSendEmailOtp = async () => {
