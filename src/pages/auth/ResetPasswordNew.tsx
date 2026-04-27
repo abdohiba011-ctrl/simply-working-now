@@ -7,7 +7,7 @@ import { z } from "zod";
 import { toast } from "sonner";
 import { Eye, EyeOff, AlertCircle, Loader2, Check, X } from "lucide-react";
 
-import { AuthLayout } from "@/components/auth/AuthLayout";
+import { AgencyAuthLayout } from "@/components/auth/AgencyAuthLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -195,7 +195,7 @@ export default function ResetPasswordNew() {
     isLoading || !allRulesOk || !passwordsMatch || !form.formState.isValid;
 
   return (
-    <AuthLayout>
+    <AgencyAuthLayout>
       <div className="space-y-6">
         <div className="space-y-1.5">
           <h1
@@ -363,6 +363,6 @@ export default function ResetPasswordNew() {
           </Button>
         </form>
       </div>
-    </AuthLayout>
+    </AgencyAuthLayout>
   );
 }

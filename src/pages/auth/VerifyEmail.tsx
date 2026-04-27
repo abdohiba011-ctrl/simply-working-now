@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { MailCheck, AlertCircle, Loader2 } from "lucide-react";
 
-import { AuthLayout } from "@/components/auth/AuthLayout";
+import { AgencyAuthLayout as AuthLayout } from "@/components/auth/AgencyAuthLayout";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { getResendCooldownMs, type AuthError } from "@/lib/mockAuth";

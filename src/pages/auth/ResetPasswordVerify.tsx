@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { KeyRound, AlertCircle, Loader2 } from "lucide-react";
 
-import { AuthLayout } from "@/components/auth/AuthLayout";
+import { AgencyAuthLayout } from "@/components/auth/AgencyAuthLayout";
 import { Button } from "@/components/ui/button";
 import { OtpInput } from "@/components/auth/OtpInput";
 import { useAuthStore } from "@/stores/useAuthStore";
@@ -103,7 +103,7 @@ export default function ResetPasswordVerify() {
   };
 
   return (
-    <AuthLayout>
+    <AgencyAuthLayout>
       <div className="space-y-6">
         <div className="text-center space-y-3">
           <div
@@ -210,6 +210,6 @@ export default function ResetPasswordVerify() {
           </>
         )}
       </div>
-    </AuthLayout>
+    </AgencyAuthLayout>
   );
 }
