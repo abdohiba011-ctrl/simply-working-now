@@ -17,6 +17,7 @@ const Confirmation = () => {
   const { t, isRTL } = useLanguage();
   const [isGeneratingContract, setIsGeneratingContract] = useState(false);
   const [contractHtml, setContractHtml] = useState<string | null>(null);
+  const [contractAvailable, setContractAvailable] = useState(true);
   const [verificationStatus, setVerificationStatus] = useState<string | null>(null);
 
   const bookingId = searchParams.get("bookingId");
@@ -62,9 +63,13 @@ const Confirmation = () => {
 
       if (data?.contractHtml) {
         setContractHtml(data.contractHtml);
+      } else {
+        setContractAvailable(false);
       }
     } catch (error) {
-      console.error("Error generating contract:", error);
+      // Contract generation is optional — agency provides physical contract at pickup.
+      console.warn("Contract not available yet:", error);
+      setContractAvailable(false);
     } finally {
       setIsGeneratingContract(false);
     }
