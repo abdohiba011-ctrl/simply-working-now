@@ -8,7 +8,7 @@ import logoDark from "@/assets/motonita-logo-dark.svg";
 import { useTheme } from "@/hooks/useTheme";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { useAuthStore } from "@/stores/useAuthStore";
+import { useAuthStore, readCachedIsAdmin } from "@/stores/useAuthStore";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { LogoutConfirmDialog } from "@/components/LogoutConfirmDialog";
@@ -46,7 +46,9 @@ export const Header = memo(() => {
   const { user, isAuthenticated, isLoading: authLoading, logout, hasRole } = useAuth();
   const navigate = useNavigate();
   const isBusiness = hasRole('business');
-  const isAdmin = hasRole('admin');
+  // Combine live role check with cached admin flag so the Admin button shows
+  // instantly on refresh, even before user_roles finishes loading.
+  const isAdmin = hasRole('admin') || (isAuthenticated && readCachedIsAdmin(user?.id));
   const isRenter = isAuthenticated && !isBusiness && !isAdmin;
   const storeUser = useAuthStore((s) => s.user);
   const storeIsAuthenticated = useAuthStore((s) => s.isAuthenticated);
