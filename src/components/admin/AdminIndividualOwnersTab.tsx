@@ -289,7 +289,7 @@ export const AdminIndividualOwnersTab = () => {
       // Add business role
       const { error: roleError } = await supabase
         .from('user_roles')
-        .insert({ user_id: userId, role: 'agency' });
+        .insert({ user_id: userId, role: 'business' });
 
       if (roleError && !roleError.message.includes('duplicate')) throw roleError;
 

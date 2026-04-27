@@ -253,7 +253,7 @@ const AdminBookingDetails = () => {
       const { data: businessRoles, error: rolesError } = await supabase
         .from('user_roles')
         .select('user_id')
-        .eq('role', 'agency');
+        .eq('role', 'business');
 
       if (rolesError) throw rolesError;
 
