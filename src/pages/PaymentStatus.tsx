@@ -3,8 +3,9 @@ import { useSearchParams, useNavigate, Link } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, XCircle, Loader2, Clock } from "lucide-react";
+import { CheckCircle2, XCircle, Loader2, Clock, LifeBuoy } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 /**
  * Generic payment status page.
@@ -41,7 +42,41 @@ export default function PaymentStatus() {
     outcomeHint === "error" ? "failed" : "processing",
   );
   const [elapsed, setElapsed] = useState(0);
-  
+  const [verifying, setVerifying] = useState(false);
+
+  const supportMailto = `mailto:support@motonita.ma?subject=${encodeURIComponent(
+    `Payment stuck — ${pid}`,
+  )}&body=${encodeURIComponent(
+    `Hi Motonita team,\n\nMy payment is stuck.\nPayment ID: ${pid}\n\nThanks.`,
+  )}`;
+
+  const handleVerifyNow = async () => {
+    if (!pid || verifying) return;
+    setVerifying(true);
+    try {
+      const { data, error } = await supabase.functions.invoke(
+        "youcanpay-verify-payment",
+        { body: { payment_id: pid } },
+      );
+      if (error) throw error;
+      const status = (data as any)?.status;
+      if (status === "paid") {
+        toast.success("Payment confirmed");
+        setPhase("succeeded");
+      } else if (status === "failed") {
+        toast.error("Payment did not go through");
+        setPhase("failed");
+      } else {
+        toast.info("Still pending — try again in a moment");
+        setElapsed(0);
+        setPhase("processing");
+      }
+    } catch (e: any) {
+      toast.error(e?.message || "Could not verify payment");
+    } finally {
+      setVerifying(false);
+    }
+  };
 
   useEffect(() => {
     if (!pid) {
@@ -173,23 +208,51 @@ export default function PaymentStatus() {
                 </h1>
                 <p className="text-sm text-muted-foreground">
                   The payment provider is taking longer than usual. If your
-                  card was charged, the page will update automatically once we
-                  receive confirmation. You can safely refresh later.
+                  card was charged, click "Verify payment now" to check
+                  directly with YouCan Pay.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-2 justify-center">
                   <Button
                     variant="hero"
+                    onClick={handleVerifyNow}
+                    disabled={verifying}
+                  >
+                    {verifying ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Verifying…
+                      </>
+                    ) : (
+                      "Verify payment now"
+                    )}
+                  </Button>
+                  <Button
+                    variant="outline"
                     onClick={() => {
                       setElapsed(0);
                       setPhase("processing");
                     }}
+                    disabled={verifying}
                   >
                     Check again
                   </Button>
-                  <Button variant="outline" asChild>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-2 justify-center pt-2">
+                  <Button variant="ghost" size="sm" asChild>
+                    <a href={supportMailto}>
+                      <LifeBuoy className="h-4 w-4 mr-2" />
+                      Contact support
+                    </a>
+                  </Button>
+                  <Button variant="ghost" size="sm" asChild>
                     <Link to="/">Back to home</Link>
                   </Button>
                 </div>
+                {pid && (
+                  <p className="text-[10px] text-muted-foreground/70 pt-2 font-mono">
+                    Ref: {pid}
+                  </p>
+                )}
               </>
             )}
           </CardContent>
