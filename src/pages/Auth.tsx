@@ -158,7 +158,7 @@ const Auth = () => {
           validatedData.email, 
           validatedData.password, 
           validatedData.name,
-          accountType === "business" ? "business" : "user"
+          accountType === "business" ? "agency" : "renter"
         );
         
         toast.success(t('auth.accountCreatedSuccess'));

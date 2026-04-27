@@ -62,7 +62,7 @@ interface AuthContextType {
   isLoading: boolean;
   userRoles: string[];
   login: (email: string, password: string, rememberMe?: boolean) => Promise<void>;
-  signup: (email: string, password: string, name: string, role: "user" | "business") => Promise<void>;
+  signup: (email: string, password: string, name: string, role: "renter" | "agency") => Promise<void>;
   logout: () => Promise<void>;
   hasRole: (role: string) => boolean;
   refreshRoles: () => Promise<string[]>;
@@ -246,7 +246,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const signup = async (email: string, password: string, name: string, role: "user" | "business") => {
+  const signup = async (email: string, password: string, name: string, role: "renter" | "agency") => {
     const rateLimitCheck = checkAndRecordRateLimit('signup', email, false);
     if (!rateLimitCheck.allowed) {
       throw new Error(rateLimitCheck.message || 'Too many signup attempts');
@@ -272,10 +272,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     clearRateLimitState('signup', email);
 
     // Add business role if user selected business account type
-    if (data?.user && role === "business") {
+    if (data?.user && role === "agency") {
       const { error: roleError } = await supabase
         .from('user_roles')
-        .insert({ user_id: data.user.id, role: 'business' });
+        .insert({ user_id: data.user.id, role: 'agency' });
       
       if (roleError) throw roleError;
     }

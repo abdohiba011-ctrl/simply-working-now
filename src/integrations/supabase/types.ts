@@ -1487,52 +1487,199 @@ export type Database = {
       }
       profiles: {
         Row: {
+          address: string | null
+          address_line: string | null
           avatar_url: string | null
+          bio: string | null
           blocked_reason: string | null
+          business_address: string | null
+          business_city: string | null
+          business_description: string | null
+          business_email: string | null
+          business_logo_url: string | null
+          business_name: string | null
+          business_phone: string | null
+          business_type: string | null
+          city: string | null
+          country: string | null
           created_at: string
+          date_of_birth: string | null
           email: string
           email_verified: boolean | null
+          family_name_on_id: string | null
+          first_name_on_id: string | null
+          frozen_reason: string | null
           full_name: string | null
+          full_name_on_id: string | null
+          gender: string | null
+          ice: string | null
           id: string
+          id_back_image_url: string | null
+          id_card_back_url: string | null
+          id_card_number: string | null
+          id_card_url: string | null
+          id_front_image_url: string | null
           is_blocked: boolean | null
+          is_frozen: boolean | null
+          is_verified: boolean | null
+          last_active_at: string | null
           last_login_at: string | null
+          license_back_image_url: string | null
+          license_back_url: string | null
+          license_front_image_url: string | null
+          license_url: string | null
+          loyalty_points: number | null
+          name: string | null
+          nationality: string | null
           phone: string | null
           phone_verified: boolean | null
           preferred_language: string | null
+          rc: string | null
+          rejected_at: string | null
+          rejected_by: string | null
+          rejection_reason: string | null
+          selfie_image_url: string | null
+          selfie_url: string | null
+          selfie_with_id_url: string | null
+          submitted_at: string | null
+          trust_score: number | null
+          trust_tier: string | null
           updated_at: string
           user_id: string
+          user_type: string | null
+          verification_status: string | null
+          verified_at: string | null
+          verified_by: string | null
         }
         Insert: {
+          address?: string | null
+          address_line?: string | null
           avatar_url?: string | null
+          bio?: string | null
           blocked_reason?: string | null
+          business_address?: string | null
+          business_city?: string | null
+          business_description?: string | null
+          business_email?: string | null
+          business_logo_url?: string | null
+          business_name?: string | null
+          business_phone?: string | null
+          business_type?: string | null
+          city?: string | null
+          country?: string | null
           created_at?: string
+          date_of_birth?: string | null
           email: string
           email_verified?: boolean | null
+          family_name_on_id?: string | null
+          first_name_on_id?: string | null
+          frozen_reason?: string | null
           full_name?: string | null
+          full_name_on_id?: string | null
+          gender?: string | null
+          ice?: string | null
           id?: string
+          id_back_image_url?: string | null
+          id_card_back_url?: string | null
+          id_card_number?: string | null
+          id_card_url?: string | null
+          id_front_image_url?: string | null
           is_blocked?: boolean | null
+          is_frozen?: boolean | null
+          is_verified?: boolean | null
+          last_active_at?: string | null
           last_login_at?: string | null
+          license_back_image_url?: string | null
+          license_back_url?: string | null
+          license_front_image_url?: string | null
+          license_url?: string | null
+          loyalty_points?: number | null
+          name?: string | null
+          nationality?: string | null
           phone?: string | null
           phone_verified?: boolean | null
           preferred_language?: string | null
+          rc?: string | null
+          rejected_at?: string | null
+          rejected_by?: string | null
+          rejection_reason?: string | null
+          selfie_image_url?: string | null
+          selfie_url?: string | null
+          selfie_with_id_url?: string | null
+          submitted_at?: string | null
+          trust_score?: number | null
+          trust_tier?: string | null
           updated_at?: string
           user_id: string
+          user_type?: string | null
+          verification_status?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
         }
         Update: {
+          address?: string | null
+          address_line?: string | null
           avatar_url?: string | null
+          bio?: string | null
           blocked_reason?: string | null
+          business_address?: string | null
+          business_city?: string | null
+          business_description?: string | null
+          business_email?: string | null
+          business_logo_url?: string | null
+          business_name?: string | null
+          business_phone?: string | null
+          business_type?: string | null
+          city?: string | null
+          country?: string | null
           created_at?: string
+          date_of_birth?: string | null
           email?: string
           email_verified?: boolean | null
+          family_name_on_id?: string | null
+          first_name_on_id?: string | null
+          frozen_reason?: string | null
           full_name?: string | null
+          full_name_on_id?: string | null
+          gender?: string | null
+          ice?: string | null
           id?: string
+          id_back_image_url?: string | null
+          id_card_back_url?: string | null
+          id_card_number?: string | null
+          id_card_url?: string | null
+          id_front_image_url?: string | null
           is_blocked?: boolean | null
+          is_frozen?: boolean | null
+          is_verified?: boolean | null
+          last_active_at?: string | null
           last_login_at?: string | null
+          license_back_image_url?: string | null
+          license_back_url?: string | null
+          license_front_image_url?: string | null
+          license_url?: string | null
+          loyalty_points?: number | null
+          name?: string | null
+          nationality?: string | null
           phone?: string | null
           phone_verified?: boolean | null
           preferred_language?: string | null
+          rc?: string | null
+          rejected_at?: string | null
+          rejected_by?: string | null
+          rejection_reason?: string | null
+          selfie_image_url?: string | null
+          selfie_url?: string | null
+          selfie_with_id_url?: string | null
+          submitted_at?: string | null
+          trust_score?: number | null
+          trust_tier?: string | null
           updated_at?: string
           user_id?: string
+          user_type?: string | null
+          verification_status?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
         }
         Relationships: []
       }
