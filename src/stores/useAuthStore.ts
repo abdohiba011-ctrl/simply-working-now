@@ -177,6 +177,11 @@ async function loadAuthUserModel(authUser: User): Promise<MockUser> {
   };
 }
 
+function persistAdminFlag(user: MockUser): MockUser {
+  writeCachedIsAdmin(user.id, !!user.isAdmin);
+  return user;
+}
+
 // ---------------------------------------------------------------------
 // Translate Supabase auth errors → our AuthError shape
 // ---------------------------------------------------------------------
