@@ -198,7 +198,7 @@ export default function Login({ context = "renter" }: LoginProps) {
         <div className="space-y-1.5">
           <h1
             className="text-2xl font-bold tracking-tight"
-            style={{ color: "#163300" }}
+            className_FOREGROUND
           >
             {context === "agency"
               ? t("mockAuth.welcome_business", {
@@ -206,7 +206,7 @@ export default function Login({ context = "renter" }: LoginProps) {
                 })
               : t("mockAuth.welcome_back", { defaultValue: "Welcome back" })}
           </h1>
-          <p className="text-sm" style={{ color: "rgba(22,51,0,0.7)" }}>
+          <p className="text-sm" className_MUTED7>
             {context === "agency"
               ? t("mockAuth.login_continue_business", {
                   defaultValue: "Log in to manage your fleet and bookings",
@@ -311,10 +311,10 @@ export default function Login({ context = "renter" }: LoginProps) {
           <GoogleSignInButton />
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" style={{ borderColor: "rgba(22,51,0,0.1)" }} />
+              <span className="w-full border-t" className_BORDER />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-white px-2" style={{ color: "rgba(22,51,0,0.55)" }}>
+              <span className="bg-card px-2 text-muted-foreground" className_MUTED55>
                 {t("mockAuth.or", { defaultValue: "or" })}
               </span>
             </div>
@@ -324,7 +324,7 @@ export default function Login({ context = "renter" }: LoginProps) {
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" noValidate>
           {/* Identifier */}
           <div className="space-y-1.5">
-            <Label htmlFor="identifier" className="text-sm" style={{ color: "#163300" }}>
+            <Label htmlFor="identifier" className="text-sm" className_FOREGROUND>
               {t("mockAuth.email_or_phone", { defaultValue: "Email or phone" })}
             </Label>
             <div className="relative">
@@ -356,7 +356,7 @@ export default function Login({ context = "renter" }: LoginProps) {
 
           {/* Password */}
           <div className="space-y-1.5">
-            <Label htmlFor="password" className="text-sm" style={{ color: "#163300" }}>
+            <Label htmlFor="password" className="text-sm" className_FOREGROUND>
               {t("mockAuth.password", { defaultValue: "Password" })}
             </Label>
             <div className="relative">
@@ -393,14 +393,14 @@ export default function Login({ context = "renter" }: LoginProps) {
                 checked={form.watch("rememberMe")}
                 onCheckedChange={(v) => form.setValue("rememberMe", Boolean(v))}
               />
-              <span className="text-sm" style={{ color: "#163300" }}>
+              <span className="text-sm" className_FOREGROUND>
                 {t("mockAuth.remember_me", { defaultValue: "Remember me for 30 days" })}
               </span>
             </label>
             <Link
               to="/forgot-password"
               className="text-sm hover:underline"
-              style={{ color: "#163300" }}
+              className_FOREGROUND
             >
               {t("mockAuth.forgot_password", { defaultValue: "Forgot password?" })}
             </Link>
@@ -424,7 +424,7 @@ export default function Login({ context = "renter" }: LoginProps) {
           </Button>
 
           {/* Signup */}
-          <p className="text-center text-sm" style={{ color: "rgba(22,51,0,0.75)" }}>
+          <p className="text-center text-sm" className_MUTED75>
             {context === "agency"
               ? t("mockAuth.no_business_account", {
                   defaultValue: "Don't have a business account?",
@@ -433,7 +433,7 @@ export default function Login({ context = "renter" }: LoginProps) {
             <Link
               to={context === "agency" ? "/agency/signup" : "/signup"}
               className="font-medium hover:underline"
-              style={{ color: "#163300" }}
+              className_FOREGROUND
             >
               {t("mockAuth.signup", { defaultValue: "Sign up" })}
             </Link>
@@ -441,14 +441,14 @@ export default function Login({ context = "renter" }: LoginProps) {
 
           {/* Cross-door link — only on agency login (renters reach agency auth via /agencies) */}
           {context === "agency" ? (
-            <p className="text-center text-xs" style={{ color: "rgba(22,51,0,0.6)" }}>
+            <p className="text-center text-xs" className_MUTED6>
               {t("mockAuth.are_you_renter", {
                 defaultValue: "Are you a renter?",
               })}{" "}
               <Link
                 to="/login"
                 className="hover:underline font-medium"
-                style={{ color: "#163300" }}
+                className_FOREGROUND
               >
                 {t("mockAuth.login_here", { defaultValue: "Log in here" })}
               </Link>

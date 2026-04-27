@@ -374,12 +374,12 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
               {t("mockAuth.agency_pill", { defaultValue: "For rental agencies" })}
             </span>
           ) : null}
-          <h1 className="text-2xl font-bold tracking-tight" style={{ color: "#163300" }}>
+          <h1 className="text-2xl font-bold tracking-tight" className_FOREGROUND>
             {isAgencyFlow
               ? t("mockAuth.create_agency_account", { defaultValue: "Create your agency account" })
               : t("mockAuth.create_account", { defaultValue: "Create your account" })}
           </h1>
-          <p className="text-sm" style={{ color: "rgba(22,51,0,0.7)" }}>
+          <p className="text-sm" className_MUTED7>
             {isAgencyFlow
               ? t("mockAuth.agency_subtitle", {
                   defaultValue:
@@ -403,13 +403,13 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
 
         {/* Agency flow shows a small renter cross-link; renter flow shows nothing (no toggle) */}
         {isAgencyFlow ? (
-          <p className="text-xs" style={{ color: "rgba(22,51,0,0.6)" }}>
+          <p className="text-xs" className_MUTED6>
             {t("mockAuth.not_business_prefix", { defaultValue: "Just want to rent a bike?" })}{" "}
             <button
               type="button"
               onClick={() => navigate("/signup")}
               className="font-semibold underline underline-offset-2 hover:opacity-80"
-              style={{ color: "#163300" }}
+              className_FOREGROUND
             >
               {t("mockAuth.not_business_link", { defaultValue: "Sign up as a renter instead" })}
             </button>
@@ -432,10 +432,10 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
             />
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" style={{ borderColor: "rgba(22,51,0,0.1)" }} />
+                <span className="w-full border-t" className_BORDER />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-white px-2" style={{ color: "rgba(22,51,0,0.55)" }}>
+                <span className="bg-card px-2 text-muted-foreground" className_MUTED55>
                   {t("mockAuth.or", { defaultValue: "or" })}
                 </span>
               </div>
@@ -485,7 +485,7 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
               label={
                 <>
                   {t("mockAuth.phone", { defaultValue: "Phone" })}{" "}
-                  <span className="text-xs font-normal" style={{ color: "rgba(22,51,0,0.55)" }}>
+                  <span className="text-xs font-normal" className_MUTED55>
                     {role === "agency"
                       ? t("mockAuth.required", { defaultValue: "(required)" })
                       : t("mockAuth.optional", { defaultValue: "(optional)" })}
@@ -705,14 +705,14 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
                     })
                   }
                 />
-                <span className="text-sm" style={{ color: "#163300" }}>
+                <span className="text-sm" className_FOREGROUND>
                   {t("mockAuth.agree_terms_prefix", { defaultValue: "I agree to Motonita's" })}{" "}
                   <a
                     href="/terms"
                     target="_blank"
                     rel="noreferrer"
                     className="underline"
-                    style={{ color: "#163300" }}
+                    className_FOREGROUND
                   >
                     {t("mockAuth.terms_of_service", { defaultValue: "Terms of Service" })}
                   </a>{" "}
@@ -722,7 +722,7 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
                     target="_blank"
                     rel="noreferrer"
                     className="underline"
-                    style={{ color: "#163300" }}
+                    className_FOREGROUND
                   >
                     {t("mockAuth.privacy_policy", { defaultValue: "Privacy Policy" })}
                   </a>
@@ -740,7 +740,7 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
                   checked={!!form.watch("marketingOptIn")}
                   onCheckedChange={(v) => form.setValue("marketingOptIn", Boolean(v))}
                 />
-                <span className="text-sm" style={{ color: "rgba(22,51,0,0.75)" }}>
+                <span className="text-sm" className_MUTED75>
                   {t("mockAuth.send_updates", {
                     defaultValue: "Send me product updates and tips",
                   })}
@@ -766,12 +766,12 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
           </form>
         ) : null}
 
-        <p className="text-center text-sm" style={{ color: "rgba(22,51,0,0.75)" }}>
+        <p className="text-center text-sm" className_MUTED75>
           {t("mockAuth.already_account", { defaultValue: "Already have an account?" })}{" "}
           <Link
             to="/login"
             className="font-medium hover:underline"
-            style={{ color: "#163300" }}
+            className_FOREGROUND
           >
             {t("mockAuth.login", { defaultValue: "Log in" })}
           </Link>
@@ -811,10 +811,10 @@ function RoleCard({
     >
       {icon}
       <div>
-        <div className="text-base font-semibold" style={{ color: "#163300" }}>
+        <div className="text-base font-semibold" className_FOREGROUND>
           {title}
         </div>
-        <div className="text-xs" style={{ color: "rgba(22,51,0,0.65)" }}>
+        <div className="text-xs" className_MUTED65>
           {subtitle}
         </div>
       </div>
@@ -835,7 +835,7 @@ function Field({
 }) {
   return (
     <div className="space-y-1.5">
-      <Label htmlFor={id} className="text-sm" style={{ color: "#163300" }}>
+      <Label htmlFor={id} className="text-sm" className_FOREGROUND>
         {label}
       </Label>
       {children}
