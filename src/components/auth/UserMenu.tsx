@@ -83,6 +83,7 @@ export function UserMenu({ align = "end" }: Props) {
             size="icon"
             className="h-9 w-9 rounded-full"
             aria-label="User menu"
+            data-admin={user.isAdmin ? "true" : "false"}
           >
             <span
               className="flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold"
