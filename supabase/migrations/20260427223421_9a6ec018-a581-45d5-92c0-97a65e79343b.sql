@@ -1,0 +1,38 @@
+
+-- Phase B shim: re-add dropped columns as nullable so the existing 46 files compile.
+-- These will be removed in Phase C after the codebase is refactored to use the new schema.
+
+ALTER TABLE public.profiles
+  ADD COLUMN IF NOT EXISTS name text GENERATED ALWAYS AS (full_name) STORED,
+  ADD COLUMN IF NOT EXISTS is_verified boolean DEFAULT false,
+  ADD COLUMN IF NOT EXISTS verification_status text DEFAULT 'unverified',
+  ADD COLUMN IF NOT EXISTS is_frozen boolean DEFAULT false,
+  ADD COLUMN IF NOT EXISTS frozen_reason text,
+  ADD COLUMN IF NOT EXISTS id_card_number text,
+  ADD COLUMN IF NOT EXISTS id_card_url text,
+  ADD COLUMN IF NOT EXISTS id_card_back_url text,
+  ADD COLUMN IF NOT EXISTS license_url text,
+  ADD COLUMN IF NOT EXISTS license_back_url text,
+  ADD COLUMN IF NOT EXISTS selfie_url text,
+  ADD COLUMN IF NOT EXISTS date_of_birth date,
+  ADD COLUMN IF NOT EXISTS nationality text,
+  ADD COLUMN IF NOT EXISTS address_line text,
+  ADD COLUMN IF NOT EXISTS city text,
+  ADD COLUMN IF NOT EXISTS country text DEFAULT 'MA',
+  ADD COLUMN IF NOT EXISTS user_type text DEFAULT 'renter',
+  ADD COLUMN IF NOT EXISTS business_name text,
+  ADD COLUMN IF NOT EXISTS business_type text,
+  ADD COLUMN IF NOT EXISTS business_phone text,
+  ADD COLUMN IF NOT EXISTS business_address text,
+  ADD COLUMN IF NOT EXISTS business_city text,
+  ADD COLUMN IF NOT EXISTS business_logo_url text,
+  ADD COLUMN IF NOT EXISTS business_description text,
+  ADD COLUMN IF NOT EXISTS ice text,
+  ADD COLUMN IF NOT EXISTS rc text,
+  ADD COLUMN IF NOT EXISTS trust_score integer DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS trust_tier text DEFAULT 'standard',
+  ADD COLUMN IF NOT EXISTS loyalty_points integer DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS verified_at timestamptz,
+  ADD COLUMN IF NOT EXISTS verified_by uuid,
+  ADD COLUMN IF NOT EXISTS rejection_reason text,
+  ADD COLUMN IF NOT EXISTS bio text;
