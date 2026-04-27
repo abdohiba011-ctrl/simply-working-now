@@ -2626,5 +2626,29 @@
     "cta_sub": "It takes 30 seconds. Share your link and earn on every friend who rides.",
     "cta_help": "Need help? Contact us at contact@motonita.ma",
     "toast_placeholder": "Your referral link will appear here once the dashboard is complete"
+  },
+  "testimonials": {
+    "trustBadge": "Trusted by riders across Morocco",
+    "title": "Real stories from Motonita riders",
+    "subtitle": "See why renters across Morocco trust Motonita to find motorbikes and scooters faster, easier, and with more confidence.",
+    "tabs": {
+      "all": "All",
+      "text": "Text",
+      "audio": "Audio",
+      "video": "Video"
+    },
+    "verified": "Verified renter",
+    "audioComingSoon": "Audio testimonial coming soon",
+    "videoComingSoon": "Video coming soon",
+    "playAudio": "Play audio testimonial",
+    "pauseAudio": "Pause audio testimonial",
+    "playVideo": "Play video testimonial",
+    "closeVideo": "Close video",
+    "cta": {
+      "title": "Ready to find your next ride?",
+      "text": "Explore available motorbikes and scooters near you and book with confidence.",
+      "primary": "Find a motorbike",
+      "secondary": "How Motonita works"
+    }
   }
 }
