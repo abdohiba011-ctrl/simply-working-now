@@ -58,7 +58,7 @@ export function readCachedIsAdmin(userId?: string | null): boolean {
   }
 }
 
-function writeCachedIsAdmin(userId: string, isAdmin: boolean): void {
+export function writeCachedIsAdmin(userId: string, isAdmin: boolean): void {
   try {
     localStorage.setItem(ADMIN_CACHE_KEY, JSON.stringify({ userId, isAdmin }));
   } catch {
@@ -278,14 +278,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         setTimeout(async () => {
           try {
             const mapped = await loadAuthUserModel(session.user);
-            // [diag] Temporary admin-panel visibility log — remove after confirming
-            console.info("[auth] user loaded", {
-              email: mapped.email,
-              isAdmin: mapped.isAdmin,
-              currentRole: mapped.last_active_role,
-              hasAgency: mapped.roles.agency.active,
-              hasRenter: mapped.roles.renter.active,
-            });
             set({
               user: mapped,
               session,

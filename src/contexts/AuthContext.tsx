@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from "@supabase/supabase-js";
-import { useAuthStore } from "@/stores/useAuthStore";
+import { useAuthStore, writeCachedIsAdmin } from "@/stores/useAuthStore";
 
 // Rate limit configuration
 const RATE_LIMITS = {
@@ -97,6 +97,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       if (error) throw error;
       const roles = data?.map(r => r.role) || [];
+      writeCachedIsAdmin(userId, roles.includes('admin'));
       setUserRoles(roles);
       return roles;
     } catch (error) {
