@@ -254,6 +254,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         setTimeout(async () => {
           try {
             const mapped = await loadAuthUserModel(session.user);
+            // [diag] Temporary admin-panel visibility log — remove after confirming
+            console.info("[auth] user loaded", {
+              email: mapped.email,
+              isAdmin: mapped.isAdmin,
+              currentRole: mapped.last_active_role,
+              hasAgency: mapped.roles.agency.active,
+              hasRenter: mapped.roles.renter.active,
+            });
             set({
               user: mapped,
               session,
