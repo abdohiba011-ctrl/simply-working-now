@@ -4,10 +4,23 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { lovable } from "@/integrations/lovable";
 import { getErrMsg } from "@/lib/errorMessages";
+import { PRIMARY_PRODUCTION_ORIGIN } from "@/lib/oauthDomain";
 
 interface GoogleSignInButtonProps {
   label?: string;
   className?: string;
+}
+
+/**
+ * Returns true if we are running on the iframe-preview host. The Lovable
+ * preview proxy intercepts the OAuth token-exchange POST, which produces
+ * `failed to exchange authorization code`. Google sign-in must run on
+ * the published origin (`motonita.ma`) instead.
+ */
+function isPreviewHost(): boolean {
+  if (typeof window === "undefined") return false;
+  const h = window.location.hostname;
+  return h.endsWith("lovableproject.com") || h.startsWith("id-preview--");
 }
 
 /**
@@ -21,20 +34,48 @@ export function GoogleSignInButton({
   const [loading, setLoading] = useState(false);
 
   const onClick = useCallback(async () => {
+    // Hard guard: the iframe preview proxy breaks the token exchange.
+    // Hop the user onto the production origin where it works reliably,
+    // preserving the path so they land back where they started.
+    if (isPreviewHost()) {
+      const target = `${PRIMARY_PRODUCTION_ORIGIN}${window.location.pathname}${window.location.search}`;
+      toast.message("Opening sign-in on motonita.ma…", {
+        description: "Google sign-in must run on the live domain.",
+      });
+      window.location.assign(target);
+      return;
+    }
+
     setLoading(true);
     try {
       const result = await lovable.auth.signInWithOAuth("google", {
         redirect_uri: window.location.origin,
       });
       if (result.error) {
-        toast.error(getErrMsg(result.error) || "Google sign-in failed.");
+        const raw = getErrMsg(result.error) || "";
+        if (/exchange authorization code/i.test(raw)) {
+          toast.error(
+            "Google sign-in could not finish here. Please try again on motonita.ma.",
+            { duration: 7000 },
+          );
+        } else {
+          toast.error(raw || "Google sign-in failed.");
+        }
         setLoading(false);
         return;
       }
       // result.redirected → browser is going to Google.
       // popup flow → supabase session is set, auth listener will redirect.
     } catch (err) {
-      toast.error(getErrMsg(err) || "Google sign-in failed.");
+      const raw = getErrMsg(err) || "";
+      if (/exchange authorization code/i.test(raw)) {
+        toast.error(
+          "Google sign-in could not finish here. Please try again on motonita.ma.",
+          { duration: 7000 },
+        );
+      } else {
+        toast.error(raw || "Google sign-in failed.");
+      }
       setLoading(false);
     }
   }, []);
