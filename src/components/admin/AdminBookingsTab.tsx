@@ -46,6 +46,7 @@ import { toast } from "sonner";
 import { format, isToday, isThisWeek, isBefore, startOfDay } from "date-fns";
 import { resolveBikeImageUrl } from "@/lib/bikeImageResolver";
 import { BookingQuickFilters, BookingBulkActions } from "./bookings";
+import { StuckPaymentsCard } from "./StuckPaymentsCard";
 import { AdminTableSkeleton } from "@/components/ui/admin-skeleton";
 
 type AdminStatus = 'new' | 'reviewed' | 'confirmed' | 'rejected';
@@ -396,6 +397,9 @@ export const AdminBookingsTab = () => {
 
   return (
     <div className="space-y-4">
+      {/* Stuck payment recovery */}
+      <StuckPaymentsCard />
+
       {/* Quick Filters */}
       <Card>
         <CardContent className="pt-4">
