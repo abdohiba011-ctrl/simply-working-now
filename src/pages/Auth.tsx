@@ -280,6 +280,23 @@ const Auth = () => {
   // page (6-digit OTP flow). The button on this page just redirects there.
 
   const handleGoogleSignIn = useCallback(async () => {
+    // Hard guard: the Lovable iframe preview proxy intercepts the OAuth
+    // token exchange and produces "failed to exchange authorization code".
+    // Hop the user onto the production origin where the flow works.
+    if (typeof window !== "undefined") {
+      const host = window.location.hostname;
+      const isPreview =
+        host.endsWith("lovableproject.com") || host.startsWith("id-preview--");
+      if (isPreview) {
+        const target = `${PRIMARY_PRODUCTION_ORIGIN}/auth${window.location.search}`;
+        toast.message("Opening sign-in on motonita.ma…", {
+          description: "Google sign-in must run on the live domain.",
+        });
+        window.location.assign(target);
+        return;
+      }
+    }
+
     setIsLoading(true);
     try {
       // Standard same-origin Google flow. The Lovable Cloud auth helper
@@ -291,9 +308,16 @@ const Auth = () => {
       });
 
       if (result.error) {
-        const msg = getErrMsg(result.error) || t('auth.googleSignInFailed');
+        const raw = getErrMsg(result.error) || "";
         console.error("[OAuth] Initiation error:", result.error);
-        toast.error(msg);
+        if (/exchange authorization code/i.test(raw)) {
+          toast.error(
+            "Google sign-in could not finish. Open https://motonita.ma/auth in a new incognito window and try again.",
+            { duration: 8000 },
+          );
+        } else {
+          toast.error(raw || t('auth.googleSignInFailed'));
+        }
         setIsLoading(false);
         return;
       }
@@ -307,9 +331,16 @@ const Auth = () => {
       playSuccessSound();
       toast.success(t('auth.googleSignInSuccess'));
     } catch (error: unknown) {
-      const msg = getErrMsg(error) || t('auth.googleSignInFailed');
+      const raw = getErrMsg(error) || "";
       console.error("[OAuth] Exception:", error);
-      toast.error(msg);
+      if (/exchange authorization code/i.test(raw)) {
+        toast.error(
+          "Google sign-in could not finish. Open https://motonita.ma/auth in a new incognito window and try again.",
+          { duration: 8000 },
+        );
+      } else {
+        toast.error(raw || t('auth.googleSignInFailed'));
+      }
       setIsLoading(false);
     }
   }, [t]);
@@ -440,7 +471,54 @@ const Auth = () => {
                     {isSignup ? t('auth.signUpWithGoogle') : t('auth.continueWithGoogle')}
                   </Button>
 
-
+                  <details className="mt-3 text-xs text-muted-foreground">
+                    <summary className="cursor-pointer select-none hover:text-foreground">
+                      Google sign-in not working? Test on the live site
+                    </summary>
+                    <div className="mt-3 space-y-3 rounded-md border border-border bg-muted/40 p-3">
+                      <div>
+                        <p className="font-medium text-foreground mb-1">Production test steps</p>
+                        <ol className="list-decimal pl-5 space-y-1">
+                          <li>Open a new incognito / private window.</li>
+                          <li>
+                            Go to{" "}
+                            <a
+                              href="https://motonita.ma/auth"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-primary underline"
+                            >
+                              https://motonita.ma/auth
+                            </a>
+                            .
+                          </li>
+                          <li>Click <strong>Continue with Google</strong>.</li>
+                          <li>Choose your Google account.</li>
+                          <li>You should land back on motonita.ma, signed in.</li>
+                        </ol>
+                      </div>
+                      <div>
+                        <p className="font-medium text-foreground mb-1">If it still fails, verify these in Google Cloud Console</p>
+                        <p className="mb-1">Authorized JavaScript origins:</p>
+                        <ul className="list-disc pl-5 space-y-0.5 break-all">
+                          <li><code>https://motonita.ma</code></li>
+                          <li><code>https://www.motonita.ma</code></li>
+                          <li><code>https://simply-working-now.lovable.app</code></li>
+                          <li><code>https://oauth.lovable.app</code></li>
+                        </ul>
+                        <p className="mt-2 mb-1">Authorized redirect URIs:</p>
+                        <ul className="list-disc pl-5 space-y-0.5 break-all">
+                          <li><code>https://motonita.ma/~oauth/callback</code></li>
+                          <li><code>https://www.motonita.ma/~oauth/callback</code></li>
+                          <li><code>https://simply-working-now.lovable.app/~oauth/callback</code></li>
+                          <li><code>https://oauth.lovable.app/callback</code></li>
+                        </ul>
+                      </div>
+                      <p>
+                        Also make sure the OAuth consent screen Publishing status is set to <strong>In production</strong> (not Testing).
+                      </p>
+                    </div>
+                  </details>
 
 
                   <div className="relative my-6">
