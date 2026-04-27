@@ -47,7 +47,10 @@ All colors MUST be HSL.
     --input: 216 12.1951% 83.9216%;
     --ring: 217 32.5843% 17.451%;
 
-    --radius: 0.75rem;
+    --radius: 1rem;
+
+    /* Agency canvas — soft tinted background that floating cards sit on */
+    --agency-canvas: 96 25% 97%;
 
     /* Sidebar */
     --sidebar-background: 0 0% 100%;
