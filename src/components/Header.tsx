@@ -46,7 +46,9 @@ export const Header = memo(() => {
   const { user, isAuthenticated, isLoading: authLoading, logout, hasRole } = useAuth();
   const navigate = useNavigate();
   const isBusiness = hasRole('business');
-  const isAdmin = hasRole('admin');
+  // Combine live role check with cached admin flag so the Admin button shows
+  // instantly on refresh, even before user_roles finishes loading.
+  const isAdmin = hasRole('admin') || (isAuthenticated && readCachedIsAdmin(user?.id));
   const isRenter = isAuthenticated && !isBusiness && !isAdmin;
   const storeUser = useAuthStore((s) => s.user);
   const storeIsAuthenticated = useAuthStore((s) => s.isAuthenticated);
