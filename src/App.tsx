@@ -108,6 +108,9 @@ const MockVerifyEmail = lazy(() => import("./pages/auth/VerifyEmail"));
 const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword"));
 const ResetPasswordVerify = lazy(() => import("./pages/auth/ResetPasswordVerify"));
 const ResetPasswordNew = lazy(() => import("./pages/auth/ResetPasswordNew"));
+const RenterForgotPassword = lazy(() => import("./pages/auth/RenterForgotPassword"));
+const RenterResetPasswordVerify = lazy(() => import("./pages/auth/RenterResetPasswordVerify"));
+const RenterResetPasswordNew = lazy(() => import("./pages/auth/RenterResetPasswordNew"));
 const SignupExtra = lazy(() => import("./pages/auth/SignupExtra"));
 const Blog = lazy(() => import("./pages/Blog"));
 const BlogPost = lazy(() => import("./pages/BlogPost"));
@@ -170,6 +173,9 @@ const App = () => (
                   <Route path="/forgot-password" element={<ForgotPassword />} />
                   <Route path="/reset-password/verify" element={<ResetPasswordVerify />} />
                   <Route path="/reset-password/new" element={<ResetPasswordNew />} />
+                  <Route path="/renter/forgot-password" element={<RenterForgotPassword />} />
+                  <Route path="/renter/reset-password/verify" element={<RenterResetPasswordVerify />} />
+                  <Route path="/renter/reset-password/new" element={<RenterResetPasswordNew />} />
                   <Route path="/agency/signup-extra" element={<SignupExtra />} />
                   <Route path="/become-business" element={<BecomeBusiness />} />
                   <Route path="/verification" element={<ProtectedRoute><Verification /></ProtectedRoute>} />

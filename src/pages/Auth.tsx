@@ -449,7 +449,7 @@ const Auth = () => {
                             type="button"
                             variant="link"
                             className="p-0 text-sm text-primary hover:underline"
-                            onClick={() => navigate("/forgot-password")}
+                            onClick={() => navigate("/renter/forgot-password")}
                           >
                             {t('auth.forgotPassword')}
                           </Button>
