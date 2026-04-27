@@ -16,11 +16,20 @@ interface OptimizedImageProps extends React.ImgHTMLAttributes<HTMLImageElement> 
   }[];
 }
 
-/**
- * Generates srcset string from sources array
- */
 const generateSrcSet = (sources: { src: string; width: number }[]): string => {
   return sources.map(({ src, width }) => `${src} ${width}w`).join(', ');
+};
+
+/** Synchronous browser-cache check — same trick as ResponsiveImage. */
+const isImageCached = (src?: string): boolean => {
+  if (!src || typeof Image === 'undefined') return false;
+  try {
+    const img = new Image();
+    img.src = src;
+    return img.complete && img.naturalWidth > 0;
+  } catch {
+    return false;
+  }
 };
 
 export const OptimizedImage = memo(({
@@ -37,17 +46,15 @@ export const OptimizedImage = memo(({
   height,
   ...props
 }: OptimizedImageProps) => {
-  const [isLoaded, setIsLoaded] = useState(false);
+  const cached = isImageCached(src);
+  const [isLoaded, setIsLoaded] = useState(cached);
   const [error, setError] = useState(false);
-  const [isInView, setIsInView] = useState(priority);
+  const [isInView, setIsInView] = useState(priority || cached);
   const imgRef = useRef<HTMLImageElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (priority) {
-      setIsInView(true);
-      return;
-    }
+    if (priority || isInView) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -69,7 +76,7 @@ export const OptimizedImage = memo(({
     }
 
     return () => observer.disconnect();
-  }, [priority]);
+  }, [priority, isInView]);
 
   useEffect(() => {
     if (imgRef.current?.complete && imgRef.current?.naturalHeight !== 0) {
@@ -85,9 +92,11 @@ export const OptimizedImage = memo(({
     ? src.replace(/\.(jpg|jpeg|png)$/, '.webp')
     : null;
 
+  const skipTransition = priority || cached;
+
   return (
-    <div 
-      ref={containerRef} 
+    <div
+      ref={containerRef}
       className={cn('overflow-hidden', className)}
       style={containerStyle}
     >
@@ -108,14 +117,15 @@ export const OptimizedImage = memo(({
             onLoad={() => setIsLoaded(true)}
             onError={() => setError(true)}
             className={cn(
-              'w-full h-full object-cover transition-opacity duration-300',
-              isLoaded ? 'opacity-100' : 'opacity-0'
+              'w-full h-full object-cover',
+              !skipTransition && 'transition-opacity duration-300',
+              isLoaded || skipTransition ? 'opacity-100' : 'opacity-0',
             )}
             {...props}
           />
         </picture>
       ) : (
-        <div 
+        <div
           className="w-full h-full bg-muted animate-pulse"
           style={containerStyle}
           aria-hidden="true"
