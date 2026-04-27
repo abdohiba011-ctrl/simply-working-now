@@ -1,71 +1,74 @@
-## Senior-UX redesign brief — Agency dashboard
+## Goal
 
-Reference: COD Partner-style layout — soft canvas, rounded cards floating on a tinted background, pastel icon tiles, generous breathing room, friendly header.
+Wire up branded, Motonita-styled auth emails for the entire flow — forgot password (6-digit code), signup verification (6-digit code), magic link, invite, email change, and reauthentication — all sent from `notify.motonita.ma` via Lovable's built-in email infrastructure (no Resend account needed).
 
-We keep Motonita's lime (`#9FE870`) brand identity — we are not adopting the violet palette of the reference. We are adopting the *layout language*, *radius scale*, *spacing rhythm*, and *icon-tile pattern*.
+## Heads-up about Resend
 
-## What changes
+You linked `resend.com`. Lovable already has a built-in transactional email system that works exactly the same way — no API key, no signup, no monthly fee — and your domain `notify.motonita.ma` is already configured for it. I'll use the built-in system. If you specifically want to switch to Resend later, we'd need to remove the NS delegation at your registrar first; happy to do that on request, but it's not necessary.
 
-### 1. Canvas + radius language
-Bigger, friendlier radii everywhere. Cards float on a tinted canvas with clear separation.
+## Current State
 
-| Token | Before | After |
-|---|---|---|
-| `--radius` | 0.75rem (12px) | 1rem (16px) — drives `rounded-lg` |
-| Page background | `bg-muted/20` | softer tinted canvas (`hsl(96 25% 97%)` light / unchanged dark) |
-| Cards | `rounded-xl` mixed | unified `rounded-2xl` |
-| Buttons / pills / inputs | `rounded-md` mixed | `rounded-xl` for primary actions, `rounded-full` for chips |
-| Icon tiles | none / `rounded-lg` | `rounded-2xl` soft pastel tiles (44×44) |
+- ✅ `notify.motonita.ma` configured (DNS still verifying — emails activate automatically once DNS is green)
+- ✅ `auth-email-hook` edge function exists and routes all 6 auth event types
+- ✅ All 6 template files exist in `supabase/functions/_shared/email-templates/`
+- ✅ Frontend pages exist: `ForgotPassword.tsx`, `ResetPasswordVerify.tsx`, `ResetPasswordNew.tsx`, `VerifyEmail.tsx` (already using `verifyOtp` for 6-digit codes)
+- ✅ `useAuthStore` already calls `resetPasswordForEmail` and `verifyOtp` correctly
+- ⚠️ Only `recovery.tsx` and `signup.tsx` have Motonita styling. The other 4 templates still use generic black/Arial defaults.
 
-### 2. Sidebar — floating, pill nav, pastel icons
-- Sidebar becomes a floating panel: `m-3 rounded-2xl border bg-card shadow-sm` (sits on the canvas, no hard right border).
-- Width: 240→**256px** expanded, 64→**72px** collapsed.
-- Each nav row becomes a **pill** with a **soft pastel icon tile** on the left (the reference's signature).
-  - Inactive: `rounded-xl` row, `rounded-xl` muted tile (`bg-muted`), icon at `text-muted-foreground`.
-  - Active: `bg-primary/15` pill, icon tile `bg-primary/25`, icon `text-foreground`, no fill hack.
-  - Hover: subtle `bg-muted/60` row + tile lifts to `bg-muted`.
-- 12px vertical gap between rows (currently 4px).
-- Footer profile block: rounded-2xl card with avatar, name, role chip ("Agency"), and a separated "Log out" button — same warmth as the reference's user card.
-- Collapse button: pill chip on the **outer edge** of the floating sidebar, half-overlapping (matches the reference's chevron tab).
+## Changes
 
-### 3. Header — calmer, less crowded
-- Height stays 64px, but: remove the breadcrumb (it competes with the page H1). Replace with a small **"Hey {name} 👋"** greeting chip on the left (matches the reference) — only on the dashboard; other pages keep page title only.
-- Search becomes a **rounded-full** input, 360px wide on lg, with `⌘K` kbd hint.
-- Wallet button: rounded-full pill, lime icon tile inside.
-- Order: greeting → spacer → search → language → wallet → theme → notifications → help → avatar+name (visible name on desktop, like reference).
-- Avatar: 36px rounded-full with role label below (`text-[10px] text-muted-foreground` "Agency").
+### 1. Re-style 4 remaining email templates with Motonita brand
 
-### 4. Dashboard page — pastel metric cards + softer empty states
-- **Metric cards** get the reference's signature pastel icon tile in the top-right corner:
-  - Wallet → lime tile (`bg-primary/15`), `Wallet` icon `text-primary`.
-  - Pending → amber tile (`bg-warning/15`), `Clock`.
-  - This month → blue tile (`bg-info/15`), `Calendar`.
-  - Revenue → emerald tile (`bg-success/15`), `TrendingUp`.
-  - Card: `rounded-2xl p-6`, label uppercase 11px tracking-wider, value 30px bold, optional delta line below ("+12% vs last month" — only when data available; never fake).
-- **Two-column section**: "Today's schedule" (3/5) + "Quick actions" stack (2/5) — keep, but:
-  - Quick action tiles get pastel icon tiles too (rounded-2xl, 48×48), label below, hover lifts shadow.
-  - Today's schedule: rows get more vertical padding (py-4), avatar+bike thumbnail in rounded-xl, status chip rounded-full.
-- **Empty states**: keep the friendly illustration approach from the reference — large soft-tinted circle behind icon, headline + helper copy, primary CTA pill.
+Apply the same brand system already used in `recovery.tsx` to:
 
-### 5. Mobile bottom-nav refinements
-- Active tab gets a **lime pill** behind the icon (rounded-2xl), label stays below — matches the modern app feel.
-- Bottom nav itself sits inside `mx-3 mb-3 rounded-2xl` floating bar with `shadow-lg` (instead of edge-to-edge).
+- `magic-link.tsx` — login link email
+- `invite.tsx` — agency team invitation email
+- `email-change.tsx` — confirm new email address
+- `reauthentication.tsx` — sensitive-action 6-digit code
 
-### 6. Trial / unverified banners
-- Switch from edge-to-edge stripes to **rounded-2xl pills** that sit inside the content area (`max-w-7xl mx-auto`), with a leading icon tile. Less alarming, more polished.
+Brand tokens applied to every template:
+- Background: white `#ffffff`
+- Body text: forest `#163300`
+- Muted text: `rgba(22, 51, 0, 0.7)`
+- Footer text: `rgba(22, 51, 0, 0.55)`
+- Primary CTA button: lime `#9FE870` background, forest `#163300` text, `border-radius: 12px`
+- 6-digit code box: lime tint `rgba(159, 232, 112, 0.18)` background, forest border, large mono font with letter-spacing
+- Font: Inter stack with system fallbacks
+- Container: 480px max-width, 32px padding
 
-## Files touched
-- `src/index.css` — `--radius` to 1rem, lighter tinted background variable for agency canvas
-- `src/components/agency/Sidebar.tsx` — floating panel, pill nav with icon tiles, profile block
-- `src/components/agency/Header.tsx` — greeting chip, rounded-full search/wallet, named avatar
-- `src/components/agency/AgencyShell.tsx` — canvas tint, banner pill style, floating-sidebar layout (sidebar margin instead of border-r)
-- `src/components/agency/MobileNav.tsx` — floating bottom bar with lime active pill
-- `src/pages/agency/Dashboard.tsx` — pastel metric tiles, softer cards, refined quick actions
+### 2. Add Motonita logo header to all 6 templates
 
-## Out of scope (explicitly)
-- Brand color change — we keep lime. The reference's violet is *not* adopted.
-- Page-level features, copy, or data flows — UI only.
-- Other agency sub-pages (Bookings, Motorbikes, etc.). They inherit the new tokens automatically (radius, canvas) but no per-page rework in this pass. We can tackle them next once you approve the language here.
+- Use the existing `favicon.svg` (or upload a wider wordmark to a new `email-assets` storage bucket if you prefer — let me know)
+- Add a small logo + "Motonita" wordmark at the top of every template (forest text, lime accent dot)
+- Footer: "Motonita SARLAU · Casablanca · motonita.ma" in muted forest
 
-## What you'll see after
-A calmer, more spacious, more friendly dashboard that feels like a 2026 SaaS tool: floating rounded sidebar, pastel icon tiles everywhere, generous padding, no harsh borders, lime kept as the brand accent.
+### 3. Localize subject lines and copy
+
+Subjects already exist in the hook. Refine for clarity:
+- `signup` → "Confirm your Motonita account"
+- `recovery` → "Reset your Motonita password"
+- `magiclink` → "Your Motonita login link"
+- `invite` → "You've been invited to Motonita"
+- `email_change` → "Confirm your new Motonita email"
+- `reauthentication` → "Your Motonita verification code"
+
+Copy stays in English (matches default site language). Arabic/French versions are out of scope for this round — happy to add multi-language detection later if you want it.
+
+### 4. Redeploy the auth-email-hook
+
+After template edits, redeploy so Supabase serves the new code (edge functions don't auto-pick up template changes).
+
+## Out of Scope (ask if you want any of these)
+
+- Switching to Resend instead of Lovable's built-in email
+- Arabic / French versions of the email templates
+- Custom email-assets storage bucket with a PNG/SVG wordmark logo (currently planning to use `favicon.svg`)
+- Changing the 6-digit code length, expiry, or rate limits (Supabase defaults stay)
+- Welcome / onboarding emails (those are transactional, not auth — separate setup)
+
+## Technical Notes
+
+- All edits stay inside `supabase/functions/_shared/email-templates/*.tsx` and one redeploy of `auth-email-hook`
+- No DB migrations, no new edge functions, no new env vars
+- Email body background must remain white (#ffffff) per email client compatibility — dark mode of the app does NOT carry into emails
+- Once DNS for `notify.motonita.ma` finishes verifying, emails ship automatically; until then, default Lovable templates are sent as a fallback
