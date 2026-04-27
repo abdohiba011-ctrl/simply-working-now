@@ -2,14 +2,7 @@
 
 import * as React from 'npm:react@18.3.1'
 import {
-  Body,
-  Container,
-  Head,
-  Heading,
-  Html,
-  Preview,
-  Section,
-  Text,
+  Body, Container, Head, Heading, Html, Preview, Section, Text,
 } from 'npm:@react-email/components@0.0.22'
 import { BrandHeader, BrandFooter, styles } from './_brand.tsx'
 
@@ -24,22 +17,15 @@ export const ReauthenticationEmail = ({ token }: ReauthenticationEmailProps) => 
     <Body style={styles.main}>
       <Container style={styles.container}>
         <BrandHeader />
-        <Heading style={styles.h1}>Confirm it's you</Heading>
+        <Heading style={styles.h1}>Confirm your identity</Heading>
         <Text style={styles.text}>
-          Use the 6-digit code below to confirm your identity on{' '}
-          <strong>Motonita</strong>.
+          Use the 6-digit code below to confirm your identity on <strong>Motonita</strong>:
         </Text>
-
         <Section style={styles.codeWrap}>
           <Text style={styles.code}>{token}</Text>
         </Section>
-
         <Text style={styles.smallNote}>
-          This code expires shortly. Never share it — the Motonita team will
-          never ask for your code.
-        </Text>
-        <Text style={styles.smallNote}>
-          If you didn't request this, please reset your password right away.
+          This code expires shortly. Never share it. If you didn't request this, you can safely ignore this email.
         </Text>
         <BrandFooter />
       </Container>

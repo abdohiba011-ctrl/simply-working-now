@@ -2,44 +2,29 @@
 
 import * as React from 'npm:react@18.3.1'
 import {
-  Body,
-  Container,
-  Head,
-  Heading,
-  Html,
-  Preview,
-  Section,
-  Text,
+  Body, Button, Container, Head, Heading, Html, Preview, Text,
 } from 'npm:@react-email/components@0.0.22'
 import { BrandHeader, BrandFooter, styles } from './_brand.tsx'
 
 interface MagicLinkEmailProps {
   siteName: string
-  token: string
+  confirmationUrl: string
 }
 
-export const MagicLinkEmail = ({ token }: MagicLinkEmailProps) => (
+export const MagicLinkEmail = ({ confirmationUrl }: MagicLinkEmailProps) => (
   <Html lang="en" dir="ltr">
     <Head />
-    <Preview>Your Motonita login code: {token}</Preview>
+    <Preview>Your Motonita login link</Preview>
     <Body style={styles.main}>
       <Container style={styles.container}>
         <BrandHeader />
-        <Heading style={styles.h1}>Your login code</Heading>
+        <Heading style={styles.h1}>Your login link</Heading>
         <Text style={styles.text}>
-          Use the 6-digit code below to log in to <strong>Motonita</strong>.
+          Click the button below to log in to <strong>Motonita</strong>. This link will expire shortly.
         </Text>
-
-        <Section style={styles.codeWrap}>
-          <Text style={styles.code}>{token}</Text>
-        </Section>
-
+        <Button style={styles.button} href={confirmationUrl}>Log in to Motonita</Button>
         <Text style={styles.smallNote}>
-          This code expires in 60 minutes. Never share it — the Motonita team
-          will never ask for your code.
-        </Text>
-        <Text style={styles.smallNote}>
-          If you didn't request this code, you can safely ignore this email.
+          If you didn't request this link, you can safely ignore this email.
         </Text>
         <BrandFooter />
       </Container>
