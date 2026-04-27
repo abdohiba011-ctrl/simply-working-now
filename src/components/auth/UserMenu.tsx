@@ -148,7 +148,7 @@ export function UserMenu({ align = "end" }: Props) {
             {t("settings_link")}
           </DropdownMenuItem>
 
-          {user.isAdmin && (
+          {showAdmin && (
             <>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => navigate("/admin/panel")}>
