@@ -698,7 +698,7 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
 
   // ---------------- RENTER (single page) ----------------
   return (
-    <AuthLayout>
+    <AgencyAuthLayout>
       <div className="space-y-6">
         <div className="space-y-2">
           <h1 className="text-2xl font-bold tracking-tight text-foreground">
@@ -860,7 +860,7 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
           </Link>
         </p>
       </div>
-    </AuthLayout>
+    </AgencyAuthLayout>
   );
 }
 

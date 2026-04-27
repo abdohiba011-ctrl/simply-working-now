@@ -192,7 +192,7 @@ export default function Login({ context = "renter" }: LoginProps) {
 
   const submitDisabled = isLoading || lockoutMs > 0;
 
-  const Layout = context === "agency" ? AgencyAuthLayout : AuthLayout;
+  const Layout = AgencyAuthLayout;
 
   return (
     <Layout>
