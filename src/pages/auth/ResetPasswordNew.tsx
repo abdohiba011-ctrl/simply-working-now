@@ -108,11 +108,11 @@ export default function ResetPasswordNew() {
     defaultValues: { password: "", confirmPassword: "" },
   });
 
-  // For the legacy internal-token flow: validate token on mount.
-  // For the email-link flow, Supabase auto-establishes a recovery session
-  // from the URL hash, so no validation is needed here.
+  // OTP-only flow: the token must be present and valid. If not, send the
+  // user back to /forgot-password to request a fresh code. Any old recovery
+  // link that lands here without a token is rejected.
   useEffect(() => {
-    if (internalToken && !isResetTokenValid(internalToken)) {
+    if (!internalToken || !isResetTokenValid(internalToken)) {
       toast.error(
         t("mockAuth.reset_link_expired", {
           defaultValue: "Your reset code expired. Please request a new one.",
