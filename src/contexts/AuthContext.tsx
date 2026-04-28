@@ -252,7 +252,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       throw new Error(rateLimitCheck.message || 'Too many signup attempts');
     }
 
-    const { data, error } = await supabase.auth.signUp({
+    const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
