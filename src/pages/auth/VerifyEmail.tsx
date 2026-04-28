@@ -68,7 +68,8 @@ export default function VerifyEmail() {
   };
 
   const handleChange = (index: number, value: string) => {
-    const sanitized = value.replace(/\D/g, "");
+    // Supabase OTP tokens are alphanumeric (e.g. "C6X4K2"), so accept letters + digits.
+    const sanitized = value.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
     if (!sanitized) {
       // Allow clearing
       const next = [...digits];
