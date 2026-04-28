@@ -53,7 +53,7 @@ export function OtpInput({
     next[index] = sanitized;
     onChange(next);
     if (index < length - 1) inputsRef.current[index + 1]?.focus();
-    if (next.join("").length === length && next.every((d) => /^\d$/.test(d))) {
+    if (next.join("").length === length && next.every((d) => /^[A-Z0-9]$/.test(d))) {
       onComplete?.(next.join(""));
     }
   };
