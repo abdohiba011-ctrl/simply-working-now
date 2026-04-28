@@ -75,10 +75,14 @@ export const AdminUnifiedClientsTab = ({ statusFilter = "all" }: AdminUnifiedCli
     fetchClients();
   }, []);
 
+  // Sync prop -> local filter when parent stat cards change selection
+  useEffect(() => {
+    setLocalStatusFilter(statusFilter);
+  }, [statusFilter]);
+
   useEffect(() => {
     let filtered = clients;
     
-    // Apply status filter (use localStatusFilter for internal state, or prop for external)
     const activeFilter = localStatusFilter || statusFilter;
     if (activeFilter !== "all") {
       filtered = clients.filter(client => {
@@ -88,7 +92,9 @@ export const AdminUnifiedClientsTab = ({ statusFilter = "all" }: AdminUnifiedCli
           case "verified":
             return client.is_verified === true;
           case "not_verified":
-            return !client.is_verified && client.verification_status !== 'pending_review';
+            return !client.is_verified
+              && client.verification_status !== 'pending_review'
+              && client.verification_status !== 'rejected';
           case "blocked":
             return client.is_frozen === true;
           default:
@@ -114,8 +120,8 @@ export const AdminUnifiedClientsTab = ({ statusFilter = "all" }: AdminUnifiedCli
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, name, email, phone, avatar_url, is_verified, verification_status, is_frozen, created_at')
-        .or('user_type.is.null,user_type.eq.client')
+        .select('id, name, email, phone, avatar_url, is_verified, verification_status, is_frozen, created_at, user_type')
+        .or('user_type.is.null,user_type.eq.client,user_type.eq.renter')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -129,7 +135,7 @@ export const AdminUnifiedClientsTab = ({ statusFilter = "all" }: AdminUnifiedCli
         total: clientsData.length,
         verified: clientsData.filter(c => c.is_verified).length,
         pending: clientsData.filter(c => c.verification_status === 'pending_review').length,
-        notStarted: clientsData.filter(c => !c.verification_status || c.verification_status === 'not_started').length,
+        notStarted: clientsData.filter(c => !c.is_verified && c.verification_status !== 'pending_review' && c.verification_status !== 'rejected').length,
         blocked: clientsData.filter(c => c.is_frozen).length
       });
     } catch (error: unknown) {
