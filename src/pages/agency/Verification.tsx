@@ -456,7 +456,7 @@ const Verification = () => {
                 ? status === "pending"
                   ? "Your documents are under review."
                   : "All set — submit your documents for review."
-                : "Upload all 3 documents to enable submission."}
+                : "Upload all required documents to enable submission."}
             </div>
             <Button
               onClick={handleSubmit}
