@@ -12,7 +12,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuthStore } from "@/stores/useAuthStore";
-import { supabase } from "@/integrations/supabase/client";
 
 import { COMMON_PASSWORDS, isResetTokenValid, type AuthError } from "@/lib/mockAuth";
 import { cn } from "@/lib/utils";
@@ -95,20 +94,11 @@ export default function ResetPasswordNew() {
   const [params] = useSearchParams();
   const isLoading = useAuthStore((s) => s.isLoading);
 
-  // Reset can come from EITHER:
-  //   1. A reset link in the user's email (Supabase establishes a recovery
-  //      session via detectSessionInUrl). In this case there is no `token`
-  //      query param — the active session IS the proof.
-  //   2. The legacy in-app code flow that issued an internal token after
-  //      verifying a 6-character code on /reset-password/verify.
   const internalToken = params.get("token") ?? "";
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
-  const [hasRecoverySession, setHasRecoverySession] = useState<boolean | null>(
-    null,
-  );
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -116,29 +106,15 @@ export default function ResetPasswordNew() {
     defaultValues: { password: "", confirmPassword: "" },
   });
 
-  // Detect a Supabase recovery session (from clicking the email link).
-  // We accept it as proof the user controls the email account, just like
-  // a verified internal token would.
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      const { data } = await supabase.auth.getSession();
-      if (cancelled) return;
-      const ok = !!data.session?.user;
-      setHasRecoverySession(ok);
-
-      if (!ok && (!internalToken || !isResetTokenValid(internalToken))) {
-        toast.error(
-          t("mockAuth.reset_link_expired", {
-            defaultValue: "Your reset link expired. Please request a new one.",
-          }),
-        );
-        navigate("/forgot-password", { replace: true });
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
+    if (!internalToken || !isResetTokenValid(internalToken)) {
+      toast.error(
+        t("mockAuth.reset_code_expired", {
+          defaultValue: "Your reset code expired. Please request a new one.",
+        }),
+      );
+      navigate("/forgot-password", { replace: true });
+    }
   }, [internalToken, navigate, t]);
 
   const pwValue = form.watch("password");
@@ -169,22 +145,8 @@ export default function ResetPasswordNew() {
   const onSubmit = async (values: FormValues) => {
     setServerError(null);
     try {
-      if (hasRecoverySession) {
-        // Email-link flow: just update the password on the active session.
-        const { error } = await supabase.auth.updateUser({
-          password: values.password,
-        });
-        if (error) throw error;
-        try {
-          await useAuthStore.getState().checkAuth();
-        } catch {
-          /* ignore */
-        }
-      } else {
-        // Legacy in-app code flow.
-        const setNewPassword = useAuthStore.getState().setNewPassword;
-        await setNewPassword(internalToken, values.password);
-      }
+      const setNewPassword = useAuthStore.getState().setNewPassword;
+      await setNewPassword(internalToken, values.password);
       toast.success(
         t("mockAuth.password_updated", { defaultValue: "Password updated!" }),
       );
@@ -193,8 +155,8 @@ export default function ResetPasswordNew() {
       const e = err as AuthError & { message?: string };
       if (e?.code === "TOKEN_EXPIRED" || e?.code === "INVALID_TOKEN") {
         toast.error(
-          t("mockAuth.reset_link_expired", {
-            defaultValue: "Your reset link expired. Please request a new one.",
+          t("mockAuth.reset_code_expired", {
+            defaultValue: "Your reset code expired. Please request a new one.",
           }),
         );
         navigate("/forgot-password", { replace: true });

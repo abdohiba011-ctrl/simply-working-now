@@ -7,7 +7,7 @@ const errorMap: Record<string, string> = {
   // Authentication errors
   'invalid login credentials': 'The email or password you entered is incorrect. Please check your credentials and try again.',
   'invalid email or password': 'The email or password you entered is incorrect. Please check your credentials and try again.',
-  'email not confirmed': 'Please verify your email address before logging in. Check your inbox for the verification link.',
+  'email not confirmed': 'Please verify your email address before logging in. Check your inbox for the 6-digit verification code.',
   'user already registered': 'An account with this email already exists. Please login instead.',
   'already exists': 'An account with this email already exists. Please login instead.',
   'email rate limit exceeded': 'Too many attempts. Please wait a few minutes before trying again.',

@@ -208,7 +208,7 @@ function mapSupabaseAuthError(message: string): AuthError {
     return makeAuthError("RATE_LIMITED", message);
   }
   if (m.includes("token") && m.includes("expired")) {
-    return makeAuthError("TOKEN_EXPIRED", "This link expired. Please request a new one.");
+    return makeAuthError("TOKEN_EXPIRED", "This code expired. Please request a new one.");
   }
   if (m.includes("invalid token") || m.includes("invalid otp") || m.includes("token has expired")) {
     return makeAuthError("INVALID_TOKEN", message);
@@ -718,12 +718,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         throw err;
       }
 
-      // Send a password reset LINK (not a code). The link lands on the
-      // app, Supabase establishes a recovery session, and the user is
-      // taken to the new-password screen.
-      const { error } = await supabase.auth.resetPasswordForEmail(cleanEmail, {
-        redirectTo: `${window.location.origin}/reset-password/new`,
-      });
+      // Send the recovery OTP email. The email template shows only the
+      // 6-digit code; users verify it inside Motonita before setting a
+      // new password.
+      const { error } = await supabase.auth.resetPasswordForEmail(cleanEmail);
       recordResetResend(cleanEmail);
 
       if (error) {

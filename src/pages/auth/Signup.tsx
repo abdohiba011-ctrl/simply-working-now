@@ -348,7 +348,7 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
       );
       toast.success(
         t("mockAuth.account_created", {
-          defaultValue: "Account created! Check your email for the 6-character verification code.",
+          defaultValue: "Account created! Check your email for the 6-digit verification code.",
         }),
       );
       navigate(`/verify-email?email=${encodeURIComponent(values.email)}`);
