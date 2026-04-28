@@ -90,6 +90,70 @@ export const useAdminNotifications = () => {
         .subscribe();
 
       channels.push(verificationsChannel);
+
+      // Admin notifications for new agency shop verification submissions
+      const agenciesChannel = supabase
+        .channel("admin-agency-verifications")
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "agencies",
+            filter: "verification_status=eq.pending_review",
+          },
+          (
+            payload: RealtimePostgresChangesPayload<{
+              id: string;
+              business_name: string | null;
+              verification_status: string;
+            }>
+          ) => {
+            const next = payload.new as {
+              business_name: string | null;
+              verification_status: string;
+            };
+            if (next?.verification_status === "pending_review") {
+              toast.info("New Agency Verification", {
+                description: `${next.business_name || "An agency"} submitted shop verification.`,
+                action: {
+                  label: "Review",
+                  onClick: () =>
+                    (window.location.href = "/admin/agencies/verifications"),
+                },
+              });
+            }
+          }
+        )
+        .subscribe();
+
+      channels.push(agenciesChannel);
+
+      // Admin notifications for new per-unit motorbike submissions
+      const bikesChannel = supabase
+        .channel("admin-bikes")
+        .on(
+          "postgres_changes",
+          {
+            event: "INSERT",
+            schema: "public",
+            table: "bikes",
+            filter: "approval_status=eq.pending",
+          },
+          () => {
+            toast.info("New Motorbike Pending Approval", {
+              description: "A new motorbike was added and is awaiting review.",
+              action: {
+                label: "Review",
+                onClick: () =>
+                  (window.location.href = "/admin/bikes/approvals"),
+              },
+            });
+          }
+        )
+        .subscribe();
+
+      channels.push(bikesChannel);
     }
 
     // Business notifications for booking assignments and bike approvals
