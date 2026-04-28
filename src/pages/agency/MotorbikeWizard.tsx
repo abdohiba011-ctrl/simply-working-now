@@ -86,6 +86,8 @@ const MotorbikeWizard = () => {
         transmission,
         fuel_type: fuelType,
         owner_id: u.user.id,
+        // Every new listing must be reviewed by an admin before it appears publicly.
+        ...(editing ? {} : { approval_status: "pending", is_approved: false }),
       };
       if (editing && id) {
         const { error } = await supabase.from("bike_types").update(payload).eq("id", id);
@@ -98,7 +100,9 @@ const MotorbikeWizard = () => {
           .select()
           .single();
         if (error) throw error;
-        toast.success("Motorbike created — now add images.");
+        toast.success(
+          "Motorbike submitted — pending admin approval. Add images while you wait."
+        );
         // Switch into edit mode in place so user can manage images.
         setBikeId(data.id);
         navigate(`/agency/motorbikes/${data.id}/edit`, { replace: true });
