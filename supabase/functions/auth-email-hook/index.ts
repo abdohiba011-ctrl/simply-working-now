@@ -17,11 +17,11 @@ const corsHeaders = {
 }
 
 const EMAIL_SUBJECTS: Record<string, string> = {
-  signup: 'Confirm your email',
-  invite: "You've been invited",
-  magiclink: 'Your login link',
-  recovery: 'Reset your password',
-  email_change: 'Confirm your new email',
+  signup: 'Your Motonita verification code',
+  invite: 'Your Motonita invitation code',
+  magiclink: 'Your Motonita login code',
+  recovery: 'Your Motonita password reset code',
+  email_change: 'Confirm your new email — verification code',
   reauthentication: 'Your verification code',
 }
 

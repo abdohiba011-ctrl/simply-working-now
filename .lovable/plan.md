@@ -1,47 +1,50 @@
 ## Goal
 
-Make agency verification simple. Only ask for what's actually needed:
+Stop sending "click this link" magic-link buttons in auth emails. Instead, display the **6-digit OTP code** so users can type it into the existing `/verify-email` and `/reset-verify` pages (which already call `supabase.auth.verifyOtp`).
 
-1. **Entity type selector** — "Company (SARL/SA)" or "Auto-entrepreneur"
-2. **Business document** (one, depending on entity type):
-   - Company → upload **RC (Registre de Commerce)**
-   - Auto-entrepreneur → upload **Auto-entrepreneur card**
-3. **Owner ID card** — both sides:
-   - Front of CIN
-   - Back of CIN
+## Why it's currently broken
 
-Remove **ICE certificate**, **RIB / bank account**, and **Insurance certificate** from the flow. They are no longer requested.
+The `auth-email-hook` already receives both the URL and the `token` (6-digit code) from the auth system. But the React Email templates only render `confirmationUrl` as a button — the `token` is silently dropped. Users get a link, click it, and bypass our OTP-based verification flow.
 
-## What changes
+The shared brand file (`_brand.tsx`) already defines `styles.codeWrap` and `styles.code` (36px, mono, lime tint background) — clearly designed for OTPs but never wired up.
 
-### `src/pages/agency/Verification.tsx` (rewrite)
+## Changes
 
-- Add a top selector (radio cards) for entity type: `company` | `auto_entrepreneur`. Persisted on the profile so it survives reloads.
-- Replace the 4-tile grid with a 3-step checklist tailored to the choice:
-  - Step 1 — Business document (label switches based on entity type)
-  - Step 2 — Owner ID card (front)
-  - Step 3 — Owner ID card (back)
-- Each step keeps the same upload UX (PDF/JPG/PNG, 5 MB max, Replace button, signed-URL preview).
-- "Submit for review" only enables once all 3 required files are uploaded; it sets `verification_status = 'pending'`.
-- Status badge (Verified / Pending / Rejected / Not started) stays as-is.
+### 1. `auth-email-hook/index.ts`
+- Pass `token` into `templateProps` for **all** templates (currently only `reauthentication` uses it).
+- Add `token` to `SAMPLE_DATA` for `signup`, `magiclink`, `recovery`, `email_change`, `invite` so previews render correctly.
 
-### Storage / data
+### 2. Rewrite 5 templates to display the OTP code
 
-- Reuse the existing `client-files` bucket and `client_files` table — no schema migration needed.
-- File-name convention encodes the slot so reloads can re-hydrate the UI:
-  - `rc-…` (company business doc)
-  - `ae_card-…` (auto-entrepreneur business doc)
-  - `id_front-…`
-  - `id_back-…`
-- Entity type stored in `profiles.business_type` (existing column), values `company` or `auto_entrepreneur`.
+For each of `signup.tsx`, `magic-link.tsx`, `recovery.tsx`, `email-change.tsx`, `invite.tsx`:
+- Remove the `<Button href={confirmationUrl}>` CTA entirely.
+- Add a centered `{token}` block using `styles.codeWrap` + `styles.code` (the brand file already defines these).
+- Add small note: "Enter this 6-digit code in the verification page. The code expires in 60 minutes." (translated/adapted per template purpose).
+- Keep `BrandHeader` / `BrandFooter`.
+- Update `Preview` text and `Heading` to reflect "Your verification code" / "Your reset code" / etc.
+- Add new prop `token: string` to each template's interface.
 
-### Copy
+`reauthentication.tsx` already uses the token — leave as-is (verify quickly).
 
-- Brief one-line helper above the steps: "Most reviews take 24–48 hours. Unverified agencies don't appear in renter search results."
-- Remove any mention of ICE, RIB, bank account, insurance from this screen.
+### 3. Redeploy `auth-email-hook`
+
+After file changes, deploy the edge function so the new templates take effect immediately.
 
 ## Out of scope
 
-- Admin review UI changes (admin still sees whatever files were uploaded under the user, which now happen to be the simpler set).
-- No DB migration, no edge functions, no new tables.
-- Translations: English copy only for now (matches current state of this page).
+- No changes to `useAuthStore.ts`, `/verify-email`, or `/reset-verify` — they already call `verifyOtp` correctly.
+- No changes to email subjects or queue infrastructure.
+- No changes to brand colors / layout (already on-brand).
+
+## Files touched
+
+- `supabase/functions/auth-email-hook/index.ts` (pass `token`, add to sample data)
+- `supabase/functions/_shared/email-templates/signup.tsx` (rewrite)
+- `supabase/functions/_shared/email-templates/magic-link.tsx` (rewrite)
+- `supabase/functions/_shared/email-templates/recovery.tsx` (rewrite)
+- `supabase/functions/_shared/email-templates/email-change.tsx` (rewrite)
+- `supabase/functions/_shared/email-templates/invite.tsx` (rewrite)
+
+## Verification after deploy
+
+User signs up → receives email with a 6-digit code → enters code on `/verify-email` → account confirmed. No magic links anywhere.
