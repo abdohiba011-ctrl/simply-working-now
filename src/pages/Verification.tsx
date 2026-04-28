@@ -276,65 +276,120 @@ const Verification = () => {
       
       const compressedFile = new File([compressedBlob], file.name.replace(/\.[^.]+$/, '.webp'), { type: 'image/webp' });
       
-      setUploadState(prev => ({ 
-        ...prev, 
-        progress: 45,
-        status: 'uploading',
-        statusMessage: 'Uploading to secure storage...',
-        compressedSize: compressedBlob.size
-      }));
-      
-      // Upload to Supabase
-      const fileName = `${user?.id}/${side}-${Date.now()}.webp`;
-      
-      // Smooth progress animation during upload
-      let currentProgress = 45;
-      const progressInterval = setInterval(() => {
-        setUploadState(prev => {
-          if (prev.progress < 85) {
-            currentProgress = prev.progress + 2;
-            return { 
-              ...prev, 
-              progress: currentProgress,
-              statusMessage: currentProgress < 70 ? 'Uploading to secure storage...' : 'Verifying upload...'
-            };
-          }
-          return prev;
-        });
-      }, 150);
+      // Cache the compressed file on state so the user can retry the
+      // network upload without re-running compression.
+      setUploadState(prev => ({ ...prev, compressedFile }));
 
-      const { data, error } = await supabase.storage
-        .from('id-documents')
-        .upload(fileName, compressedFile, { upsert: true });
-
-      clearInterval(progressInterval);
-
-      if (error) throw error;
-
-      // Store storage path only - private bucket requires signed URLs for access
-      setUploadedUrls(prev => ({
-        ...prev,
-        [side]: fileName
-      }));
-
-      // Show success
-      setUploadState(prev => ({ 
-        ...prev, 
-        progress: 100, 
-        status: 'success',
-        statusMessage: `Complete! Reduced from ${formatFileSize(originalSize)} to ${formatFileSize(compressedBlob.size)}`
-      }));
-      
-      toast.success(`${side === 'front' ? 'Front ID' : side === 'back' ? 'Back ID' : 'Selfie'} uploaded successfully!`);
+      await uploadCompressedFile(side, compressedFile, originalSize, compressedBlob.size, setUploadState);
     } catch (err: unknown) {
-      setUploadState(prev => ({ 
-        ...prev, 
-        status: 'error', 
-        error: getErrMsg(err) || 'Upload failed. Please try again.',
+      const info = describeUploadError(err);
+      console.error(`[Verification] upload failed (${side}):`, err);
+      setUploadState(prev => ({
+        ...prev,
+        status: 'error',
+        error: info.message || getErrMsg(err) || 'Upload failed. Please try again.',
+        errorCode: info.code,
+        errorHint: info.hint,
         progress: 0,
         statusMessage: 'Upload failed'
       }));
-      toast.error(`Failed to upload: ${getErrMsg(err)}`);
+      toast.error(`Failed to upload: ${info.message || getErrMsg(err)}`);
+    }
+  };
+
+  // Performs only the network upload portion. Used by both the initial
+  // selection flow and by the Retry button on the error card.
+  const uploadCompressedFile = async (
+    side: 'front' | 'back' | 'selfie',
+    compressedFile: File,
+    originalSize: number,
+    compressedSize: number,
+    setUploadState: React.Dispatch<React.SetStateAction<UploadState>>,
+  ) => {
+    setUploadState(prev => ({
+      ...prev,
+      progress: 45,
+      status: 'uploading',
+      error: null,
+      errorCode: null,
+      errorHint: null,
+      statusMessage: 'Uploading to secure storage...',
+      compressedSize,
+    }));
+
+    const fileName = `${user?.id}/${side}-${Date.now()}.webp`;
+
+    let currentProgress = 45;
+    const progressInterval = setInterval(() => {
+      setUploadState(prev => {
+        if (prev.progress < 85) {
+          currentProgress = prev.progress + 2;
+          return {
+            ...prev,
+            progress: currentProgress,
+            statusMessage: currentProgress < 70 ? 'Uploading to secure storage...' : 'Verifying upload...'
+          };
+        }
+        return prev;
+      });
+    }, 150);
+
+    try {
+      const { error } = await supabase.storage
+        .from('id-documents')
+        .upload(fileName, compressedFile, { upsert: true, contentType: 'image/webp' });
+
+      clearInterval(progressInterval);
+      if (error) throw error;
+
+      setUploadedUrls(prev => ({ ...prev, [side]: fileName }));
+      setUploadState(prev => ({
+        ...prev,
+        progress: 100,
+        status: 'success',
+        error: null,
+        errorCode: null,
+        errorHint: null,
+        statusMessage: `Complete! Reduced from ${formatFileSize(originalSize)} to ${formatFileSize(compressedSize)}`,
+      }));
+      toast.success(`${side === 'front' ? 'Front ID' : side === 'back' ? 'Back ID' : 'Selfie'} uploaded successfully!`);
+    } catch (err: unknown) {
+      clearInterval(progressInterval);
+      throw err;
+    }
+  };
+
+  // Retry the network upload only (no re-pick, no re-compression).
+  const retryUpload = async (
+    side: 'front' | 'back' | 'selfie',
+    uploadState: UploadState,
+    setUploadState: React.Dispatch<React.SetStateAction<UploadState>>,
+  ) => {
+    if (!uploadState.compressedFile) {
+      toast.error('No file to retry — please pick a photo first.');
+      return;
+    }
+    try {
+      await uploadCompressedFile(
+        side,
+        uploadState.compressedFile,
+        uploadState.originalSize,
+        uploadState.compressedSize || uploadState.compressedFile.size,
+        setUploadState,
+      );
+    } catch (err: unknown) {
+      const info = describeUploadError(err);
+      console.error(`[Verification] retry failed (${side}):`, err);
+      setUploadState(prev => ({
+        ...prev,
+        status: 'error',
+        error: info.message || getErrMsg(err) || 'Upload failed. Please try again.',
+        errorCode: info.code,
+        errorHint: info.hint,
+        progress: 0,
+        statusMessage: 'Upload failed',
+      }));
+      toast.error(`Retry failed: ${info.message || getErrMsg(err)}`);
     }
   };
 
