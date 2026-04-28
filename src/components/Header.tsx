@@ -50,11 +50,26 @@ export const Header = memo(() => {
   const storeIsLoading = useAuthStore((s) => s.isLoading);
   const checkAuthStore = useAuthStore((s) => s.checkAuth);
   const switchRoleStore = useAuthStore((s) => s.switchRole);
-  const isBusiness = hasRole('agency') || hasRole('business') || !!storeUser?.roles?.agency?.active;
+
+  // Roles are "ready" once both stores have either resolved or hydrated a
+  // user. Until then, we render neutral placeholders for role-specific
+  // buttons to avoid flicker (e.g. agency accounts briefly seeing the
+  // renter wallet button on first paint).
+  const rolesReady =
+    !authLoading && (!isAuthenticated || (!!storeUser && !storeIsLoading));
+
+  // Agency takes precedence — once we know the user has the agency role
+  // we lock the UI into agency-mode and never show renter widgets, even
+  // if `currentRole` is briefly stale.
+  const isBusiness =
+    rolesReady &&
+    (hasRole('agency') || hasRole('business') || !!storeUser?.roles?.agency?.active);
   // Combine live role check with cached admin flag so the Admin button shows
   // instantly on refresh, even before user_roles finishes loading.
-  const isAdmin = hasRole('admin') || (isAuthenticated && readCachedIsAdmin(user?.id));
-  const isRenter = isAuthenticated && !isBusiness && !isAdmin;
+  const isAdmin =
+    (rolesReady && hasRole('admin')) ||
+    (isAuthenticated && readCachedIsAdmin(user?.id));
+  const isRenter = rolesReady && isAuthenticated && !isBusiness && !isAdmin;
   const hasAgencyRole = isBusiness;
   const handleSwitchToAgency = useCallback(() => {
     switchRoleStore("agency");
