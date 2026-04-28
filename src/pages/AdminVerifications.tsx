@@ -104,7 +104,7 @@ const AdminVerifications = () => {
           is_verified: false, 
           verification_status: 'rejected' 
         })
-        .eq('id', userId);
+        .eq('user_id', userId);
 
       if (error) throw error;
 
