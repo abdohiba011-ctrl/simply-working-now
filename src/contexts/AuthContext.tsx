@@ -256,7 +256,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       email,
       password,
       options: {
-        data: { name },
+        data: { name, full_name: name, signup_role: role === "business" ? "agency" : "renter" },
         emailRedirectTo: `${window.location.origin}/`,
       },
     });
@@ -271,14 +271,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     
     clearRateLimitState('signup', email);
 
-    // Add business role if user selected business account type
-    if (data?.user && role === "business") {
-      const { error: roleError } = await supabase
-        .from('user_roles')
-        .insert({ user_id: data.user.id, role: 'agency' });
-      
-      if (roleError) throw roleError;
-    }
+    // Role assignment is handled by trusted backend signup automation.
   };
 
   const logout = async () => {
