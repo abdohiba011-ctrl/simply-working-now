@@ -160,13 +160,13 @@ const UserVerificationDetails = () => {
           verification_status: 'verified',
           rejection_reason: null
         })
-        .eq('id', user.id);
+        .eq('user_id', user.user_id);
 
       if (error) throw error;
 
       // Send notification
       await supabase.from('notifications').insert({
-        user_id: user.id,
+        user_id: user.user_id,
         title: 'Account Verified! ✅',
         message: 'Congratulations! Your account has been verified. You can now rent motorbikes on Motonita.',
         type: 'success'
