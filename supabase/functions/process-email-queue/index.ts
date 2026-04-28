@@ -1,5 +1,55 @@
-import { sendLovableEmail } from 'npm:@lovable.dev/email-js'
 import { createClient } from 'npm:@supabase/supabase-js@2'
+
+// All emails (auth + transactional) are sent via Resend through the
+// Lovable connector gateway. The frontend never sees RESEND_API_KEY.
+const RESEND_GATEWAY_URL = 'https://connector-gateway.lovable.dev/resend'
+
+// Custom error so the existing rate-limit / forbidden detection still works.
+class ResendSendError extends Error {
+  status: number
+  retryAfterSeconds: number | null
+  constructor(status: number, message: string, retryAfterSeconds: number | null) {
+    super(message)
+    this.status = status
+    this.retryAfterSeconds = retryAfterSeconds
+  }
+}
+
+async function sendViaResend(payload: {
+  to: string
+  from: string
+  subject: string
+  html: string
+  text?: string
+}, opts: { lovableApiKey: string; resendApiKey: string }) {
+  const resp = await fetch(`${RESEND_GATEWAY_URL}/emails`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${opts.lovableApiKey}`,
+      'X-Connection-Api-Key': opts.resendApiKey,
+    },
+    body: JSON.stringify({
+      from: payload.from,
+      to: [payload.to],
+      subject: payload.subject,
+      html: payload.html,
+      text: payload.text,
+    }),
+  })
+
+  const data = await resp.json().catch(() => ({}))
+  if (!resp.ok) {
+    const retryAfterHeader = resp.headers.get('retry-after')
+    const retryAfterSeconds = retryAfterHeader ? parseInt(retryAfterHeader, 10) : null
+    throw new ResendSendError(
+      resp.status,
+      `Resend ${resp.status}: ${JSON.stringify(data)}`,
+      Number.isFinite(retryAfterSeconds as number) ? (retryAfterSeconds as number) : null,
+    )
+  }
+  return data
+}
 
 const MAX_RETRIES = 5
 const DEFAULT_BATCH_SIZE = 10
