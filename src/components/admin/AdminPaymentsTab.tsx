@@ -35,7 +35,7 @@ interface YouCanPayment {
   created_at: string;
   user_id: string | null;
   customer_email: string | null;
-  booking_id?: string | null;
+  related_booking_id?: string | null;
 }
 
 interface BookingPaymentRow {
@@ -89,7 +89,7 @@ export const AdminPaymentsTab = () => {
     setYcLoading(true);
     let q = supabase
       .from("youcanpay_payments")
-      .select("id,purpose,amount,currency,status,created_at,user_id,customer_email,booking_id")
+      .select("id,purpose,amount,currency,status,created_at,user_id,customer_email,related_booking_id")
       .order("created_at", { ascending: false })
       .limit(200);
     if (ycStatus !== "all") q = q.eq("status", ycStatus);
@@ -132,7 +132,7 @@ export const AdminPaymentsTab = () => {
     return (
       p.id.toLowerCase().includes(s) ||
       (p.customer_email || "").toLowerCase().includes(s) ||
-      (p.booking_id || "").toLowerCase().includes(s)
+      (p.related_booking_id || "").toLowerCase().includes(s)
     );
   });
 
@@ -241,11 +241,11 @@ export const AdminPaymentsTab = () => {
                             {p.customer_email || p.user_id || "—"}
                           </TableCell>
                           <TableCell className="text-right">
-                            {p.booking_id ? (
+                            {p.related_booking_id ? (
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => navigate(`/admin/bookings/${p.booking_id}`)}
+                                onClick={() => navigate(`/admin/bookings/${p.related_booking_id}`)}
                               >
                                 View <ExternalLink className="h-3 w-3 ml-1" />
                               </Button>
