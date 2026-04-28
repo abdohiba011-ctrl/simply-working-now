@@ -80,7 +80,7 @@ export default function ForgotPassword() {
     setServerError(null);
     try {
       await requestPasswordReset(values.email);
-      setSent(true);
+      navigate(`/reset-password/verify?email=${encodeURIComponent(values.email)}`);
     } catch (err) {
       const e = err as AuthError;
       if (e.code === "RESET_RATE_LIMITED") {
@@ -113,13 +113,13 @@ export default function ForgotPassword() {
           </h1>
           <p className="text-sm" style={{ color: "rgba(22,51,0,0.7)" }}>
             {sent
-              ? t("mockAuth.reset_link_sent_sub", {
+              ? t("mockAuth.reset_code_sent_sub", {
                   defaultValue:
-                    "We've emailed you a password reset link. Open it from your inbox to set a new password.",
+                    "We've emailed you a 6-digit reset code. Enter it to set a new password.",
                 })
               : t("mockAuth.reset_password_sub", {
                   defaultValue:
-                    "Enter your email and we'll send you a link to reset your password.",
+                    "Enter your email and we'll send you a 6-digit code to reset your password.",
                 })}
           </p>
         </div>
@@ -146,14 +146,14 @@ export default function ForgotPassword() {
             >
               <Mail className="h-4 w-4 mt-0.5 shrink-0" />
               <span>
-                {t("mockAuth.reset_link_sent_to", {
-                  defaultValue: "Reset link sent to",
+                {t("mockAuth.reset_code_sent_to", {
+                  defaultValue: "Reset code sent to",
                 })}{" "}
                 <span className="font-semibold">{emailValue}</span>
               </span>
             </div>
             <p className="text-xs" style={{ color: "rgba(22,51,0,0.6)" }}>
-              {t("mockAuth.reset_link_check_spam", {
+              {t("mockAuth.reset_code_check_spam", {
                 defaultValue:
                   "Didn't get it? Check your spam folder, or try again in a minute.",
               })}
@@ -216,7 +216,7 @@ export default function ForgotPassword() {
                   {t("mockAuth.sending", { defaultValue: "Sending..." })}
                 </span>
               ) : (
-                t("mockAuth.send_reset_link", { defaultValue: "Send reset link" })
+                t("mockAuth.send_reset_code", { defaultValue: "Send reset code" })
               )}
             </Button>
           </form>
