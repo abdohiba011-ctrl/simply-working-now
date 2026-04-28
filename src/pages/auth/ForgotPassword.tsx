@@ -49,6 +49,7 @@ export default function ForgotPassword() {
 
   const [serverError, setServerError] = useState<string | null>(null);
   const [lockoutMs, setLockoutMs] = useState(0);
+  const [sent, setSent] = useState(false);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -75,17 +76,11 @@ export default function ForgotPassword() {
     [lockoutMs],
   );
 
-  
-
   const onSubmit = async (values: FormValues) => {
     setServerError(null);
     try {
       await requestPasswordReset(values.email);
-      // Send the user straight to the OTP entry screen so they can paste
-      // the 6-digit code we just emailed them.
-      navigate(
-        `/reset-password/verify?email=${encodeURIComponent(values.email.trim().toLowerCase())}`,
-      );
+      setSent(true);
     } catch (err) {
       const e = err as AuthError;
       if (e.code === "RESET_RATE_LIMITED") {
