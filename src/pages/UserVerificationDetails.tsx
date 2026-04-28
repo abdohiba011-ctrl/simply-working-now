@@ -27,6 +27,7 @@ import {
 
 interface UserProfile {
   id: string;
+  user_id: string;
   name: string | null;
   email: string | null;
   phone: string | null;
@@ -76,8 +77,8 @@ const UserVerificationDetails = () => {
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', userId)
-        .single();
+        .eq('user_id', userId)
+        .maybeSingle();
 
       if (error) throw error;
       setUser(data);
@@ -159,13 +160,13 @@ const UserVerificationDetails = () => {
           verification_status: 'verified',
           rejection_reason: null
         })
-        .eq('id', user.id);
+        .eq('user_id', user.user_id);
 
       if (error) throw error;
 
       // Send notification
       await supabase.from('notifications').insert({
-        user_id: user.id,
+        user_id: user.user_id,
         title: 'Account Verified! ✅',
         message: 'Congratulations! Your account has been verified. You can now rent motorbikes on Motonita.',
         type: 'success'
@@ -195,13 +196,13 @@ const UserVerificationDetails = () => {
           verification_status: 'rejected',
           rejection_reason: rejectionReason.trim()
         })
-        .eq('id', user.id);
+        .eq('user_id', user.user_id);
 
       if (error) throw error;
 
       // Send notification with reason
       await supabase.from('notifications').insert({
-        user_id: user.id,
+        user_id: user.user_id,
         title: 'Verification Rejected ❌',
         message: `Your verification was rejected. Reason: ${rejectionReason.trim()}. Please review and resubmit your documents.`,
         type: 'warning',
@@ -232,12 +233,12 @@ const UserVerificationDetails = () => {
           is_frozen: true,
           frozen_reason: 'Blocked by admin during verification review'
         })
-        .eq('id', user.id);
+        .eq('user_id', user.user_id);
 
       if (error) throw error;
 
       await supabase.from('notifications').insert({
-        user_id: user.id,
+        user_id: user.user_id,
         title: 'Account Blocked',
         message: 'Your account has been blocked. Please contact support for more information.',
         type: 'error'

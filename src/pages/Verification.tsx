@@ -175,8 +175,8 @@ const Verification = () => {
       const { data: profile } = await supabase
         .from('profiles')
         .select('is_verified, verification_status, phone, first_name_on_id, family_name_on_id, id_card_number, name, rejection_reason')
-        .eq('id', user.id)
-        .single();
+        .eq('user_id', user.id)
+        .maybeSingle();
       
       if (profile) {
         // Store rejection reason if exists
@@ -445,33 +445,16 @@ const Verification = () => {
           id_back_image_url: backUrl,
           selfie_with_id_url: selfieUrl || null,
           verification_status: 'pending_review',
+          submitted_at: new Date().toISOString(),
+          rejection_reason: null,
         })
-        .eq('id', user?.id);
+        .eq('user_id', user?.id);
 
       if (error) throw error;
 
-      // Notify all admins of the new verification submission
-      try {
-        const { data: admins } = await supabase
-          .from('user_roles')
-          .select('user_id')
-          .eq('role', 'admin');
-
-        if (admins && admins.length > 0) {
-          const fullName = `${firstName.trim()} ${familyName.trim()}`.trim();
-          const notifications = admins.map((a) => ({
-            user_id: a.user_id,
-            title: 'New Verification Submitted',
-            message: `${fullName || 'A user'} submitted ID verification for review.`,
-            type: 'verification',
-            link: `/admin/verifications/${user?.id}`,
-            action_url: `/admin/verifications/${user?.id}`,
-          }));
-          await supabase.from('notifications').insert(notifications);
-        }
-      } catch (notifErr) {
-        console.error('Failed to notify admins:', notifErr);
-      }
+      // Admins are notified automatically by the
+      // trg_notify_admins_on_verification_submit database trigger.
+      setVerificationStatus('pending_review');
 
       // After submission: if this came from a paid booking, send them to the booking page
       // (chat is already unlocked); otherwise show the standard verification thank-you.

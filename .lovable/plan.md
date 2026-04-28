@@ -1,88 +1,73 @@
-## What you're seeing & why
+# Fix renter verification flow (persist, notify, show status)
 
-Three separate issues — let me address each honestly because one of them needs a product decision from you before I touch code.
+## What's broken (root cause)
 
----
+Every verification-related query targets the wrong column on `profiles`. The `profiles` table is keyed by `user_id` (= `auth.uid()`). The verification code uses `.eq('id', user.id)` everywhere — `id` is the profile row's own PK, not the auth user id. The filter matches **0 rows**, so:
 
-### Issue 1 — Credits pill shows on `/affiliate` even though page says "Credits are for renters"
+1. The `UPDATE` on submit silently affects 0 rows → `verification_status` never flips to `pending_review`, `id_front_image_url` / `selfie_with_id_url` are never saved. Confirmed: `SELECT … FROM profiles WHERE verification_status <> 'unverified'` returns 0 rows.
+2. The status `SELECT` on page load also returns nothing → user always sees `not_started` → keeps re-submitting.
+3. The admin queue at `/admin/verifications` lists nothing (no rows in `pending_review`), so there's nothing to act on. The notification IS inserted, but the linked profile never updates and the admin has nothing to review.
+4. Admin approve/reject/block buttons also use `.eq('id', userId)` → would silently no-op even if a row existed.
 
-**Cause:** You signed up as a renter, so the header correctly shows the credits pill (0 MAD). The `/affiliate` page body has a separate "Credits are for renters" empty state that's targeted at *agency-only* users — but you're a renter, so you shouldn't see that empty state at all. You should see the actual referral/affiliate UI.
+There's also no admin notification bell, so even when the `notifications` row is inserted, an admin only sees it if they manually open `/notifications`.
 
-**Fix:** In `src/pages/Affiliate.tsx`, the gating logic is wrong. Renters should see the full affiliate page; only agency-only (no renter role) users should see the "Credits are for renters" lock screen.
+## Changes
 
----
+### 1. Fix the column-name bug everywhere (the actual blocker)
 
-### Issue 2 — `/agencies` CTAs ("Start 30-day free trial", "Log in to dashboard") send a logged-in renter to the wrong place
+Replace `.eq('id', …)` with `.eq('user_id', …)` for all `profiles` queries in:
+- `src/pages/Verification.tsx` — load (line 178) and submit update (line 449)
+- `src/pages/AdminVerifications.tsx` — approve (line 76), reject (line 106), block (line 136)
+- `src/pages/UserVerificationDetails.tsx` — load (line 79), approve (line 162), reject (line 198), block (line 235)
 
-**Cause:** Both buttons in `src/pages/Agencies.tsx` link unconditionally to `/agency/signup` and `/agency/login`. When a renter is already logged in, `/agency/login` redirects them via `navigateAfterAuth` which sees they have no agency role and bounces them around.
+After this single fix the submission persists, the admin queue populates, and approve/reject works.
 
-**Fix:** Make the CTAs role-aware on `/agencies`:
-- Not logged in → `/agency/signup` and `/agency/login` (current).
-- Logged in as renter (no agency role) → both CTAs go to `/agency/signup` (because they need to *create* an agency account, not log in again).
-- Logged in as agency → both CTAs go to `/agency/dashboard`.
+### 2. Make submission state truly persistent
 
-Apply the same fix to the bottom "Ready to grow your rental business?" CTAs and the pricing-card CTAs.
+In `Verification.tsx`:
+- Stamp `submitted_at = new Date().toISOString()` in the update payload (column already exists).
+- On load, if `verification_status` is `pending_review`, `verified`, or `rejected`, render the read-only status card (already exists for `pending_review` at line 663) instead of the upload form. Add the same gating for `verified` (success card) and `rejected` (banner + allow resubmit since rejection is the one case where re-upload is intended).
+- If `is_verified = true`, keep the existing redirect.
 
----
+### 3. Show a clear status badge
 
-### Issue 3 — "Same email can't be reused for renter AND agency" — needs your decision
+- Add a small `VerificationStatusBadge` (uses existing badge component) shown:
+  - In the user header/profile menu (next to name) — `Pending`, `Verified`, `Rejected`, or nothing if unverified.
+  - At the top of `Verification.tsx` whenever a status exists.
+- Disable the "Submit" button while `verification_status === 'pending_review'`.
 
-This is the big one. Right now the app uses a single Supabase `auth.users` table where **email is globally unique**. One email = one account = one set of roles attached to it. That's why signing up as agency with your renter email throws "email already exists".
+### 4. Reliable admin notification pipeline
 
-You're asking for the opposite: two parallel namespaces, where `you@gmail.com` can exist independently as a renter account AND as a separate agency account, with different passwords, different verification, different everything.
+Currently only renter-side code inserts admin notifications inline, which fails silently if the `notifications` insert is blocked or the admin list query returns nothing. Replace with a database trigger so it can never be skipped:
 
-**There are only two clean ways to do this — they have very different consequences. Pick one:**
+- Migration: `notify_admins_on_verification_submit` AFTER UPDATE trigger on `public.profiles` that fires when `NEW.verification_status = 'pending_review'` AND `OLD.verification_status IS DISTINCT FROM 'pending_review'`. It inserts one `notifications` row per admin (`user_roles WHERE role = 'admin'`) with `link = '/admin/verifications/' || NEW.user_id`.
+- Remove the inline admin-notification block from `Verification.tsx` (now handled by the trigger).
 
-#### Option A — One account, multiple roles (RECOMMENDED — small change)
-`you@gmail.com` is one account. When a renter tries to sign up as agency with the same email, instead of erroring we say:
-> "You already have a renter account. Add an agency profile to it?"
-> [Sign in to add agency role]
+### 5. Admin notifications bell
 
-After they sign in, we run the agency onboarding wizard (business name, city, etc.), insert the `agency` role into `user_roles`, and they can switch between renter and agency from their avatar menu. One password, one inbox, two dashboards.
+In `src/pages/AdminPanel.tsx` header, add a bell icon that:
+- Counts unread `notifications` for the current admin (`is_read = false`).
+- Lists the latest 10 with click-through to `link`.
+- Subscribes to realtime inserts on `notifications` filtered by `user_id = auth.uid()` so new submissions appear instantly.
 
-This matches the codebase's existing role-switcher (`switchRoleStore`, `MockProtectedRoute` already handles dual-role users) and the `MockUser` shape that already has both `roles.renter` and `roles.agency`. **~1 day of work.**
+Also surface a "Verifications" tab/card on `/admin/panel` showing the count of profiles with `verification_status = 'pending_review'`, linking to `/admin/verifications`.
 
-#### Option B — True separate accounts per role (BIG REWRITE)
-`you@gmail.com` literally exists twice in `auth.users` — once as renter, once as agency. Different passwords. Different sessions. They can't share data, can't switch in-app, must log out and log back in to swap.
+### 6. Small cleanups
 
-Supabase enforces unique emails on `auth.users` natively. To do this we'd have to:
-- Store agency accounts under a synthetic email (e.g. `agency+you@gmail.com`) so Supabase accepts them, then map back to the real email in our own table — fragile and breaks password reset, OAuth, email verification.
-- OR run two Supabase projects (one for renters, one for agencies) — operationally painful and we'd lose the unified admin panel.
+- Toast wording on resubmit-after-reject: keep the existing rejection banner (already implemented), just make sure the form re-enables only for `rejected`.
+- Add an index to speed up the admin queue: `CREATE INDEX IF NOT EXISTS idx_profiles_verification_status ON profiles(verification_status) WHERE verification_status = 'pending_review';`
 
-**This is ~1–2 weeks of work, will break OAuth/Google sign-in, and creates ongoing support pain (users will forget which "version" of their account they're on).** I strongly recommend against it.
+## Files
 
----
+- `src/pages/Verification.tsx` — fix `.eq` keys, add `submitted_at`, gate UI by status, show badge.
+- `src/pages/AdminVerifications.tsx` — fix `.eq` keys.
+- `src/pages/UserVerificationDetails.tsx` — fix `.eq` keys.
+- `src/pages/AdminPanel.tsx` — add notifications bell + pending-verifications card.
+- `src/components/VerificationStatusBadge.tsx` — new tiny component.
+- New migration — admin-notify trigger + index.
 
-## What I'll build (assuming Option A)
+## Out of scope
 
-1. **Affiliate page gating fix** — show the affiliate UI to renters; show the "Credits are for renters" lock only to agency-only users.
-
-2. **Agencies page CTAs become role-aware** — hero buttons, pricing-plan CTAs, and the bottom "Ready to grow" section all check auth state + roles and route correctly. Logged-in renter → `/agency/signup` (which becomes "add agency profile"). Logged-in agency → `/agency/dashboard`.
-
-3. **Add-role flow for existing accounts** — when a logged-in renter hits `/agency/signup`, skip the email/password step entirely and show only step 2 (business name, type, city, neighborhood). On submit:
-   - Insert `agency` row into `user_roles` (via a new `add_role_to_self` RPC — needed because the `guard_user_roles_write` trigger blocks direct inserts from authenticated users).
-   - Update `profiles` with business fields + `user_type = 'business'`.
-   - Switch active role to `agency` and route to `/agency/dashboard` (or `/agency/verification`).
-
-4. **Better error message in renter signup → agency signup case** — when someone tries to sign up as agency with an email that already has a renter account, instead of the generic "email already exists" red box, show:
-   > "This email already has a renter account. [Log in] to add an agency profile to it."
-
-5. **QA pass** — verify all four matrix cases:
-   - Anonymous → /agencies CTAs → signup/login pages
-   - Renter logged in → /agencies CTAs → "add agency profile" wizard
-   - Agency logged in → /agencies CTAs → /agency/dashboard
-   - Dual-role user → /agencies CTAs → /agency/dashboard
-
-## Technical details
-
-- `src/pages/Affiliate.tsx`: change gate from `isRenter ? lock : page` to `isAgencyOnly ? lock : page`.
-- `src/pages/Agencies.tsx`: replace each `<Link to="/agency/...">` wrapper with a function that branches on `useAuthStore` state + `user.roles`.
-- `src/pages/auth/Signup.tsx` (agency flow): when `isAuthenticated && user.roles.renter.active && !user.roles.agency.active`, render only Step 2 and call a new `addAgencyRole()` action on submit instead of `signup()`.
-- `src/stores/useAuthStore.ts`: add `addAgencyRole(extra: AgencyExtraData)` that calls a new SECURITY DEFINER RPC.
-- New migration: `add_role_to_self(_role app_role, _profile jsonb)` — SECURITY DEFINER function that inserts into `user_roles` for `auth.uid()`, updates `profiles`, returns void. Bypasses the existing `guard_user_roles_write` trigger because it runs as the function owner.
-- No changes to `auth.users`, no synthetic emails, no second Supabase project.
-
-## Out of scope (per your "fix only what I asked" constraint)
-- Header avatar dropdown contents (already changed last loop).
-- Admin panel access (already covered by `mem://navigation/admin-access`).
-- Verification upload UI (already shipped).
+- No changes to RLS (existing `Users can update own profile` policy already permits the corrected update).
+- No changes to upload buckets or storage policies (those were fixed earlier).
+- No new edge functions needed.

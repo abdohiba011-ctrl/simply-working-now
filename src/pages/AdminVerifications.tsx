@@ -13,6 +13,7 @@ import { useNavigate } from "react-router-dom";
 
 interface PendingUser {
   id: string;
+  user_id: string;
   name: string | null;
   email: string | null;
   phone: string | null;
@@ -51,8 +52,8 @@ const AdminVerifications = () => {
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .in('verification_status', ['pending_review', 'not_started'])
-        .order('created_at', { ascending: false });
+        .eq('verification_status', 'pending_review')
+        .order('submitted_at', { ascending: false, nullsFirst: false });
 
       if (error) throw error;
       setPendingUsers(data || []);
@@ -73,7 +74,7 @@ const AdminVerifications = () => {
           is_verified: true, 
           verification_status: 'verified' 
         })
-        .eq('id', userId);
+        .eq('user_id', userId);
 
       if (error) throw error;
 
@@ -103,7 +104,7 @@ const AdminVerifications = () => {
           is_verified: false, 
           verification_status: 'rejected' 
         })
-        .eq('id', userId);
+        .eq('user_id', userId);
 
       if (error) throw error;
 
@@ -133,7 +134,7 @@ const AdminVerifications = () => {
           is_verified: false, 
           verification_status: 'blocked' 
         })
-        .eq('id', userId);
+        .eq('user_id', userId);
 
       if (error) throw error;
 
@@ -256,10 +257,10 @@ const AdminVerifications = () => {
                               </Button>
                               <Button
                                 size="sm"
-                                onClick={() => handleVerify(user.id)}
-                                disabled={actionLoading === user.id}
+                                onClick={() => handleVerify(user.user_id)}
+                                disabled={actionLoading === user.user_id}
                               >
-                                {actionLoading === user.id ? (
+                                {actionLoading === user.user_id ? (
                                   <Loader2 className="h-4 w-4 animate-spin" />
                                 ) : (
                                   <>
@@ -271,8 +272,8 @@ const AdminVerifications = () => {
                               <Button
                                 size="sm"
                                 variant="destructive"
-                                onClick={() => handleReject(user.id)}
-                                disabled={actionLoading === user.id}
+                                onClick={() => handleReject(user.user_id)}
+                                disabled={actionLoading === user.user_id}
                               >
                                 <XCircle className="h-4 w-4 mr-1" />
                                 Reject
@@ -281,8 +282,8 @@ const AdminVerifications = () => {
                                 size="sm"
                                 variant="outline"
                                 className="text-destructive border-destructive hover:bg-destructive/10"
-                                onClick={() => handleBlock(user.id)}
-                                disabled={actionLoading === user.id}
+                                onClick={() => handleBlock(user.user_id)}
+                                disabled={actionLoading === user.user_id}
                               >
                                 Block
                               </Button>
@@ -377,16 +378,16 @@ const AdminVerifications = () => {
             
             <div className="flex justify-end gap-2 pt-4 border-t">
               <Button
-                onClick={() => { handleVerify(selectedUser!.id); setShowDocuments(false); }}
-                disabled={actionLoading === selectedUser?.id}
+                onClick={() => { handleVerify(selectedUser!.user_id); setShowDocuments(false); }}
+                disabled={actionLoading === selectedUser?.user_id}
               >
                 <CheckCircle className="h-4 w-4 mr-2" />
                 Approve & Verify
               </Button>
               <Button
                 variant="destructive"
-                onClick={() => { handleReject(selectedUser!.id); setShowDocuments(false); }}
-                disabled={actionLoading === selectedUser?.id}
+                onClick={() => { handleReject(selectedUser!.user_id); setShowDocuments(false); }}
+                disabled={actionLoading === selectedUser?.user_id}
               >
                 <XCircle className="h-4 w-4 mr-2" />
                 Reject
