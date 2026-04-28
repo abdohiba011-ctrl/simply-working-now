@@ -17,6 +17,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { MotorbikeImageManager } from "@/components/agency/MotorbikeImageManager";
+import { AgencyVerificationBanner } from "@/components/agency/AgencyVerificationBanner";
 
 const MotorbikeWizard = () => {
   const navigate = useNavigate();
@@ -131,6 +132,8 @@ const MotorbikeWizard = () => {
         <h1 className="text-2xl font-bold tracking-tight">
           {editing ? "Edit motorbike" : "Add motorbike"}
         </h1>
+
+        <AgencyVerificationBanner />
 
         <Card className="space-y-4 p-6">
           <h2 className="text-lg font-semibold">Details</h2>
