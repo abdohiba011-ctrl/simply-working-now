@@ -251,7 +251,7 @@ export default function Billing() {
             credits and pay platform booking fees.
           </p>
           <Button className="mt-6" asChild>
-            <a href="/auth/signup">Sign up as renter</a>
+            <a href="/signup">Sign up as renter</a>
           </Button>
         </main>
         <Footer />
