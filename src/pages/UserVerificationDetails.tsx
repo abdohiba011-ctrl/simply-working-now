@@ -233,12 +233,12 @@ const UserVerificationDetails = () => {
           is_frozen: true,
           frozen_reason: 'Blocked by admin during verification review'
         })
-        .eq('id', user.id);
+        .eq('user_id', user.user_id);
 
       if (error) throw error;
 
       await supabase.from('notifications').insert({
-        user_id: user.id,
+        user_id: user.user_id,
         title: 'Account Blocked',
         message: 'Your account has been blocked. Please contact support for more information.',
         type: 'error'
