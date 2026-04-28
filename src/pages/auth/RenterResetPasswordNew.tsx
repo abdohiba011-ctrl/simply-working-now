@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuthStore } from "@/stores/useAuthStore";
+import { supabase } from "@/integrations/supabase/client";
 import { COMMON_PASSWORDS, isResetTokenValid, type AuthError } from "@/lib/mockAuth";
 import { cn } from "@/lib/utils";
 
