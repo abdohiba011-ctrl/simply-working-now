@@ -36,6 +36,7 @@ export default function RenterForgotPassword() {
 
   const [serverError, setServerError] = useState<string | null>(null);
   const [lockoutMs, setLockoutMs] = useState(0);
+  const [sent, setSent] = useState(false);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -65,9 +66,7 @@ export default function RenterForgotPassword() {
     setServerError(null);
     try {
       await requestPasswordReset(values.email);
-      navigate(
-        `/renter/reset-password/verify?email=${encodeURIComponent(values.email.trim().toLowerCase())}`,
-      );
+      setSent(true);
     } catch (err) {
       const e = err as AuthError;
       if (e.code === "RESET_RATE_LIMITED") {
@@ -98,8 +97,9 @@ export default function RenterForgotPassword() {
                     {t("auth.forgotPassword") || "Forgot password"}
                   </h1>
                   <p className="text-muted-foreground text-sm">
-                    Enter your email and we'll send you a 6-digit code to reset
-                    your password.
+                    {sent
+                      ? "We've emailed you a password reset link. Open it from your inbox to set a new password."
+                      : "Enter your email and we'll send you a link to reset your password."}
                   </p>
                 </div>
 
@@ -113,55 +113,77 @@ export default function RenterForgotPassword() {
                   </div>
                 ) : null}
 
-                <form
-                  onSubmit={form.handleSubmit(onSubmit)}
-                  className="space-y-4"
-                  noValidate
-                >
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <div className="relative">
-                      <Mail
-                        className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
-                        aria-hidden
-                      />
-                      <Input
-                        id="email"
-                        type="email"
-                        autoComplete="email"
-                        placeholder="you@example.com"
-                        className="pl-9"
-                        {...form.register("email")}
-                      />
-                    </div>
-                    {form.formState.errors.email ? (
-                      <p className="text-xs text-destructive">
-                        {form.formState.errors.email.message}
-                      </p>
-                    ) : null}
-                    {lockoutLabel ? (
-                      <p className="text-xs text-destructive">
-                        Try again in {lockoutLabel}
-                      </p>
-                    ) : null}
-                  </div>
-
-                  <Button
-                    type="submit"
-                    variant="hero"
-                    className="w-full"
-                    disabled={submitDisabled || !form.formState.isValid}
-                  >
-                    {isLoading ? (
-                      <span className="inline-flex items-center gap-2">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Sending...
+                {sent ? (
+                  <div className="space-y-4">
+                    <div className="rounded-md border border-primary/40 bg-primary/10 px-4 py-3 text-sm text-foreground flex items-start gap-2">
+                      <Mail className="h-4 w-4 mt-0.5 shrink-0" />
+                      <span>
+                        Reset link sent to <strong>{emailValue}</strong>
                       </span>
-                    ) : (
-                      "Send code"
-                    )}
-                  </Button>
-                </form>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Didn't get it? Check your spam folder, or try again in a minute.
+                    </p>
+                    <Button
+                      type="button"
+                      variant="hero"
+                      className="w-full"
+                      onClick={() => setSent(false)}
+                    >
+                      Send again
+                    </Button>
+                  </div>
+                ) : (
+                  <form
+                    onSubmit={form.handleSubmit(onSubmit)}
+                    className="space-y-4"
+                    noValidate
+                  >
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Email</Label>
+                      <div className="relative">
+                        <Mail
+                          className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
+                          aria-hidden
+                        />
+                        <Input
+                          id="email"
+                          type="email"
+                          autoComplete="email"
+                          placeholder="you@example.com"
+                          className="pl-9"
+                          {...form.register("email")}
+                        />
+                      </div>
+                      {form.formState.errors.email ? (
+                        <p className="text-xs text-destructive">
+                          {form.formState.errors.email.message}
+                        </p>
+                      ) : null}
+                      {lockoutLabel ? (
+                        <p className="text-xs text-destructive">
+                          Try again in {lockoutLabel}
+                        </p>
+                      ) : null}
+                    </div>
+
+                    <Button
+                      type="submit"
+                      variant="hero"
+                      className="w-full"
+                      disabled={submitDisabled || !form.formState.isValid}
+                    >
+                      {isLoading ? (
+                        <span className="inline-flex items-center gap-2">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Sending...
+                        </span>
+                      ) : (
+                        "Send reset link"
+                      )}
+                    </Button>
+                  </form>
+                )}
 
                 <div className="text-center">
                   <button
