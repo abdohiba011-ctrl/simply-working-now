@@ -23,14 +23,15 @@ import { Skeleton } from "@/components/ui/skeleton";
 // Lazy load analytics tab to avoid loading recharts on initial load
 const AdminAnalyticsTab = lazy(() => import("@/components/admin/AdminAnalyticsTab").then(m => ({ default: m.AdminAnalyticsTab })));
 
-type TabValue = "clients" | "business-clients" | "employees" | "bookings" | "fleet" | "analytics" | "locations" | "cities" | "email";
+type TabValue = "clients" | "business-clients" | "employees" | "bookings" | "fleet" | "analytics" | "cities" | "email";
 type FilterValue = "all" | "pending" | "verified" | "not_verified" | "blocked";
 
 // Map tab values to permission keys
 const TAB_PERMISSION_MAP: Record<TabValue, AdminTabPermission | null> = {
   bookings: "bookings",
   fleet: "fleet",
-  locations: "locations",
+  // The merged Cities tab now also covers what used to be the Locations tab,
+  // so users with either legacy permission can see it (handled below).
   cities: "cities",
   clients: "clients",
   // The merged business-clients tab is special-cased below: visible if the
