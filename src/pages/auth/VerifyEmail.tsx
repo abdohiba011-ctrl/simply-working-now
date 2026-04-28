@@ -8,6 +8,7 @@ import { AgencyAuthLayout as AuthLayout } from "@/components/auth/AgencyAuthLayo
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { getResendCooldownMs, type AuthError } from "@/lib/mockAuth";
+import { sendAppEmail } from "@/lib/sendAppEmail";
 import { cn } from "@/lib/utils";
 
 const CODE_LENGTH = 6;
