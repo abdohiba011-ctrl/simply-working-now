@@ -44,7 +44,7 @@ export function OtpInput({
       onChange(next);
       const lastIdx = Math.min(index + chars.length, length - 1);
       inputsRef.current[lastIdx]?.focus();
-      if (next.join("").length === length && next.every((d) => /^\d$/.test(d))) {
+      if (next.join("").length === length && next.every((d) => /^[A-Z0-9]$/.test(d))) {
         onComplete?.(next.join(""));
       }
       return;
