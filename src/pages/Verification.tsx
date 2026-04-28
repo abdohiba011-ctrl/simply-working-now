@@ -175,8 +175,8 @@ const Verification = () => {
       const { data: profile } = await supabase
         .from('profiles')
         .select('is_verified, verification_status, phone, first_name_on_id, family_name_on_id, id_card_number, name, rejection_reason')
-        .eq('id', user.id)
-        .single();
+        .eq('user_id', user.id)
+        .maybeSingle();
       
       if (profile) {
         // Store rejection reason if exists
