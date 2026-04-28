@@ -14,7 +14,7 @@ import { VerifiedBadge } from "@/components/ui/verified-badge";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { toast } from "sonner";
-import { Camera, User, Mail, Phone, MapPin, Save, Loader2, CheckCircle, Shield, Clock, Upload, ImageIcon, Trash2, Plus, Edit2 } from "lucide-react";
+import { Camera, User, Mail, Phone, MapPin, Save, Loader2, CheckCircle, Shield, Clock, Upload, ImageIcon, Trash2, Plus, Edit2, ShieldCheck, ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { profileSchema, imageFileSchema } from "@/lib/validationSchemas";
 import { z } from "zod";
@@ -59,6 +59,21 @@ const Profile = () => {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingProfile, setIsFetchingProfile] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    if (!user) { setIsAdmin(false); return; }
+    (async () => {
+      const { data } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .eq("role", "admin")
+        .eq("is_active", true)
+        .maybeSingle();
+      setIsAdmin(!!data);
+    })();
+  }, [user]);
   
   // Image crop modal state
   const [showCropModal, setShowCropModal] = useState(false);
@@ -283,6 +298,25 @@ const Profile = () => {
             <ProfileSkeleton />
           ) : (
             <div className="space-y-6">
+
+              {isAdmin && (
+                <Card className="border-primary/40 bg-primary/5">
+                  <CardContent className="p-4 flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-full bg-primary/15 flex items-center justify-center">
+                        <ShieldCheck className="h-5 w-5 text-primary" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-foreground">Admin access</p>
+                        <p className="text-sm text-muted-foreground">You have admin privileges on Motonita.</p>
+                      </div>
+                    </div>
+                    <Button onClick={() => navigate("/admin/panel")} className="gap-2">
+                      Open admin panel <ArrowRight className="h-4 w-4" />
+                    </Button>
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Profile Information */}
               <Card>
