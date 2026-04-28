@@ -77,8 +77,8 @@ const UserVerificationDetails = () => {
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', userId)
-        .single();
+        .eq('user_id', userId)
+        .maybeSingle();
 
       if (error) throw error;
       setUser(data);
