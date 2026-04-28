@@ -99,6 +99,10 @@ const AdminPanel = () => {
       if (tab.value === "business-clients") {
         return hasPermission("individual_owners") || hasPermission("rental_shops");
       }
+      // The merged Cities tab also covers the old Locations tab
+      if (tab.value === "cities") {
+        return hasPermission("cities") || hasPermission("locations");
+      }
       const permissionKey = TAB_PERMISSION_MAP[tab.value];
       if (permissionKey === null) return true;
       return hasPermission(permissionKey);
