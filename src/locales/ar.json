@@ -593,7 +593,7 @@
     "logIn": "تسجيل الدخول",
     "verifyYourEmail": "تحقق من بريدك الإلكتروني",
     "codeSentToEmail": "أرسلنا رمز التحقق المكون من 6 أحرف إلى",
-    "enterSixDigitCode": "أدخل الرمز المكون من 6 أرقام",
+    "enterSixDigitCode": "أدخل رمز التحقق المكون من 6 أحرف",
     "verifyAndCreate": "تحقق وأنشئ الحساب",
     "enterNewPasswordPlaceholder": "أدخل كلمة المرور الجديدة",
     "confirmNewPasswordPlaceholder": "أكد كلمة المرور الجديدة",
