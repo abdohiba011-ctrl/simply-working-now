@@ -461,20 +461,19 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ isLoading: true, error: null });
 
     try {
-      // 1. Upsert business profile fields
-      const { error: pErr } = await supabase
-        .from("profiles")
-        .update({
-          user_type: "business",
-          business_name: data.businessName,
-          business_type: data.businessType,
-          business_address: data.city,
-          ...(data.phone ? { business_phone: normalizePhone(data.phone) ?? data.phone } : {}),
-        })
-        .eq("user_id", user.id);
-      if (pErr) throw pErr;
+      // 1. Add the agency role to user_roles + populate business profile fields
+      // via SECURITY DEFINER RPC (the guard_user_roles_write trigger blocks
+      // direct INSERTs from the authenticated role).
+      const { error: rpcErr } = await supabase.rpc("add_agency_role_to_self", {
+        _business_name: data.businessName,
+        _business_type: data.businessType,
+        _city: data.city,
+        _neighborhood: (data as { neighborhood?: string }).neighborhood ?? null,
+        _phone: data.phone ? normalizePhone(data.phone) ?? data.phone : null,
+      });
+      if (rpcErr) throw rpcErr;
 
-      // 2. Reload from DB so verified flags etc. reflect reality
+      // 2. Reload from DB so the new role + flags reflect reality.
       const { data: authData } = await supabase.auth.getUser();
       if (!authData.user) throw new Error("Session lost");
       const reloaded = await loadAuthUserModel(authData.user);
