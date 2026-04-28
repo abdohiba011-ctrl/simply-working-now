@@ -237,7 +237,7 @@ const Auth = () => {
                         id="email-otp"
                         type="text"
                         value={emailOtp}
-                        onChange={(e) => setEmailOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                        onChange={(e) => setEmailOtp(e.target.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, 6))}
                         required
                         placeholder={t('auth.enterSixDigitCode')}
                         maxLength={6}
