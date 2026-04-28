@@ -688,21 +688,45 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   requestPasswordReset: async (email) => {
     set({ isLoading: true, error: null });
     try {
-      // Best-effort client-side rate limit
-      checkResetRequestAllowed(email);
+      const cleanEmail = email.trim().toLowerCase();
 
-      // No redirectTo: we use a 6-digit OTP-only flow, not a magic link.
-      // Supabase still emails the recovery token, which the user enters on
-      // /reset-password/verify and we exchange via verifyOtp({ type:'recovery' }).
-      const { error } = await supabase.auth.resetPasswordForEmail(
-        email.trim().toLowerCase(),
+      // Best-effort client-side rate limit
+      checkResetRequestAllowed(cleanEmail);
+
+      // Only send a reset email if an account actually exists for this
+      // address. Avoids confusing emails to people who never signed up,
+      // and avoids generating recovery tokens for unknown users.
+      const { data: methodData } = await supabase.functions.invoke(
+        "check-account-method",
+        { body: { email: cleanEmail } },
       );
-      // Always record the attempt — even if Supabase silently no-ops on
-      // a non-existent address, we want to enforce our per-hour cap.
-      recordResetResend(email);
+      const status = (methodData as { status?: string } | null)?.status;
+      if (status === "not_found") {
+        const err = makeAuthError(
+          "USER_NOT_FOUND",
+          "No account found with this email. Please sign up first.",
+        );
+        set({ isLoading: false, error: err.message });
+        throw err;
+      }
+      if (status === "oauth_only") {
+        const err = makeAuthError(
+          "OAUTH_ONLY",
+          "This account uses Google sign-in. There's no password to reset — please log in with Google.",
+        );
+        set({ isLoading: false, error: err.message });
+        throw err;
+      }
+
+      // Send a password reset LINK (not a code). The link lands on the
+      // app, Supabase establishes a recovery session, and the user is
+      // taken to the new-password screen.
+      const { error } = await supabase.auth.resetPasswordForEmail(cleanEmail, {
+        redirectTo: `${window.location.origin}/reset-password/new`,
+      });
+      recordResetResend(cleanEmail);
 
       if (error) {
-        // For security, surface a generic success unless it's a clear rate-limit
         if (/rate|too many/i.test(error.message)) {
           const err = mapSupabaseAuthError(error.message);
           set({ isLoading: false, error: err.message });
