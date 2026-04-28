@@ -116,6 +116,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "agencies_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       agency_subscriptions: {
@@ -2123,6 +2130,54 @@ export type Database = {
           bikes_available: number | null
           city_id: string | null
           name: string | null
+        }
+        Relationships: []
+      }
+      profiles_public: {
+        Row: {
+          avatar_url: string | null
+          business_city: string | null
+          business_description: string | null
+          business_logo_url: string | null
+          business_name: string | null
+          created_at: string | null
+          full_name: string | null
+          id: string | null
+          is_verified: boolean | null
+          name: string | null
+          trust_tier: string | null
+          user_id: string | null
+          user_type: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          business_city?: string | null
+          business_description?: string | null
+          business_logo_url?: string | null
+          business_name?: string | null
+          created_at?: string | null
+          full_name?: string | null
+          id?: string | null
+          is_verified?: boolean | null
+          name?: string | null
+          trust_tier?: string | null
+          user_id?: string | null
+          user_type?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          business_city?: string | null
+          business_description?: string | null
+          business_logo_url?: string | null
+          business_name?: string | null
+          created_at?: string | null
+          full_name?: string | null
+          id?: string | null
+          is_verified?: boolean | null
+          name?: string | null
+          trust_tier?: string | null
+          user_id?: string | null
+          user_type?: string | null
         }
         Relationships: []
       }
