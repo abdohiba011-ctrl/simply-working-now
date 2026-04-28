@@ -1,0 +1,2 @@
+ALTER TABLE public.agencies DROP CONSTRAINT IF EXISTS agencies_verification_status_check;
+ALTER TABLE public.agencies ADD CONSTRAINT agencies_verification_status_check CHECK (verification_status = ANY (ARRAY['pending'::text, 'pending_review'::text, 'approved'::text, 'verified'::text, 'rejected'::text, 'suspended'::text]));
