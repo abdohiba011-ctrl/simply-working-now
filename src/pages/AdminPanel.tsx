@@ -4,18 +4,16 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { AlertTriangle, Users, Building2, Store, UserCog, Clock, CheckCircle, XCircle, UserX, Calendar, Bike, BarChart3, MapPin, Map, Tag, Mail } from "lucide-react";
+import { AlertTriangle, Users, Building2, UserCog, Clock, CheckCircle, XCircle, UserX, Calendar, Bike, BarChart3, MapPin, Map, Mail } from "lucide-react";
 import { useAdminNotifications } from "@/hooks/useAdminNotifications";
 import { useAdminPermissions, AdminTabPermission } from "@/hooks/useAdminPermissions";
 import { AdminUnifiedClientsTab } from "@/components/admin/AdminUnifiedClientsTab";
-import { AdminIndividualOwnersTab } from "@/components/admin/AdminIndividualOwnersTab";
-import { AdminRentalShopsTab } from "@/components/admin/AdminRentalShopsTab";
+import { AdminBusinessClientsTab } from "@/components/admin/AdminBusinessClientsTab";
 import { AdminEmployeesTab } from "@/components/admin/AdminEmployeesTab";
 import { AdminBookingsTab } from "@/components/admin/AdminBookingsTab";
 import { AdminFleetTab } from "@/components/admin/AdminFleetTab";
 import { AdminLocationsTab } from "@/components/admin/AdminLocationsTab";
 import { AdminCitiesTab } from "@/components/admin/AdminCitiesTab";
-import { AdminPricingTab } from "@/components/admin/AdminPricingTab";
 import { AdminEmailTestTab } from "@/components/admin/AdminEmailTestTab";
 import { TabErrorBoundary } from "@/components/TabErrorBoundary";
 import { cn } from "@/lib/utils";
@@ -26,7 +24,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 // Lazy load analytics tab to avoid loading recharts on initial load
 const AdminAnalyticsTab = lazy(() => import("@/components/admin/AdminAnalyticsTab").then(m => ({ default: m.AdminAnalyticsTab })));
 
-type TabValue = "clients" | "individual-owners" | "rental-shops" | "employees" | "bookings" | "fleet" | "analytics" | "locations" | "cities" | "pricing" | "email";
+type TabValue = "clients" | "business-clients" | "employees" | "bookings" | "fleet" | "analytics" | "locations" | "cities" | "email";
 type FilterValue = "all" | "pending" | "verified" | "not_verified" | "blocked";
 
 // Map tab values to permission keys
@@ -36,11 +34,11 @@ const TAB_PERMISSION_MAP: Record<TabValue, AdminTabPermission | null> = {
   locations: "locations",
   cities: "cities",
   clients: "clients",
-  "individual-owners": "individual_owners",
-  "rental-shops": "rental_shops",
+  // The merged business-clients tab is special-cased below: visible if the
+  // user has either the legacy individual_owners OR rental_shops permission.
+  "business-clients": null,
   employees: null, // Employees tab is always visible for admins
   analytics: "analytics",
-  pricing: null, // Pricing tab is always visible for admins
   email: null, // Email test tab is always visible for admins
 };
 
@@ -57,17 +55,23 @@ const AdminPanel = () => {
   const [searchParams] = useSearchParams();
   const { t } = useLanguage();
   const { hasPermission, isLoading: permissionsLoading, isFullAdmin, isSuperAdmin } = useAdminPermissions();
-  
-  // Read initial tab from URL query param
-  const initialTab = (searchParams.get('tab') as TabValue) || "bookings";
-  const [activeTab, setActiveTab] = useState<TabValue>(initialTab);
+
+  // Read initial tab from URL query param (and migrate the two old values)
+  const rawInitial = searchParams.get('tab') as TabValue | "individual-owners" | "rental-shops" | "pricing" | null;
+  const migratedInitial: TabValue =
+    rawInitial === "individual-owners" || rawInitial === "rental-shops"
+      ? "business-clients"
+      : rawInitial === "pricing" || !rawInitial
+        ? "bookings"
+        : (rawInitial as TabValue);
+  const [activeTab, setActiveTab] = useState<TabValue>(migratedInitial);
   const [statusFilter, setStatusFilter] = useState<FilterValue>("all");
   const [statusCounts, setStatusCounts] = useState<StatusCounts>({ pending: 0, verified: 0, not_verified: 0, blocked: 0 });
   const [retryKey, setRetryKey] = useState(0);
   const isAdmin = hasRole('admin');
-  
+
   useAdminNotifications();
-  
+
   // Force re-render of error boundary when retry is clicked
   const handleTabRetry = useCallback(() => {
     setRetryKey(prev => prev + 1);
@@ -78,10 +82,8 @@ const AdminPanel = () => {
     { value: "fleet" as TabValue, label: t('admin.fleet'), icon: Bike },
     { value: "locations" as TabValue, label: t('admin.locations'), icon: MapPin },
     { value: "cities" as TabValue, label: t('admin.cities'), icon: Map },
-    { value: "pricing" as TabValue, label: t('admin.pricing') || "Pricing", icon: Tag },
     { value: "clients" as TabValue, label: t('admin.clients'), icon: Users },
-    { value: "individual-owners" as TabValue, label: t('admin.individualOwners'), icon: Building2 },
-    { value: "rental-shops" as TabValue, label: t('admin.rentalShops'), icon: Store },
+    { value: "business-clients" as TabValue, label: "Business Clients", icon: Building2 },
     { value: "employees" as TabValue, label: t('admin.employees'), icon: UserCog },
     { value: "analytics" as TabValue, label: t('admin.analytics'), icon: BarChart3 },
     { value: "email" as TabValue, label: "Email", icon: Mail },
@@ -90,10 +92,13 @@ const AdminPanel = () => {
   // Filter tabs based on user permissions
   const tabs = useMemo(() => {
     if (isFullAdmin || isSuperAdmin) return allTabs;
-    
+
     return allTabs.filter(tab => {
+      // The merged business-clients tab needs either legacy permission
+      if (tab.value === "business-clients") {
+        return hasPermission("individual_owners") || hasPermission("rental_shops");
+      }
       const permissionKey = TAB_PERMISSION_MAP[tab.value];
-      // Employees tab is always visible, other tabs check permission
       if (permissionKey === null) return true;
       return hasPermission(permissionKey);
     });
@@ -260,24 +265,14 @@ const AdminPanel = () => {
             <AdminCitiesTab />
           </TabErrorBoundary>
         )}
-        {activeTab === "pricing" && (
-          <TabErrorBoundary key={`pricing-${retryKey}`} tabName="Pricing" onRetry={handleTabRetry}>
-            <AdminPricingTab />
-          </TabErrorBoundary>
-        )}
         {activeTab === "clients" && (
           <TabErrorBoundary key={`clients-${retryKey}`} tabName="Clients" onRetry={handleTabRetry}>
             <AdminUnifiedClientsTab statusFilter={statusFilter} />
           </TabErrorBoundary>
         )}
-        {activeTab === "individual-owners" && (
-          <TabErrorBoundary key={`individual-owners-${retryKey}`} tabName="Individual Owners" onRetry={handleTabRetry}>
-            <AdminIndividualOwnersTab />
-          </TabErrorBoundary>
-        )}
-        {activeTab === "rental-shops" && (
-          <TabErrorBoundary key={`rental-shops-${retryKey}`} tabName="Rental Shops" onRetry={handleTabRetry}>
-            <AdminRentalShopsTab />
+        {activeTab === "business-clients" && (
+          <TabErrorBoundary key={`business-clients-${retryKey}`} tabName="Business Clients" onRetry={handleTabRetry}>
+            <AdminBusinessClientsTab />
           </TabErrorBoundary>
         )}
         {activeTab === "employees" && (
