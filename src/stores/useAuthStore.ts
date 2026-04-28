@@ -106,7 +106,7 @@ async function loadAuthUserModel(authUser: User): Promise<MockUser> {
       .select(
         "id,email,name,phone,phone_verified,is_verified,user_type,business_name,business_type,business_address,business_phone,business_email,verification_status,is_frozen,created_at",
       )
-      .eq("id", authUser.id)
+      .eq("user_id", authUser.id)
       .maybeSingle(),
     supabase.from("user_roles").select("role").eq("user_id", authUser.id),
   ]);
@@ -119,7 +119,7 @@ async function loadAuthUserModel(authUser: User): Promise<MockUser> {
 
   // Agency role: explicit DB role OR a populated business profile.
   const hasBusinessRow = !!(profile?.business_name && profile.business_name.trim().length > 0);
-  const agencyActive = roles.includes("business") || hasBusinessRow;
+  const agencyActive = roles.includes("agency") || hasBusinessRow;
   const agencyVerified =
     !!profile?.is_verified && profile?.verification_status === "verified";
 
@@ -460,7 +460,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           business_address: data.city,
           ...(data.phone ? { business_phone: normalizePhone(data.phone) ?? data.phone } : {}),
         })
-        .eq("id", user.id);
+        .eq("user_id", user.id);
       if (pErr) throw pErr;
 
       // 2. Reload from DB so verified flags etc. reflect reality
@@ -534,6 +534,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           name: formData.name,
           full_name: formData.name,
           phone: phone ?? undefined,
+          signup_role: role,
         },
       },
     });
@@ -565,14 +566,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
 
     // Best-effort — don't fail signup if these don't apply
-    await supabase.from("profiles").update(profileUpdates).eq("id", data.user.id);
-
-    if (role === "agency") {
-      await supabase.from("user_roles").insert({
-        user_id: data.user.id,
-        role: "agency",
-      });
-    }
+    await supabase.from("profiles").update(profileUpdates).eq("user_id", data.user.id);
 
     // If the project has auto-confirm enabled, the user is already
     // signed in — route the UI like a successful login.
