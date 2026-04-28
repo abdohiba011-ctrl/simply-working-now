@@ -3,6 +3,61 @@ import type { MockUser } from "@/lib/mockAuth";
 
 export type LoginContext = "renter" | "agency";
 
+/**
+ * Lightweight audit hook. Logs to the console (always) and best-effort
+ * persists to `audit_logs` so we can later confirm that agency users were
+ * never routed to /rent. Never throws — auth must keep working even if
+ * the audit insert fails.
+ */
+function auditAuthRouting(
+  user: MockUser,
+  context: LoginContext | undefined,
+  destination: string,
+): void {
+  const hasAgency = !!user.roles.agency.active;
+  const hasRenter = !!user.roles.renter.active;
+  const violation = hasAgency && destination.startsWith("/rent");
+
+  // eslint-disable-next-line no-console
+  console.info("[auth-route]", {
+    userId: user.id,
+    context: context ?? null,
+    hasAgency,
+    hasRenter,
+    destination,
+    violation,
+  });
+
+  if (violation) {
+    // eslint-disable-next-line no-console
+    console.error(
+      "[auth-route] VIOLATION: agency user routed to renter area",
+      { userId: user.id, destination },
+    );
+  }
+
+  // Fire-and-forget audit insert. Imported lazily so this module stays
+  // tree-shakeable in tests that don't touch Supabase.
+  void (async () => {
+    try {
+      const { supabase } = await import("@/integrations/supabase/client");
+      await supabase.rpc("log_audit_event", {
+        _action: violation ? "auth_route_violation" : "auth_route_decision",
+        _table_name: "auth",
+        _record_id: user.id,
+        _details: {
+          context: context ?? null,
+          destination,
+          has_agency: hasAgency,
+          has_renter: hasRenter,
+        } as Record<string, unknown>,
+      });
+    } catch {
+      // ignore — auditing must never break login
+    }
+  })();
+}
+
 const BECOME_BUSINESS_FLAG = "motonita_show_become_business";
 
 export function queueBecomeBusinessPrompt(): void {
@@ -63,5 +118,7 @@ export function navigateAfterAuth(
   user: MockUser,
   context?: LoginContext,
 ): void {
-  navigate(getDestinationForUser(user, context), { replace: true });
+  const dest = getDestinationForUser(user, context);
+  auditAuthRouting(user, context, dest);
+  navigate(dest, { replace: true });
 }
