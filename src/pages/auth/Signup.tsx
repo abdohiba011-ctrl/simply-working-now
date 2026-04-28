@@ -418,23 +418,32 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
               {t("mockAuth.agency_pill", { defaultValue: "For rental agencies" })}
             </span>
             <h1 className="text-2xl font-bold tracking-tight text-foreground">
-              {t("mockAuth.create_agency_account", {
-                defaultValue: "Create your agency account",
-              })}
+              {isAddingAgencyToExistingAccount
+                ? t("mockAuth.add_agency_profile", {
+                    defaultValue: "Add an agency profile to your account",
+                  })
+                : t("mockAuth.create_agency_account", {
+                    defaultValue: "Create your agency account",
+                  })}
             </h1>
             <p className="text-sm text-muted-foreground">
-              {step === 1
-                ? t("agencyAuth.step1_subtitle", {
-                    defaultValue: "Step 1 of 2 — Your account details",
+              {isAddingAgencyToExistingAccount
+                ? t("agencyAuth.add_agency_subtitle", {
+                    defaultValue:
+                      "You're already signed in. Tell us about your business and we'll switch you to your agency dashboard.",
                   })
-                : t("agencyAuth.step2_subtitle", {
-                    defaultValue: "Step 2 of 2 — Your business",
-                  })}
+                : step === 1
+                  ? t("agencyAuth.step1_subtitle", {
+                      defaultValue: "Step 1 of 2 — Your account details",
+                    })
+                  : t("agencyAuth.step2_subtitle", {
+                      defaultValue: "Step 2 of 2 — Your business",
+                    })}
             </p>
           </div>
 
-          {/* Stepper */}
-          <Stepper step={step} />
+          {/* Stepper — only relevant for the full 2-step new-account flow */}
+          {!isAddingAgencyToExistingAccount && <Stepper step={step} />}
 
           {serverError ? (
             <div
