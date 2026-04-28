@@ -43,7 +43,16 @@ const BookingReview = () => {
   const dropoffTime = searchParams.get("dropoffTime") || savedBooking?.dropoffTime || "18:00";
   const deliveryMethod = searchParams.get("deliveryMethod") || savedBooking?.deliveryMethod || "pickup";
   const location = searchParams.get("location") || savedBooking?.location || "Casablanca";
-  const dailyPrice = parseInt(searchParams.get("dailyPrice") || String(savedBooking?.dailyPrice) || "99");
+  // Robust daily-price parsing — never NaN, never 0 from a missing field.
+  const parseDailyPrice = (): number => {
+    const raw = searchParams.get("dailyPrice");
+    const fromUrl = raw != null ? Number(raw) : NaN;
+    if (Number.isFinite(fromUrl) && fromUrl > 0) return Math.round(fromUrl);
+    const fromSaved = Number(savedBooking?.dailyPrice);
+    if (Number.isFinite(fromSaved) && fromSaved > 0) return Math.round(fromSaved);
+    return 99;
+  };
+  const dailyPrice = parseDailyPrice();
 
   // Scroll to top on page load
   useEffect(() => {
@@ -84,11 +93,61 @@ const BookingReview = () => {
       return;
     }
 
-    // Verification is now collected AFTER payment — go straight to checkout.
+    // Authenticated path: always (re)create a fresh hold so users who
+    // navigate back to this page after the original hold expired can
+    // still continue without seeing "reservation expired" on checkout.
+    if (!bikeId || !pickup || !end) {
+      toast.error("Missing booking details. Please re-pick your bike and dates.");
+      setIsProcessing(false);
+      return;
+    }
 
-    // Always card payment for the 10 MAD platform fee.
-    setIsProcessing(false);
-    navigate(`/checkout?${searchParams.toString()}&total=${total}`);
+    try {
+      const { data: holdRows, error: holdErr } = await supabase.rpc('create_bike_hold', {
+        _bike_id: bikeId,
+        _pickup: pickup,
+        _return: end,
+      });
+
+      if (holdErr) {
+        const msg = (holdErr.message || "").toUpperCase();
+        if (msg.includes("BIKE_ALREADY_BOOKED")) {
+          toast.error("This bike is no longer available for those dates.");
+        } else if (msg.includes("BIKE_HELD_BY_OTHER")) {
+          toast.error("Someone else is currently checking out this bike. Try again in a few minutes.");
+        } else if (msg.includes("INVALID_DATES")) {
+          toast.error("Please pick valid pickup and return dates.");
+        } else if (msg.includes("AUTH_REQUIRED")) {
+          toast.error("Please sign in again to continue.");
+          navigate('/auth?mode=login');
+        } else {
+          toast.error(holdErr.message || "Could not reserve this bike. Please try again.");
+        }
+        setIsProcessing(false);
+        return;
+      }
+
+      const newHoldId = Array.isArray(holdRows) && holdRows[0]?.hold_id
+        ? holdRows[0].hold_id
+        : null;
+
+      if (!newHoldId) {
+        toast.error("Could not reserve this bike. Please try again.");
+        setIsProcessing(false);
+        return;
+      }
+
+      // Always card payment for the 10 MAD platform fee.
+      const params = new URLSearchParams(searchParams.toString());
+      params.set('holdId', newHoldId);
+      params.set('total', String(total));
+      setIsProcessing(false);
+      navigate(`/checkout?${params.toString()}`);
+    } catch (err) {
+      console.error('[BookingReview] hold creation failed:', err);
+      toast.error("Could not reserve this bike. Please try again.");
+      setIsProcessing(false);
+    }
   };
 
   return (

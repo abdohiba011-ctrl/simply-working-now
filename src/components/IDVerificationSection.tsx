@@ -149,7 +149,7 @@ export const IDVerificationSection = ({ profile, onUpdate }: IDVerificationSecti
           verification_status: 'pending_review',
           is_verified: false // Always false - admin will verify
         })
-        .eq('id', user.id);
+        .eq('user_id', user.id);
 
       if (error) throw error;
 

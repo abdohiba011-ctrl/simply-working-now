@@ -6,30 +6,110 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ChevronLeft, Bell, Globe, Moon, Shield, Building2 } from "lucide-react";
+import { ChevronLeft, Bell, Globe, Moon, Shield, Building2, Loader2 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 const Settings = () => {
   const navigate = useNavigate();
   const { language, setLanguage, t, isRTL } = useLanguage();
   const { theme, setTheme } = useTheme();
-  const { hasRole } = useAuth();
+  const { hasRole, user } = useAuth();
   const [notifications, setNotifications] = useState(true);
   const [emailNotifications, setEmailNotifications] = useState(true);
+  const [savingPush, setSavingPush] = useState(false);
+  const [savingEmail, setSavingEmail] = useState(false);
+  const [loaded, setLoaded] = useState(false);
   const isBusiness = hasRole('business');
 
-  const handleLanguageChange = (value: string) => {
-    setLanguage(value as 'en' | 'fr' | 'ar');
-    const langName = value === 'en' ? 'English' : value === 'fr' ? 'Français' : 'العربية';
+  // Load saved preferences from DB
+  useEffect(() => {
+    if (!user) {
+      setLoaded(true);
+      return;
+    }
+    (async () => {
+      const { data } = await supabase
+        .from('profiles')
+        .select('push_notifications_enabled, email_notifications_enabled, preferred_language')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (data) {
+        if (typeof data.push_notifications_enabled === 'boolean') {
+          setNotifications(data.push_notifications_enabled);
+        }
+        if (typeof data.email_notifications_enabled === 'boolean') {
+          setEmailNotifications(data.email_notifications_enabled);
+        }
+      }
+      setLoaded(true);
+    })();
+  }, [user]);
+
+  const persistLanguage = async (lang: 'en' | 'fr' | 'ar') => {
+    if (!user) return;
+    await supabase
+      .from('profiles')
+      .update({ preferred_language: lang })
+      .eq('user_id', user.id);
+  };
+
+  const handleLanguageChange = async (value: string) => {
+    const lang = value as 'en' | 'fr' | 'ar';
+    setLanguage(lang);
+    if (user) {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ preferred_language: lang })
+        .eq('user_id', user.id);
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+    }
     toast.success(t('success.profileUpdated'));
   };
 
   const handleDarkModeToggle = (checked: boolean) => {
     setTheme(checked ? 'dark' : 'light');
+    toast.success(t('success.profileUpdated'));
+  };
+
+  const handlePushToggle = async (checked: boolean) => {
+    setNotifications(checked);
+    if (!user) return;
+    setSavingPush(true);
+    const { error } = await supabase
+      .from('profiles')
+      .update({ push_notifications_enabled: checked })
+      .eq('user_id', user.id);
+    setSavingPush(false);
+    if (error) {
+      setNotifications(!checked); // revert
+      toast.error(error.message);
+      return;
+    }
+    toast.success(t('success.profileUpdated'));
+  };
+
+  const handleEmailToggle = async (checked: boolean) => {
+    setEmailNotifications(checked);
+    if (!user) return;
+    setSavingEmail(true);
+    const { error } = await supabase
+      .from('profiles')
+      .update({ email_notifications_enabled: checked })
+      .eq('user_id', user.id);
+    setSavingEmail(false);
+    if (error) {
+      setEmailNotifications(!checked); // revert
+      toast.error(error.message);
+      return;
+    }
     toast.success(t('success.profileUpdated'));
   };
 
@@ -94,22 +174,30 @@ const Settings = () => {
                       <Label htmlFor="push-notifications" className="text-base">{t('settings.pushNotifications')}</Label>
                       <p className="text-sm text-muted-foreground">{t('settings.pushNotificationsDesc')}</p>
                     </div>
-                    <Switch
-                      id="push-notifications"
-                      checked={notifications}
-                      onCheckedChange={setNotifications}
-                    />
+                    <div className="flex items-center gap-2">
+                      {savingPush && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+                      <Switch
+                        id="push-notifications"
+                        checked={notifications}
+                        onCheckedChange={handlePushToggle}
+                        disabled={!loaded || savingPush}
+                      />
+                    </div>
                   </div>
                   <div className={`flex items-center justify-between ${isRTL ? 'flex-row-reverse' : ''}`}>
                     <div className={isRTL ? 'text-right' : ''}>
                       <Label htmlFor="email-notifications" className="text-base">{t('settings.emailNotifications')}</Label>
                       <p className="text-sm text-muted-foreground">{t('settings.emailNotificationsDesc')}</p>
                     </div>
-                    <Switch
-                      id="email-notifications"
-                      checked={emailNotifications}
-                      onCheckedChange={setEmailNotifications}
-                    />
+                    <div className="flex items-center gap-2">
+                      {savingEmail && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+                      <Switch
+                        id="email-notifications"
+                        checked={emailNotifications}
+                        onCheckedChange={handleEmailToggle}
+                        disabled={!loaded || savingEmail}
+                      />
+                    </div>
                   </div>
                 </CardContent>
               </Card>

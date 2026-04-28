@@ -76,7 +76,7 @@ const BecomeBusiness = () => {
       const { data, error } = await supabase
         .from('profiles')
         .select('is_verified, phone')
-        .eq('id', user.id)
+        .eq('user_id', user.id)
         .single();
 
       if (error) throw error;
@@ -123,7 +123,7 @@ const BecomeBusiness = () => {
           user_type: 'business_pending',
           business_type: partnerType === 'individual' ? 'individual_owner' : 'rental_shop'
         })
-        .eq('id', user.id);
+        .eq('user_id', user.id);
 
       if (profileError) throw profileError;
 

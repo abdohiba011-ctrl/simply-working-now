@@ -48,7 +48,7 @@ export async function createAuditLog(entry: AuditLogEntry): Promise<boolean> {
     const { data: profile } = await supabase
       .from('profiles')
       .select('name, email')
-      .eq('id', user.id)
+      .eq('user_id', user.id)
       .single();
 
     const { error } = await supabase

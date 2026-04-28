@@ -25,7 +25,7 @@ export const BlockedUserCheck = ({ children }: BlockedUserCheckProps) => {
         const { data, error } = await supabase
           .from('profiles')
           .select('is_frozen, frozen_reason')
-          .eq('id', user.id)
+          .eq('user_id', user.id)
           .single();
 
         if (error) throw error;

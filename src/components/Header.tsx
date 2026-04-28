@@ -142,7 +142,7 @@ export const Header = memo(() => {
       const { data, error } = await supabase
         .from('profiles')
         .select('avatar_url, name, is_verified')
-        .eq('id', user.id)
+        .eq('user_id', user.id)
         .single();
 
       if (error) throw error;
@@ -171,7 +171,7 @@ export const Header = memo(() => {
         supabase
           .from('profiles')
           .select('is_verified')
-          .eq('id', user.id)
+          .eq('user_id', user.id)
           .single()
       ]);
 

@@ -429,9 +429,20 @@ const Verification = () => {
     setIsSubmitting(true);
 
     try {
-      const frontUrl = uploadedUrls.front || frontId.preview;
-      const backUrl = uploadedUrls.back || backId.preview;
-      const selfieUrl = uploadedUrls.selfie || selfieWithId.preview;
+      // Only persist real storage paths. Never persist data:/blob: previews —
+      // those mean the upload to storage didn't actually succeed.
+      const isStoragePath = (v: string | null | undefined): v is string =>
+        !!v && !v.startsWith('data:') && !v.startsWith('blob:');
+
+      const frontUrl = isStoragePath(uploadedUrls.front) ? uploadedUrls.front : null;
+      const backUrl = isStoragePath(uploadedUrls.back) ? uploadedUrls.back : null;
+      const selfieUrl = isStoragePath(uploadedUrls.selfie) ? uploadedUrls.selfie : null;
+
+      if (!frontUrl || !backUrl) {
+        toast.error('Please re-upload your ID photos before submitting.');
+        setIsSubmitting(false);
+        return;
+      }
 
       const { error } = await supabase
         .from('profiles')

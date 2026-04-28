@@ -87,7 +87,7 @@ export default function Billing() {
       const { data } = await supabase
         .from("profiles")
         .select("name, email, phone, address")
-        .eq("id", user.id)
+        .eq("user_id", user.id)
         .maybeSingle();
       if (data) {
         setProfile({
@@ -230,7 +230,7 @@ export default function Billing() {
         phone: profile.phone,
         address: profile.address,
       })
-      .eq("id", user.id);
+      .eq("user_id", user.id);
     setProfileSaving(false);
     if (error) toast.error(error.message);
     else toast.success("Billing info saved");

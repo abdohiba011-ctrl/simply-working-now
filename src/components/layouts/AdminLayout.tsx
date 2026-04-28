@@ -40,7 +40,7 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
       const { data, error } = await supabase
         .from('profiles')
         .select('avatar_url, name')
-        .eq('id', user.id)
+        .eq('user_id', user.id)
         .single();
 
       if (error) throw error;
