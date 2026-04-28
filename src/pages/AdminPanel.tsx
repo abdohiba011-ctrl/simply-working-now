@@ -56,14 +56,16 @@ const AdminPanel = () => {
   const { t } = useLanguage();
   const { hasPermission, isLoading: permissionsLoading, isFullAdmin, isSuperAdmin } = useAdminPermissions();
 
-  // Read initial tab from URL query param (and migrate the two old values)
-  const rawInitial = searchParams.get('tab') as TabValue | "individual-owners" | "rental-shops" | "pricing" | null;
+  // Read initial tab from URL query param (and migrate the old values)
+  const rawInitial = searchParams.get('tab') as TabValue | "individual-owners" | "rental-shops" | "pricing" | "locations" | null;
   const migratedInitial: TabValue =
     rawInitial === "individual-owners" || rawInitial === "rental-shops"
       ? "business-clients"
-      : rawInitial === "pricing" || !rawInitial
-        ? "bookings"
-        : (rawInitial as TabValue);
+      : rawInitial === "locations"
+        ? "cities"
+        : rawInitial === "pricing" || !rawInitial
+          ? "bookings"
+          : (rawInitial as TabValue);
   const [activeTab, setActiveTab] = useState<TabValue>(migratedInitial);
   const [statusFilter, setStatusFilter] = useState<FilterValue>("all");
   const [statusCounts, setStatusCounts] = useState<StatusCounts>({ pending: 0, verified: 0, not_verified: 0, blocked: 0 });
