@@ -648,7 +648,7 @@ const Agencies = () => {
           </h2>
           <p className="mt-4 text-white/80 max-w-xl mx-auto text-lg">{t.finalSub}</p>
           <div className="mt-8 flex flex-wrap gap-3 justify-center">
-            <Link to="/agency/signup">
+            <Link to={trialHref}>
               <Button
                 className="h-12 px-8 rounded-md font-bold hover:opacity-90"
                 style={{ background: LIME, color: FOREST }}
@@ -657,7 +657,7 @@ const Agencies = () => {
                 <ArrowRight className="h-4 w-4 ltr:ml-2 rtl:mr-2 rtl:rotate-180" />
               </Button>
             </Link>
-            <Link to="/agency/login">
+            <Link to={loginHref}>
               <Button
                 variant="outline"
                 className="h-12 px-8 rounded-md font-semibold border-white/30 text-white hover:bg-white/10 hover:text-white bg-transparent"
