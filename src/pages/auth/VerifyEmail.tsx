@@ -55,7 +55,7 @@ export default function VerifyEmail() {
   }, [email]);
 
   const codeStr = useMemo(() => digits.join(""), [digits]);
-  const allFilled = codeStr.length === CODE_LENGTH && digits.every((d) => /^\d$/.test(d));
+  const allFilled = codeStr.length === CODE_LENGTH && digits.every((d) => /^[A-Z0-9]$/.test(d));
 
   const triggerShake = () => {
     setShaking(true);
