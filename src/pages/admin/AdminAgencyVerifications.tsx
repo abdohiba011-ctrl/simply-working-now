@@ -15,6 +15,9 @@ import {
   AlertTriangle,
   Building2,
   MapPin,
+  FileText,
+  ExternalLink,
+  AlertCircle,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -34,12 +37,55 @@ interface PendingAgency {
   profile_id: string;
 }
 
+type SlotKey = "rc" | "ae_card" | "id_front" | "id_back";
+
+interface AgencyDoc {
+  key: SlotKey;
+  file_name: string;
+  signed_url: string | null;
+  file_type: string | null;
+}
+
+interface AgencyDocsState {
+  loading: boolean;
+  business_type: string | null;
+  docs: AgencyDoc[];
+}
+
+const SLOT_LABEL: Record<SlotKey, string> = {
+  rc: "Registre de Commerce (RC)",
+  ae_card: "Auto-entrepreneur card",
+  id_front: "Owner ID — Front",
+  id_back: "Owner ID — Back",
+};
+
+const matchSlot = (fileName: string): SlotKey | null => {
+  const n = (fileName || "").toLowerCase();
+  if (n.startsWith("ae_card")) return "ae_card";
+  if (n.startsWith("id_front")) return "id_front";
+  if (n.startsWith("id_back")) return "id_back";
+  if (n.startsWith("rc")) return "rc";
+  return null;
+};
+
+// Try to extract the bucket path from a stored file_url (signed URL or raw path)
+const extractBucketPath = (fileUrl: string): string | null => {
+  if (!fileUrl) return null;
+  // signed URL pattern: /storage/v1/object/sign/client-files/<path>?token=...
+  const m = fileUrl.match(/\/object\/(?:sign|public)\/client-files\/([^?]+)/);
+  if (m) return decodeURIComponent(m[1]);
+  // already a raw path
+  if (!fileUrl.startsWith("http")) return fileUrl;
+  return null;
+};
+
 const AdminAgencyVerifications = () => {
   const { hasRole, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const [pending, setPending] = useState<PendingAgency[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [docsByAgency, setDocsByAgency] = useState<Record<string, AgencyDocsState>>({});
 
   const isAdmin = hasRole("admin");
 
@@ -59,12 +105,85 @@ const AdminAgencyVerifications = () => {
         .eq("is_verified", false)
         .order("created_at", { ascending: false });
       if (error) throw error;
-      setPending(data || []);
+      const list = data || [];
+      setPending(list);
+      // Fetch documents for each agency
+      list.forEach((a) => loadDocsFor(a));
     } catch (e) {
       toast.error("Failed to load pending agencies");
       console.error(e);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const loadDocsFor = async (agency: PendingAgency) => {
+    setDocsByAgency((prev) => ({
+      ...prev,
+      [agency.id]: { loading: true, business_type: null, docs: [] },
+    }));
+    try {
+      // Get owner user_id + business_type from the linked profile
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("user_id, business_type")
+        .eq("id", agency.profile_id)
+        .maybeSingle();
+      if (!profile?.user_id) {
+        setDocsByAgency((prev) => ({
+          ...prev,
+          [agency.id]: { loading: false, business_type: null, docs: [] },
+        }));
+        return;
+      }
+      const { data: files } = await supabase
+        .from("client_files")
+        .select("file_name, file_url, file_type, created_at")
+        .eq("user_id", profile.user_id)
+        .is("deleted_at", null)
+        .order("created_at", { ascending: false });
+
+      const found: Record<SlotKey, AgencyDoc | null> = {
+        rc: null,
+        ae_card: null,
+        id_front: null,
+        id_back: null,
+      };
+      for (const f of files || []) {
+        const slot = matchSlot(f.file_name || "");
+        if (!slot || found[slot]) continue;
+        let signedUrl: string | null = null;
+        const path = extractBucketPath(f.file_url || "");
+        if (path) {
+          const { data: s } = await supabase.storage
+            .from("client-files")
+            .createSignedUrl(path, 60 * 60);
+          signedUrl = s?.signedUrl || null;
+        }
+        if (!signedUrl && f.file_url?.startsWith("http")) {
+          signedUrl = f.file_url;
+        }
+        found[slot] = {
+          key: slot,
+          file_name: f.file_name,
+          signed_url: signedUrl,
+          file_type: f.file_type,
+        };
+      }
+      setDocsByAgency((prev) => ({
+        ...prev,
+        [agency.id]: {
+          loading: false,
+          business_type: profile.business_type || null,
+          docs: (Object.values(found).filter(Boolean) as AgencyDoc[]),
+        },
+      }));
+    } catch (e) {
+      console.error("loadDocsFor failed", e);
+      setDocsByAgency((prev) => ({
+        ...prev,
+        [agency.id]: { loading: false, business_type: null, docs: [] },
+      }));
     }
   };
 
@@ -194,62 +313,178 @@ const AdminAgencyVerifications = () => {
             </Card>
           ) : (
             <div className="grid gap-4">
-              {pending.map((a) => (
-                <Card key={a.id} className="hover:shadow-md transition-shadow">
-                  <CardContent className="p-6">
-                    <div className="flex items-start justify-between gap-4 flex-wrap">
-                      <div className="flex items-start gap-4 min-w-0">
-                        <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                          <Building2 className="h-6 w-6 text-primary" />
-                        </div>
-                        <div className="min-w-0">
-                          <h3 className="font-semibold truncate">
-                            {a.business_name}
-                          </h3>
-                          <p className="text-sm text-muted-foreground flex items-center gap-1">
-                            <MapPin className="h-3 w-3" />
-                            {a.city || "—"}
-                            {a.primary_neighborhood
-                              ? ` · ${a.primary_neighborhood}`
-                              : ""}
-                          </p>
-                          <div className="flex flex-wrap gap-2 mt-2 text-xs text-muted-foreground">
-                            {a.rc && <span>RC: {a.rc}</span>}
-                            {a.ice && <span>ICE: {a.ice}</span>}
-                            {a.phone && <span>Tel: {a.phone}</span>}
+              {pending.map((a) => {
+                const ds = docsByAgency[a.id];
+                const businessType = ds?.business_type;
+                const requiredBusinessSlot: SlotKey =
+                  businessType === "auto_entrepreneur" ? "ae_card" : "rc";
+                const requiredSlots: SlotKey[] = [
+                  requiredBusinessSlot,
+                  "id_front",
+                  "id_back",
+                ];
+                const docMap = new Map(
+                  (ds?.docs || []).map((d) => [d.key, d] as const),
+                );
+                const missing = requiredSlots.filter((s) => !docMap.get(s));
+                const canApprove = missing.length === 0 && !ds?.loading;
+
+                return (
+                  <Card key={a.id} className="hover:shadow-md transition-shadow">
+                    <CardContent className="p-6">
+                      <div className="flex items-start justify-between gap-4 flex-wrap">
+                        <div className="flex items-start gap-4 min-w-0 flex-1">
+                          <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                            <Building2 className="h-6 w-6 text-primary" />
                           </div>
-                          {a.bio && (
-                            <p className="text-sm mt-2 line-clamp-2">{a.bio}</p>
-                          )}
+                          <div className="min-w-0 flex-1">
+                            <h3 className="font-semibold truncate">
+                              {a.business_name}
+                            </h3>
+                            <p className="text-sm text-muted-foreground flex items-center gap-1">
+                              <MapPin className="h-3 w-3" />
+                              {a.city || "—"}
+                              {a.primary_neighborhood
+                                ? ` · ${a.primary_neighborhood}`
+                                : ""}
+                            </p>
+                            <div className="flex flex-wrap gap-2 mt-2 text-xs text-muted-foreground">
+                              {a.rc && <span>RC: {a.rc}</span>}
+                              {a.ice && <span>ICE: {a.ice}</span>}
+                              {a.phone && <span>Tel: {a.phone}</span>}
+                              {businessType && (
+                                <span>
+                                  Type:{" "}
+                                  {businessType === "auto_entrepreneur"
+                                    ? "Auto-entrepreneur"
+                                    : "Company"}
+                                </span>
+                              )}
+                            </div>
+                            {a.bio && (
+                              <p className="text-sm mt-2 line-clamp-2">{a.bio}</p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex gap-2 shrink-0">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleReject(a)}
+                            disabled={actionLoading === a.id}
+                          >
+                            <XCircle className="h-4 w-4 mr-1" />
+                            Reject
+                          </Button>
+                          <Button
+                            size="sm"
+                            onClick={() => handleApprove(a)}
+                            disabled={actionLoading === a.id || !canApprove}
+                            title={
+                              !canApprove
+                                ? "Cannot approve: documents missing"
+                                : undefined
+                            }
+                          >
+                            {actionLoading === a.id ? (
+                              <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                            ) : (
+                              <CheckCircle className="h-4 w-4 mr-1" />
+                            )}
+                            Approve
+                          </Button>
                         </div>
                       </div>
-                      <div className="flex gap-2 shrink-0">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleReject(a)}
-                          disabled={actionLoading === a.id}
-                        >
-                          <XCircle className="h-4 w-4 mr-1" />
-                          Reject
-                        </Button>
-                        <Button
-                          size="sm"
-                          onClick={() => handleApprove(a)}
-                          disabled={actionLoading === a.id}
-                        >
-                          {actionLoading === a.id ? (
-                            <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+
+                      {/* Documents */}
+                      <div className="mt-4 pt-4 border-t">
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="text-sm font-medium flex items-center gap-1.5">
+                            <FileText className="h-4 w-4" />
+                            Submitted Documents
+                          </h4>
+                          {ds?.loading ? (
+                            <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
+                          ) : missing.length > 0 ? (
+                            <Badge variant="destructive" className="text-xs">
+                              {missing.length} missing
+                            </Badge>
                           ) : (
-                            <CheckCircle className="h-4 w-4 mr-1" />
+                            <Badge className="text-xs bg-success/10 text-success border-success/30">
+                              Complete
+                            </Badge>
                           )}
-                          Approve
-                        </Button>
+                        </div>
+                        {ds?.loading ? (
+                          <p className="text-xs text-muted-foreground">
+                            Loading documents…
+                          </p>
+                        ) : (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            {requiredSlots.map((slot) => {
+                              const d = docMap.get(slot);
+                              const isImage =
+                                d?.file_type?.startsWith("image/") ?? false;
+                              return (
+                                <div
+                                  key={slot}
+                                  className={`flex items-center gap-3 p-2 rounded-md border ${
+                                    d
+                                      ? "bg-muted/30"
+                                      : "bg-destructive/5 border-destructive/30"
+                                  }`}
+                                >
+                                  <div className="h-12 w-12 rounded bg-background border flex items-center justify-center shrink-0 overflow-hidden">
+                                    {d && isImage && d.signed_url ? (
+                                      <img
+                                        src={d.signed_url}
+                                        alt={SLOT_LABEL[slot]}
+                                        className="h-full w-full object-cover"
+                                      />
+                                    ) : d ? (
+                                      <FileText className="h-5 w-5 text-muted-foreground" />
+                                    ) : (
+                                      <AlertCircle className="h-5 w-5 text-destructive" />
+                                    )}
+                                  </div>
+                                  <div className="min-w-0 flex-1">
+                                    <p className="text-xs font-medium truncate">
+                                      {SLOT_LABEL[slot]}
+                                    </p>
+                                    {d ? (
+                                      <p className="text-[11px] text-muted-foreground truncate">
+                                        {d.file_name.replace(
+                                          /^(rc|ae_card|id_front|id_back)-/,
+                                          "",
+                                        )}
+                                      </p>
+                                    ) : (
+                                      <p className="text-[11px] text-destructive">
+                                        Not submitted
+                                      </p>
+                                    )}
+                                  </div>
+                                  {d?.signed_url && (
+                                    <a
+                                      href={d.signed_url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-primary hover:underline text-xs flex items-center gap-1 shrink-0"
+                                    >
+                                      Open
+                                      <ExternalLink className="h-3 w-3" />
+                                    </a>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           )}
         </div>
