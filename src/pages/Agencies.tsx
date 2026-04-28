@@ -508,7 +508,7 @@ const Agencies = () => {
               const suffix = yearly ? t.perYear : t.perMonth;
               const isHighlight = p.highlight;
               const planSlug = p.name.toLowerCase().includes("pro") ? "pro" : p.name.toLowerCase().includes("business") ? "business" : "free";
-              const href = planSlug === "business" ? "mailto:contact@motonita.ma" : `/agency/signup${planSlug === "pro" ? "?plan=pro" : ""}`;
+              const href = planHref(planSlug as "free" | "pro" | "business");
               return (
                 <div
                   key={i}
