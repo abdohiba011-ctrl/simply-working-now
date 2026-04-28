@@ -2009,6 +2009,7 @@ export type Database = {
         Row: {
           attempts: number
           code: string
+          code_hash: string | null
           created_at: string
           email: string
           expires_at: string
@@ -2020,6 +2021,7 @@ export type Database = {
         Insert: {
           attempts?: number
           code: string
+          code_hash?: string | null
           created_at?: string
           email: string
           expires_at: string
@@ -2031,6 +2033,7 @@ export type Database = {
         Update: {
           attempts?: number
           code?: string
+          code_hash?: string | null
           created_at?: string
           email?: string
           expires_at?: string
