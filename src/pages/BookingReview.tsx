@@ -43,7 +43,16 @@ const BookingReview = () => {
   const dropoffTime = searchParams.get("dropoffTime") || savedBooking?.dropoffTime || "18:00";
   const deliveryMethod = searchParams.get("deliveryMethod") || savedBooking?.deliveryMethod || "pickup";
   const location = searchParams.get("location") || savedBooking?.location || "Casablanca";
-  const dailyPrice = parseInt(searchParams.get("dailyPrice") || String(savedBooking?.dailyPrice) || "99");
+  // Robust daily-price parsing — never NaN, never 0 from a missing field.
+  const parseDailyPrice = (): number => {
+    const raw = searchParams.get("dailyPrice");
+    const fromUrl = raw != null ? Number(raw) : NaN;
+    if (Number.isFinite(fromUrl) && fromUrl > 0) return Math.round(fromUrl);
+    const fromSaved = Number(savedBooking?.dailyPrice);
+    if (Number.isFinite(fromSaved) && fromSaved > 0) return Math.round(fromSaved);
+    return 99;
+  };
+  const dailyPrice = parseDailyPrice();
 
   // Scroll to top on page load
   useEffect(() => {

@@ -52,7 +52,12 @@ const ChangePassword = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
+    if (!currentPassword) {
+      toast.error(t('auth.password'));
+      return;
+    }
+
     if (newPassword !== confirmPassword) {
       toast.error(t('errors.passwordMismatch'));
       return;
@@ -63,11 +68,32 @@ const ChangePassword = () => {
       return;
     }
 
+    if (currentPassword === newPassword) {
+      toast.error('New password must be different from current password.');
+      return;
+    }
+
     try {
       setIsLoading(true);
-      
+
+      // 1. Verify current password by attempting a sign-in with it.
+      const { data: userData } = await supabase.auth.getUser();
+      const email = userData.user?.email;
+      if (!email) throw new Error('No active session.');
+
+      const { error: verifyError } = await supabase.auth.signInWithPassword({
+        email,
+        password: currentPassword,
+      });
+      if (verifyError) {
+        toast.error('Current password is incorrect.');
+        setIsLoading(false);
+        return;
+      }
+
+      // 2. Update to new password.
       const { error } = await supabase.auth.updateUser({
-        password: newPassword
+        password: newPassword,
       });
 
       if (error) throw error;
