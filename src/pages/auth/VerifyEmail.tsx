@@ -8,6 +8,7 @@ import { AgencyAuthLayout as AuthLayout } from "@/components/auth/AgencyAuthLayo
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { getResendCooldownMs, type AuthError } from "@/lib/mockAuth";
+import { sendAppEmail } from "@/lib/sendAppEmail";
 import { cn } from "@/lib/utils";
 
 const CODE_LENGTH = 6;
@@ -146,6 +147,15 @@ export default function VerifyEmail() {
     try {
       await verifyEmail(codeStr, email);
       toast.success(t("mockAuth.email_verified", { defaultValue: "Email verified!" }));
+      // Fire-and-forget welcome email (don't block routing on email send).
+      const verifiedUser = useAuthStore.getState().user;
+      if (email) {
+        void sendAppEmail({
+          templateName: "welcome",
+          recipientEmail: email,
+          templateData: { name: verifiedUser?.name, siteUrl: window.location.origin },
+        }).catch((e) => console.warn("welcome email failed", e));
+      }
       routeAfterVerify();
     } catch (err) {
       const e = err as AuthError;
