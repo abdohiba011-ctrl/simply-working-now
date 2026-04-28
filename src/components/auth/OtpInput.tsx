@@ -27,8 +27,7 @@ export function OtpInput({
   }, [autoFocus]);
 
   const handleChange = (index: number, raw: string) => {
-    // Supabase OTP tokens are alphanumeric (e.g. "C6X4K2"), so accept letters + digits.
-    const sanitized = raw.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
+    const sanitized = raw.replace(/\D/g, "");
     if (!sanitized) {
       const next = [...value];
       next[index] = "";
@@ -44,7 +43,7 @@ export function OtpInput({
       onChange(next);
       const lastIdx = Math.min(index + chars.length, length - 1);
       inputsRef.current[lastIdx]?.focus();
-      if (next.join("").length === length && next.every((d) => /^[A-Z0-9]$/.test(d))) {
+      if (next.join("").length === length && next.every((d) => /^\d$/.test(d))) {
         onComplete?.(next.join(""));
       }
       return;
@@ -53,7 +52,7 @@ export function OtpInput({
     next[index] = sanitized;
     onChange(next);
     if (index < length - 1) inputsRef.current[index + 1]?.focus();
-    if (next.join("").length === length && next.every((d) => /^[A-Z0-9]$/.test(d))) {
+    if (next.join("").length === length && next.every((d) => /^\d$/.test(d))) {
       onComplete?.(next.join(""));
     }
   };
@@ -74,8 +73,7 @@ export function OtpInput({
   const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
     const pasted = e.clipboardData
       .getData("text")
-      .replace(/[^a-zA-Z0-9]/g, "")
-      .toUpperCase()
+      .replace(/\D/g, "")
       .slice(0, length);
     if (pasted.length === length) {
       e.preventDefault();
@@ -100,10 +98,9 @@ export function OtpInput({
             key={i}
             ref={(el) => (inputsRef.current[i] = el)}
             type="text"
-            inputMode="text"
-            autoCapitalize="characters"
+            inputMode="numeric"
             autoComplete="one-time-code"
-            pattern="[A-Za-z0-9]*"
+            pattern="[0-9]*"
             maxLength={1}
             value={d}
             onChange={(e) => handleChange(i, e.target.value)}
