@@ -55,6 +55,7 @@ import {
   AssignBusinessModal,
   RejectBookingModal
 } from "@/components/admin/bookings";
+import { BookingMessagesCard } from "@/components/admin/bookings/BookingMessagesCard";
 import { AdminBookingDetailsSkeleton } from "@/components/ui/admin-skeleton";
 
 interface Booking {
@@ -823,6 +824,9 @@ const AdminBookingDetails = () => {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Conversation between renter and agency */}
+            <BookingMessagesCard bookingId={booking.id} />
 
             {/* Activity Timeline */}
             <BookingTimeline events={events} isLoading={eventsLoading} />
