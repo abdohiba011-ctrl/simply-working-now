@@ -590,20 +590,41 @@ const Verification = () => {
 
         {uploadState.status === 'error' && (
           <div className="border border-destructive/30 bg-destructive/5 rounded-lg p-4 space-y-3">
-            <div className="flex items-center gap-2 text-destructive">
-              <AlertCircle className="h-4 w-4" />
-              <span className="text-sm">{uploadState.error}</span>
+            <div className="flex items-start gap-2 text-destructive">
+              <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
+              <div className="flex-1 space-y-1">
+                <p className="text-sm font-medium break-words">{uploadState.error}</p>
+                {uploadState.errorHint && (
+                  <p className="text-xs text-destructive/80">{uploadState.errorHint}</p>
+                )}
+                {uploadState.errorCode && (
+                  <p className="text-[10px] uppercase tracking-wide text-destructive/60">
+                    Error code: {uploadState.errorCode}
+                  </p>
+                )}
+              </div>
             </div>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => resetUpload(side, setUploadState, inputRef)}
-              className="w-full"
-            >
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Try again
-            </Button>
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                type="button"
+                variant="default"
+                size="sm"
+                disabled={!uploadState.compressedFile}
+                onClick={() => retryUpload(side, uploadState, setUploadState)}
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Retry upload
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => resetUpload(side, setUploadState, inputRef)}
+              >
+                <Upload className="h-4 w-4 mr-2" />
+                Pick another
+              </Button>
+            </div>
           </div>
         )}
 
