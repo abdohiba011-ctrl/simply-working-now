@@ -201,7 +201,7 @@ export default function VerifyEmail() {
           </h1>
           <p className="text-sm" style={{ color: "rgba(22,51,0,0.7)" }}>
             {t("mockAuth.code_sent_to", {
-              defaultValue: "We sent a 6-digit code to",
+              defaultValue: "We sent a 6-character verification code to",
             })}{" "}
             <span className="font-semibold" style={{ color: "#163300" }}>
               {email || "your email"}
