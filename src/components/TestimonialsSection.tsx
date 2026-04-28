@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { ShieldCheck } from "lucide-react";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { testimonials, type Testimonial, type TestimonialType } from "@/data/testimonials";
@@ -75,7 +75,18 @@ export const TestimonialsSection = () => {
               <TabsTrigger value="audio" className="rounded-full px-4">{t("testimonials.tabs.audio")}</TabsTrigger>
               <TabsTrigger value="video" className="rounded-full px-4">{t("testimonials.tabs.video")}</TabsTrigger>
             </TabsList>
+            {/*
+              Mount empty TabsContent panels for each trigger so the
+              auto-generated aria-controls IDs always resolve to a real
+              element in the DOM. The actual filtered cards are rendered
+              below; these panels stay empty and visually hidden.
+            */}
+            <TabsContent value="all" className="sr-only" />
+            <TabsContent value="text" className="sr-only" />
+            <TabsContent value="audio" className="sr-only" />
+            <TabsContent value="video" className="sr-only" />
           </Tabs>
+
         </div>
 
         <div
