@@ -284,6 +284,91 @@ const Verification = () => {
     );
   };
 
+  const idSubSlot = (slot: "id_front" | "id_back", label: string) => {
+    const existing = docs.find((d) => d.key === slot);
+    return (
+      <div className="rounded-lg border border-border p-4">
+        <div className="flex items-center justify-between gap-2">
+          <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            {label}
+          </Label>
+          {existing && <FileCheck2 className="h-4 w-4 text-success shrink-0" />}
+        </div>
+        {existing ? (
+          <p className="mt-2 truncate text-xs text-muted-foreground">
+            <a
+              href={existing.file_url}
+              target="_blank"
+              rel="noreferrer"
+              className="text-primary hover:underline"
+            >
+              {existing.file_name}
+            </a>
+          </p>
+        ) : (
+          <p className="mt-2 text-xs text-muted-foreground">
+            Not uploaded yet.
+          </p>
+        )}
+        <div className="mt-3">
+          <label className="inline-flex">
+            <input
+              type="file"
+              accept=".pdf,image/*"
+              className="hidden"
+              disabled={uploading === slot}
+              onChange={(e) => handleUpload(slot, e.target.files?.[0] || null)}
+            />
+            <Button
+              asChild
+              size="sm"
+              variant={existing ? "outline" : "default"}
+              disabled={uploading === slot}
+            >
+              <span className="cursor-pointer">
+                {uploading === slot ? (
+                  <>
+                    <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />{" "}
+                    Uploading…
+                  </>
+                ) : (
+                  <>
+                    <Upload className="mr-2 h-3.5 w-3.5" />{" "}
+                    {existing ? "Replace" : "Upload"}
+                  </>
+                )}
+              </span>
+            </Button>
+          </label>
+        </div>
+      </div>
+    );
+  };
+
+  const idCard = (
+    <Card className="p-5">
+      <div className="flex items-start gap-3">
+        <div className="rounded-md bg-primary/10 p-2 text-primary">
+          <UserIcon className="h-4 w-4" />
+        </div>
+        <div className="flex-1">
+          <Label className="text-sm font-semibold">
+            2. Owner ID card (CIN)
+          </Label>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Upload both sides of the CIN of the person managing the business.
+            Make sure the text is readable. PDF, JPG or PNG. Max 5 MB each.
+          </p>
+        </div>
+      </div>
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        {idSubSlot("id_front", "Front side")}
+        {idSubSlot("id_back", "Back side")}
+      </div>
+    </Card>
+  );
+
+
   return (
     <div className="space-y-4">
       <Card className="p-6">
@@ -353,26 +438,15 @@ const Verification = () => {
             </div>
           </Card>
 
-          {/* Steps 1-3 — required documents */}
-          <div className="grid gap-4 md:grid-cols-2">
+          {/* Steps 1-2 — required documents */}
+          <div className="grid gap-4">
             {slotCard(
               businessSlot,
               `1. ${businessLabel}`,
               businessHelp,
               <Building2 className="h-4 w-4" />,
             )}
-            {slotCard(
-              "id_front",
-              "2. Owner ID card — front",
-              "Front side of the CIN of the person managing the business.",
-              <UserIcon className="h-4 w-4" />,
-            )}
-            {slotCard(
-              "id_back",
-              "3. Owner ID card — back",
-              "Back side of the same CIN. Make sure the text is readable.",
-              <UserIcon className="h-4 w-4" />,
-            )}
+            {idCard}
           </div>
 
           {/* Submit */}
@@ -382,7 +456,7 @@ const Verification = () => {
                 ? status === "pending"
                   ? "Your documents are under review."
                   : "All set — submit your documents for review."
-                : "Upload all 3 documents to enable submission."}
+                : "Upload all required documents to enable submission."}
             </div>
             <Button
               onClick={handleSubmit}
