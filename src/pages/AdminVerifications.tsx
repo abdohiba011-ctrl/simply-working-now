@@ -52,8 +52,8 @@ const AdminVerifications = () => {
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .in('verification_status', ['pending_review', 'not_started'])
-        .order('created_at', { ascending: false });
+        .eq('verification_status', 'pending_review')
+        .order('submitted_at', { ascending: false, nullsFirst: false });
 
       if (error) throw error;
       setPendingUsers(data || []);
