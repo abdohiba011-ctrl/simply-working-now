@@ -75,7 +75,18 @@ export const TestimonialsSection = () => {
               <TabsTrigger value="audio" className="rounded-full px-4">{t("testimonials.tabs.audio")}</TabsTrigger>
               <TabsTrigger value="video" className="rounded-full px-4">{t("testimonials.tabs.video")}</TabsTrigger>
             </TabsList>
+            {/*
+              Mount empty TabsContent panels for each trigger so the
+              auto-generated aria-controls IDs always resolve to a real
+              element in the DOM. The actual filtered cards are rendered
+              below; these panels stay empty and visually hidden.
+            */}
+            <TabsContent value="all" className="sr-only" />
+            <TabsContent value="text" className="sr-only" />
+            <TabsContent value="audio" className="sr-only" />
+            <TabsContent value="video" className="sr-only" />
           </Tabs>
+
         </div>
 
         <div
