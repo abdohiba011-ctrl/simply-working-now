@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { AlertTriangle, Users, Building2, UserCog, Clock, CheckCircle, XCircle, UserX, Calendar, Bike, BarChart3, MapPin, Map, Mail } from "lucide-react";
+import { AlertTriangle, Users, Building2, UserCog, Clock, CheckCircle, XCircle, UserX, Calendar, Bike, BarChart3, Map, Mail } from "lucide-react";
 import { useAdminNotifications } from "@/hooks/useAdminNotifications";
 import { useAdminPermissions, AdminTabPermission } from "@/hooks/useAdminPermissions";
 import { AdminUnifiedClientsTab } from "@/components/admin/AdminUnifiedClientsTab";
@@ -12,7 +12,6 @@ import { AdminBusinessClientsTab } from "@/components/admin/AdminBusinessClients
 import { AdminEmployeesTab } from "@/components/admin/AdminEmployeesTab";
 import { AdminBookingsTab } from "@/components/admin/AdminBookingsTab";
 import { AdminFleetTab } from "@/components/admin/AdminFleetTab";
-import { AdminLocationsTab } from "@/components/admin/AdminLocationsTab";
 import { AdminCitiesTab } from "@/components/admin/AdminCitiesTab";
 import { AdminEmailTestTab } from "@/components/admin/AdminEmailTestTab";
 import { TabErrorBoundary } from "@/components/TabErrorBoundary";
@@ -24,14 +23,15 @@ import { Skeleton } from "@/components/ui/skeleton";
 // Lazy load analytics tab to avoid loading recharts on initial load
 const AdminAnalyticsTab = lazy(() => import("@/components/admin/AdminAnalyticsTab").then(m => ({ default: m.AdminAnalyticsTab })));
 
-type TabValue = "clients" | "business-clients" | "employees" | "bookings" | "fleet" | "analytics" | "locations" | "cities" | "email";
+type TabValue = "clients" | "business-clients" | "employees" | "bookings" | "fleet" | "analytics" | "cities" | "email";
 type FilterValue = "all" | "pending" | "verified" | "not_verified" | "blocked";
 
 // Map tab values to permission keys
 const TAB_PERMISSION_MAP: Record<TabValue, AdminTabPermission | null> = {
   bookings: "bookings",
   fleet: "fleet",
-  locations: "locations",
+  // The merged Cities tab now also covers what used to be the Locations tab,
+  // so users with either legacy permission can see it (handled below).
   cities: "cities",
   clients: "clients",
   // The merged business-clients tab is special-cased below: visible if the
@@ -56,14 +56,16 @@ const AdminPanel = () => {
   const { t } = useLanguage();
   const { hasPermission, isLoading: permissionsLoading, isFullAdmin, isSuperAdmin } = useAdminPermissions();
 
-  // Read initial tab from URL query param (and migrate the two old values)
-  const rawInitial = searchParams.get('tab') as TabValue | "individual-owners" | "rental-shops" | "pricing" | null;
+  // Read initial tab from URL query param (and migrate the old values)
+  const rawInitial = searchParams.get('tab') as TabValue | "individual-owners" | "rental-shops" | "pricing" | "locations" | null;
   const migratedInitial: TabValue =
     rawInitial === "individual-owners" || rawInitial === "rental-shops"
       ? "business-clients"
-      : rawInitial === "pricing" || !rawInitial
-        ? "bookings"
-        : (rawInitial as TabValue);
+      : rawInitial === "locations"
+        ? "cities"
+        : rawInitial === "pricing" || !rawInitial
+          ? "bookings"
+          : (rawInitial as TabValue);
   const [activeTab, setActiveTab] = useState<TabValue>(migratedInitial);
   const [statusFilter, setStatusFilter] = useState<FilterValue>("all");
   const [statusCounts, setStatusCounts] = useState<StatusCounts>({ pending: 0, verified: 0, not_verified: 0, blocked: 0 });
@@ -80,7 +82,6 @@ const AdminPanel = () => {
   const allTabs = [
     { value: "bookings" as TabValue, label: t('admin.bookings'), icon: Calendar },
     { value: "fleet" as TabValue, label: t('admin.fleet'), icon: Bike },
-    { value: "locations" as TabValue, label: t('admin.locations'), icon: MapPin },
     { value: "cities" as TabValue, label: t('admin.cities'), icon: Map },
     { value: "clients" as TabValue, label: t('admin.clients'), icon: Users },
     { value: "business-clients" as TabValue, label: "Business Clients", icon: Building2 },
@@ -97,6 +98,10 @@ const AdminPanel = () => {
       // The merged business-clients tab needs either legacy permission
       if (tab.value === "business-clients") {
         return hasPermission("individual_owners") || hasPermission("rental_shops");
+      }
+      // The merged Cities tab also covers the old Locations tab
+      if (tab.value === "cities") {
+        return hasPermission("cities") || hasPermission("locations");
       }
       const permissionKey = TAB_PERMISSION_MAP[tab.value];
       if (permissionKey === null) return true;
@@ -253,11 +258,6 @@ const AdminPanel = () => {
         {activeTab === "fleet" && (
           <TabErrorBoundary key={`fleet-${retryKey}`} tabName="Fleet" onRetry={handleTabRetry}>
             <AdminFleetTab />
-          </TabErrorBoundary>
-        )}
-        {activeTab === "locations" && (
-          <TabErrorBoundary key={`locations-${retryKey}`} tabName="Locations" onRetry={handleTabRetry}>
-            <AdminLocationsTab />
           </TabErrorBoundary>
         )}
         {activeTab === "cities" && (
