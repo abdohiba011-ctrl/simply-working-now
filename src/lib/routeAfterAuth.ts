@@ -42,29 +42,17 @@ export function getDestinationForUser(
   const hasRenter = user.roles.renter.active;
   const hasAgency = user.roles.agency.active;
 
-  // Single-role users always go to their only home.
-  if (hasAgency && !hasRenter) {
+  // Agency users are agency-only. They always land on the agency
+  // dashboard (or verification screen), regardless of which login door
+  // they used. They never get sent to /rent.
+  if (hasAgency) {
     return user.roles.agency.verified
       ? "/agency/dashboard"
       : "/agency/verification";
   }
-  if (hasRenter && !hasAgency) return "/rent";
 
-  // Dual-role: context wins.
-  if (hasRenter && hasAgency) {
-    let chosen: LoginContext;
-    if (context === "agency") chosen = "agency";
-    else if (context === "renter") chosen = "renter";
-    else if (user.last_active_role === "renter") chosen = "renter";
-    else chosen = "agency"; // business-priority default
-
-    if (chosen === "agency") {
-      return user.roles.agency.verified
-        ? "/agency/dashboard"
-        : "/agency/verification";
-    }
-    return "/rent";
-  }
+  // Renter-only accounts go to the renter home.
+  if (hasRenter) return "/rent";
 
   // No active roles — fallback to renter.
   return "/rent";

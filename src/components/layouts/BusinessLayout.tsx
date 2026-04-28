@@ -142,9 +142,9 @@ export const BusinessLayout = ({ children }: BusinessLayoutProps) => {
                     <User className="mr-2 h-4 w-4 text-muted-foreground" />
                     Profile
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate("/")} className="text-foreground hover:bg-muted">
+                  <DropdownMenuItem onClick={() => navigate("/agency/dashboard")} className="text-foreground hover:bg-muted">
                     <Home className="mr-2 h-4 w-4 text-muted-foreground" />
-                    Switch to Client
+                    Dashboard
                   </DropdownMenuItem>
                   <DropdownMenuSeparator className="bg-border" />
                   <DropdownMenuItem onClick={() => setShowLogoutDialog(true)} className="text-foreground hover:bg-muted">
