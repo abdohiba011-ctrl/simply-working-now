@@ -661,6 +661,8 @@ export type Database = {
       }
       bikes: {
         Row: {
+          agency_id: string | null
+          approval_status: string
           available: boolean | null
           bike_type_id: string
           condition: string | null
@@ -673,6 +675,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          agency_id?: string | null
+          approval_status?: string
           available?: boolean | null
           bike_type_id: string
           condition?: string | null
@@ -685,6 +689,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          agency_id?: string | null
+          approval_status?: string
           available?: boolean | null
           bike_type_id?: string
           condition?: string | null
@@ -2086,6 +2092,7 @@ export type Database = {
     Views: {
       bikes_public: {
         Row: {
+          agency_id: string | null
           available: boolean | null
           bike_type_id: string | null
           condition: string | null
@@ -2094,26 +2101,6 @@ export type Database = {
           location: string | null
           owner_id: string | null
           updated_at: string | null
-        }
-        Insert: {
-          available?: boolean | null
-          bike_type_id?: string | null
-          condition?: string | null
-          created_at?: string | null
-          id?: string | null
-          location?: string | null
-          owner_id?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          available?: boolean | null
-          bike_type_id?: string | null
-          condition?: string | null
-          created_at?: string | null
-          id?: string | null
-          location?: string | null
-          owner_id?: string | null
-          updated_at?: string | null
         }
         Relationships: [
           {

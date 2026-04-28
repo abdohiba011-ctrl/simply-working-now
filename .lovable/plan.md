@@ -1,73 +1,80 @@
-# Fix renter verification flow (persist, notify, show status)
+## Goal
 
-## What's broken (root cause)
+Lock down the public marketplace behind a **two-gate approval pipeline**:
 
-Every verification-related query targets the wrong column on `profiles`. The `profiles` table is keyed by `user_id` (= `auth.uid()`). The verification code uses `.eq('id', user.id)` everywhere — `id` is the profile row's own PK, not the auth user id. The filter matches **0 rows**, so:
+1. **Shop gate** — an agency must be admin-verified before any of its motorbikes can appear publicly.
+2. **Motorbike gate** — every motorbike listing also needs admin approval before it's listed, even after the shop is verified.
 
-1. The `UPDATE` on submit silently affects 0 rows → `verification_status` never flips to `pending_review`, `id_front_image_url` / `selfie_with_id_url` are never saved. Confirmed: `SELECT … FROM profiles WHERE verification_status <> 'unverified'` returns 0 rows.
-2. The status `SELECT` on page load also returns nothing → user always sees `not_started` → keeps re-submitting.
-3. The admin queue at `/admin/verifications` lists nothing (no rows in `pending_review`), so there's nothing to act on. The notification IS inserted, but the linked profile never updates and the admin has nothing to review.
-4. Admin approve/reject/block buttons also use `.eq('id', userId)` → would silently no-op even if a row existed.
+Agencies can keep working in their dashboard at every stage (create shop → add bikes), but listings stay hidden until both gates flip to approved.
 
-There's also no admin notification bell, so even when the `notifications` row is inserted, an admin only sees it if they manually open `/notifications`.
+---
+
+## Current state (audited)
+
+- `agencies` table already has `verification_status` + `is_verified` and the agency-side `Verification.tsx` upload flow exists.
+- `AdminVerifications.tsx` only reviews **renter ID verification** (queries `profiles`); there is **no admin queue for agency-shop verification**.
+- The motorbike catalog actually used by the agency wizard is `bike_types` (with `approval_status`, `business_status`, `owner_id`) — and `BusinessMotorbikes.tsx` already shows pending/approved/rejected counts. The renter `Listings.tsx` reads from `bike_types` indirectly via `useBikeTypes` (no approval filter today).
+- `bikes` (the per-unit fleet) and the public view `bikes_public` have **no `approval_status` and no agency join**, so unverified-agency or unapproved bikes can leak into search.
+- Admin notifications (`useAdminNotifications.ts`) already listen for `bikes.approval_status=pending` and `profiles.verification_status=pending_review` — but neither subscription targets agency-shop submissions today.
+
+---
 
 ## Changes
 
-### 1. Fix the column-name bug everywhere (the actual blocker)
+### 1. Database migration
 
-Replace `.eq('id', …)` with `.eq('user_id', …)` for all `profiles` queries in:
-- `src/pages/Verification.tsx` — load (line 178) and submit update (line 449)
-- `src/pages/AdminVerifications.tsx` — approve (line 76), reject (line 106), block (line 136)
-- `src/pages/UserVerificationDetails.tsx` — load (line 79), approve (line 162), reject (line 198), block (line 235)
+- Add `verification_status` (default `'not_submitted'`) and `submitted_at` indexing on `agencies` (column already exists; just ensure a check + index for the admin queue).
+- Add `approval_status` (`pending` | `approved` | `rejected`, default `pending`) and `agency_id` (FK → `agencies.id`) to **`bikes`** so per-unit bikes inherit the same gate as the catalog.
+- Backfill: link existing `bikes.owner_id` to the matching `agencies.profile_id` to populate `agency_id`.
+- Replace the `bikes_public` view to **only return rows where**:
+  `bikes.available = true AND bikes.approval_status = 'approved' AND agencies.is_verified = true`.
+- Same gate for `bike_types` exposed publicly: filter `useBikeTypes`/`useBikes` queries to `approval_status = 'approved'` and join-verify the owner agency.
+- New trigger `notify_admins_on_agency_submit` — when `agencies.verification_status` flips to `pending_review`, insert one row per admin into `notifications` (mirrors the existing renter-verification trigger added last loop).
+- New trigger `notify_admins_on_bike_submit` — when a `bikes` row is inserted with `approval_status='pending'` (or a `bike_types` row likewise), notify all admins.
+- Indexes: `agencies(verification_status)`, `bikes(approval_status, agency_id)`.
 
-After this single fix the submission persists, the admin queue populates, and approve/reject works.
+### 2. Agency dashboard
 
-### 2. Make submission state truly persistent
+- In `agency/Verification.tsx`: persist submission timestamp, lock the form once status is `pending_review` / `verified` / `rejected`, show a status badge.
+- In `agency/MotorbikeWizard.tsx` and `BusinessMotorbikes.tsx`:
+  - Allow creating bikes regardless of shop status.
+  - Always insert with `approval_status='pending'`.
+  - Show a banner: "Your shop is awaiting verification — listings won't appear publicly until verified" when the agency isn't yet verified.
+  - Show per-bike status badge (Pending / Approved / Rejected) — already exists for `bike_types`; mirror it on the per-unit `bikes` list.
 
-In `Verification.tsx`:
-- Stamp `submitted_at = new Date().toISOString()` in the update payload (column already exists).
-- On load, if `verification_status` is `pending_review`, `verified`, or `rejected`, render the read-only status card (already exists for `pending_review` at line 663) instead of the upload form. Add the same gating for `verified` (success card) and `rejected` (banner + allow resubmit since rejection is the one case where re-upload is intended).
-- If `is_verified = true`, keep the existing redirect.
+### 3. Admin panel
 
-### 3. Show a clear status badge
+- New page `src/pages/admin/AdminAgencyVerifications.tsx` (route `/admin/agencies/verifications`) listing agencies with `verification_status='pending_review'`, with approve/reject actions that set `is_verified` and `verification_status` accordingly and write an audit log entry.
+- New page `src/pages/admin/AdminBikeApprovals.tsx` (route `/admin/bikes/approvals`) listing both `bikes` and `bike_types` with `approval_status='pending'`. Approve/reject actions update the row.
+- Add both to the admin sidebar in `AdminPanel.tsx` with unread-count badges sourced from the existing notification bell.
 
-- Add a small `VerificationStatusBadge` (uses existing badge component) shown:
-  - In the user header/profile menu (next to name) — `Pending`, `Verified`, `Rejected`, or nothing if unverified.
-  - At the top of `Verification.tsx` whenever a status exists.
-- Disable the "Submit" button while `verification_status === 'pending_review'`.
+### 4. Renter-facing (public) gate
 
-### 4. Reliable admin notification pipeline
+- Update `useBikes` / `useBikeTypes` to only return rows from approved bikes belonging to verified agencies (the new `bikes_public` view does the heavy lifting; the type-level filter is added in the hook).
+- Add a small "Verified Agency" badge on the bike card to reinforce trust.
 
-Currently only renter-side code inserts admin notifications inline, which fails silently if the `notifications` insert is blocked or the admin list query returns nothing. Replace with a database trigger so it can never be skipped:
+---
 
-- Migration: `notify_admins_on_verification_submit` AFTER UPDATE trigger on `public.profiles` that fires when `NEW.verification_status = 'pending_review'` AND `OLD.verification_status IS DISTINCT FROM 'pending_review'`. It inserts one `notifications` row per admin (`user_roles WHERE role = 'admin'`) with `link = '/admin/verifications/' || NEW.user_id`.
-- Remove the inline admin-notification block from `Verification.tsx` (now handled by the trigger).
+## Files to change
 
-### 5. Admin notifications bell
+```
+supabase/migrations/<new>.sql                  # columns, view, triggers, indexes
+src/pages/admin/AdminAgencyVerifications.tsx   # new
+src/pages/admin/AdminBikeApprovals.tsx         # new
+src/pages/AdminPanel.tsx                       # nav entries + badge counts
+src/pages/agency/Verification.tsx              # persist + lock + badge
+src/pages/agency/MotorbikeWizard.tsx           # always insert pending
+src/pages/agency/Motorbikes.tsx                # status badges + banner
+src/pages/business/BusinessMotorbikes.tsx      # banner if shop unverified
+src/hooks/useBikes.ts                          # public filter
+src/hooks/useAdminNotifications.ts             # subscribe to agency submits
+src/components/agency/AgencyLayout.tsx         # global "shop pending" banner
+```
 
-In `src/pages/AdminPanel.tsx` header, add a bell icon that:
-- Counts unread `notifications` for the current admin (`is_read = false`).
-- Lists the latest 10 with click-through to `link`.
-- Subscribes to realtime inserts on `notifications` filtered by `user_id = auth.uid()` so new submissions appear instantly.
-
-Also surface a "Verifications" tab/card on `/admin/panel` showing the count of profiles with `verification_status = 'pending_review'`, linking to `/admin/verifications`.
-
-### 6. Small cleanups
-
-- Toast wording on resubmit-after-reject: keep the existing rejection banner (already implemented), just make sure the form re-enables only for `rejected`.
-- Add an index to speed up the admin queue: `CREATE INDEX IF NOT EXISTS idx_profiles_verification_status ON profiles(verification_status) WHERE verification_status = 'pending_review';`
-
-## Files
-
-- `src/pages/Verification.tsx` — fix `.eq` keys, add `submitted_at`, gate UI by status, show badge.
-- `src/pages/AdminVerifications.tsx` — fix `.eq` keys.
-- `src/pages/UserVerificationDetails.tsx` — fix `.eq` keys.
-- `src/pages/AdminPanel.tsx` — add notifications bell + pending-verifications card.
-- `src/components/VerificationStatusBadge.tsx` — new tiny component.
-- New migration — admin-notify trigger + index.
+---
 
 ## Out of scope
 
-- No changes to RLS (existing `Users can update own profile` policy already permits the corrected update).
-- No changes to upload buckets or storage policies (those were fixed earlier).
-- No new edge functions needed.
+- No change to renter ID verification flow (already fixed last loop).
+- No change to the 10/50 MAD fee model or booking flow.
+- No automatic re-approval on edits — any material edit to a bike will reset `approval_status` to `pending` (handled in a follow-up if requested).
