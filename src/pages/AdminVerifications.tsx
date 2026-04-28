@@ -13,6 +13,7 @@ import { useNavigate } from "react-router-dom";
 
 interface PendingUser {
   id: string;
+  user_id: string;
   name: string | null;
   email: string | null;
   phone: string | null;
