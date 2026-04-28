@@ -44,9 +44,13 @@ export default function Billing() {
   const navigate = useNavigate();
   const { balance, currency, isLoading, transactions, refetch, refetchTransactions } = useRenterWallet();
 
-  // A "renter" in this app = any authenticated user that is not an agency/business or admin.
-  // The user_roles enum is: admin | business | user. There is no explicit "renter" role.
-  const isRenter = !userRoles?.some((r) => r === "business" || r === "admin");
+  // A user qualifies as a renter (and so can see Credits/Billing) whenever they have the
+  // renter role. Even a dual-role user (renter + agency) should still see their renter
+  // wallet. We only hide credits from accounts that are PURELY agency or admin.
+  const hasRenterRole = !!userRoles?.includes("renter");
+  const hasOnlyNonRenterRoles =
+    !!userRoles && userRoles.length > 0 && !hasRenterRole;
+  const isRenter = hasRenterRole || !hasOnlyNonRenterRoles;
 
   const [topupOpen, setTopupOpen] = useState(false);
   const [amount, setAmount] = useState<string>("100");
@@ -247,7 +251,7 @@ export default function Billing() {
             credits and pay platform booking fees.
           </p>
           <Button className="mt-6" asChild>
-            <a href="/auth/signup">Sign up as renter</a>
+            <a href="/signup">Sign up as renter</a>
           </Button>
         </main>
         <Footer />

@@ -83,6 +83,7 @@ export interface AgencyExtraData {
   businessName: string;
   businessType: string;
   city: string;
+  neighborhood?: string;
   numBikes: string;
   phone?: string;
 }

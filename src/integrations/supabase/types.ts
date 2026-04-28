@@ -2135,6 +2135,16 @@ export type Database = {
       }
     }
     Functions: {
+      add_agency_role_to_self: {
+        Args: {
+          _business_name: string
+          _business_type: string
+          _city: string
+          _neighborhood?: string
+          _phone?: string
+        }
+        Returns: Json
+      }
       admin_role_sync_status: {
         Args: never
         Returns: {

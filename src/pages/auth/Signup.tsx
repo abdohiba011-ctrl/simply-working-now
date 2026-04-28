@@ -260,6 +260,7 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const signup = useAuthStore((s) => s.signup);
+  const activateAgencyRole = useAuthStore((s) => s.activateAgencyRole);
   const isLoading = useAuthStore((s) => s.isLoading);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const authedUser = useAuthStore((s) => s.user);
@@ -267,17 +268,30 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
   const role: "renter" | "agency" = defaultRole ?? "renter";
   const isAgencyFlow = role === "agency";
 
+  // Special case: a logged-in renter (no agency role yet) hitting /agency/signup
+  // should NOT be redirected away. Instead they get an "add agency profile"
+  // wizard that skips email/password (account already exists) and only
+  // collects business details.
+  const hasAgencyRole = !!authedUser?.roles?.agency?.active;
+  const hasRenterRole = !!authedUser?.roles?.renter?.active;
+  const isAddingAgencyToExistingAccount =
+    isAgencyFlow && isAuthenticated && hasRenterRole && !hasAgencyRole;
+
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
-  const [step, setStep] = useState<1 | 2>(1);
+  const [step, setStep] = useState<1 | 2>(
+    isAddingAgencyToExistingAccount ? 2 : 1,
+  );
 
   useEffect(() => {
-    if (isAuthenticated && authedUser) {
+    // Already authenticated AND we're not in the "add agency profile" flow:
+    // bounce them to their proper destination.
+    if (isAuthenticated && authedUser && !isAddingAgencyToExistingAccount) {
       navigateAfterAuth(navigate, authedUser, defaultRole);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated]);
+  }, [isAuthenticated, isAddingAgencyToExistingAccount]);
 
   const schema = useMemo(() => buildSchema(role), [role]);
 
@@ -285,12 +299,14 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
     resolver: zodResolver(schema),
     mode: "onBlur",
     defaultValues: {
-      name: "",
-      email: "",
-      phone: "",
-      password: "",
-      confirmPassword: "",
-      acceptTerms: undefined as unknown as true,
+      name: authedUser?.name ?? "",
+      email: authedUser?.email ?? "",
+      phone: authedUser?.phone ?? "",
+      // Authed users have no password to type — fill placeholders that
+      // satisfy the schema; they're never sent anywhere.
+      password: isAddingAgencyToExistingAccount ? "PlaceHolder1" : "",
+      confirmPassword: isAddingAgencyToExistingAccount ? "PlaceHolder1" : "",
+      acceptTerms: (isAddingAgencyToExistingAccount ? true : undefined) as unknown as true,
       marketingOptIn: false,
       businessName: "",
       businessType: "",
@@ -319,13 +335,43 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
   const onSubmit = async (values: SignupValues) => {
     setServerError(null);
 
+    // Logged-in renter completing the agency wizard → add the agency role
+    // to their existing account (no new auth user is created).
+    if (isAddingAgencyToExistingAccount) {
+      try {
+        await activateAgencyRole({
+          businessName: values.businessName ?? "",
+          businessType: values.businessType ?? "",
+          city: values.city ?? "",
+          neighborhood: values.neighborhood,
+          numBikes: "",
+          phone: values.phone || undefined,
+        });
+        toast.success(
+          t("mockAuth.agency_added", {
+            defaultValue: "Agency profile added. Welcome to your dashboard!",
+          }),
+        );
+        navigate("/agency/dashboard");
+      } catch (err) {
+        const e = err as Error;
+        setServerError(e.message);
+      }
+      return;
+    }
+
     const existing = await checkAccountMethod(values.email);
     if (existing.status === "has_password") {
       setServerError(
-        t("mockAuth.signup_email_taken", {
-          defaultValue:
-            "An account with this email already exists. Try logging in instead.",
-        }),
+        isAgencyFlow
+          ? t("mockAuth.signup_email_taken_agency", {
+              defaultValue:
+                "This email already has an account. Log in to add an agency profile to it.",
+            })
+          : t("mockAuth.signup_email_taken", {
+              defaultValue:
+                "An account with this email already exists. Try logging in instead.",
+            }),
       );
       if (isAgencyFlow) setStep(1);
       return;
@@ -372,23 +418,32 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
               {t("mockAuth.agency_pill", { defaultValue: "For rental agencies" })}
             </span>
             <h1 className="text-2xl font-bold tracking-tight text-foreground">
-              {t("mockAuth.create_agency_account", {
-                defaultValue: "Create your agency account",
-              })}
+              {isAddingAgencyToExistingAccount
+                ? t("mockAuth.add_agency_profile", {
+                    defaultValue: "Add an agency profile to your account",
+                  })
+                : t("mockAuth.create_agency_account", {
+                    defaultValue: "Create your agency account",
+                  })}
             </h1>
             <p className="text-sm text-muted-foreground">
-              {step === 1
-                ? t("agencyAuth.step1_subtitle", {
-                    defaultValue: "Step 1 of 2 — Your account details",
+              {isAddingAgencyToExistingAccount
+                ? t("agencyAuth.add_agency_subtitle", {
+                    defaultValue:
+                      "You're already signed in. Tell us about your business and we'll switch you to your agency dashboard.",
                   })
-                : t("agencyAuth.step2_subtitle", {
-                    defaultValue: "Step 2 of 2 — Your business",
-                  })}
+                : step === 1
+                  ? t("agencyAuth.step1_subtitle", {
+                      defaultValue: "Step 1 of 2 — Your account details",
+                    })
+                  : t("agencyAuth.step2_subtitle", {
+                      defaultValue: "Step 2 of 2 — Your business",
+                    })}
             </p>
           </div>
 
-          {/* Stepper */}
-          <Stepper step={step} />
+          {/* Stepper — only relevant for the full 2-step new-account flow */}
+          {!isAddingAgencyToExistingAccount && <Stepper step={step} />}
 
           {serverError ? (
             <div

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuthStore } from "@/stores/useAuthStore";
 import {
   Building2,
   Check,
@@ -305,6 +306,32 @@ const Agencies = () => {
   const t = COPY[lang];
   const isRTL = lang === "ar";
   const [yearly, setYearly] = useState(false);
+  const navigate = useNavigate();
+
+  // Role-aware destinations: where each CTA on this page should send the user.
+  // Anonymous → standard agency signup/login flow.
+  // Logged-in renter without agency role → agency signup wizard (which becomes
+  //   "add agency profile" because they're already authenticated).
+  // Logged-in agency → straight to the dashboard.
+  const authedUser = useAuthStore((s) => s.user);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const hasAgencyRole = !!authedUser?.roles?.agency?.active;
+  const trialHref = !isAuthenticated
+    ? "/agency/signup"
+    : hasAgencyRole
+      ? "/agency/dashboard"
+      : "/agency/signup";
+  const loginHref = !isAuthenticated
+    ? "/agency/login"
+    : hasAgencyRole
+      ? "/agency/dashboard"
+      : "/agency/signup";
+  const planHref = (planSlug: "free" | "pro" | "business") => {
+    if (planSlug === "business") return "mailto:contact@motonita.ma";
+    if (isAuthenticated && hasAgencyRole) return "/agency/dashboard";
+    if (isAuthenticated) return "/agency/signup";
+    return planSlug === "pro" ? "/agency/signup?plan=pro" : "/agency/signup";
+  };
 
   useEffect(() => {
     const prevTitle = document.title;
@@ -345,7 +372,7 @@ const Agencies = () => {
             </h1>
             <p className="mt-5 text-lg md:text-xl text-white/80 max-w-2xl">{t.sub}</p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link to="/agency/signup">
+              <Link to={trialHref}>
                 <Button
                   className="h-12 px-8 rounded-md font-bold hover:opacity-90"
                   style={{ background: LIME, color: FOREST }}
@@ -353,7 +380,7 @@ const Agencies = () => {
                   {t.ctaTrial}
                 </Button>
               </Link>
-              <Link to="/agency/login">
+              <Link to={loginHref}>
                 <Button
                   variant="outline"
                   className="h-12 px-8 rounded-md font-semibold border-white/30 text-white hover:bg-white/10 hover:text-white bg-transparent"
@@ -481,7 +508,7 @@ const Agencies = () => {
               const suffix = yearly ? t.perYear : t.perMonth;
               const isHighlight = p.highlight;
               const planSlug = p.name.toLowerCase().includes("pro") ? "pro" : p.name.toLowerCase().includes("business") ? "business" : "free";
-              const href = planSlug === "business" ? "mailto:contact@motonita.ma" : `/agency/signup${planSlug === "pro" ? "?plan=pro" : ""}`;
+              const href = planHref(planSlug as "free" | "pro" | "business");
               return (
                 <div
                   key={i}
@@ -621,7 +648,7 @@ const Agencies = () => {
           </h2>
           <p className="mt-4 text-white/80 max-w-xl mx-auto text-lg">{t.finalSub}</p>
           <div className="mt-8 flex flex-wrap gap-3 justify-center">
-            <Link to="/agency/signup">
+            <Link to={trialHref}>
               <Button
                 className="h-12 px-8 rounded-md font-bold hover:opacity-90"
                 style={{ background: LIME, color: FOREST }}
@@ -630,7 +657,7 @@ const Agencies = () => {
                 <ArrowRight className="h-4 w-4 ltr:ml-2 rtl:mr-2 rtl:rotate-180" />
               </Button>
             </Link>
-            <Link to="/agency/login">
+            <Link to={loginHref}>
               <Button
                 variant="outline"
                 className="h-12 px-8 rounded-md font-semibold border-white/30 text-white hover:bg-white/10 hover:text-white bg-transparent"
