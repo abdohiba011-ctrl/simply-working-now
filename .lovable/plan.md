@@ -1,48 +1,59 @@
+# Merge Cities & Locations into one "Cities" admin page
+
 ## Goal
+Replace the two separate admin tabs (Cities + Locations) with a single **Cities** tab where each city is a card/row that expands to show and manage its neighborhoods inline. Renter side and agency side keep working unchanged because the underlying tables (`service_cities`, `service_locations`) stay the same.
 
-Two changes to the admin panel:
+## What you'll see in the admin panel
 
-1. **Remove the "Pricing" tab** entirely — pricing is now set by each agency, not by admins.
-2. **Merge "Individual Owners" and "Rental Shops"** tabs into a single tab called **"Business Clients"** (keep the existing "Clients" tab for renters separate).
+A single tab called **Cities**. Each city appears as an expandable card showing:
+- City image, name, status badges (Available / Coming Soon / On Homepage)
+- Bike count, neighborhood count
+- Buttons: Edit city, Delete city, Add neighborhood
+- Expanding the card reveals the list of that city's neighborhoods, each with: name, popular toggle, active toggle, rename, delete
 
-## Changes
+A top toolbar with: Search, Refresh, **+ Add city** button.
 
-### 1. Remove pricing
-In `src/pages/AdminPanel.tsx`:
-- Remove the `pricing` value from `TabValue`, the `TAB_PERMISSION_MAP` entry, the tab definition (line 81), and the render block (lines 263–267).
-- Remove the import of `AdminPricingTab` (line 18) and the `Tag` icon if unused elsewhere.
-- Delete `src/components/admin/AdminPricingTab.tsx`.
+```text
+┌─ Cities ──────────────────────────────────────────────┐
+│  [search]                       [refresh] [+ Add city]│
+├───────────────────────────────────────────────────────┤
+│ ▸ Casablanca   [Available] [Homepage]  12 bikes  8 nb │
+│ ▾ Marrakech    [Available]              7 bikes  6 nb │
+│      • Gueliz       [popular] [active]  edit  delete  │
+│      • Medina       [        ] [active]  edit  delete │
+│      [+ Add neighborhood to Marrakech]                │
+│ ▸ Rabat        [Coming soon]            0 bikes  4 nb │
+└───────────────────────────────────────────────────────┘
+```
 
-The `pricing_tiers` database table and the `usePricingTiers` hook stay untouched (other parts of the app may still read them; no agency-side change is requested).
+## Behavior
 
-### 2. Merge Individual Owners + Rental Shops → Business Clients
+**City management** (same as today's Cities tab):
+- Add city, rename city, edit image / price-from / homepage flag / availability / coming-soon
+- Delete city (with the existing safety check showing how many neighborhoods will be orphaned)
 
-Create `src/components/admin/AdminBusinessClientsTab.tsx`:
-- Loads all profiles where `user_type = 'business'` (no `business_type` filter).
-- Adds a Type filter (All / Shops / Individuals) and shows the type as a badge on each row.
-- Keeps both action surfaces:
-  - Approved Businesses table (search, view, send notification, freeze/unfreeze).
-  - Pending Applications table (showing both `partnerType: 'shop'` and `partnerType: 'individual'` from `contact_messages` of type `business_application`); approve assigns the correct `business_type` based on the applicant's `partnerType`.
+**Neighborhood management** (same as today's Locations tab, but scoped per-city):
+- Add neighborhood directly under its city (no city dropdown needed — context is the parent card)
+- Rename neighborhood, toggle popular, toggle active, delete
+- Drag-to-reorder within the same city (kept from current Locations tab)
 
-In `src/pages/AdminPanel.tsx`:
-- Replace `individual-owners` and `rental-shops` tab values with a single `business-clients` value.
-- Use the icon `Building2` and label "Business Clients".
-- Map the new tab to a permission (treat as a single permission for now: keep visible if user has either `individual_owners` OR `rental_shops` permission, or is full/super admin).
-- Remove imports of the two old tab components and render the new one.
-- Delete `src/components/admin/AdminIndividualOwnersTab.tsx` and `src/components/admin/AdminRentalShopsTab.tsx`.
+## Effect on the rest of the app
+None. The renter search and agency dashboard read from the same `service_cities` and `service_locations` tables, so editing here updates them live as before.
 
-Employees-tab permission UI (`AdminEmployeesTab.tsx`) keeps the two existing permission keys (`individual_owners`, `rental_shops`) untouched in the database to avoid a migration; the merged tab is shown if either is granted. (Optional cleanup of the permission UI labels can come later.)
+## Technical details
 
-## Files
-
-- Edit: `src/pages/AdminPanel.tsx`
-- Create: `src/components/admin/AdminBusinessClientsTab.tsx`
-- Delete: `src/components/admin/AdminPricingTab.tsx`
-- Delete: `src/components/admin/AdminIndividualOwnersTab.tsx`
-- Delete: `src/components/admin/AdminRentalShopsTab.tsx`
+- Create `src/components/admin/AdminCitiesTab.tsx` (rewritten) that combines the logic of the current `AdminCitiesTab` and `AdminLocationsTab`. Use a single fetch that pulls cities + locations together, groups locations by `city_id` in memory, and renders an expandable list (Accordion or controlled `useState<Set<string>>` of expanded city IDs).
+- Reuse existing pieces: `CityImageUpload`, `useServiceCitiesRealtime`, `AdminTableSkeleton`, the existing dialogs for add/edit/delete city.
+- Add a small "Add neighborhood" inline form/dialog inside each expanded city card (city_id pre-filled, hidden).
+- Delete the old `AdminLocationsTab.tsx` file.
+- Update `src/pages/AdminPanel.tsx`:
+  - Remove the `locations` tab from `TabValue`, `tabConfig`, the tab list, and the render switch
+  - Remove the `AdminLocationsTab` import
+  - Keep only the `cities` tab pointing to the new merged component
+- Update admin permissions check: any user who currently has `locations` permission should still see the Cities tab. Either grant access if they have `cities` OR `locations`, or migrate their permission JSON. Simpler: in the permission check for the Cities tab, accept either flag.
+- No database migration needed — schema already supports the city → neighborhoods relationship via `service_locations.city_id`.
 
 ## Out of scope
-
-- No DB migration. The `business_type` column still distinguishes shops vs individuals; we just stop showing them as separate tabs.
-- The `pricing_tiers` table and any non-admin pages that read it stay as-is.
-- No changes to the renter "Clients" tab.
+- No changes to the renter-facing city pages or agency dashboard UI.
+- No bulk import / CSV.
+- Map/coordinates editing stays as-is (still on the city edit dialog if currently there).
