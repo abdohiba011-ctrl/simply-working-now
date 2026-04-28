@@ -49,16 +49,29 @@ const Verification = () => {
     if (!userId) return;
     (async () => {
       setLoading(true);
+      // Look up profile (by user_id, NOT id) to read business_type, and the
+      // matching agency row to read shop verification_status.
       const { data: profile } = await supabase
         .from("profiles")
-        .select("verification_status,business_type")
-        .eq("id", userId)
+        .select("id,business_type")
+        .eq("user_id", userId)
         .maybeSingle();
-      if (profile?.verification_status) setStatus(profile.verification_status);
       if (profile?.business_type === "auto_entrepreneur") {
         setEntityType("auto_entrepreneur");
       } else if (profile?.business_type === "company") {
         setEntityType("company");
+      }
+      if (profile?.id) {
+        const { data: agency } = await supabase
+          .from("agencies")
+          .select("verification_status,is_verified")
+          .eq("profile_id", profile.id)
+          .maybeSingle();
+        if (agency?.is_verified) {
+          setStatus("verified");
+        } else if (agency?.verification_status) {
+          setStatus(agency.verification_status);
+        }
       }
 
       const { data: files } = await supabase
@@ -98,7 +111,7 @@ const Verification = () => {
     await supabase
       .from("profiles")
       .update({ business_type: next })
-      .eq("id", userId);
+      .eq("user_id", userId);
   };
 
   const handleUpload = async (slot: SlotKey, file: File | null) => {
@@ -172,12 +185,45 @@ const Verification = () => {
     if (!userId || !allReady) return;
     setSubmitting(true);
     try {
-      const { error } = await supabase
+      // Get the profile row to find the agency
+      const { data: profile, error: pErr } = await supabase
         .from("profiles")
-        .update({ verification_status: "pending", business_type: entityType })
-        .eq("id", userId);
-      if (error) throw error;
-      setStatus("pending");
+        .select("id,business_name")
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (pErr) throw pErr;
+      if (!profile?.id) throw new Error("Profile not found");
+
+      // Persist business_type on profile
+      await supabase
+        .from("profiles")
+        .update({ business_type: entityType })
+        .eq("user_id", userId);
+
+      // Ensure an agency row exists for this profile, then mark it pending_review.
+      const { data: existing } = await supabase
+        .from("agencies")
+        .select("id")
+        .eq("profile_id", profile.id)
+        .maybeSingle();
+
+      if (existing?.id) {
+        const { error: aErr } = await supabase
+          .from("agencies")
+          .update({ verification_status: "pending_review" })
+          .eq("id", existing.id);
+        if (aErr) throw aErr;
+      } else {
+        const { error: aErr } = await supabase.from("agencies").insert({
+          profile_id: profile.id,
+          business_name: profile.business_name || "Agency",
+          verification_status: "pending_review",
+          is_verified: false,
+        });
+        if (aErr) throw aErr;
+      }
+
+      setStatus("pending_review");
       toast.success("Submitted for review. We'll get back to you in 24–48h.");
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Could not submit";
@@ -186,6 +232,9 @@ const Verification = () => {
       setSubmitting(false);
     }
   };
+
+  const isPending = status === "pending" || status === "pending_review";
+  const isLocked = isPending || status === "verified" || status === "rejected";
 
   const statusBadge = () => {
     switch (status) {
@@ -196,6 +245,7 @@ const Verification = () => {
           </Badge>
         );
       case "pending":
+      case "pending_review":
         return (
           <Badge variant="outline" className="border-amber-400 text-amber-700">
             <Clock className="mr-1 h-3 w-3" /> Pending review
@@ -452,21 +502,25 @@ const Verification = () => {
           {/* Submit */}
           <Card className="flex flex-wrap items-center justify-between gap-3 p-5">
             <div className="text-sm text-muted-foreground">
-              {allReady
-                ? status === "pending"
+              {status === "verified"
+                ? "Your shop is verified — your approved motorbikes are visible to renters."
+                : isPending
                   ? "Your documents are under review."
-                  : "All set — submit your documents for review."
-                : "Upload all required documents to enable submission."}
+                  : status === "rejected"
+                    ? "Your previous submission was rejected. Please re-upload and submit again."
+                    : allReady
+                      ? "All set — submit your documents for review."
+                      : "Upload all required documents to enable submission."}
             </div>
             <Button
               onClick={handleSubmit}
-              disabled={!allReady || submitting || status === "pending" || status === "verified"}
+              disabled={!allReady || submitting || isPending || status === "verified"}
             >
               {submitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Submitting…
                 </>
-              ) : status === "pending" ? (
+              ) : isPending ? (
                 "Pending review"
               ) : status === "verified" ? (
                 "Verified"

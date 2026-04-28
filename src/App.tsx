@@ -58,6 +58,8 @@ const Notifications = lazy(() => import("./pages/Notifications"));
 const Inbox = lazy(() => import("./pages/Inbox"));
 const Billing = lazy(() => import("./pages/Billing"));
 const AdminVerifications = lazy(() => import("./pages/AdminVerifications"));
+const AdminAgencyVerifications = lazy(() => import("./pages/admin/AdminAgencyVerifications"));
+const AdminBikeApprovals = lazy(() => import("./pages/admin/AdminBikeApprovals"));
 const AdminPanel = lazy(() => import("./pages/AdminPanel"));
 const AdminBookings = lazy(() => import("./pages/admin/AdminBookings"));
 const AdminBookingDetails = lazy(() => import("./pages/admin/AdminBookingDetails"));
@@ -202,6 +204,8 @@ const App = () => (
                   <Route path="/inbox" element={<ProtectedRoute><Inbox /></ProtectedRoute>} />
                   <Route path="/billing" element={<ProtectedRoute><Billing /></ProtectedRoute>} />
                   <Route path="/admin/verifications" element={<ProtectedRoute requireRole="admin"><AdminVerifications /></ProtectedRoute>} />
+                  <Route path="/admin/agencies/verifications" element={<ProtectedRoute requireRole="admin"><AdminAgencyVerifications /></ProtectedRoute>} />
+                  <Route path="/admin/bikes/approvals" element={<ProtectedRoute requireRole="admin"><AdminBikeApprovals /></ProtectedRoute>} />
                   <Route path="/admin" element={<ProtectedRoute requireRole="admin"><AdminPanel /></ProtectedRoute>} />
                   <Route path="/admin/panel" element={<ProtectedRoute requireRole="admin"><AdminPanel /></ProtectedRoute>} />
                   <Route path="/admin/bookings" element={<ProtectedRoute requireRole="admin"><AdminBookings /></ProtectedRoute>} />
