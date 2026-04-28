@@ -502,21 +502,25 @@ const Verification = () => {
           {/* Submit */}
           <Card className="flex flex-wrap items-center justify-between gap-3 p-5">
             <div className="text-sm text-muted-foreground">
-              {allReady
-                ? status === "pending"
+              {status === "verified"
+                ? "Your shop is verified — your approved motorbikes are visible to renters."
+                : isPending
                   ? "Your documents are under review."
-                  : "All set — submit your documents for review."
-                : "Upload all required documents to enable submission."}
+                  : status === "rejected"
+                    ? "Your previous submission was rejected. Please re-upload and submit again."
+                    : allReady
+                      ? "All set — submit your documents for review."
+                      : "Upload all required documents to enable submission."}
             </div>
             <Button
               onClick={handleSubmit}
-              disabled={!allReady || submitting || status === "pending" || status === "verified"}
+              disabled={!allReady || submitting || isPending || status === "verified"}
             >
               {submitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Submitting…
                 </>
-              ) : status === "pending" ? (
+              ) : isPending ? (
                 "Pending review"
               ) : status === "verified" ? (
                 "Verified"
