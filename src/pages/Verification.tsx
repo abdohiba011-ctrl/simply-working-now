@@ -39,10 +39,15 @@ import { VerificationSkeleton } from "@/components/ui/bike-skeleton";
 
 interface UploadState {
   file: File | null;
+  // Compressed blob kept around so the user can retry the network upload
+  // without having to re-pick the file or re-run compression.
+  compressedFile: File | null;
   preview: string | null;
   progress: number;
   status: 'idle' | 'compressing' | 'uploading' | 'success' | 'error';
   error: string | null;
+  errorCode: string | null;
+  errorHint: string | null;
   statusMessage: string;
   originalSize: number;
   compressedSize: number;
@@ -50,14 +55,73 @@ interface UploadState {
 
 const initialUploadState: UploadState = {
   file: null,
+  compressedFile: null,
   preview: null,
   progress: 0,
   status: 'idle',
   error: null,
+  errorCode: null,
+  errorHint: null,
   statusMessage: '',
   originalSize: 0,
   compressedSize: 0
 };
+
+// Translate a Supabase Storage / network error into a clear user-facing
+// message + an actionable hint. We surface the raw message too so power
+// users (and our own logs) can still see exactly what went wrong.
+function describeUploadError(err: unknown): {
+  message: string;
+  code: string | null;
+  hint: string | null;
+} {
+  const e = err as { message?: string; error?: string; statusCode?: number | string; status?: number; name?: string } | undefined;
+  const raw = e?.message || e?.error || (typeof err === 'string' ? err : '') || 'Upload failed';
+  const status = Number(e?.statusCode ?? e?.status ?? 0);
+  const lower = raw.toLowerCase();
+
+  if (lower.includes('row-level security') || lower.includes('rls') || status === 403) {
+    return {
+      message: raw,
+      code: 'rls_denied',
+      hint: 'Your session may have expired. Please sign in again and retry the upload.',
+    };
+  }
+  if (lower.includes('jwt') || lower.includes('unauthorized') || status === 401) {
+    return {
+      message: raw,
+      code: 'unauthorized',
+      hint: 'You appear to be signed out. Please sign in again to continue.',
+    };
+  }
+  if (lower.includes('payload too large') || lower.includes('exceeded') || status === 413) {
+    return {
+      message: raw,
+      code: 'too_large',
+      hint: 'The image is too large. Try a smaller photo or use the Take a picture option.',
+    };
+  }
+  if (lower.includes('network') || lower.includes('failed to fetch') || lower.includes('timeout')) {
+    return {
+      message: raw,
+      code: 'network',
+      hint: 'Check your internet connection, then tap Retry upload.',
+    };
+  }
+  if (lower.includes('mime') || lower.includes('content type')) {
+    return {
+      message: raw,
+      code: 'mime',
+      hint: 'This file type is not accepted. Please upload a JPG, PNG, HEIC or WEBP image.',
+    };
+  }
+  return {
+    message: raw,
+    code: e?.name || null,
+    hint: 'Tap Retry upload to try again, or pick a different photo.',
+  };
+}
+
 
 const Verification = () => {
   const navigate = useNavigate();
