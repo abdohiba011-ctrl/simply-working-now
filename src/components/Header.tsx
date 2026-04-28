@@ -524,18 +524,17 @@ export const Header = memo(() => {
                       </DropdownMenuItem>
                     </>
                   )}
-                  {isBusiness && (
+                  {hasAgencyRole ? (
+                    <DropdownMenuItem onClick={handleSwitchToAgency}>
+                      <Building2 className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
+                      {t('header.switchToBusiness')}
+                    </DropdownMenuItem>
+                  ) : isBusiness ? (
                     <DropdownMenuItem onClick={() => navigate("/business-dashboard")}>
                       <Building2 className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
                       {t('header.businessDashboard')}
                     </DropdownMenuItem>
-                  )}
-                  {hasAgencyRole && (
-                    <DropdownMenuItem onClick={handleSwitchToAgency}>
-                      <Building2 className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
-                      Switch to business
-                    </DropdownMenuItem>
-                  )}
+                  ) : null}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogoutClick}>
                     <LogOut className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
