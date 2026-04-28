@@ -147,6 +147,15 @@ export default function VerifyEmail() {
     try {
       await verifyEmail(codeStr, email);
       toast.success(t("mockAuth.email_verified", { defaultValue: "Email verified!" }));
+      // Fire-and-forget welcome email (don't block routing on email send).
+      const verifiedUser = useAuthStore.getState().user;
+      if (email) {
+        void sendAppEmail({
+          templateName: "welcome",
+          recipientEmail: email,
+          templateData: { name: verifiedUser?.name, siteUrl: window.location.origin },
+        }).catch((e) => console.warn("welcome email failed", e));
+      }
       routeAfterVerify();
     } catch (err) {
       const e = err as AuthError;
