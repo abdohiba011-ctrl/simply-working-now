@@ -135,7 +135,7 @@ export const AdminUnifiedClientsTab = ({ statusFilter = "all" }: AdminUnifiedCli
         total: clientsData.length,
         verified: clientsData.filter(c => c.is_verified).length,
         pending: clientsData.filter(c => c.verification_status === 'pending_review').length,
-        notStarted: clientsData.filter(c => !c.verification_status || c.verification_status === 'not_started').length,
+        notStarted: clientsData.filter(c => !c.is_verified && c.verification_status !== 'pending_review' && c.verification_status !== 'rejected').length,
         blocked: clientsData.filter(c => c.is_frozen).length
       });
     } catch (error: unknown) {
