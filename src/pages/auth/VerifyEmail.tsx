@@ -111,7 +111,11 @@ export default function VerifyEmail() {
   };
 
   const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
-    const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, CODE_LENGTH);
+    const pasted = e.clipboardData
+      .getData("text")
+      .replace(/[^a-zA-Z0-9]/g, "")
+      .toUpperCase()
+      .slice(0, CODE_LENGTH);
     if (pasted.length === CODE_LENGTH) {
       e.preventDefault();
       setDigits(pasted.split(""));
