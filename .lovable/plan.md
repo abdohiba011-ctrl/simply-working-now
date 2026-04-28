@@ -1,50 +1,27 @@
-## Goal
+I found the likely reason it still looks unchanged: the app has two different signup/auth paths, and the active signup page is still using the normal backend signup email path. The custom email hook also has no recent send logs, and the email domain is still pending DNS, so the deployed OTP templates are not currently the email users are receiving.
 
-Stop sending "click this link" magic-link buttons in auth emails. Instead, display the **6-digit OTP code** so users can type it into the existing `/verify-email` and `/reset-verify` pages (which already call `supabase.auth.verifyOtp`).
+Plan to fix it properly:
 
-## Why it's currently broken
+1. Make the active signup flow use the OTP verification path consistently
+   - Update the signup flow used by `/signup` and `/agency/signup` so it sends a real 6-digit verification code email and routes the user to the existing code-entry screen.
+   - Remove/avoid the older magic-link style behavior for this flow.
+   - Keep the current `/verify-email` page as the code entry UI.
 
-The `auth-email-hook` already receives both the URL and the `token` (6-digit code) from the auth system. But the React Email templates only render `confirmationUrl` as a button — the `token` is silently dropped. Users get a link, click it, and bypass our OTP-based verification flow.
+2. Fix the email template activation issue
+   - Reconnect/re-scaffold the managed auth email templates if needed so the backend uses the current Motonita code templates, not the default link template.
+   - Redeploy the auth email backend after changes so the live email content updates immediately.
+   - Confirm the template uses a visible 6-digit code and no “click this link” primary action.
 
-The shared brand file (`_brand.tsx`) already defines `styles.codeWrap` and `styles.code` (36px, mono, lime tint background) — clearly designed for OTPs but never wired up.
+3. Clean up confusing UI copy
+   - Replace old wording such as “verification email” with “verification code” where it appears in auth screens/toasts.
+   - Keep all text in the localization files for English, French, and Arabic.
+   - Ensure the UI says “6-digit code” consistently, not 8-digit or magic-link wording.
 
-## Changes
+4. Verify email delivery state
+   - Check the email domain/status and email send logs after deployment.
+   - If DNS is still pending, I’ll tell you clearly: custom branded emails may not be active until the domain finishes verification in Cloud → Emails. The app code can still be fixed now, but domain activation controls whether users receive the custom Motonita template instead of the default email.
 
-### 1. `auth-email-hook/index.ts`
-- Pass `token` into `templateProps` for **all** templates (currently only `reauthentication` uses it).
-- Add `token` to `SAMPLE_DATA` for `signup`, `magiclink`, `recovery`, `email_change`, `invite` so previews render correctly.
-
-### 2. Rewrite 5 templates to display the OTP code
-
-For each of `signup.tsx`, `magic-link.tsx`, `recovery.tsx`, `email-change.tsx`, `invite.tsx`:
-- Remove the `<Button href={confirmationUrl}>` CTA entirely.
-- Add a centered `{token}` block using `styles.codeWrap` + `styles.code` (the brand file already defines these).
-- Add small note: "Enter this 6-digit code in the verification page. The code expires in 60 minutes." (translated/adapted per template purpose).
-- Keep `BrandHeader` / `BrandFooter`.
-- Update `Preview` text and `Heading` to reflect "Your verification code" / "Your reset code" / etc.
-- Add new prop `token: string` to each template's interface.
-
-`reauthentication.tsx` already uses the token — leave as-is (verify quickly).
-
-### 3. Redeploy `auth-email-hook`
-
-After file changes, deploy the edge function so the new templates take effect immediately.
-
-## Out of scope
-
-- No changes to `useAuthStore.ts`, `/verify-email`, or `/reset-verify` — they already call `verifyOtp` correctly.
-- No changes to email subjects or queue infrastructure.
-- No changes to brand colors / layout (already on-brand).
-
-## Files touched
-
-- `supabase/functions/auth-email-hook/index.ts` (pass `token`, add to sample data)
-- `supabase/functions/_shared/email-templates/signup.tsx` (rewrite)
-- `supabase/functions/_shared/email-templates/magic-link.tsx` (rewrite)
-- `supabase/functions/_shared/email-templates/recovery.tsx` (rewrite)
-- `supabase/functions/_shared/email-templates/email-change.tsx` (rewrite)
-- `supabase/functions/_shared/email-templates/invite.tsx` (rewrite)
-
-## Verification after deploy
-
-User signs up → receives email with a 6-digit code → enters code on `/verify-email` → account confirmed. No magic links anywhere.
+Technical details:
+- Files likely involved: `src/pages/auth/Signup.tsx`, `src/stores/useAuthStore.ts`, `src/locales/en.json`, `src/locales/fr.json`, `src/locales/ar.json`, and `supabase/functions/auth-email-hook/*`.
+- The current `auth-email-hook` code already contains OTP-style templates, but it is not showing activity in recent logs, which points to activation/domain/runtime configuration rather than only template text.
+- After any change under `supabase/functions/`, the backend function will be redeployed.
