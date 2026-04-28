@@ -48,7 +48,7 @@ export const UnifiedVerificationModal = ({ isOpen, onComplete }: UnifiedVerifica
       const { data: profile } = await supabase
         .from('profiles')
         .select('is_verified, verification_status, phone')
-        .eq('id', user.id)
+        .eq('user_id', user.id)
         .single();
       
       // If user is already verified AND has phone, close the modal immediately
@@ -98,7 +98,7 @@ export const UnifiedVerificationModal = ({ isOpen, onComplete }: UnifiedVerifica
       const { error: updateError } = await supabase
         .from('profiles')
         .update({ phone: phone.trim() })
-        .eq('id', user.id);
+        .eq('user_id', user.id);
 
       if (updateError) throw updateError;
 
@@ -216,7 +216,7 @@ export const UnifiedVerificationModal = ({ isOpen, onComplete }: UnifiedVerifica
           verification_status: 'pending_review',
           is_verified: false
         })
-        .eq('id', user.id);
+        .eq('user_id', user.id);
 
       if (updateError) throw updateError;
 

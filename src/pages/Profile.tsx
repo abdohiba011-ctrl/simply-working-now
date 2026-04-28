@@ -97,7 +97,7 @@ const Profile = () => {
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', user.id)
+        .eq('user_id', user.id)
         .single();
 
       if (error) throw error;
@@ -209,7 +209,7 @@ const Profile = () => {
       const { error: updateError } = await supabase
         .from('profiles')
         .update({ avatar_url: urlWithCacheBust })
-        .eq('id', user.id);
+        .eq('user_id', user.id);
       
       if (updateError) {
         throw new Error(`Profile update failed: ${updateError.message}`);
@@ -264,7 +264,7 @@ const Profile = () => {
           phone: validatedData.phone || null,
           address: validatedData.address || null
         })
-        .eq('id', user.id);
+        .eq('user_id', user.id);
 
       if (error) throw error;
 

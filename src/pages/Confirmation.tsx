@@ -42,7 +42,7 @@ const Confirmation = () => {
       const { data: prof } = await supabase
         .from('profiles')
         .select('verification_status, is_verified')
-        .eq('id', auth.user.id)
+        .eq('user_id', auth.user.id)
         .single();
       if (prof) {
         setVerificationStatus(prof.is_verified ? 'verified' : (prof.verification_status || null));

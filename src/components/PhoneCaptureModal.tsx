@@ -54,7 +54,7 @@ export const PhoneCaptureModal = ({ isOpen, onComplete }: PhoneCaptureModalProps
       const { error: updateError } = await supabase
         .from('profiles')
         .update({ phone: phone.trim() })
-        .eq('id', user.id);
+        .eq('user_id', user.id);
 
       if (updateError) throw updateError;
 

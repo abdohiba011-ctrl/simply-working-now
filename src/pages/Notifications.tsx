@@ -196,7 +196,7 @@ const Notifications = () => {
         supabase
           .from('profiles')
           .select('is_verified, phone, verification_status')
-          .eq('id', user.id)
+          .eq('user_id', user.id)
           .single(),
         supabase
           .from('notifications')

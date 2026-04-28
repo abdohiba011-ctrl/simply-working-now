@@ -42,7 +42,7 @@ const Checkout = () => {
         const { data } = await supabase
           .from('profiles')
           .select('name, email, phone, is_verified')
-          .eq('id', user.id)
+          .eq('user_id', user.id)
           .single();
         if (data) {
           setProfile({
