@@ -1,32 +1,48 @@
-## Problem
+## Goal
 
-The user dropdown (and mobile menu) in `src/components/Header.tsx` renders two separate items that look the same and use the same icon:
+Two changes to the admin panel:
 
-- `isBusiness` → "Business Dashboard" → navigates to `/business-dashboard`
-- `hasAgencyRole` → "Switch to business" → calls `handleSwitchToAgency()`
+1. **Remove the "Pricing" tab** entirely — pricing is now set by each agency, not by admins.
+2. **Merge "Individual Owners" and "Rental Shops"** tabs into a single tab called **"Business Clients"** (keep the existing "Clients" tab for renters separate).
 
-Users who qualify for both (most agency owners do) see them stacked back-to-back, exactly as in the uploaded screenshot.
+## Changes
 
-There is also a hardcoded English string ("Switch to business") that is not translated.
+### 1. Remove pricing
+In `src/pages/AdminPanel.tsx`:
+- Remove the `pricing` value from `TabValue`, the `TAB_PERMISSION_MAP` entry, the tab definition (line 81), and the render block (lines 263–267).
+- Remove the import of `AdminPricingTab` (line 18) and the `Tag` icon if unused elsewhere.
+- Delete `src/components/admin/AdminPricingTab.tsx`.
 
-## Fix
+The `pricing_tiers` database table and the `usePricingTiers` hook stay untouched (other parts of the app may still read them; no agency-side change is requested).
 
-Show **one** business entry in the menu, chosen by priority:
+### 2. Merge Individual Owners + Rental Shops → Business Clients
 
-1. If the user has the **agency** role → show **"Switch to business"** that calls `handleSwitchToAgency()` (this is the modern agency workspace and the canonical destination).
-2. Otherwise, if the user is flagged as `isBusiness` (legacy individual owner / rental shop without the agency role yet) → show **"Business Dashboard"** that navigates to `/business-dashboard`.
-3. If neither → show nothing (current behavior).
+Create `src/components/admin/AdminBusinessClientsTab.tsx`:
+- Loads all profiles where `user_type = 'business'` (no `business_type` filter).
+- Adds a Type filter (All / Shops / Individuals) and shows the type as a badge on each row.
+- Keeps both action surfaces:
+  - Approved Businesses table (search, view, send notification, freeze/unfreeze).
+  - Pending Applications table (showing both `partnerType: 'shop'` and `partnerType: 'individual'` from `contact_messages` of type `business_application`); approve assigns the correct `business_type` based on the applicant's `partnerType`.
 
-Apply the same logic in both the desktop dropdown (around lines 527–538) and the mobile menu (around lines 688–699) in `src/components/Header.tsx`.
+In `src/pages/AdminPanel.tsx`:
+- Replace `individual-owners` and `rental-shops` tab values with a single `business-clients` value.
+- Use the icon `Building2` and label "Business Clients".
+- Map the new tab to a permission (treat as a single permission for now: keep visible if user has either `individual_owners` OR `rental_shops` permission, or is full/super admin).
+- Remove imports of the two old tab components and render the new one.
+- Delete `src/components/admin/AdminIndividualOwnersTab.tsx` and `src/components/admin/AdminRentalShopsTab.tsx`.
 
-Replace the hardcoded `"Switch to business"` string with the existing translation key `header.switchToBusiness` (already defined in EN/FR/AR in `src/locales/translations.ts` and the JSON locale files).
+Employees-tab permission UI (`AdminEmployeesTab.tsx`) keeps the two existing permission keys (`individual_owners`, `rental_shops`) untouched in the database to avoid a migration; the merged tab is shown if either is granted. (Optional cleanup of the permission UI labels can come later.)
 
-## Files touched
+## Files
 
-- `src/components/Header.tsx` — collapse the two conditional menu items into one in both the desktop dropdown and the mobile menu, and use the i18n key for the label.
+- Edit: `src/pages/AdminPanel.tsx`
+- Create: `src/components/admin/AdminBusinessClientsTab.tsx`
+- Delete: `src/components/admin/AdminPricingTab.tsx`
+- Delete: `src/components/admin/AdminIndividualOwnersTab.tsx`
+- Delete: `src/components/admin/AdminRentalShopsTab.tsx`
 
 ## Out of scope
 
-- The separate `UserMenu.tsx` component (used elsewhere) already shows a single switch entry — no change needed there.
-- No DB or backend changes.
-- No other admin / business pages are touched.
+- No DB migration. The `business_type` column still distinguishes shops vs individuals; we just stop showing them as separate tabs.
+- The `pricing_tiers` table and any non-admin pages that read it stay as-is.
+- No changes to the renter "Clients" tab.
