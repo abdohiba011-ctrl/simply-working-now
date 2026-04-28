@@ -684,18 +684,17 @@ export const Header = memo(() => {
                       {t('header.adminPanel')}
                     </Button>
                   )}
-                  {isBusiness && (
+                  {hasAgencyRole ? (
+                    <Button variant="outline" size="lg" className="justify-start gap-2 text-base min-h-[44px] mx-2" onClick={handleSwitchToAgency}>
+                      <Building2 className="h-5 w-5" />
+                      {t('header.switchToBusiness')}
+                    </Button>
+                  ) : isBusiness ? (
                     <Button variant="outline" size="lg" className="justify-start gap-2 text-base min-h-[44px] mx-2" onClick={() => { navigate("/business-dashboard"); setIsMenuOpen(false); }}>
                       <Building2 className="h-5 w-5" />
                       {t('header.businessDashboard')}
                     </Button>
-                  )}
-                  {hasAgencyRole && (
-                    <Button variant="outline" size="lg" className="justify-start gap-2 text-base min-h-[44px] mx-2" onClick={handleSwitchToAgency}>
-                      <Building2 className="h-5 w-5" />
-                      Switch to business
-                    </Button>
-                  )}
+                  ) : null}
                   <Button variant="outline" size="lg" className="justify-start gap-2 text-base min-h-[44px] mx-2" onClick={handleLogoutClick}>
                     <LogOut className="h-5 w-5" />
                     {t('header.logout')}
