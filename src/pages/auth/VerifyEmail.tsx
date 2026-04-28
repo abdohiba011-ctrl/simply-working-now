@@ -55,7 +55,7 @@ export default function VerifyEmail() {
   }, [email]);
 
   const codeStr = useMemo(() => digits.join(""), [digits]);
-  const allFilled = codeStr.length === CODE_LENGTH && digits.every((d) => /^\d$/.test(d));
+  const allFilled = codeStr.length === CODE_LENGTH && digits.every((d) => /^[A-Z0-9]$/.test(d));
 
   const triggerShake = () => {
     setShaking(true);
@@ -68,7 +68,8 @@ export default function VerifyEmail() {
   };
 
   const handleChange = (index: number, value: string) => {
-    const sanitized = value.replace(/\D/g, "");
+    // Supabase OTP tokens are alphanumeric (e.g. "C6X4K2"), so accept letters + digits.
+    const sanitized = value.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
     if (!sanitized) {
       // Allow clearing
       const next = [...digits];
@@ -110,7 +111,11 @@ export default function VerifyEmail() {
   };
 
   const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
-    const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, CODE_LENGTH);
+    const pasted = e.clipboardData
+      .getData("text")
+      .replace(/[^a-zA-Z0-9]/g, "")
+      .toUpperCase()
+      .slice(0, CODE_LENGTH);
     if (pasted.length === CODE_LENGTH) {
       e.preventDefault();
       setDigits(pasted.split(""));
@@ -226,8 +231,10 @@ export default function VerifyEmail() {
               key={i}
               ref={(el) => (inputsRef.current[i] = el)}
               type="text"
-              inputMode="numeric"
-              pattern="[0-9]*"
+              inputMode="text"
+              autoCapitalize="characters"
+              autoComplete="one-time-code"
+              pattern="[A-Za-z0-9]*"
               maxLength={1}
               value={d}
               onChange={(e) => handleChange(i, e.target.value)}

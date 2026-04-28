@@ -43,7 +43,7 @@ export const EmailChangeEmail = ({
           <Text style={styles.code}>{token}</Text>
         </div>
         <Text style={styles.smallNote}>
-          Enter this 6-digit code on the verification page. It expires in 60 minutes.
+          Enter this 6-character code on the verification page. It expires in 60 minutes.
         </Text>
         <Text style={styles.footer}>
           If you didn't request this change, contact support — your account may be at risk.
