@@ -378,16 +378,16 @@ const AdminVerifications = () => {
             
             <div className="flex justify-end gap-2 pt-4 border-t">
               <Button
-                onClick={() => { handleVerify(selectedUser!.id); setShowDocuments(false); }}
-                disabled={actionLoading === selectedUser?.id}
+                onClick={() => { handleVerify(selectedUser!.user_id); setShowDocuments(false); }}
+                disabled={actionLoading === selectedUser?.user_id}
               >
                 <CheckCircle className="h-4 w-4 mr-2" />
                 Approve & Verify
               </Button>
               <Button
                 variant="destructive"
-                onClick={() => { handleReject(selectedUser!.id); setShowDocuments(false); }}
-                disabled={actionLoading === selectedUser?.id}
+                onClick={() => { handleReject(selectedUser!.user_id); setShowDocuments(false); }}
+                disabled={actionLoading === selectedUser?.user_id}
               >
                 <XCircle className="h-4 w-4 mr-2" />
                 Reject
