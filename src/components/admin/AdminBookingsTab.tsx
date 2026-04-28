@@ -397,9 +397,6 @@ export const AdminBookingsTab = () => {
 
   return (
     <div className="space-y-4">
-      {/* Stuck payment recovery */}
-      <StuckPaymentsCard />
-
       {/* Quick Filters */}
       <Card>
         <CardContent className="pt-4">
