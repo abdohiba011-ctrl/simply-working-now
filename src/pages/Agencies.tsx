@@ -372,7 +372,7 @@ const Agencies = () => {
             </h1>
             <p className="mt-5 text-lg md:text-xl text-white/80 max-w-2xl">{t.sub}</p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link to="/agency/signup">
+              <Link to={trialHref}>
                 <Button
                   className="h-12 px-8 rounded-md font-bold hover:opacity-90"
                   style={{ background: LIME, color: FOREST }}
@@ -380,7 +380,7 @@ const Agencies = () => {
                   {t.ctaTrial}
                 </Button>
               </Link>
-              <Link to="/agency/login">
+              <Link to={loginHref}>
                 <Button
                   variant="outline"
                   className="h-12 px-8 rounded-md font-semibold border-white/30 text-white hover:bg-white/10 hover:text-white bg-transparent"
