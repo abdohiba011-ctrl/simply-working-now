@@ -66,7 +66,7 @@ export default function RenterForgotPassword() {
     setServerError(null);
     try {
       await requestPasswordReset(values.email);
-      setSent(true);
+      navigate(`/renter/reset-password/verify?email=${encodeURIComponent(values.email)}`);
     } catch (err) {
       const e = err as AuthError;
       if (e.code === "RESET_RATE_LIMITED") {
@@ -98,8 +98,8 @@ export default function RenterForgotPassword() {
                   </h1>
                   <p className="text-muted-foreground text-sm">
                     {sent
-                      ? "We've emailed you a password reset link. Open it from your inbox to set a new password."
-                      : "Enter your email and we'll send you a link to reset your password."}
+                      ? "We've emailed you a 6-digit reset code. Enter it to set a new password."
+                      : "Enter your email and we'll send you a 6-digit code to reset your password."}
                   </p>
                 </div>
 
@@ -118,7 +118,7 @@ export default function RenterForgotPassword() {
                     <div className="rounded-md border border-primary/40 bg-primary/10 px-4 py-3 text-sm text-foreground flex items-start gap-2">
                       <Mail className="h-4 w-4 mt-0.5 shrink-0" />
                       <span>
-                        Reset link sent to <strong>{emailValue}</strong>
+                        Reset code sent to <strong>{emailValue}</strong>
                       </span>
                     </div>
                     <p className="text-xs text-muted-foreground">
@@ -179,7 +179,7 @@ export default function RenterForgotPassword() {
                           Sending...
                         </span>
                       ) : (
-                        "Send reset link"
+                        "Send reset code"
                       )}
                     </Button>
                   </form>
