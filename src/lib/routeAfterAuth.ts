@@ -50,7 +50,7 @@ function auditAuthRouting(
           destination,
           has_agency: hasAgency,
           has_renter: hasRenter,
-        } as Record<string, unknown>,
+        } as never,
       });
     } catch {
       // ignore — auditing must never break login
