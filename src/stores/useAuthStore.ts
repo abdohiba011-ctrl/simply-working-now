@@ -114,12 +114,14 @@ async function loadAuthUserModel(authUser: User): Promise<MockUser> {
   const profile = (profileRes.data as ProfileRow | null) ?? null;
   const roles = (rolesRes.data ?? []).map((r) => r.role as string);
 
-  // Every signed-up user can browse / book bikes by default.
-  const renterActive = true;
-
   // Agency role: explicit DB role OR a populated business profile.
   const hasBusinessRow = !!(profile?.business_name && profile.business_name.trim().length > 0);
   const agencyActive = roles.includes("agency") || hasBusinessRow;
+
+  // Renter role is only active for accounts that are NOT agencies. An
+  // account registered as an agency is agency-only — it never gets the
+  // implicit renter role, never sees renter UI, and never lands on /rent.
+  const renterActive = !agencyActive && (roles.includes("renter") || roles.length === 0);
   const agencyVerified =
     !!profile?.is_verified && profile?.verification_status === "verified";
 

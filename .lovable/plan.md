@@ -1,62 +1,72 @@
-## Part 1 — Admin Panel front-end verification
+# Make agency accounts agency-only (no renter mixing)
 
-The front-end code is already correct:
+## Problem
 
-- `src/components/auth/UserMenu.tsx` (lines 128–136) renders the **Admin Panel** dropdown item whenever `user.isAdmin === true`.
-- `src/stores/useAuthStore.ts` (line 154) computes `isAdmin` from the `user_roles` table: `isAdmin: roles.includes("admin")`.
-- The DB confirms `abdrahimbamouh56@gmail.com` has the `admin` role.
+Today, every signed-in user is treated as both a renter AND an agency:
+- In `loadAuthUserModel` (`src/stores/useAuthStore.ts`), `renterActive` is hardcoded to `true` for everyone.
+- The agency role is set active when the DB has the `agency` role OR a business profile.
+- Result: an agency user has BOTH roles "active", so:
+  - Login routing on the renter door (`/auth`) sends them to `/rent` instead of `/agency/dashboard`.
+  - The avatar dropdown shows "Switch to renter" because `canSwitchRoles = hasRenter && hasAgency` is always true.
+  - Header shows renter widgets (renter wallet, "Switch to business" prompts, etc.).
 
-So the UI logic is wired correctly. To make the verification airtight from the UI side, I will:
+The user wants: **a user who registered/logs in as an agency is an agency, period.** Always land on `/agency/dashboard` (or `/agency/verification` if not yet verified). No renter UI. No "switch to renter".
 
-1. Add a temporary `console.log` (auto-removed after confirm) in `useAuthStore.ts` after `loadAuthUserModel` runs that logs `{ email, isAdmin, roles }` so you can open DevTools and confirm exactly what the front-end sees for your account.
-2. Add a small `data-admin="true|false"` attribute to the `UserMenu` trigger so we can visually confirm in DOM whether the user is being treated as admin even before opening the dropdown.
-3. If `isAdmin` is `true` in the log but the menu item still doesn't show, I'll know it's a render/cache issue and force a re-fetch of `user_roles` on session restore.
-4. If `isAdmin` is `false` in the log, the issue is the session is stale → I'll add a "Refresh permissions" action that re-runs `loadAuthUserModel` without forcing a logout.
+## Fix
 
-This gives us a concrete answer in one round-trip instead of guessing.
+### 1. Agency role gates renter role — `src/stores/useAuthStore.ts` (`loadAuthUserModel`)
 
-## Part 2 — Route ALL auth emails through Resend
+Stop hardcoding `renterActive = true`. Compute it from real signals so agency-only accounts don't get an implicit renter role:
 
-### Current state
-- ✅ Transactional emails (booking notifications, admin notifications) already go through Resend via the connector gateway (`send-transactional-email` edge function).
-- ❌ Auth emails (signup confirmation OTP, password reset OTP, magic link, email change) are still sent by default Supabase/Lovable mailer because the previous step deleted `auth-email-hook`.
+- `agencyActive` = `roles.includes("agency") || hasBusinessRow` (unchanged).
+- `renterActive` = `roles.includes("renter") && !agencyActive` — i.e. only true when the DB explicitly grants the renter role AND the user is not an agency. Agency accounts are agency-only.
+- `default_role` and the priority logic stay agency-first.
 
-### What I'll do
+This ensures `user.roles.renter.active` is `false` for any agency user, which automatically:
+- Hides "Switch to renter" in `UserMenu` (the existing `canSwitchRoles = hasRenter && hasAgency` becomes `false`).
+- Makes `getDestinationForUser` go through the "agency-only" branch and return `/agency/dashboard` (or `/agency/verification`).
 
-1. **Re-create the `auth-email-hook` edge function** — but this time it will send through the Resend connector (not Lovable's mailer). It will:
-   - Receive Supabase Auth's webhook payload for every auth email (signup, recovery, magic link, email change, reauthentication).
-   - Verify the webhook signature using `SEND_EMAIL_HOOK_SECRET`.
-   - Render the right React Email template (signup, recovery, magic-link, email-change, reauthentication, invite — already exist in `supabase/functions/_shared/email-templates/`).
-   - POST to `https://connector-gateway.lovable.dev/resend/emails` with `From: Motonita.ma <noreply@motonita.ma>`, the rendered HTML, and the 6-digit token / confirmation link.
-   - Log success/failure to `email_send_log` for visibility.
+### 2. Login routing — `src/lib/routeAfterAuth.ts` (`getDestinationForUser`)
 
-2. **Register the hook in Supabase Auth** via a migration:
-   - Set the `Send Email` auth hook URL to the deployed `auth-email-hook` function.
-   - Generate `SEND_EMAIL_HOOK_SECRET` and store it as a Supabase secret.
-   - Set `verify_jwt = false` for `auth-email-hook` in `supabase/config.toml`.
+Add an explicit short-circuit at the top: **if the user has the agency role active, always return the agency destination, regardless of `context` or `last_active_role`.** This guarantees an agency user logging in via the renter door (`/auth`) never lands on `/rent`.
 
-3. **Update the auth email templates** to use the Motonita branding (lime `#9FE870`, deep forest `#163300`, Inter font) and to clearly show the **6-digit OTP code** for:
-   - Signup confirmation (`signup.tsx`)
-   - Password reset (`recovery.tsx`)
-   - Magic link (`magic-link.tsx`)
-   - Email change (`email-change.tsx`)
-   - Reauthentication (`reauthentication.tsx`)
-   - Invite (`invite.tsx`)
+```text
+if (hasAgency) {
+  return user.roles.agency.verified ? "/agency/dashboard" : "/agency/verification";
+}
+```
 
-4. **Deploy the function** and confirm with a real test (you trigger "Forgot password" → you receive a Resend-sent email from `noreply@motonita.ma` with a 6-digit code).
+Also remove the dual-role "context wins" branch (no longer reachable for agency users) and keep the renter fallback.
 
-### Result
-Every email your users receive — signup OTP, password reset OTP, magic link, email change confirmation, booking notifications, admin notifications — will be sent by Resend from `noreply@motonita.ma`. Lovable Emails / `notify.motonita.ma` will not be used for anything.
+### 3. Header renter UI for agency users — `src/components/Header.tsx`
 
-### Files that will change
-- `supabase/functions/auth-email-hook/index.ts` (new)
-- `supabase/functions/auth-email-hook/deno.json` (new)
-- `supabase/config.toml` (add `verify_jwt = false` for the hook)
-- `supabase/functions/_shared/email-templates/*.tsx` (Motonita branding pass)
-- New migration to register the auth hook URL with Supabase Auth
-- Tiny diagnostic addition in `src/stores/useAuthStore.ts` + `src/components/auth/UserMenu.tsx` for Part 1
+- Update `isRenter` so agency users are never treated as renters: `const isRenter = isAuthenticated && !hasAgencyRole && !isBusiness && !isAdmin;`
+- Hide the renter wallet, "Switch to business" CTA, and other renter-only menu items when `hasAgencyRole` is true (lines ~528 and ~689).
 
-### What I need from you (after approval)
-- Confirm you want the diagnostic logs added in Part 1 (I'll remove them once we confirm what the UI sees).
-- The Resend API key is already stored as `RESEND_API_KEY` secret — no new key needed.
-- The hook secret `SEND_EMAIL_HOOK_SECRET` will be auto-generated and added during the migration.
+### 4. Business layout dropdown — `src/components/layouts/BusinessLayout.tsx`
+
+- Remove the "Switch to Client" item (line 147) from the agency-shell dropdown. Agency users should not see that option at all.
+
+### 5. Auth context role mapping — `src/contexts/AuthContext.tsx`
+
+- The `Header` uses `hasRole('business')`. The DB role string is `'agency'`. Add a small alias so `hasRole('business')` returns true when the user has `'agency'`, OR change the call site to `hasRole('agency')`. Pick the call-site fix (cleaner): update `Header.tsx` to use `hasRole('agency')` everywhere.
+
+### 6. Sanity check — Signup
+
+`Signup.tsx` already calls `navigateAfterAuth(navigate, authedUser, defaultRole)` after signup. With (1) and (2) above, an agency signup with auto-confirm enabled now lands on `/agency/dashboard` (or `/agency/verification`) automatically. No code change needed here.
+
+## Files touched
+
+- `src/stores/useAuthStore.ts` — change `renterActive` derivation in `loadAuthUserModel`.
+- `src/lib/routeAfterAuth.ts` — agency short-circuit in `getDestinationForUser`.
+- `src/components/Header.tsx` — gate renter UI on `!hasAgencyRole`; switch `hasRole('business')` → `hasRole('agency')`.
+- `src/components/layouts/BusinessLayout.tsx` — remove "Switch to Client" menu item.
+- `src/components/auth/UserMenu.tsx` — no change needed (the existing `canSwitchRoles` check naturally becomes false once renter is no longer auto-active).
+
+## Verification
+
+After approval and implementation:
+1. Register a new agency via `/agency/signup` → should land on `/agency/verification` (or `/agency/dashboard` if verified). Never `/rent`.
+2. Log in as an agency via `/auth` (renter door) → should still land on `/agency/dashboard`. Never `/rent`.
+3. Open the avatar dropdown as an agency → no "Switch to renter" item, no renter wallet.
+4. Renter accounts (no `agency` role, no business profile) keep working as before.
