@@ -74,7 +74,8 @@ export function OtpInput({
   const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
     const pasted = e.clipboardData
       .getData("text")
-      .replace(/\D/g, "")
+      .replace(/[^a-zA-Z0-9]/g, "")
+      .toUpperCase()
       .slice(0, length);
     if (pasted.length === length) {
       e.preventDefault();
