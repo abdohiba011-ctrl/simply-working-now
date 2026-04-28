@@ -16,8 +16,6 @@ import { BrandFooter, BrandHeader, styles } from './_brand.tsx'
 
 interface InviteEmailProps {
   siteName: string
-  siteUrl: string
-  confirmationUrl: string
   token: string
 }
 
@@ -37,7 +35,7 @@ export const InviteEmail = ({ siteName, token }: InviteEmailProps) => (
           <Text style={styles.code}>{token}</Text>
         </div>
         <Text style={styles.smallNote}>
-          Enter this 6-character code on the verification page. It expires in 60 minutes.
+          Enter this 6-digit code on the verification page. It expires in 60 minutes.
         </Text>
         <Text style={styles.footer}>
           If you weren't expecting this invitation, you can safely ignore this email.
