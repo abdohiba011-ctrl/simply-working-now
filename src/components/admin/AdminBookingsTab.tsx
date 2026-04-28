@@ -46,7 +46,7 @@ import { toast } from "sonner";
 import { format, isToday, isThisWeek, isBefore, startOfDay } from "date-fns";
 import { resolveBikeImageUrl } from "@/lib/bikeImageResolver";
 import { BookingQuickFilters, BookingBulkActions } from "./bookings";
-import { StuckPaymentsCard } from "./StuckPaymentsCard";
+
 import { AdminTableSkeleton } from "@/components/ui/admin-skeleton";
 
 type AdminStatus = 'new' | 'reviewed' | 'confirmed' | 'rejected';

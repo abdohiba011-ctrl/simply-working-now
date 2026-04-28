@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { AlertTriangle, Users, Building2, UserCog, Clock, CheckCircle, XCircle, UserX, Calendar, Bike, BarChart3, Map, Mail } from "lucide-react";
+import { AlertTriangle, Users, Building2, UserCog, Clock, CheckCircle, XCircle, UserX, Calendar, Bike, BarChart3, Map, Mail, CreditCard } from "lucide-react";
 import { useAdminNotifications } from "@/hooks/useAdminNotifications";
 import { useAdminPermissions, AdminTabPermission } from "@/hooks/useAdminPermissions";
 import { AdminUnifiedClientsTab } from "@/components/admin/AdminUnifiedClientsTab";
@@ -13,6 +13,7 @@ import { AdminEmployeesTab } from "@/components/admin/AdminEmployeesTab";
 import { AdminBookingsTab } from "@/components/admin/AdminBookingsTab";
 import { AdminFleetTab } from "@/components/admin/AdminFleetTab";
 import { AdminCitiesTab } from "@/components/admin/AdminCitiesTab";
+import { AdminPaymentsTab } from "@/components/admin/AdminPaymentsTab";
 import { AdminEmailTestTab } from "@/components/admin/AdminEmailTestTab";
 import { TabErrorBoundary } from "@/components/TabErrorBoundary";
 import { cn } from "@/lib/utils";
@@ -23,12 +24,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 // Lazy load analytics tab to avoid loading recharts on initial load
 const AdminAnalyticsTab = lazy(() => import("@/components/admin/AdminAnalyticsTab").then(m => ({ default: m.AdminAnalyticsTab })));
 
-type TabValue = "clients" | "business-clients" | "employees" | "bookings" | "fleet" | "analytics" | "cities" | "email";
+type TabValue = "clients" | "business-clients" | "employees" | "bookings" | "payments" | "fleet" | "analytics" | "cities" | "email";
 type FilterValue = "all" | "pending" | "verified" | "not_verified" | "blocked";
 
 // Map tab values to permission keys
 const TAB_PERMISSION_MAP: Record<TabValue, AdminTabPermission | null> = {
   bookings: "bookings",
+  payments: "bookings", // reuse bookings permission
   fleet: "fleet",
   // The merged Cities tab now also covers what used to be the Locations tab,
   // so users with either legacy permission can see it (handled below).
@@ -81,9 +83,10 @@ const AdminPanel = () => {
 
   const allTabs = [
     { value: "bookings" as TabValue, label: t('admin.bookings'), icon: Calendar },
-    { value: "fleet" as TabValue, label: t('admin.fleet'), icon: Bike },
+    { value: "payments" as TabValue, label: t('admin.payments'), icon: CreditCard },
+    { value: "fleet" as TabValue, label: t('admin.bikes'), icon: Bike },
     { value: "cities" as TabValue, label: t('admin.cities'), icon: Map },
-    { value: "clients" as TabValue, label: t('admin.clients'), icon: Users },
+    { value: "clients" as TabValue, label: t('admin.renterClients'), icon: Users },
     { value: "business-clients" as TabValue, label: "Business Clients", icon: Building2 },
     { value: "employees" as TabValue, label: t('admin.employees'), icon: UserCog },
     { value: "analytics" as TabValue, label: t('admin.analytics'), icon: BarChart3 },
@@ -253,6 +256,11 @@ const AdminPanel = () => {
         {activeTab === "bookings" && (
           <TabErrorBoundary key={`bookings-${retryKey}`} tabName="Bookings" onRetry={handleTabRetry}>
             <AdminBookingsTab />
+          </TabErrorBoundary>
+        )}
+        {activeTab === "payments" && (
+          <TabErrorBoundary key={`payments-${retryKey}`} tabName="Payments" onRetry={handleTabRetry}>
+            <AdminPaymentsTab />
           </TabErrorBoundary>
         )}
         {activeTab === "fleet" && (
