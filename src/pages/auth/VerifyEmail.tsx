@@ -231,8 +231,10 @@ export default function VerifyEmail() {
               key={i}
               ref={(el) => (inputsRef.current[i] = el)}
               type="text"
-              inputMode="numeric"
-              pattern="[0-9]*"
+              inputMode="text"
+              autoCapitalize="characters"
+              autoComplete="one-time-code"
+              pattern="[A-Za-z0-9]*"
               maxLength={1}
               value={d}
               onChange={(e) => handleChange(i, e.target.value)}
