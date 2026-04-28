@@ -69,7 +69,11 @@ export const Header = memo(() => {
   const isAdmin =
     (rolesReady && hasRole('admin')) ||
     (isAuthenticated && readCachedIsAdmin(user?.id));
-  const isRenter = rolesReady && isAuthenticated && !isBusiness && !isAdmin;
+  // A user counts as a renter (and so should see the wallet/credits)
+  // whenever they have the renter role active — even if they are also admin.
+  // We only hide the renter wallet when the user is acting purely as a business/agency.
+  const isRenter =
+    rolesReady && isAuthenticated && !isBusiness && (hasRole('renter') || !isAdmin);
   const hasAgencyRole = isBusiness;
   const handleSwitchToAgency = useCallback(() => {
     switchRoleStore("agency");
