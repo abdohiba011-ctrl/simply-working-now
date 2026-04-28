@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { AlertTriangle, Users, Building2, UserCog, Clock, CheckCircle, XCircle, UserX, Calendar, Bike, BarChart3, MapPin, Map, Mail } from "lucide-react";
+import { AlertTriangle, Users, Building2, UserCog, Clock, CheckCircle, XCircle, UserX, Calendar, Bike, BarChart3, Map, Mail } from "lucide-react";
 import { useAdminNotifications } from "@/hooks/useAdminNotifications";
 import { useAdminPermissions, AdminTabPermission } from "@/hooks/useAdminPermissions";
 import { AdminUnifiedClientsTab } from "@/components/admin/AdminUnifiedClientsTab";
@@ -12,7 +12,6 @@ import { AdminBusinessClientsTab } from "@/components/admin/AdminBusinessClients
 import { AdminEmployeesTab } from "@/components/admin/AdminEmployeesTab";
 import { AdminBookingsTab } from "@/components/admin/AdminBookingsTab";
 import { AdminFleetTab } from "@/components/admin/AdminFleetTab";
-import { AdminLocationsTab } from "@/components/admin/AdminLocationsTab";
 import { AdminCitiesTab } from "@/components/admin/AdminCitiesTab";
 import { AdminEmailTestTab } from "@/components/admin/AdminEmailTestTab";
 import { TabErrorBoundary } from "@/components/TabErrorBoundary";
