@@ -49,6 +49,7 @@ export default function ForgotPassword() {
 
   const [serverError, setServerError] = useState<string | null>(null);
   const [lockoutMs, setLockoutMs] = useState(0);
+  const [sent, setSent] = useState(false);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -75,17 +76,11 @@ export default function ForgotPassword() {
     [lockoutMs],
   );
 
-  
-
   const onSubmit = async (values: FormValues) => {
     setServerError(null);
     try {
       await requestPasswordReset(values.email);
-      // Send the user straight to the OTP entry screen so they can paste
-      // the 6-digit code we just emailed them.
-      navigate(
-        `/reset-password/verify?email=${encodeURIComponent(values.email.trim().toLowerCase())}`,
-      );
+      setSent(true);
     } catch (err) {
       const e = err as AuthError;
       if (e.code === "RESET_RATE_LIMITED") {
@@ -117,10 +112,15 @@ export default function ForgotPassword() {
             {t("mockAuth.reset_password", { defaultValue: "Reset your password" })}
           </h1>
           <p className="text-sm" style={{ color: "rgba(22,51,0,0.7)" }}>
-            {t("mockAuth.reset_password_sub", {
-              defaultValue:
-                "Enter your email and we'll send you a 6-digit code to reset your password.",
-            })}
+            {sent
+              ? t("mockAuth.reset_link_sent_sub", {
+                  defaultValue:
+                    "We've emailed you a password reset link. Open it from your inbox to set a new password.",
+                })
+              : t("mockAuth.reset_password_sub", {
+                  defaultValue:
+                    "Enter your email and we'll send you a link to reset your password.",
+                })}
           </p>
         </div>
 
@@ -134,58 +134,93 @@ export default function ForgotPassword() {
           </div>
         ) : null}
 
-        <form
-          onSubmit={form.handleSubmit(onSubmit)}
-          className="space-y-4"
-          noValidate
-        >
-          <div className="space-y-1.5">
-            <Label htmlFor="email" className="text-sm" style={{ color: "#163300" }}>
-              {t("mockAuth.email_or_phone", { defaultValue: "Email" }).split(" ")[0]}
-            </Label>
-            <div className="relative">
-              <Mail
-                className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
-                aria-hidden
-              />
-              <Input
-                id="email"
-                type="email"
-                autoComplete="email"
-                placeholder="you@example.com"
-                className="h-10 rounded-md text-sm pl-9"
-                {...form.register("email")}
-              />
-            </div>
-            {form.formState.errors.email ? (
-              <p className="text-xs text-red-600 mt-1">
-                {form.formState.errors.email.message}
-              </p>
-            ) : null}
-            {lockoutLabel ? (
-              <p className="text-xs text-red-600 mt-1">
-                {t("mockAuth.try_again_in", { defaultValue: "Try again in" })}{" "}
-                {lockoutLabel}
-              </p>
-            ) : null}
-          </div>
-
-          <Button
-            type="submit"
-            disabled={submitDisabled || !form.formState.isValid}
-            className="w-full h-10 rounded-md text-sm font-semibold"
-            style={{ backgroundColor: "#9FE870", color: "#163300" }}
-          >
-            {isLoading ? (
-              <span className="inline-flex items-center gap-2">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                {t("mockAuth.sending", { defaultValue: "Sending..." })}
+        {sent ? (
+          <div className="space-y-4">
+            <div
+              className="rounded-md border px-4 py-3 text-sm flex items-start gap-2"
+              style={{
+                borderColor: "rgba(159,232,112,0.5)",
+                backgroundColor: "rgba(159,232,112,0.12)",
+                color: "#163300",
+              }}
+            >
+              <Mail className="h-4 w-4 mt-0.5 shrink-0" />
+              <span>
+                {t("mockAuth.reset_link_sent_to", {
+                  defaultValue: "Reset link sent to",
+                })}{" "}
+                <span className="font-semibold">{emailValue}</span>
               </span>
-            ) : (
-              t("mockAuth.send_reset_code", { defaultValue: "Send code" })
-            )}
-          </Button>
-        </form>
+            </div>
+            <p className="text-xs" style={{ color: "rgba(22,51,0,0.6)" }}>
+              {t("mockAuth.reset_link_check_spam", {
+                defaultValue:
+                  "Didn't get it? Check your spam folder, or try again in a minute.",
+              })}
+            </p>
+            <Button
+              type="button"
+              onClick={() => setSent(false)}
+              className="w-full h-10 rounded-md text-sm font-semibold"
+              style={{ backgroundColor: "#9FE870", color: "#163300" }}
+            >
+              {t("mockAuth.send_again", { defaultValue: "Send again" })}
+            </Button>
+          </div>
+        ) : (
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="space-y-4"
+            noValidate
+          >
+            <div className="space-y-1.5">
+              <Label htmlFor="email" className="text-sm" style={{ color: "#163300" }}>
+                {t("mockAuth.email_or_phone", { defaultValue: "Email" }).split(" ")[0]}
+              </Label>
+              <div className="relative">
+                <Mail
+                  className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
+                  aria-hidden
+                />
+                <Input
+                  id="email"
+                  type="email"
+                  autoComplete="email"
+                  placeholder="you@example.com"
+                  className="h-10 rounded-md text-sm pl-9"
+                  {...form.register("email")}
+                />
+              </div>
+              {form.formState.errors.email ? (
+                <p className="text-xs text-red-600 mt-1">
+                  {form.formState.errors.email.message}
+                </p>
+              ) : null}
+              {lockoutLabel ? (
+                <p className="text-xs text-red-600 mt-1">
+                  {t("mockAuth.try_again_in", { defaultValue: "Try again in" })}{" "}
+                  {lockoutLabel}
+                </p>
+              ) : null}
+            </div>
+
+            <Button
+              type="submit"
+              disabled={submitDisabled || !form.formState.isValid}
+              className="w-full h-10 rounded-md text-sm font-semibold"
+              style={{ backgroundColor: "#9FE870", color: "#163300" }}
+            >
+              {isLoading ? (
+                <span className="inline-flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  {t("mockAuth.sending", { defaultValue: "Sending..." })}
+                </span>
+              ) : (
+                t("mockAuth.send_reset_link", { defaultValue: "Send reset link" })
+              )}
+            </Button>
+          </form>
+        )}
 
         <div className="text-center">
           <Link

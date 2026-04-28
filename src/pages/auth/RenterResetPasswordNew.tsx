@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuthStore } from "@/stores/useAuthStore";
+import { supabase } from "@/integrations/supabase/client";
 import { COMMON_PASSWORDS, isResetTokenValid, type AuthError } from "@/lib/mockAuth";
 import { cn } from "@/lib/utils";
 
@@ -93,6 +94,9 @@ export default function RenterResetPasswordNew() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
+  const [hasRecoverySession, setHasRecoverySession] = useState<boolean | null>(
+    null,
+  );
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -101,10 +105,20 @@ export default function RenterResetPasswordNew() {
   });
 
   useEffect(() => {
-    if (!internalToken || !isResetTokenValid(internalToken)) {
-      toast.error("Your reset code expired. Please request a new one.");
-      navigate("/renter/forgot-password", { replace: true });
-    }
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase.auth.getSession();
+      if (cancelled) return;
+      const ok = !!data.session?.user;
+      setHasRecoverySession(ok);
+      if (!ok && (!internalToken || !isResetTokenValid(internalToken))) {
+        toast.error("Your reset link expired. Please request a new one.");
+        navigate("/renter/forgot-password", { replace: true });
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [internalToken, navigate]);
 
   const pwValue = form.watch("password");
@@ -118,14 +132,26 @@ export default function RenterResetPasswordNew() {
   const onSubmit = async (values: FormValues) => {
     setServerError(null);
     try {
-      const setNewPassword = useAuthStore.getState().setNewPassword;
-      await setNewPassword(internalToken, values.password);
+      if (hasRecoverySession) {
+        const { error } = await supabase.auth.updateUser({
+          password: values.password,
+        });
+        if (error) throw error;
+        try {
+          await useAuthStore.getState().checkAuth();
+        } catch {
+          /* ignore */
+        }
+      } else {
+        const setNewPassword = useAuthStore.getState().setNewPassword;
+        await setNewPassword(internalToken, values.password);
+      }
       toast.success("Password updated!");
       navigate("/auth", { replace: true });
     } catch (err) {
       const e = err as AuthError & { message?: string };
       if (e?.code === "TOKEN_EXPIRED" || e?.code === "INVALID_TOKEN") {
-        toast.error("Your reset code expired. Please request a new one.");
+        toast.error("Your reset link expired. Please request a new one.");
         navigate("/renter/forgot-password", { replace: true });
         return;
       }

@@ -57,6 +57,7 @@ export interface AuthError extends Error {
     | "INVALID_TOKEN"
     | "TOKEN_EXPIRED"
     | "RESET_RATE_LIMITED"
+    | "OAUTH_ONLY"
     | "NETWORK";
   needsVerification?: boolean;
   lockedUntil?: string;
