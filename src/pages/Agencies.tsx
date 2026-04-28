@@ -306,6 +306,32 @@ const Agencies = () => {
   const t = COPY[lang];
   const isRTL = lang === "ar";
   const [yearly, setYearly] = useState(false);
+  const navigate = useNavigate();
+
+  // Role-aware destinations: where each CTA on this page should send the user.
+  // Anonymous → standard agency signup/login flow.
+  // Logged-in renter without agency role → agency signup wizard (which becomes
+  //   "add agency profile" because they're already authenticated).
+  // Logged-in agency → straight to the dashboard.
+  const authedUser = useAuthStore((s) => s.user);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const hasAgencyRole = !!authedUser?.roles?.agency?.active;
+  const trialHref = !isAuthenticated
+    ? "/agency/signup"
+    : hasAgencyRole
+      ? "/agency/dashboard"
+      : "/agency/signup";
+  const loginHref = !isAuthenticated
+    ? "/agency/login"
+    : hasAgencyRole
+      ? "/agency/dashboard"
+      : "/agency/signup";
+  const planHref = (planSlug: "free" | "pro" | "business") => {
+    if (planSlug === "business") return "mailto:contact@motonita.ma";
+    if (isAuthenticated && hasAgencyRole) return "/agency/dashboard";
+    if (isAuthenticated) return "/agency/signup";
+    return planSlug === "pro" ? "/agency/signup?plan=pro" : "/agency/signup";
+  };
 
   useEffect(() => {
     const prevTitle = document.title;
