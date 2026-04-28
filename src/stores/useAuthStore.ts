@@ -534,6 +534,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           name: formData.name,
           full_name: formData.name,
           phone: phone ?? undefined,
+          signup_role: role,
         },
       },
     });
@@ -565,14 +566,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
 
     // Best-effort — don't fail signup if these don't apply
-    await supabase.from("profiles").update(profileUpdates).eq("id", data.user.id);
-
-    if (role === "agency") {
-      await supabase.from("user_roles").insert({
-        user_id: data.user.id,
-        role: "agency",
-      });
-    }
+    await supabase.from("profiles").update(profileUpdates).eq("user_id", data.user.id);
 
     // If the project has auto-confirm enabled, the user is already
     // signed in — route the UI like a successful login.
