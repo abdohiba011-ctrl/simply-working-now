@@ -257,10 +257,10 @@ const AdminVerifications = () => {
                               </Button>
                               <Button
                                 size="sm"
-                                onClick={() => handleVerify(user.id)}
-                                disabled={actionLoading === user.id}
+                                onClick={() => handleVerify(user.user_id)}
+                                disabled={actionLoading === user.user_id}
                               >
-                                {actionLoading === user.id ? (
+                                {actionLoading === user.user_id ? (
                                   <Loader2 className="h-4 w-4 animate-spin" />
                                 ) : (
                                   <>
@@ -272,8 +272,8 @@ const AdminVerifications = () => {
                               <Button
                                 size="sm"
                                 variant="destructive"
-                                onClick={() => handleReject(user.id)}
-                                disabled={actionLoading === user.id}
+                                onClick={() => handleReject(user.user_id)}
+                                disabled={actionLoading === user.user_id}
                               >
                                 <XCircle className="h-4 w-4 mr-1" />
                                 Reject
@@ -282,8 +282,8 @@ const AdminVerifications = () => {
                                 size="sm"
                                 variant="outline"
                                 className="text-destructive border-destructive hover:bg-destructive/10"
-                                onClick={() => handleBlock(user.id)}
-                                disabled={actionLoading === user.id}
+                                onClick={() => handleBlock(user.user_id)}
+                                disabled={actionLoading === user.user_id}
                               >
                                 Block
                               </Button>
