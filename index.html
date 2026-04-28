@@ -47,6 +47,23 @@
       ]
     }
     </script>
+
+    <script>
+      // Force light mode by default for first-time visitors.
+      // Only honor an explicit saved preference; ignore OS dark preference.
+      (function () {
+        try {
+          var saved = localStorage.getItem('motonita-theme');
+          var theme = (saved === 'dark' || saved === 'light') ? saved : 'light';
+          var root = document.documentElement;
+          root.classList.remove('light', 'dark');
+          root.classList.add(theme);
+          if (!saved) localStorage.setItem('motonita-theme', 'light');
+        } catch (e) {
+          document.documentElement.classList.add('light');
+        }
+      })();
+    </script>
 </head>
 
   <body>
