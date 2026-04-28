@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { getErrMsg } from "@/lib/errorMessages";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -44,12 +44,19 @@ import {
   RefreshCw,
   Store,
   User,
+  ChevronLeft,
+  ChevronRight,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+  Inbox,
 } from "lucide-react";
 import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
 
 interface BusinessUser {
   id: string;
+  user_id: string | null;
   name: string | null;
   email: string | null;
   phone: string | null;
@@ -88,22 +95,44 @@ const formatDate = (dateString: string | null, formatStr: string = "MMM d, yyyy"
 };
 
 type TypeFilter = "all" | "shop" | "individual";
+type SortField = "created_at" | "name" | "email";
+type SortDir = "asc" | "desc";
 
-const businessTypeLabel = (bt: string | null) => {
-  if (bt === "rental_shop") return { label: "Rental Shop", icon: Store };
-  if (bt === "individual" || bt === "individual_owner") return { label: "Individual Owner", icon: User };
-  return { label: "Business", icon: Building2 };
+// Exact mapping to stored business_type values in profiles
+const SHOP_TYPES = ["rental_shop"];
+const INDIVIDUAL_TYPES = ["individual_owner", "individual"];
+
+const businessTypeBadge = (bt: string | null) => {
+  if (bt && SHOP_TYPES.includes(bt)) {
+    return { label: "Rental Shop", icon: Store, variant: "default" as const };
+  }
+  if (bt && INDIVIDUAL_TYPES.includes(bt)) {
+    return { label: "Individual Owner", icon: User, variant: "secondary" as const };
+  }
+  return { label: "Unspecified", icon: Building2, variant: "outline" as const };
 };
+
+const PAGE_SIZE = 20;
 
 export const AdminBusinessClientsTab = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("clients");
 
+  // Server-side data state
   const [businesses, setBusinesses] = useState<BusinessUser[]>([]);
-  const [filtered, setFiltered] = useState<BusinessUser[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [shopsCount, setShopsCount] = useState(0);
+  const [individualsCount, setIndividualsCount] = useState(0);
+  const [frozenCount, setFrozenCount] = useState(0);
+
   const [isLoading, setIsLoading] = useState(true);
+  const [searchInput, setSearchInput] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
+  const [sortField, setSortField] = useState<SortField>("created_at");
+  const [sortDir, setSortDir] = useState<SortDir>("desc");
+  const [page, setPage] = useState(0);
+
   const [selected, setSelected] = useState<BusinessUser | null>(null);
   const [showNotificationDialog, setShowNotificationDialog] = useState(false);
   const [notificationTitle, setNotificationTitle] = useState("");
@@ -118,60 +147,108 @@ export const AdminBusinessClientsTab = () => {
   const [rejectReason, setRejectReason] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
+  // Debounce search input -> searchQuery
   useEffect(() => {
-    fetchBusinesses();
-    fetchApplications();
-  }, []);
+    const t = setTimeout(() => {
+      setSearchQuery(searchInput.trim());
+      setPage(0);
+    }, 300);
+    return () => clearTimeout(t);
+  }, [searchInput]);
 
+  // Reset to first page when filter/sort changes
   useEffect(() => {
+    setPage(0);
+  }, [typeFilter, sortField, sortDir]);
+
+  const fetchBusinesses = useCallback(async () => {
+    setIsLoading(true);
     try {
-      let result = businesses;
+      let query = supabase
+        .from("profiles")
+        .select(
+          "id,user_id,name,full_name,email,phone,avatar_url,is_verified,verification_status,is_frozen,frozen_reason,created_at,business_type",
+          { count: "exact" },
+        )
+        .eq("user_type", "business");
 
       if (typeFilter === "shop") {
-        result = result.filter((b) => b.business_type === "rental_shop");
+        query = query.in("business_type", SHOP_TYPES);
       } else if (typeFilter === "individual") {
-        result = result.filter(
-          (b) => b.business_type === "individual" || b.business_type === "individual_owner" || !b.business_type,
-        );
+        query = query.in("business_type", INDIVIDUAL_TYPES);
       }
 
       if (searchQuery) {
-        const q = searchQuery.toLowerCase();
-        result = result.filter(
-          (b) =>
-            b.name?.toLowerCase().includes(q) ||
-            b.email?.toLowerCase().includes(q) ||
-            b.phone?.includes(searchQuery),
+        const escaped = searchQuery.replace(/[%,()]/g, " ");
+        query = query.or(
+          `name.ilike.%${escaped}%,full_name.ilike.%${escaped}%,email.ilike.%${escaped}%,phone.ilike.%${escaped}%`,
         );
       }
 
-      setFiltered(result);
-    } catch (error) {
-      console.error("[AdminBusinessClientsTab] Error filtering:", error);
-      setFiltered(businesses);
-    }
-  }, [searchQuery, typeFilter, businesses]);
+      query = query.order(sortField, { ascending: sortDir === "asc" });
 
-  const fetchBusinesses = async () => {
-    setIsLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("user_type", "business")
-        .order("created_at", { ascending: false });
+      const from = page * PAGE_SIZE;
+      const to = from + PAGE_SIZE - 1;
+      query = query.range(from, to);
 
+      const { data, error, count } = await query;
       if (error) throw error;
-      setBusinesses(data || []);
-    } catch (error: unknown) {
+
+      const rows: BusinessUser[] = (data || []).map((p: any) => ({
+        id: p.id,
+        user_id: p.user_id,
+        name: p.name || p.full_name,
+        email: p.email,
+        phone: p.phone,
+        avatar_url: p.avatar_url,
+        is_verified: p.is_verified,
+        verification_status: p.verification_status,
+        is_frozen: p.is_frozen,
+        frozen_reason: p.frozen_reason,
+        created_at: p.created_at,
+        business_type: p.business_type,
+      }));
+      setBusinesses(rows);
+      setTotalCount(count || 0);
+    } catch (error) {
       console.error("[AdminBusinessClientsTab] Failed to load:", error);
       toast.error("Failed to load business clients");
+      setBusinesses([]);
+      setTotalCount(0);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [typeFilter, searchQuery, sortField, sortDir, page]);
 
-  const fetchApplications = async () => {
+  // Fetch aggregate counts (independent of pagination)
+  const fetchAggregates = useCallback(async () => {
+    try {
+      const [shopsRes, indivRes, frozenRes] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("id", { count: "exact", head: true })
+          .eq("user_type", "business")
+          .in("business_type", SHOP_TYPES),
+        supabase
+          .from("profiles")
+          .select("id", { count: "exact", head: true })
+          .eq("user_type", "business")
+          .in("business_type", INDIVIDUAL_TYPES),
+        supabase
+          .from("profiles")
+          .select("id", { count: "exact", head: true })
+          .eq("user_type", "business")
+          .eq("is_frozen", true),
+      ]);
+      setShopsCount(shopsRes.count || 0);
+      setIndividualsCount(indivRes.count || 0);
+      setFrozenCount(frozenRes.count || 0);
+    } catch (error) {
+      console.error("[AdminBusinessClientsTab] Aggregates failed:", error);
+    }
+  }, []);
+
+  const fetchApplications = useCallback(async () => {
     setIsLoadingApps(true);
     try {
       const { data, error } = await supabase
@@ -204,36 +281,51 @@ export const AdminBusinessClientsTab = () => {
     } catch (error) {
       console.error("[AdminBusinessClientsTab] Failed to load applications:", error);
       toast.error("Failed to load applications");
+      setApplications([]);
     } finally {
       setIsLoadingApps(false);
     }
-  };
+  }, []);
 
-  const handleFreeze = async (userId: string, freeze: boolean) => {
+  useEffect(() => {
+    fetchBusinesses();
+  }, [fetchBusinesses]);
+
+  useEffect(() => {
+    fetchAggregates();
+    fetchApplications();
+  }, [fetchAggregates, fetchApplications]);
+
+  const handleFreeze = async (profileId: string, freeze: boolean) => {
     setActionLoading(true);
     try {
+      const target = businesses.find((b) => b.id === profileId);
       const { error } = await supabase
         .from("profiles")
         .update({
           is_frozen: freeze,
           frozen_reason: freeze ? "Frozen by admin" : null,
         })
-        .eq("id", userId);
+        .eq("id", profileId);
 
       if (error) throw error;
 
-      await supabase.from("notifications").insert({
-        user_id: userId,
-        title: freeze ? "Account Frozen" : "Account Unfrozen",
-        message: freeze
-          ? "Your business account has been frozen. Please contact support for assistance."
-          : "Your business account has been unfrozen. You can now access all features.",
-        type: freeze ? "warning" : "success",
-      });
+      if (target?.user_id) {
+        await supabase.from("notifications").insert({
+          user_id: target.user_id,
+          title: freeze ? "Account Frozen" : "Account Unfrozen",
+          message: freeze
+            ? "Your business account has been frozen. Please contact support for assistance."
+            : "Your business account has been unfrozen. You can now access all features.",
+          type: freeze ? "warning" : "success",
+        });
+      }
 
       toast.success(freeze ? "Account frozen" : "Account unfrozen");
       fetchBusinesses();
-    } catch (error: unknown) {
+      fetchAggregates();
+    } catch (error) {
+      console.error(error);
       toast.error("Failed to update status");
     } finally {
       setActionLoading(false);
@@ -242,10 +334,14 @@ export const AdminBusinessClientsTab = () => {
 
   const handleSendNotification = async () => {
     if (!selected || !notificationTitle || !notificationMessage) return;
+    if (!selected.user_id) {
+      toast.error("Cannot send: missing user reference");
+      return;
+    }
     setActionLoading(true);
     try {
       const { error } = await supabase.from("notifications").insert({
-        user_id: selected.id,
+        user_id: selected.user_id,
         title: notificationTitle,
         message: notificationMessage,
         type: "info",
@@ -255,7 +351,8 @@ export const AdminBusinessClientsTab = () => {
       setShowNotificationDialog(false);
       setNotificationTitle("");
       setNotificationMessage("");
-    } catch (error: unknown) {
+    } catch (error) {
+      console.error(error);
       toast.error("Failed to send notification");
     } finally {
       setActionLoading(false);
@@ -272,13 +369,24 @@ export const AdminBusinessClientsTab = () => {
       const { error: profileError } = await supabase
         .from("profiles")
         .update({ user_type: "business", business_type })
-        .eq("id", userId);
+        .eq("user_id", userId);
       if (profileError) throw profileError;
 
-      const { error: roleError } = await supabase
+      // Check for existing agency role first instead of relying on duplicate-error text
+      const { data: existingRole, error: roleCheckError } = await supabase
         .from("user_roles")
-        .insert({ user_id: userId, role: "agency" });
-      if (roleError && !roleError.message.includes("duplicate")) throw roleError;
+        .select("id")
+        .eq("user_id", userId)
+        .eq("role", "agency")
+        .maybeSingle();
+      if (roleCheckError) throw roleCheckError;
+
+      if (!existingRole) {
+        const { error: roleError } = await supabase
+          .from("user_roles")
+          .insert({ user_id: userId, role: "agency" });
+        if (roleError) throw roleError;
+      }
 
       const { error: statusError } = await supabase
         .from("contact_messages")
@@ -300,7 +408,8 @@ export const AdminBusinessClientsTab = () => {
       setSelectedApplication(null);
       fetchApplications();
       fetchBusinesses();
-    } catch (error: unknown) {
+      fetchAggregates();
+    } catch (error) {
       toast.error(getErrMsg(error) || "Failed to approve application");
     } finally {
       setIsSaving(false);
@@ -319,7 +428,7 @@ export const AdminBusinessClientsTab = () => {
       const { error: profileError } = await supabase
         .from("profiles")
         .update({ user_type: "client", business_type: null })
-        .eq("id", userId);
+        .eq("user_id", userId);
       if (profileError) throw profileError;
 
       const { error: statusError } = await supabase
@@ -341,7 +450,7 @@ export const AdminBusinessClientsTab = () => {
       setSelectedApplication(null);
       setRejectReason("");
       fetchApplications();
-    } catch (error: unknown) {
+    } catch (error) {
       toast.error(getErrMsg(error) || "Failed to reject application");
     } finally {
       setIsSaving(false);
@@ -354,15 +463,28 @@ export const AdminBusinessClientsTab = () => {
     return "B";
   };
 
+  const toggleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortField(field);
+      setSortDir(field === "created_at" ? "desc" : "asc");
+    }
+  };
+
+  const SortIcon = ({ field }: { field: SortField }) => {
+    if (sortField !== field) return <ArrowUpDown className="h-3 w-3 ml-1 opacity-50" />;
+    return sortDir === "asc" ? <ArrowUp className="h-3 w-3 ml-1" /> : <ArrowDown className="h-3 w-3 ml-1" />;
+  };
+
   const pendingCount = applications.filter(
     (a) => a.status === "unread" || !a.status || a.status === "pending",
   ).length;
   const approvedCount = applications.filter((a) => a.status === "approved").length;
-  const frozenCount = businesses.filter((b) => b.is_frozen).length;
-  const shopsCount = businesses.filter((b) => b.business_type === "rental_shop").length;
-  const individualsCount = businesses.filter(
-    (b) => b.business_type === "individual" || b.business_type === "individual_owner" || !b.business_type,
-  ).length;
+
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+  const fromRow = totalCount === 0 ? 0 : page * PAGE_SIZE + 1;
+  const toRow = Math.min(totalCount, (page + 1) * PAGE_SIZE);
 
   return (
     <div className="space-y-6">
@@ -370,7 +492,7 @@ export const AdminBusinessClientsTab = () => {
         <Card>
           <CardContent className="pt-4 text-center">
             <Building2 className="h-6 w-6 mx-auto mb-2 text-primary" />
-            <p className="text-2xl font-bold">{businesses.length}</p>
+            <p className="text-2xl font-bold">{totalCount}</p>
             <p className="text-sm text-muted-foreground">Total Businesses</p>
           </CardContent>
         </Card>
@@ -402,7 +524,7 @@ export const AdminBusinessClientsTab = () => {
           <TabsList>
             <TabsTrigger value="clients" className="gap-2">
               <Building2 className="h-4 w-4" />
-              Approved Businesses ({businesses.length})
+              Approved Businesses ({totalCount})
             </TabsTrigger>
             <TabsTrigger value="applications" className="gap-2">
               <Clock className="h-4 w-4" />
@@ -413,6 +535,7 @@ export const AdminBusinessClientsTab = () => {
             variant="outline"
             onClick={() => {
               fetchBusinesses();
+              fetchAggregates();
               fetchApplications();
             }}
             disabled={isLoading || isLoadingApps}
@@ -432,7 +555,7 @@ export const AdminBusinessClientsTab = () => {
                     Business Clients
                   </CardTitle>
                   <p className="text-sm text-muted-foreground mt-1">
-                    {filtered.length} business clients found ({shopsCount} shops · {individualsCount} individual owners)
+                    {shopsCount} shops · {individualsCount} individual owners
                   </p>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
@@ -467,8 +590,8 @@ export const AdminBusinessClientsTab = () => {
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                       placeholder="Search by name, email, phone..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
+                      value={searchInput}
+                      onChange={(e) => setSearchInput(e.target.value)}
                       className="pl-9"
                     />
                   </div>
@@ -478,102 +601,183 @@ export const AdminBusinessClientsTab = () => {
             <CardContent>
               {isLoading ? (
                 <AdminTableSkeleton />
-              ) : filtered.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">No business clients found</div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Business</TableHead>
-                        <TableHead>Type</TableHead>
-                        <TableHead>Contact</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Joined</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filtered.map((biz) => {
-                        const typeInfo = businessTypeLabel(biz.business_type);
-                        const TypeIcon = typeInfo.icon;
-                        return (
-                          <TableRow key={biz.id} className={biz.is_frozen ? "bg-destructive/5" : ""}>
-                            <TableCell>
-                              <div className="flex items-center gap-3">
-                                <Avatar className="h-10 w-10">
-                                  <AvatarImage src={biz.avatar_url || undefined} />
-                                  <AvatarFallback className="bg-primary/10">
-                                    {getInitials(biz.name, biz.email)}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <div>
-                                  <p className="font-medium">{biz.name || "No name"}</p>
-                                  <p className="text-xs text-muted-foreground">{biz.email}</p>
-                                </div>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant="outline" className="gap-1">
-                                <TypeIcon className="h-3 w-3" />
-                                {typeInfo.label}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              <div className="text-sm">
-                                <p className="flex items-center gap-1">
-                                  <Phone className="h-3 w-3" />
-                                  {biz.phone || "N/A"}
-                                </p>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex flex-col gap-1">
-                                {biz.is_verified ? (
-                                  <StatusBadge status="verified" label="Verified" />
-                                ) : (
-                                  <StatusBadge
-                                    status={biz.verification_status === "pending_review" ? "pending" : "not_started"}
-                                    label={biz.verification_status === "pending_review" ? "Pending" : "Unverified"}
-                                  />
-                                )}
-                                {biz.is_frozen && <StatusBadge status="frozen" label="Frozen" />}
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <span className="text-sm text-muted-foreground">{formatDate(biz.created_at)}</span>
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <div className="flex items-center justify-end gap-2">
-                                <Button size="sm" variant="outline" onClick={() => navigate(`/admin/clients/${biz.id}`)}>
-                                  <Eye className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => {
-                                    setSelected(biz);
-                                    setShowNotificationDialog(true);
-                                  }}
-                                >
-                                  <Send className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant={biz.is_frozen ? "default" : "destructive"}
-                                  onClick={() => handleFreeze(biz.id, !biz.is_frozen)}
-                                  disabled={actionLoading}
-                                >
-                                  {biz.is_frozen ? <CheckCircle className="h-4 w-4" /> : <Snowflake className="h-4 w-4" />}
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
+              ) : businesses.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 text-center">
+                  <Inbox className="h-12 w-12 text-muted-foreground mb-3" />
+                  <p className="font-medium">No business clients found</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {searchQuery || typeFilter !== "all"
+                      ? "Try adjusting your search or filters."
+                      : "Approved businesses will appear here."}
+                  </p>
+                  {(searchQuery || typeFilter !== "all") && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mt-4"
+                      onClick={() => {
+                        setSearchInput("");
+                        setTypeFilter("all");
+                      }}
+                    >
+                      Clear filters
+                    </Button>
+                  )}
                 </div>
+              ) : (
+                <>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>
+                            <button
+                              className="flex items-center hover:text-foreground"
+                              onClick={() => toggleSort("name")}
+                            >
+                              Business <SortIcon field="name" />
+                            </button>
+                          </TableHead>
+                          <TableHead>Type</TableHead>
+                          <TableHead>
+                            <button
+                              className="flex items-center hover:text-foreground"
+                              onClick={() => toggleSort("email")}
+                            >
+                              Contact <SortIcon field="email" />
+                            </button>
+                          </TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>
+                            <button
+                              className="flex items-center hover:text-foreground"
+                              onClick={() => toggleSort("created_at")}
+                            >
+                              Joined <SortIcon field="created_at" />
+                            </button>
+                          </TableHead>
+                          <TableHead className="text-right">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {businesses.map((biz) => {
+                          const typeInfo = businessTypeBadge(biz.business_type);
+                          const TypeIcon = typeInfo.icon;
+                          return (
+                            <TableRow key={biz.id} className={biz.is_frozen ? "bg-destructive/5" : ""}>
+                              <TableCell>
+                                <div className="flex items-center gap-3">
+                                  <Avatar className="h-10 w-10">
+                                    <AvatarImage src={biz.avatar_url || undefined} />
+                                    <AvatarFallback className="bg-primary/10">
+                                      {getInitials(biz.name, biz.email)}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <div>
+                                    <p className="font-medium">{biz.name || "No name"}</p>
+                                    <p className="text-xs text-muted-foreground">{biz.email}</p>
+                                  </div>
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <Badge variant={typeInfo.variant} className="gap-1">
+                                  <TypeIcon className="h-3 w-3" />
+                                  {typeInfo.label}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>
+                                <div className="text-sm">
+                                  <p className="flex items-center gap-1">
+                                    <Phone className="h-3 w-3" />
+                                    {biz.phone || "N/A"}
+                                  </p>
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex flex-col gap-1">
+                                  {biz.is_verified ? (
+                                    <StatusBadge status="verified" label="Verified" />
+                                  ) : (
+                                    <StatusBadge
+                                      status={biz.verification_status === "pending_review" ? "pending" : "not_started"}
+                                      label={biz.verification_status === "pending_review" ? "Pending" : "Unverified"}
+                                    />
+                                  )}
+                                  {biz.is_frozen && <StatusBadge status="frozen" label="Frozen" />}
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <span className="text-sm text-muted-foreground">{formatDate(biz.created_at)}</span>
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <div className="flex items-center justify-end gap-2">
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => navigate(`/admin/clients/${biz.id}`)}
+                                  >
+                                    <Eye className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      setSelected(biz);
+                                      setShowNotificationDialog(true);
+                                    }}
+                                  >
+                                    <Send className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant={biz.is_frozen ? "default" : "destructive"}
+                                    onClick={() => handleFreeze(biz.id, !biz.is_frozen)}
+                                    disabled={actionLoading}
+                                  >
+                                    {biz.is_frozen ? (
+                                      <CheckCircle className="h-4 w-4" />
+                                    ) : (
+                                      <Snowflake className="h-4 w-4" />
+                                    )}
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </div>
+
+                  <div className="flex items-center justify-between mt-4 flex-wrap gap-3">
+                    <p className="text-sm text-muted-foreground">
+                      Showing {fromRow}–{toRow} of {totalCount}
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPage((p) => Math.max(0, p - 1))}
+                        disabled={page === 0 || isLoading}
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                        Previous
+                      </Button>
+                      <span className="text-sm text-muted-foreground">
+                        Page {page + 1} of {totalPages}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+                        disabled={page >= totalPages - 1 || isLoading}
+                      >
+                        Next
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </>
               )}
             </CardContent>
           </Card>
@@ -594,7 +798,13 @@ export const AdminBusinessClientsTab = () => {
               {isLoadingApps ? (
                 <AdminRentalShopsApplicationsSkeleton />
               ) : applications.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">No pending applications</div>
+                <div className="flex flex-col items-center justify-center py-16 text-center">
+                  <Inbox className="h-12 w-12 text-muted-foreground mb-3" />
+                  <p className="font-medium">No applications yet</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    New business partner applications will show up here for review.
+                  </p>
+                </div>
               ) : (
                 <Table>
                   <TableHeader>
@@ -633,9 +843,9 @@ export const AdminBusinessClientsTab = () => {
                             </div>
                           </TableCell>
                           <TableCell>
-                            <Badge variant="outline" className="gap-1">
+                            <Badge variant={isShop ? "default" : "secondary"} className="gap-1">
                               <TypeIcon className="h-3 w-3" />
-                              {isShop ? "Rental Shop" : "Individual"}
+                              {isShop ? "Rental Shop" : "Individual Owner"}
                             </Badge>
                           </TableCell>
                           <TableCell>
