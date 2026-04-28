@@ -1511,6 +1511,7 @@ export type Database = {
           created_at: string
           date_of_birth: string | null
           email: string
+          email_notifications_enabled: boolean
           email_verified: boolean | null
           family_name_on_id: string | null
           first_name_on_id: string | null
@@ -1540,6 +1541,7 @@ export type Database = {
           phone: string | null
           phone_verified: boolean | null
           preferred_language: string | null
+          push_notifications_enabled: boolean
           rc: string | null
           rejected_at: string | null
           rejected_by: string | null
@@ -1576,6 +1578,7 @@ export type Database = {
           created_at?: string
           date_of_birth?: string | null
           email: string
+          email_notifications_enabled?: boolean
           email_verified?: boolean | null
           family_name_on_id?: string | null
           first_name_on_id?: string | null
@@ -1605,6 +1608,7 @@ export type Database = {
           phone?: string | null
           phone_verified?: boolean | null
           preferred_language?: string | null
+          push_notifications_enabled?: boolean
           rc?: string | null
           rejected_at?: string | null
           rejected_by?: string | null
@@ -1641,6 +1645,7 @@ export type Database = {
           created_at?: string
           date_of_birth?: string | null
           email?: string
+          email_notifications_enabled?: boolean
           email_verified?: boolean | null
           family_name_on_id?: string | null
           first_name_on_id?: string | null
@@ -1670,6 +1675,7 @@ export type Database = {
           phone?: string | null
           phone_verified?: boolean | null
           preferred_language?: string | null
+          push_notifications_enabled?: boolean
           rc?: string | null
           rejected_at?: string | null
           rejected_by?: string | null
