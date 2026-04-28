@@ -1,57 +1,110 @@
-## Problems Identified
 
-### Bug 1 — Clients table shows "No clients found" while top stat cards show counts
-In `src/pages/AdminPanel.tsx`, the stat cards correctly use server-side counts (`count: 'exact', head: true`) so they show real numbers (1 Pending, 3 Not Verified). They pass the selected status to `AdminUnifiedClientsTab` via the `statusFilter` prop.
+# Unified Cities & Neighborhoods + Admin QA
 
-But inside `src/components/admin/AdminUnifiedClientsTab.tsx`:
-1. The component initializes `localStatusFilter` from the prop **once**, then **only uses `localStatusFilter`** for filtering. When the parent updates `statusFilter` (by clicking a card), the prop change is ignored — there is no `useEffect` syncing it.
-2. The "Clear filter" button at the AdminPanel level resets parent `statusFilter` to `"all"` but the child still holds the previous `localStatusFilter` value.
-3. The result effect uses `clients.filter(...)` directly (not from the search-filtered set), so the filter pill at the top (`All 0`, `Verified 0`…) always shows zero counts because the local stats are computed from the truncated list (no rows because none of the visible 4 profiles were fetched after status filter was already applied client-side, OR the `or('user_type.is.null,user_type.eq.client')` returns rows but the filter kicks in incorrectly).
-4. Looking at the screenshot: stats badges show "All 0 / Verified 0 / Pending 0 / Not Started 0 / Blocked 0" — `clients` array is empty. Since the parent sends `statusFilter="not_verified"` (Not Verified card was clicked), but the profiles `select(...)` query in the child has no row limit issue (only 4 profiles exist). The empty result must come from the `.or('user_type.is.null,user_type.eq.client')` filter. In the database, every `user_type` is `'renter'`, not `'client'`, so the OR condition matches **zero rows**.
+## Goal
 
-This is the actual root cause: profiles use `user_type = 'renter'` but the admin clients tab queries for `user_type IS NULL OR user_type = 'client'`.
+Make **Cities** the single source of truth in the admin: each city owns its **neighborhoods** (currently called "locations"). One screen to add/edit/delete a city, manage its image, availability, and neighborhoods inline. Everything that consumes cities or neighborhoods on the **renter** and **agency** sides reads live from the database — no hardcoded lists.
 
-### Bug 2 — Admin doesn't see agency verification documents
-When an agency uploads documents in `src/pages/agency/Verification.tsx`, the files are stored in the `client_files` table keyed by `user_id`. RLS on `client_files` only allows the file owner to SELECT them, so admins **cannot read them at all**.
+Then QA every admin tab end-to-end.
 
-Additionally, the admin agency verifications page (`src/pages/admin/AdminAgencyVerifications.tsx`) lists agencies but does not display the uploaded RC / AE card / ID front / ID back documents.
+---
 
-## Fixes
+## Part 1 — Unified Cities admin (replaces separate Cities + Locations tabs)
 
-### Fix 1 — Admin Clients tab shows rows
-**File:** `src/components/admin/AdminUnifiedClientsTab.tsx`
-- Change the `fetchClients` query from `.or('user_type.is.null,user_type.eq.client')` to `.or('user_type.is.null,user_type.eq.client,user_type.eq.renter')` so renter profiles (the actual client accounts) are included. Renters ARE the clients.
-- Add a `useEffect` that syncs `localStatusFilter` from the `statusFilter` prop whenever it changes, so clicking the parent stat cards updates the filter.
-- Update the filter logic so the "Not Started" badge (named `not_verified` internally) matches the parent definition: `!is_verified` AND `verification_status` not in (`'pending_review'`, `'rejected'`).
-- Recompute the local stats based on the freshly fetched `clients` (already done) — verify counts match the parent cards (4 total, 1 pending, 3 not verified).
+### New screen: `AdminCitiesTab` (rebuilt)
 
-### Fix 2 — Admin can read & view agency verification documents
+Layout:
+```text
+[ Stats badges: Total / Available / Coming Soon / On Homepage ]
+[ Search + Add City ]
 
-**Migration (RLS for client_files):**
-- Add an admin SELECT policy on `public.client_files`:
-  ```sql
-  CREATE POLICY "Admins can view all client files"
-    ON public.client_files FOR SELECT
-    TO authenticated
-    USING (public.has_role(auth.uid(), 'admin'));
-  ```
+Cities table
+┌────────┬──────────────┬────────┬──────────┬──────────┬────────┬─────────┐
+│ Image  │ City         │ Hoods  │ Bikes    │ Status   │ Home   │ Actions │
+└────────┴──────────────┴────────┴──────────┴──────────┴────────┴─────────┘
+   ↘ click row → expands inline panel:
+       • City details form (name, image upload, price_from, available toggle,
+         coming-soon toggle, show-on-homepage toggle, display_order)
+       • Neighborhoods list for this city:
+            - drag to reorder
+            - inline rename
+            - active toggle, popular toggle
+            - delete (blocked if linked inventory, with count shown)
+            - "Add neighborhood" inline input
+       • Save / Cancel
+```
 
-**File:** `src/pages/admin/AdminAgencyVerifications.tsx`
-- After loading pending agencies, for each agency fetch the owner's `client_files` (filter by the agency's `profile.user_id`, slot prefixes: `rc-`, `ae_card-`, `id_front-`, `id_back-`).
-- Display each document as a thumbnail / link inside the agency card, with file name + open-in-new-tab link. Use signed URLs from the `client-files` storage bucket if needed (or the public `file_url` already stored).
-- Show a small badge when a slot is missing ("RC missing", "ID Front missing") so the admin can spot incomplete submissions before approving.
-- Keep existing Approve / Reject buttons, but disable Approve when required documents are missing.
+- "Locations" tab is **removed** from the admin sidebar. Existing data stays — same `service_locations` table, just renamed in the UI to "Neighborhoods" and surfaced inside each city.
+- Image upload reuses `CityImageUpload` (already wired to storage).
+- Delete city: if it has neighborhoods or linked inventory, show counts and block; otherwise confirm and delete.
 
-**File:** `src/components/admin/client-details/ClientNotesFilesTab.tsx` (already used for client details)
-- Verify it already lists `client_files` for the selected user. Since admin can now SELECT them via the new RLS policy, the verification documents will appear in the existing client details Files tab automatically — no further change required there.
+### Translations
+Add/replace keys in `src/locales/{en,fr,ar}.json` for: `admin.neighborhoods`, `admin.addNeighborhood`, `admin.cityDetails`, etc. Keep existing `admin.cities` label. Drop `admin.locations` from the tab list.
 
-## Out of Scope
-- No redesign of the agency Verification page (already done in the previous step).
-- No changes to the renter Verification page.
-- No new tables; only one RLS policy is added.
+---
 
-## Verification Steps After Implementation
-1. Log in as admin, open `/admin/panel?tab=clients` — confirm 4 client rows are listed and stat counts (1 Pending, 3 Not Verified) match badge counts.
-2. Click each stat card — confirm the table re-filters and the "Clear filter" button resets it.
-3. Open `/admin/agencies/verifications` — confirm the pending agency "Agency" appears with 4 document thumbnails (RC, AE card, ID Front, ID Back).
-4. Open the client details page for the agency owner — confirm documents are listed in the Files tab.
+## Part 2 — Live data on renter & agency sides
+
+Replace hardcoded city/neighborhood arrays with live queries to `service_cities` + `service_locations`. Cache via React Query (5-min stale) so it stays snappy.
+
+New hook: `src/hooks/useServiceCities.ts`
+- `useServiceCities()` → all cities (with `is_available`, `is_coming_soon`, `show_in_homepage`, `image_url`).
+- `useNeighborhoods(cityId | cityName)` → active neighborhoods for a city.
+- `useAvailableCities()` → only `is_available = true`.
+- Subscribes to realtime on both tables so changes in the admin reflect everywhere within seconds (already partially done via `useServiceCitiesRealtime`).
+
+### Files to migrate off hardcoded data
+- `src/pages/auth/Signup.tsx` — drop `NEIGHBORHOODS` const, use `useNeighborhoods(cityValue)`.
+- `src/components/HeroSection.tsx` — load neighborhoods for the selected city from DB.
+- `src/pages/RentCity.tsx` — drop `NEIGHBORHOODS_BY_CITY`, use the hook.
+- `src/components/CitiesAvailableSection.tsx` and `src/components/TopCitiesSection.tsx` — already DB-driven, just verify image/`show_in_homepage`/`is_available` filtering matches the new admin toggles.
+- `src/pages/Listings.tsx` — already DB-driven; confirm filter dropdown shows only available cities and their active neighborhoods.
+- `src/pages/agency/Profile.tsx` and `src/pages/BecomeBusiness.tsx` — city + neighborhood selectors driven by the hook.
+- `src/components/admin/client-details/CreateBookingDialog.tsx` — already DB-driven, verify it still works after UI rename.
+
+### Effects of admin edits (verified after change)
+- Renaming a city → updates city name in HeroSection, Listings, RentCity, agency profile selector, footer, etc.
+- Toggling `is_available = false` → city disappears from search filters and Listings; existing bookings/bikes are not deleted.
+- Toggling `show_in_homepage = false` → city no longer appears on `CitiesAvailableSection` / `TopCitiesSection`.
+- Toggling `is_coming_soon = true` → city renders with "Coming soon" badge and is non-selectable in booking flows.
+- Editing/uploading a city image → updates everywhere the image is displayed.
+- Adding/renaming/removing a neighborhood → updates the dropdown in renter search filters, agency signup, and admin booking creation.
+
+---
+
+## Part 3 — Admin QA pass (every tab)
+
+For each tab below, check: data loads without errors, search/filter works, action buttons work end-to-end, counts match the rows displayed, and no console errors.
+
+| Tab | What we verify |
+|---|---|
+| Bookings | List loads, filters (status/date/city), open detail drawer, confirm/reject/assign actions |
+| Fleet | Bikes list, location dropdown shows new neighborhoods, approve/reject works |
+| **Cities** (new unified) | Add/edit/delete city, image upload, all toggles, manage neighborhoods inline, drag-reorder, delete blocked when linked |
+| Pricing | Pricing tiers load and render |
+| Clients (Unified) | Counts match rows; Pending/Verified/Blocked filters; row click → details |
+| Individual Owners | Loads, search, row click |
+| Rental Shops / Agency Verifications | Loads, signed-URL documents render, approve/reject sends notification |
+| Employees | List loads, super-admin can manage permissions |
+| Analytics | Charts render with current data |
+| Email Test | Send-test action returns success |
+
+Any broken interaction discovered during QA gets fixed in the same change set (small fixes only — anything large is reported back).
+
+---
+
+## Technical notes
+
+- DB schema is already correct: `service_locations.city_id` FK to `service_cities` with `ON DELETE CASCADE`. No migration needed.
+- RLS already permits public SELECT on both tables; admin writes are admin-only via existing policies. No new policies required.
+- Realtime channel `service_cities_changes` already exists; add a parallel one for `service_locations` so neighborhood edits propagate live.
+- Bundle: removing the separate `AdminLocationsTab` from the panel reduces one route load; the file is kept on disk for now (unused) so we don't break any deep links — we can delete in a follow-up.
+- No changes to bookings/bikes data; only the UI layer that lists cities/neighborhoods.
+
+---
+
+## Out of scope
+
+- Renaming the database table `service_locations` → `neighborhoods` (cosmetic, risky, defer).
+- Bulk import of neighborhoods from a CSV.
+- Per-neighborhood images.
