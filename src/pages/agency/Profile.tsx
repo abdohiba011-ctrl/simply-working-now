@@ -24,7 +24,7 @@ const Profile = () => {
     supabase
       .from("profiles")
       .select("*")
-      .eq("id", userId)
+      .eq("user_id", userId)
       .maybeSingle()
       .then(({ data }) => {
         if (data) {
@@ -50,7 +50,7 @@ const Profile = () => {
         business_address: businessAddress,
         business_logo_url: businessLogoUrl,
       })
-      .eq("id", userId);
+      .eq("user_id", userId);
     setSaving(false);
     if (error) toast.error(error.message);
     else toast.success("Profile updated");
@@ -61,7 +61,7 @@ const Profile = () => {
   const handleLogoChange = async (url: string | null) => {
     setBusinessLogoUrl(url);
     if (!userId) return;
-    await supabase.from("profiles").update({ business_logo_url: url }).eq("id", userId);
+    await supabase.from("profiles").update({ business_logo_url: url }).eq("user_id", userId);
   };
 
   if (loading)
