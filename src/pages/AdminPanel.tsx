@@ -260,11 +260,6 @@ const AdminPanel = () => {
             <AdminFleetTab />
           </TabErrorBoundary>
         )}
-        {activeTab === "locations" && (
-          <TabErrorBoundary key={`locations-${retryKey}`} tabName="Locations" onRetry={handleTabRetry}>
-            <AdminLocationsTab />
-          </TabErrorBoundary>
-        )}
         {activeTab === "cities" && (
           <TabErrorBoundary key={`cities-${retryKey}`} tabName="Cities" onRetry={handleTabRetry}>
             <AdminCitiesTab />
