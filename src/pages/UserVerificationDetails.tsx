@@ -27,6 +27,7 @@ import {
 
 interface UserProfile {
   id: string;
+  user_id: string;
   name: string | null;
   email: string | null;
   phone: string | null;
