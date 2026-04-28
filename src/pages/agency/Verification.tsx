@@ -438,26 +438,15 @@ const Verification = () => {
             </div>
           </Card>
 
-          {/* Steps 1-3 — required documents */}
-          <div className="grid gap-4 md:grid-cols-2">
+          {/* Steps 1-2 — required documents */}
+          <div className="grid gap-4">
             {slotCard(
               businessSlot,
               `1. ${businessLabel}`,
               businessHelp,
               <Building2 className="h-4 w-4" />,
             )}
-            {slotCard(
-              "id_front",
-              "2. Owner ID card — front",
-              "Front side of the CIN of the person managing the business.",
-              <UserIcon className="h-4 w-4" />,
-            )}
-            {slotCard(
-              "id_back",
-              "3. Owner ID card — back",
-              "Back side of the same CIN. Make sure the text is readable.",
-              <UserIcon className="h-4 w-4" />,
-            )}
+            {idCard}
           </div>
 
           {/* Submit */}
