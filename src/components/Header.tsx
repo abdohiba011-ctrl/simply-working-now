@@ -524,18 +524,17 @@ export const Header = memo(() => {
                       </DropdownMenuItem>
                     </>
                   )}
-                  {isBusiness && (
+                  {hasAgencyRole ? (
+                    <DropdownMenuItem onClick={handleSwitchToAgency}>
+                      <Building2 className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
+                      {t('header.switchToBusiness')}
+                    </DropdownMenuItem>
+                  ) : isBusiness ? (
                     <DropdownMenuItem onClick={() => navigate("/business-dashboard")}>
                       <Building2 className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
                       {t('header.businessDashboard')}
                     </DropdownMenuItem>
-                  )}
-                  {hasAgencyRole && (
-                    <DropdownMenuItem onClick={handleSwitchToAgency}>
-                      <Building2 className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
-                      Switch to business
-                    </DropdownMenuItem>
-                  )}
+                  ) : null}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogoutClick}>
                     <LogOut className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
@@ -685,18 +684,17 @@ export const Header = memo(() => {
                       {t('header.adminPanel')}
                     </Button>
                   )}
-                  {isBusiness && (
+                  {hasAgencyRole ? (
+                    <Button variant="outline" size="lg" className="justify-start gap-2 text-base min-h-[44px] mx-2" onClick={handleSwitchToAgency}>
+                      <Building2 className="h-5 w-5" />
+                      {t('header.switchToBusiness')}
+                    </Button>
+                  ) : isBusiness ? (
                     <Button variant="outline" size="lg" className="justify-start gap-2 text-base min-h-[44px] mx-2" onClick={() => { navigate("/business-dashboard"); setIsMenuOpen(false); }}>
                       <Building2 className="h-5 w-5" />
                       {t('header.businessDashboard')}
                     </Button>
-                  )}
-                  {hasAgencyRole && (
-                    <Button variant="outline" size="lg" className="justify-start gap-2 text-base min-h-[44px] mx-2" onClick={handleSwitchToAgency}>
-                      <Building2 className="h-5 w-5" />
-                      Switch to business
-                    </Button>
-                  )}
+                  ) : null}
                   <Button variant="outline" size="lg" className="justify-start gap-2 text-base min-h-[44px] mx-2" onClick={handleLogoutClick}>
                     <LogOut className="h-5 w-5" />
                     {t('header.logout')}
