@@ -82,7 +82,6 @@ const AdminPanel = () => {
   const allTabs = [
     { value: "bookings" as TabValue, label: t('admin.bookings'), icon: Calendar },
     { value: "fleet" as TabValue, label: t('admin.fleet'), icon: Bike },
-    { value: "locations" as TabValue, label: t('admin.locations'), icon: MapPin },
     { value: "cities" as TabValue, label: t('admin.cities'), icon: Map },
     { value: "clients" as TabValue, label: t('admin.clients'), icon: Users },
     { value: "business-clients" as TabValue, label: "Business Clients", icon: Building2 },
