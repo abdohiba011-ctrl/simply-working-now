@@ -27,7 +27,8 @@ export function OtpInput({
   }, [autoFocus]);
 
   const handleChange = (index: number, raw: string) => {
-    const sanitized = raw.replace(/\D/g, "");
+    // Supabase OTP tokens are alphanumeric (e.g. "C6X4K2"), so accept letters + digits.
+    const sanitized = raw.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
     if (!sanitized) {
       const next = [...value];
       next[index] = "";
