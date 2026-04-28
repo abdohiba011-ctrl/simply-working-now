@@ -129,15 +129,32 @@ export const AdminUnifiedClientsTab = ({ statusFilter = "all" }: AdminUnifiedCli
       const clientsData = data || [];
       setClients(clientsData);
       setFilteredClients(clientsData);
-      
-      // Calculate stats
-      setStats({
+
+      // Calculate stats from the SAME dataset that drives the table,
+      // guaranteeing badge counts always match what's rendered.
+      const nextStats = {
         total: clientsData.length,
         verified: clientsData.filter(c => c.is_verified).length,
         pending: clientsData.filter(c => c.verification_status === 'pending_review').length,
         notStarted: clientsData.filter(c => !c.is_verified && c.verification_status !== 'pending_review' && c.verification_status !== 'rejected').length,
-        blocked: clientsData.filter(c => c.is_frozen).length
-      });
+        blocked: clientsData.filter(c => c.is_frozen).length,
+      };
+      setStats(nextStats);
+
+      // Debug: surface any drift between badge counts and what filters resolve to
+      if (import.meta.env.DEV) {
+        // eslint-disable-next-line no-console
+        console.debug('[AdminClients] fetched', {
+          rows: clientsData.length,
+          stats: nextStats,
+          sampleStatuses: clientsData.slice(0, 5).map(c => ({
+            id: c.id,
+            is_verified: c.is_verified,
+            verification_status: c.verification_status,
+            is_frozen: c.is_frozen,
+          })),
+        });
+      }
     } catch (error: unknown) {
       toast.error("Failed to load clients");
       console.error(error);
