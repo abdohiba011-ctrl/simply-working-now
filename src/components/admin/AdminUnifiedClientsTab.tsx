@@ -141,6 +141,7 @@ export const AdminUnifiedClientsTab = ({ statusFilter = "all", onDataChanged }: 
         blocked: clientsData.filter(c => c.is_frozen).length,
       };
       setStats(nextStats);
+      onDataChanged?.();
 
       // Debug: surface any drift between badge counts and what filters resolve to
       if (import.meta.env.DEV) {
