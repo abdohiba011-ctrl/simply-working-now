@@ -51,9 +51,10 @@ interface ClientUser {
 
 interface AdminUnifiedClientsTabProps {
   statusFilter?: "all" | "pending" | "verified" | "not_verified" | "blocked";
+  onDataChanged?: () => void;
 }
 
-export const AdminUnifiedClientsTab = ({ statusFilter = "all" }: AdminUnifiedClientsTabProps) => {
+export const AdminUnifiedClientsTab = ({ statusFilter = "all", onDataChanged }: AdminUnifiedClientsTabProps) => {
   const navigate = useNavigate();
   const [clients, setClients] = useState<ClientUser[]>([]);
   const [filteredClients, setFilteredClients] = useState<ClientUser[]>([]);
@@ -140,6 +141,7 @@ export const AdminUnifiedClientsTab = ({ statusFilter = "all" }: AdminUnifiedCli
         blocked: clientsData.filter(c => c.is_frozen).length,
       };
       setStats(nextStats);
+      onDataChanged?.();
 
       // Debug: surface any drift between badge counts and what filters resolve to
       if (import.meta.env.DEV) {

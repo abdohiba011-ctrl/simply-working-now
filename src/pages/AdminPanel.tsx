@@ -118,26 +118,32 @@ const AdminPanel = () => {
     }
   }, [isAdmin]);
 
-  const fetchStatusCounts = async () => {
+  const fetchStatusCounts = useCallback(async () => {
     try {
-      // Use server-side count queries to avoid the 1000-row client fetch limit
+      // Scope counts to renter-side profiles only so they always match the
+      // unified clients table below (which excludes business profiles).
+      const renterScope = 'user_type.is.null,user_type.eq.client,user_type.eq.renter';
       const [pendingRes, verifiedRes, notVerifiedRes, blockedRes] = await Promise.all([
         supabase
           .from('profiles')
           .select('*', { count: 'exact', head: true })
+          .or(renterScope)
           .eq('verification_status', 'pending_review'),
         supabase
           .from('profiles')
           .select('*', { count: 'exact', head: true })
+          .or(renterScope)
           .eq('is_verified', true),
         supabase
           .from('profiles')
           .select('*', { count: 'exact', head: true })
+          .or(renterScope)
           .or('is_verified.is.null,is_verified.eq.false')
           .neq('verification_status', 'pending_review'),
         supabase
           .from('profiles')
           .select('*', { count: 'exact', head: true })
+          .or(renterScope)
           .eq('is_frozen', true),
       ]);
 
@@ -150,7 +156,7 @@ const AdminPanel = () => {
     } catch (error) {
       console.error('Error fetching status counts:', error);
     }
-  };
+  }, []);
 
   if (!isAuthenticated) {
     return (
@@ -213,26 +219,28 @@ const AdminPanel = () => {
           </div>
         )}
 
-        {/* Status Cards - Only show for clients tab */}
+        {/* Compact Status Pills - Only show for clients tab */}
         {activeTab === "clients" && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            {statusCards.map((card) => (
-              <Card
-                key={card.key}
-                className={cn(
-                  "cursor-pointer transition-all",
-                  card.bgColor,
-                  statusFilter === card.key && "ring-2 ring-primary"
-                )}
-                onClick={() => setStatusFilter(statusFilter === card.key ? "all" : card.key)}
-              >
-                <CardContent className="pt-4 text-center">
-                  <card.icon className={cn("h-6 w-6 mx-auto mb-2", card.color)} />
-                  <p className={cn("text-2xl font-bold", card.color)}>{card.count}</p>
-                  <p className="text-sm text-muted-foreground">{card.label}</p>
-                </CardContent>
-              </Card>
-            ))}
+          <div className="flex flex-wrap gap-2 mb-4">
+            {statusCards.map((card) => {
+              const isActive = statusFilter === card.key;
+              return (
+                <Button
+                  key={card.key}
+                  variant={isActive ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setStatusFilter(isActive ? "all" : card.key)}
+                  className={cn(
+                    "h-8 gap-1.5 px-3",
+                    !isActive && card.color
+                  )}
+                >
+                  <card.icon className="h-3.5 w-3.5" />
+                  <span className="font-semibold">{card.count}</span>
+                  <span>{card.label}</span>
+                </Button>
+              );
+            })}
           </div>
         )}
 
@@ -275,7 +283,7 @@ const AdminPanel = () => {
         )}
         {activeTab === "clients" && (
           <TabErrorBoundary key={`clients-${retryKey}`} tabName="Clients" onRetry={handleTabRetry}>
-            <AdminUnifiedClientsTab statusFilter={statusFilter} />
+            <AdminUnifiedClientsTab statusFilter={statusFilter} onDataChanged={fetchStatusCounts} />
           </TabErrorBoundary>
         )}
         {activeTab === "business-clients" && (

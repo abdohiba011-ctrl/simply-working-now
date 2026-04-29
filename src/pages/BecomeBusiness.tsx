@@ -61,6 +61,39 @@ const BecomeBusiness = () => {
   const [bikesCount, setBikesCount] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
+  // Individual partner document uploads (file_path in business-applications bucket)
+  type DocKind = "id_front" | "id_back" | "bike_photo" | "ownership_paper";
+  const [docPaths, setDocPaths] = useState<Record<DocKind, string | null>>({
+    id_front: null,
+    id_back: null,
+    bike_photo: null,
+    ownership_paper: null,
+  });
+  const [uploadingDoc, setUploadingDoc] = useState<DocKind | null>(null);
+
+  const uploadDoc = async (kind: DocKind, file: File) => {
+    if (!user) return;
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("File must be under 10MB");
+      return;
+    }
+    setUploadingDoc(kind);
+    try {
+      const ext = file.name.split('.').pop() || 'jpg';
+      const path = `${user.id}/${kind}-${Date.now()}.${ext}`;
+      const { error } = await supabase.storage
+        .from('business-applications')
+        .upload(path, file, { upsert: true, contentType: file.type });
+      if (error) throw error;
+      setDocPaths((prev) => ({ ...prev, [kind]: path }));
+      toast.success("Uploaded");
+    } catch (err) {
+      toast.error(getErrMsg(err) || "Upload failed");
+    } finally {
+      setUploadingDoc(null);
+    }
+  };
+
   useEffect(() => {
     if (user) {
       checkUserStatus();
@@ -93,11 +126,8 @@ const BecomeBusiness = () => {
   const handleSubmitApplication = async () => {
     if (!user) return;
     
-    if (partnerType === "individual" && !autoEntrepreneurNumber) {
-      toast.error(t('becomeBusiness.autoEntrepreneurRequired') || "Please enter your Auto Entrepreneur number");
-      return;
-    }
-    
+    // Individual partners now upload documents instead of an auto-entrepreneur number
+
     if (partnerType === "shop" && (!companyRC || !businessName)) {
       toast.error(t('becomeBusiness.companyDetailsRequired') || "Please fill in all company details");
       return;
@@ -114,6 +144,15 @@ const BecomeBusiness = () => {
       return;
     }
 
+    if (partnerType === "individual") {
+      const requiredDocs: DocKind[] = ["id_front", "id_back", "bike_photo", "ownership_paper"];
+      const missing = requiredDocs.filter((k) => !docPaths[k]);
+      if (missing.length > 0) {
+        toast.error("Please upload all required documents (ID front, ID back, motorbike photo, ownership paper)");
+        return;
+      }
+    }
+
     setSubmitting(true);
     try {
       // Update profile with business_pending status (don't add role yet - wait for admin approval)
@@ -128,19 +167,44 @@ const BecomeBusiness = () => {
       if (profileError) throw profileError;
 
       // Send application to contact_messages for admin review
-      const { error: messageError } = await supabase.from('contact_messages').insert({
-        name: businessName || 'Individual Partner',
-        email: user.email || '',
-        phone: businessPhone,
-        type: 'business_application',
-        message: JSON.stringify({
-          partnerType,
-          autoEntrepreneurNumber,
-          companyRC,
-          bikesCount,
-          userId: user.id
+      const { data: appRow, error: messageError } = await supabase
+        .from('contact_messages')
+        .insert({
+          name: businessName || 'Individual Partner',
+          email: user.email || '',
+          phone: businessPhone,
+          type: 'business_application',
+          message: JSON.stringify({
+            partnerType,
+            autoEntrepreneurNumber,
+            companyRC,
+            bikesCount,
+            userId: user.id,
+            documents: partnerType === 'individual' ? docPaths : undefined,
+          })
         })
-      });
+        .select('id')
+        .single();
+
+      if (messageError) throw messageError;
+
+      // Persist document references for individual applications
+      if (partnerType === 'individual' && appRow?.id) {
+        const docRows = (Object.entries(docPaths) as [DocKind, string | null][])
+          .filter(([, path]) => !!path)
+          .map(([kind, path]) => ({
+            application_id: appRow.id,
+            user_id: user.id,
+            kind,
+            file_path: path as string,
+          }));
+        if (docRows.length > 0) {
+          const { error: docsError } = await supabase
+            .from('business_application_documents')
+            .insert(docRows);
+          if (docsError) console.error('Failed to persist application documents:', docsError);
+        }
+      }
 
       if (messageError) throw messageError;
 
@@ -656,15 +720,53 @@ const BecomeBusiness = () => {
                   </div>
 
                   {partnerType === "individual" ? (
-                    <div className="space-y-2">
-                      <Label htmlFor="autoEntrepreneur">{t('becomeBusiness.autoEntrepreneurNumber')} *</Label>
-                      <Input
-                        id="autoEntrepreneur"
-                        value={autoEntrepreneurNumber}
-                        onChange={(e) => setAutoEntrepreneurNumber(e.target.value)}
-                        placeholder={t('becomeBusiness.autoEntrepreneurPlaceholder') || 'Your auto entrepreneur card number'}
-                        className="ltr-input"
-                      />
+                    <div className="space-y-3 rounded-lg border p-4 bg-muted/30">
+                      <div>
+                        <Label className="text-sm font-semibold">Required documents *</Label>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Upload clear photos of each item below.
+                        </p>
+                      </div>
+                      {([
+                        { kind: "id_front" as const, label: "ID card – front" },
+                        { kind: "id_back" as const, label: "ID card – back" },
+                        { kind: "bike_photo" as const, label: "Photo of your motorbike" },
+                        { kind: "ownership_paper" as const, label: "Motorbike ownership paper (carte grise)" },
+                      ]).map((d) => {
+                        const uploaded = !!docPaths[d.kind];
+                        const busy = uploadingDoc === d.kind;
+                        return (
+                          <div key={d.kind} className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2 text-sm">
+                              {uploaded ? (
+                                <CheckCircle className="h-4 w-4 text-success" />
+                              ) : (
+                                <FileText className="h-4 w-4 text-muted-foreground" />
+                              )}
+                              <span>{d.label}</span>
+                            </div>
+                            <label className="cursor-pointer">
+                              <input
+                                type="file"
+                                accept="image/*,application/pdf"
+                                className="hidden"
+                                disabled={busy}
+                                onChange={(e) => {
+                                  const f = e.target.files?.[0];
+                                  if (f) uploadDoc(d.kind, f);
+                                  e.target.value = "";
+                                }}
+                              />
+                              <span className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-md border bg-background hover:bg-accent">
+                                {busy ? (
+                                  <Loader2 className="h-3 w-3 animate-spin" />
+                                ) : null}
+                                {uploaded ? "Replace" : "Upload"}
+                              </span>
+                            </label>
+                          </div>
+                        );
+                      })}
                     </div>
                   ) : (
                     <div className="space-y-2">
