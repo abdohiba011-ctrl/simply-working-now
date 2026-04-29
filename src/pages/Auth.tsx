@@ -166,9 +166,8 @@ const Auth = () => {
         // and route them to the verification page instead of pretending
         // they're logged in (which silently lands them back on /).
         toast.success(
-          t('auth.checkInboxToConfirm', {
-            defaultValue: 'Account created! Check your email to confirm your address before logging in.',
-          })
+          t('auth.checkInboxToConfirm') ||
+            'Account created! Check your email to confirm your address before logging in.'
         );
         navigate(`/verify-email?email=${encodeURIComponent(validatedData.email)}`);
       } else {
