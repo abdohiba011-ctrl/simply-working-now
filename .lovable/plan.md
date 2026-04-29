@@ -1,54 +1,55 @@
-# Admin Unified Clients — Live Walkthrough
+## Goal
 
-Account confirmed in the database:
-- Email: abdrahimbamouh56@gmail.com
-- Email confirmed: yes (2026-04-27)
-- Roles: renter, admin, agency
-- admin_employees row: yes
-- Profile: verified
+Walk every meaningful page on the platform as the admin account `abdrahimbamouh56@gmail.com`, capture every real error (broken renders, console errors, failed network calls, dead buttons, RLS denials, blank pages, broken redirects), then fix them. Plus eliminate the noisy "Function components cannot be given refs" dev warning that floods the console on every page load.
 
-So this account can reach `/admin/panel` directly.
+## Scope (all three roles)
 
-## What I'll do (in default mode)
+**Public / Renter side (~16 routes)**
+- `/`, `/rent/casablanca` (+ a couple other cities), `/bike/:id`, `/booking-review`, `/checkout`, `/pay/youcanpay`, `/payment-status`, `/confirmation`
+- `/about`, `/blog`, `/blog/:slug`, `/agencies`, `/booking-fee`, `/affiliate`, `/contact`, `/fixers`
+- `/profile`, `/booking-history`, `/booking/:id`, `/inbox`, `/notifications`, `/settings`, `/verification`, `/billing`
 
-1. **Log in via the preview**
-   - Open the preview URL, navigate to `/auth`
-   - Fill email + password from the message and submit
-   - Confirm redirect lands on a logged-in page (no "Email not confirmed" toast)
+**Agency side (~20 routes under `/agency/*`)**
+- `dashboard`, `bookings`, `bookings/:id`, `motorbikes`, `motorbikes/new`, `motorbikes/:id`, `messages`, `calendar`
+- `finance` (wallet/transactions/subscription/invoices tabs), `agency-center` (profile/team/verification/analytics tabs), `settings` (preferences/notifications/integrations/help tabs)
 
-2. **Open Admin Unified Clients**
-   - Navigate to `/admin/panel?tab=clients`
-   - Screenshot the initial table + pill counts (All / Verified / Pending / Rejected / Unverified)
+**Admin side (~12 routes under `/admin/*`)**
+- `panel` (every tab: clients, agencies, bikes, bookings, finance, etc.), `bookings`, `bookings/:id`, `fleet`, `fleet/:id`, `analytics`, `verifications`, `agencies/verifications`, `bikes/approvals`, `clients/:id`, `users/:id`, `verifications/:id`, `contact-messages`
 
-3. **Verified filter check**
-   - Click the **Verified** pill
-   - Screenshot the filtered table
-   - Confirm: only rows with `verification_status = 'verified'` (or `is_verified = true`, depending on which field the pill keys off — I'll verify in code) are shown
-   - Confirm the row count in the table matches the number on the Verified pill
+## Method
 
-4. **Live count update check**
-   - Pick a verified row → open the client detail drawer/page
-   - Trigger an "unverify" (or whichever inverse action the UI exposes — revoke verification / reject)
-   - Return to the Clients tab
-   - Confirm: the Verified count decreases by 1, the Unverified/Rejected count increases by 1, and the row moves out of the Verified-filter view without a manual refresh
-   - Re-verify the same client to leave data in its original state
-   - Confirm the count returns to the original value live
+For each route:
+1. Navigate via browser tool
+2. Screenshot if anything looks off
+3. Pull console errors (filter out the known ref warning until it's fixed)
+4. Pull network requests, flag any 4xx/5xx
+5. Click into 2-3 representative items per list page (booking row, motorbike, client)
+6. Note bugs in the task tracker
 
-5. **Report back**
-   - Post the screenshots inline
-   - Note any mismatch between pill counts and the actual filtered row count (this is the known 1000-row client-side count limitation in `mem://constraints/admin-performance` — I'll explicitly check whether it's biting here)
-   - Flag any console errors or failed network requests captured during the walkthrough
+I will **not** perform destructive actions (no deleting bookings, deleting users, sending real emails, processing real payments). For mutation flows, I will inspect the form/button reachability but stop short of submitting if data would change permanently.
 
-## Technical notes
+## Fix phase
 
-- Tools used (default mode only): `browser--navigate_to_sandbox`, `browser--act`, `browser--screenshot`, `browser--observe`, `browser--read_console_logs`, `browser--list_network_requests`
-- I will not modify any data permanently — the verify → unverify → re-verify sequence leaves the client in the original verified state
-- If the live update does not happen without refresh, I'll capture the failing realtime/refetch behaviour and propose a fix in a follow-up
+After the walkthrough, group findings by severity:
+- **P0** — page crashes, blank screens, infinite loaders, RLS-denied data, broken auth → fix all
+- **P1** — broken buttons, dead links, wrong navigation, missing translations on visible UI → fix all
+- **P2** — visual glitches, minor copy issues, console warnings → fix where cheap
 
-## What I will NOT do
+Fix the noisy `Function components cannot be given refs` warning by auditing the provider chain in `App.tsx` (most likely a ref forwarded into `LanguageSuggestionBanner`, `ScrollToTopButton`, or `AuthProvider` via Radix internals — needs targeted forwardRef wrapping or removing the offending ref-recipient).
 
-- Change any production data beyond the temporary toggle described above
-- Create migrations or schema changes
-- Touch other admin tabs unless something there breaks the Clients walkthrough
+## What you should expect
 
-Approve this and I'll switch to build mode and run the walkthrough end-to-end.
+- Many tool calls (likely 80-150). I will batch where possible (parallel reads, parallel screenshots).
+- Periodic check-ins if I hit something large that deserves a decision (e.g. "this whole page is broken — rewrite or hot-fix?").
+- A final summary listing every bug found, severity, and what I fixed vs deferred.
+
+## Out of scope
+
+- Lighthouse / performance audits
+- Mobile/RTL deep visual review (unless a route is clearly broken at 375px)
+- Writing new automated tests
+- Rebuilding any feature from scratch
+
+## Approve to proceed
+
+Once you approve, I switch to build mode and begin the walkthrough + fixes in one continuous run.
