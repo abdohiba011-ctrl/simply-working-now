@@ -18,27 +18,42 @@ interface MockProtectedRouteProps {
 /**
  * Route guard for mock auth + strict role isolation.
  *
- * Behaviour matrix:
- *  - not authenticated → /login (preserve return path)
- *  - email not verified → /verify-email
- *  - role missing AND user is in the OTHER role:
- *      • renter trying to access /agency/* → toast + redirect to /rent
- *        (UNLESS user has agency role active, in which case auto-switch)
- *      • agency trying to access /rent/* → silent redirect to /agency/dashboard
- *  - role === "agency" but agency.verified === false → /agency/verification
- *  - currentRole !== requested role but user HAS the requested role → auto-switch
+ * IMPORTANT: On a hard reload / direct URL navigation, the Zustand store
+ * starts empty until checkAuth() resolves the Supabase session. We MUST
+ * render a loading state during that window — otherwise we'd redirect a
+ * legitimately-logged-in agency back to /login (or /agency/dashboard) just
+ * because the role hasn't been hydrated yet.
  */
 export function MockProtectedRoute({ children, role }: MockProtectedRouteProps) {
   const { user, currentRole, isAuthenticated, isLoading, checkAuth } = useAuthStore();
+  const authListenerInitialized = useAuthStore((s) => s.authListenerInitialized);
   const location = useLocation();
   const lang = useLanguageStore((s) => s.language);
   const toastShownRef = useRef(false);
+  const checkAuthStartedRef = useRef(false);
 
+  // Kick off session hydration immediately on mount — once per app lifetime.
+  // Doing this in the render phase (guarded by a ref) is intentional: a
+  // useEffect would fire AFTER the first render returns, by which point
+  // an unguarded redirect would have already shipped.
+  if (!checkAuthStartedRef.current && !authListenerInitialized) {
+    checkAuthStartedRef.current = true;
+    void checkAuth();
+  }
+
+  // Keep this for re-mounts where the listener already exists but the
+  // session was lost in another tab.
   useEffect(() => {
-    if (!isAuthenticated) checkAuth();
-  }, [isAuthenticated, checkAuth]);
+    if (!isAuthenticated && !isLoading && authListenerInitialized) {
+      // Auth has fully resolved as "no session" — nothing to do, the
+      // redirect below handles it. We intentionally do NOT call checkAuth()
+      // here because that would loop.
+    }
+  }, [isAuthenticated, isLoading, authListenerInitialized]);
 
-  if (isLoading) {
+  // Loading window: either checkAuth is in flight, or the auth listener
+  // has not been wired up yet (first paint after a hard reload).
+  if (isLoading || !authListenerInitialized) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
