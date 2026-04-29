@@ -720,15 +720,53 @@ const BecomeBusiness = () => {
                   </div>
 
                   {partnerType === "individual" ? (
-                    <div className="space-y-2">
-                      <Label htmlFor="autoEntrepreneur">{t('becomeBusiness.autoEntrepreneurNumber')} *</Label>
-                      <Input
-                        id="autoEntrepreneur"
-                        value={autoEntrepreneurNumber}
-                        onChange={(e) => setAutoEntrepreneurNumber(e.target.value)}
-                        placeholder={t('becomeBusiness.autoEntrepreneurPlaceholder') || 'Your auto entrepreneur card number'}
-                        className="ltr-input"
-                      />
+                    <div className="space-y-3 rounded-lg border p-4 bg-muted/30">
+                      <div>
+                        <Label className="text-sm font-semibold">Required documents *</Label>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Upload clear photos of each item below.
+                        </p>
+                      </div>
+                      {([
+                        { kind: "id_front" as const, label: "ID card – front" },
+                        { kind: "id_back" as const, label: "ID card – back" },
+                        { kind: "bike_photo" as const, label: "Photo of your motorbike" },
+                        { kind: "ownership_paper" as const, label: "Motorbike ownership paper (carte grise)" },
+                      ]).map((d) => {
+                        const uploaded = !!docPaths[d.kind];
+                        const busy = uploadingDoc === d.kind;
+                        return (
+                          <div key={d.kind} className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2 text-sm">
+                              {uploaded ? (
+                                <CheckCircle className="h-4 w-4 text-success" />
+                              ) : (
+                                <FileText className="h-4 w-4 text-muted-foreground" />
+                              )}
+                              <span>{d.label}</span>
+                            </div>
+                            <label className="cursor-pointer">
+                              <input
+                                type="file"
+                                accept="image/*,application/pdf"
+                                className="hidden"
+                                disabled={busy}
+                                onChange={(e) => {
+                                  const f = e.target.files?.[0];
+                                  if (f) uploadDoc(d.kind, f);
+                                  e.target.value = "";
+                                }}
+                              />
+                              <span className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-md border bg-background hover:bg-accent">
+                                {busy ? (
+                                  <Loader2 className="h-3 w-3 animate-spin" />
+                                ) : null}
+                                {uploaded ? "Replace" : "Upload"}
+                              </span>
+                            </label>
+                          </div>
+                        );
+                      })}
                     </div>
                   ) : (
                     <div className="space-y-2">
