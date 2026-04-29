@@ -53,6 +53,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
+import { ApplicationDocumentsPreview } from "@/components/admin/ApplicationDocumentsPreview";
 
 interface BusinessUser {
   id: string;
