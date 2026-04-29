@@ -283,7 +283,7 @@ const AdminPanel = () => {
         )}
         {activeTab === "clients" && (
           <TabErrorBoundary key={`clients-${retryKey}`} tabName="Clients" onRetry={handleTabRetry}>
-            <AdminUnifiedClientsTab statusFilter={statusFilter} />
+            <AdminUnifiedClientsTab statusFilter={statusFilter} onDataChanged={fetchStatusCounts} />
           </TabErrorBoundary>
         )}
         {activeTab === "business-clients" && (
