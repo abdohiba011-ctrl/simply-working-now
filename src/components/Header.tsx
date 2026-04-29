@@ -69,11 +69,13 @@ export const Header = memo(() => {
   const isAdmin =
     (rolesReady && hasRole('admin')) ||
     (isAuthenticated && readCachedIsAdmin(user?.id));
-  // A user counts as a renter (and so should see the wallet/credits)
-  // whenever they have the renter role active — even if they are also admin.
-  // We only hide the renter wallet when the user is acting purely as a business/agency.
-  const isRenter =
-    rolesReady && isAuthenticated && !isBusiness && (hasRole('renter') || !isAdmin);
+  // Show the renter wallet/credits to any authenticated user who isn't
+  // currently acting as an agency. Admins also have a renter wallet, so we
+  // don't gate on hasRole('renter') — that gate caused the pill to disappear
+  // for admins. We also don't gate on `rolesReady` so the pill stays visible
+  // during route changes when roles briefly refetch (no flicker).
+  const showRenterWallet = isAuthenticated && !isBusiness;
+  const isRenter = showRenterWallet;
   const hasAgencyRole = isBusiness;
   const handleSwitchToAgency = useCallback(() => {
     switchRoleStore("agency");
