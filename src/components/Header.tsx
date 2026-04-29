@@ -69,11 +69,13 @@ export const Header = memo(() => {
   const isAdmin =
     (rolesReady && hasRole('admin')) ||
     (isAuthenticated && readCachedIsAdmin(user?.id));
-  // A user counts as a renter (and so should see the wallet/credits)
-  // whenever they have the renter role active — even if they are also admin.
-  // We only hide the renter wallet when the user is acting purely as a business/agency.
-  const isRenter =
-    rolesReady && isAuthenticated && !isBusiness && (hasRole('renter') || !isAdmin);
+  // Show the renter wallet/credits to any authenticated user who isn't
+  // currently acting as an agency. Admins also have a renter wallet, so we
+  // don't gate on hasRole('renter') — that gate caused the pill to disappear
+  // for admins. We also don't gate on `rolesReady` so the pill stays visible
+  // during route changes when roles briefly refetch (no flicker).
+  const showRenterWallet = isAuthenticated && !isBusiness;
+  const isRenter = showRenterWallet;
   const hasAgencyRole = isBusiness;
   const handleSwitchToAgency = useCallback(() => {
     switchRoleStore("agency");
@@ -527,7 +529,7 @@ export const Header = memo(() => {
                   {hasAgencyRole ? (
                     <DropdownMenuItem onClick={handleSwitchToAgency}>
                       <Building2 className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
-                      {t('header.switchToBusiness')}
+                      {t('header.openAgencyDashboard')}
                     </DropdownMenuItem>
                   ) : isBusiness ? (
                     <DropdownMenuItem onClick={() => navigate("/business-dashboard")}>
@@ -687,7 +689,7 @@ export const Header = memo(() => {
                   {hasAgencyRole ? (
                     <Button variant="outline" size="lg" className="justify-start gap-2 text-base min-h-[44px] mx-2" onClick={handleSwitchToAgency}>
                       <Building2 className="h-5 w-5" />
-                      {t('header.switchToBusiness')}
+                      {t('header.openAgencyDashboard')}
                     </Button>
                   ) : isBusiness ? (
                     <Button variant="outline" size="lg" className="justify-start gap-2 text-base min-h-[44px] mx-2" onClick={() => { navigate("/business-dashboard"); setIsMenuOpen(false); }}>

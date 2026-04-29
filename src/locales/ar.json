@@ -335,7 +335,9 @@
     "faq": "الأسئلة الشائعة",
     "pricing": "الأسعار",
     "marketplace": "السوق",
-    "agencies": "للوكالات"
+    "agencies": "للوكالات",
+    "openAgencyDashboard": "لوحة تحكم الوكالة",
+    "switchToBusiness": "لوحة تحكم الوكالة"
   },
   "promo": {
     "useCode": "استخدم الكود",

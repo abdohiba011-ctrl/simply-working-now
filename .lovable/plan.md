@@ -1,114 +1,62 @@
-## Goal
+# Fix: Header credits + business label + verify Cities admin
 
-Reorganize the admin panel into clearer, role-focused sections so the admin can supervise rentals, payments, communications and fleet from purpose-built screens.
+Three fixes — all in the header / i18n layer plus a thorough functional review of the Cities admin tab.
 
-## 1. New "Payments" tab (split from Bookings)
+## 1. Credits pill in header keeps appearing/disappearing
 
-- Add a new top-level admin tab **Payments** (icon: `CreditCard`), placed right after Bookings.
-- Move the `StuckPaymentsCard` widget out of `AdminBookingsTab.tsx` into a new `AdminPaymentsTab.tsx`.
-- Expand it into a proper page with three sub-sections (segmented control):
-  1. **Stuck** — current behavior (YouCan Pay pending > 10 min, Verify now button).
-  2. **All payments** — paginated table of `youcanpay_payments` with filters: status (pending / paid / failed / refunded), purpose, date range, customer email search.
-  3. **Booking payments** — table of `booking_payments` (manual cash/transfer entries), filterable by method, status, date.
-- Each row links to its parent booking when available.
-- Permission key: reuse `bookings` permission for now (no schema change needed).
+**Cause** (`src/components/Header.tsx`, lines 60–83):
 
-## 2. Bookings tab — focused on bookings only
-
-- Remove `<StuckPaymentsCard />` from `AdminBookingsTab.tsx` (line 401).
-- Tighten the filter bar into a single clean toolbar:
-  - Search (name / email / phone / bike)
-  - Status group: **Booking status** (pending, confirmed, in_progress, completed, cancelled, rejected) and **Admin status** (new, reviewed, confirmed, rejected) shown as two segmented dropdowns side-by-side.
-  - Quick chips: Today · This week · Overdue · Unassigned.
-  - Date range with "Created / Pickup / Return" toggle (already exists — keep).
-- Status counts strip above the table (small color-coded pills): New · Confirmed · In progress · Completed · Cancelled.
-- Row click → opens existing `AdminBookingDetails` page.
-
-## 3. Booking detail page — Messages + History
-
-In `src/pages/admin/AdminBookingDetails.tsx`, add a `Tabs` block under the booking summary with:
-
-- **Overview** — current detail view (price breakdown, customer info, payment section).
-- **Messages** — read-only thread of `booking_messages` between renter and agency. For each message show sender role, body, timestamp, and a red badge if `flagged = true` with the `flag_reasons`. Top of pane shows a "Policy violations" summary card (count of flagged messages, list of detected reasons such as phone numbers / WhatsApp / off-platform payment asks).
-- **History** — existing `BookingTimeline` events (already wired) plus payment events merged into one chronological feed.
-- **Admin actions** (sidebar, always visible): Warn user · Apply penalty (amount in MAD) · Ban user — these write to `audit_logs` and `client_trust_events`, and update `profiles.is_blocked` / `frozen_reason` when banning. Penalty creates a `booking_payments` row with `payment_type = 'penalty'`.
-
-RLS: admins already have read access to `booking_messages` via the existing policy. No schema change required for the read view. The penalty/ban actions use existing admin update permissions on `profiles` and existing insert permissions on `client_trust_events` and `audit_logs`.
-
-## 4. Rename "Clients" → "Renter Clients"
-
-- Update the tab label in `AdminPanel.tsx` (line 86) to use a new translation key `admin.renterClients`.
-- Add `"renterClients": "Renter Clients"` (en), `"Clients particuliers"` (fr), `"العملاء المستأجرون"` (ar) to the `admin` block in the three locale files.
-- Tab value stays `clients` (no route changes).
-
-## 5. Replace "Fleet" with "Bikes" — grouped by agency
-
-Rename tab **Fleet → Bikes** (icon stays `Bike`, key `admin.bikes`). Rewrite `AdminFleetTab.tsx` (or add a new `AdminBikesTab.tsx` and swap the import) into one unified Bikes management view.
-
-### Data model
-
-No new tables. Continue using:
-- `bike_types` (owner_id → profiles.id, agency_id via owner profile, approval_status)
-- `bike_inventory` (per-location quantities)
-- `agencies` and `profiles` (for business name + verification)
-
-A single fetch loads all `bike_types` regardless of `is_original`, joined with the owner profile and agency. Original Motonita bikes (`owner_id IS NULL` or `is_original = true`) are bucketed under a virtual "Motonita (platform)" agency so the same UI works for both.
-
-### UI (single page, no Original/Business split)
-
-Top metrics: Total bikes · Pending review · Approved · Rejected · Agencies with bikes.
-
-Toolbar: search (bike or agency name) · status filter (All / Pending / Approved / Rejected) · agency filter (dropdown of agencies that have bikes) · "Add bike type" button.
-
-Below: an accordion of **Agency cards**. Each agency row (collapsed by default, but auto-expanded if it contains pending bikes):
-
-```text
-[Logo] Business Name        [Verified ✓]   12 bikes · 2 pending · 8 approved · 2 rejected
-                                            [Expand ▾]
-─────────────────────────────────────────────────────────
-| img | Bike name      | Price/day | Inventory | Status   | Actions             |
-| img | Honda PCX 125  | 250 DH    | 4/6       | Pending  | Approve · Reject · View |
-| ... | ...            | ...       | ...       | ...      | ...                 |
+```ts
+const isRenter =
+  rolesReady && isAuthenticated && !isBusiness && (hasRole('renter') || !isAdmin);
 ```
 
-Per-bike actions inside the card:
-- **Approve** / **Reject (with reason)** — when status is pending, same handlers as today.
-- **View / Edit** — navigate to `/admin/fleet/:id` (existing route stays).
-- **Soft delete** — keeps existing `business_status = 'admin_deleted'` flow; hidden from list by default with a "Show deleted" toggle.
-- **Hard delete** — only for original Motonita bikes.
+- `rolesReady` flips false → true on every navigation while roles refetch → the pill mounts/unmounts → "appears, disappears".
+- For an admin who doesn't also have the explicit `renter` role, `!isAdmin` is false → pill is hidden entirely.
+- The wallet hook (`useRenterWallet`) is also gated, so balance stays at 0 even when shown.
 
-Pending bikes also surface in a sticky "Needs review" banner at the top of the page that scrolls to the relevant agency card on click.
+**Fix:**
+- Show the credits pill for **any authenticated user** that isn't currently acting as a business/agency, regardless of admin status. Admins and renters both have a renter wallet.
+- Cache the previous "should show" decision so a brief `rolesReady=false` window during route changes doesn't unmount the button. Use `useRef` to keep the last truthy value, only hide when we're certain the user is in business mode.
+- Same fix applied to the dropdown `Credits · {balance}` row.
 
-### Cleanup
+## 2. "header.switchToBusiness" raw key showing in the menu
 
-- Remove the two-tab layout (`Original` / `Business Submissions`) from `AdminFleetTab.tsx`.
-- Delete or leave in place the `is_original` field — UI no longer surfaces this concept, but the flag remains in DB for backwards compatibility.
+**Cause:**
+- `en.json` has `header.switchToBusiness`, but `fr.json` and `ar.json` only define `settings.switchToBusiness` — the `header.switchToBusiness` key is **missing**, so i18next falls back to printing the raw key.
+- Beyond that, the label itself is wrong: when the user already has the agency role, clicking that item goes to `/agency/agency-center` — it's not "switch to business", it's "open my agency dashboard".
 
-## 6. Translations
+**Fix:**
+- Rename the menu label to a clearer key: `header.openAgencyDashboard` → "Agency Dashboard" / "Tableau de bord agence" / "لوحة تحكم الوكالة".
+- Add the new key to all three locale files (`en.json`, `fr.json`, `ar.json`) AND to `src/locales/translations.ts` (so legacy consumers don't break).
+- Update `Header.tsx` (desktop dropdown line 530 + mobile menu line 690) to use the new key.
 
-Add the following keys in `en`, `fr`, `ar` under `admin`:
+## 3. Verify the Cities admin tab end-to-end
 
-- `bikes`: "Bikes" / "Motos" / "الدراجات"
-- `payments`: "Payments" / "Paiements" / "المدفوعات"
-- `renterClients`: "Renter Clients" / "Clients particuliers" / "العملاء المستأجرون"
-- `messages`: "Messages" / "Messages" / "الرسائل"
-- `history`: "History" / "Historique" / "السجل"
-- `policyViolations`: "Policy violations" / "Violations de politique" / "انتهاكات السياسة"
+Code review of `src/components/admin/AdminCitiesTab.tsx` shows all CRUD wiring exists:
+- Add city, edit city, delete city (blocked when neighborhoods exist) ✅
+- Toggle availability, toggle "show on homepage" ✅
+- Add / rename / delete neighborhood, toggle popular & active ✅
+- `useServiceCitiesRealtime()` is called for live updates ✅
+- Renter side reads from `service_cities` / `service_locations` so changes propagate.
 
-## Files touched
+I'll do a live functional pass with the browser tool after the code fixes:
+1. Open `/admin/panel` → Cities tab.
+2. Add a test city ("QA City"), confirm it appears.
+3. Expand it, add two neighborhoods, rename one, toggle popular/active.
+4. Toggle homepage on/off, toggle availability.
+5. Edit the city (name + price).
+6. Try deleting with neighborhoods present → should be blocked with the warning dialog.
+7. Delete the neighborhoods, then delete the city.
+8. Verify the renter homepage/cities section reflects toggles, and agency "city" pickers list the new city.
 
-- `src/pages/AdminPanel.tsx` — add Payments tab, rename Fleet→Bikes label, rename Clients label.
-- `src/components/admin/AdminBookingsTab.tsx` — remove StuckPaymentsCard, polish filters/status strip.
-- `src/components/admin/AdminPaymentsTab.tsx` — **new**, hosts segmented Stuck / All / Booking payments views.
-- `src/components/admin/StuckPaymentsCard.tsx` — keep, now consumed by Payments tab.
-- `src/components/admin/AdminFleetTab.tsx` — rewritten as unified Bikes-by-Agency view (or replaced by `AdminBikesTab.tsx`).
-- `src/pages/admin/AdminBookingDetails.tsx` — add Tabs (Overview / Messages / History) and admin action sidebar (warn / penalty / ban).
-- `src/components/admin/bookings/BookingMessagesPanel.tsx` — **new**, read-only chat with flag highlights.
-- `src/locales/en.json`, `fr.json`, `ar.json` — new keys above.
+Any issue found during the live pass → fix in the same loop and re-test.
 
-## Out of scope (will not change)
+## Files to change
 
-- No DB schema changes; all new views read from existing tables and policies.
-- No changes to the renter or agency UI.
-- No edits to YouCan Pay edge functions.
-- 10 MAD platform fee remains prepaid via YouCan Pay (rule unchanged).
+- `src/components/Header.tsx` — credits pill stability + new menu label key (desktop + mobile)
+- `src/locales/en.json` / `fr.json` / `ar.json` — add `header.openAgencyDashboard`
+- `src/locales/translations.ts` — same key in all three blocks
+- `src/components/admin/AdminCitiesTab.tsx` — only if the live test surfaces a real bug
+
+No database changes needed.

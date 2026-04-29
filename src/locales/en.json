@@ -335,7 +335,9 @@
     "faq": "FAQ",
     "pricing": "Pricing",
     "marketplace": "Marketplace",
-    "agencies": "Agencies"
+    "agencies": "Agencies",
+    "openAgencyDashboard": "Agency Dashboard",
+    "switchToBusiness": "Agency Dashboard"
   },
   "promo": {
     "useCode": "Use code",
