@@ -118,26 +118,32 @@ const AdminPanel = () => {
     }
   }, [isAdmin]);
 
-  const fetchStatusCounts = async () => {
+  const fetchStatusCounts = useCallback(async () => {
     try {
-      // Use server-side count queries to avoid the 1000-row client fetch limit
+      // Scope counts to renter-side profiles only so they always match the
+      // unified clients table below (which excludes business profiles).
+      const renterScope = 'user_type.is.null,user_type.eq.client,user_type.eq.renter';
       const [pendingRes, verifiedRes, notVerifiedRes, blockedRes] = await Promise.all([
         supabase
           .from('profiles')
           .select('*', { count: 'exact', head: true })
+          .or(renterScope)
           .eq('verification_status', 'pending_review'),
         supabase
           .from('profiles')
           .select('*', { count: 'exact', head: true })
+          .or(renterScope)
           .eq('is_verified', true),
         supabase
           .from('profiles')
           .select('*', { count: 'exact', head: true })
+          .or(renterScope)
           .or('is_verified.is.null,is_verified.eq.false')
           .neq('verification_status', 'pending_review'),
         supabase
           .from('profiles')
           .select('*', { count: 'exact', head: true })
+          .or(renterScope)
           .eq('is_frozen', true),
       ]);
 
