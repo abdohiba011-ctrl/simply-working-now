@@ -147,6 +147,15 @@ const BecomeBusiness = () => {
       return;
     }
 
+    if (partnerType === "individual") {
+      const requiredDocs: DocKind[] = ["id_front", "id_back", "bike_photo", "ownership_paper"];
+      const missing = requiredDocs.filter((k) => !docPaths[k]);
+      if (missing.length > 0) {
+        toast.error("Please upload all required documents (ID front, ID back, motorbike photo, ownership paper)");
+        return;
+      }
+    }
+
     setSubmitting(true);
     try {
       // Update profile with business_pending status (don't add role yet - wait for admin approval)
@@ -161,19 +170,44 @@ const BecomeBusiness = () => {
       if (profileError) throw profileError;
 
       // Send application to contact_messages for admin review
-      const { error: messageError } = await supabase.from('contact_messages').insert({
-        name: businessName || 'Individual Partner',
-        email: user.email || '',
-        phone: businessPhone,
-        type: 'business_application',
-        message: JSON.stringify({
-          partnerType,
-          autoEntrepreneurNumber,
-          companyRC,
-          bikesCount,
-          userId: user.id
+      const { data: appRow, error: messageError } = await supabase
+        .from('contact_messages')
+        .insert({
+          name: businessName || 'Individual Partner',
+          email: user.email || '',
+          phone: businessPhone,
+          type: 'business_application',
+          message: JSON.stringify({
+            partnerType,
+            autoEntrepreneurNumber,
+            companyRC,
+            bikesCount,
+            userId: user.id,
+            documents: partnerType === 'individual' ? docPaths : undefined,
+          })
         })
-      });
+        .select('id')
+        .single();
+
+      if (messageError) throw messageError;
+
+      // Persist document references for individual applications
+      if (partnerType === 'individual' && appRow?.id) {
+        const docRows = (Object.entries(docPaths) as [DocKind, string | null][])
+          .filter(([, path]) => !!path)
+          .map(([kind, path]) => ({
+            application_id: appRow.id,
+            user_id: user.id,
+            kind,
+            file_path: path as string,
+          }));
+        if (docRows.length > 0) {
+          const { error: docsError } = await supabase
+            .from('business_application_documents')
+            .insert(docRows);
+          if (docsError) console.error('Failed to persist application documents:', docsError);
+        }
+      }
 
       if (messageError) throw messageError;
 
