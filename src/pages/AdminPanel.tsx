@@ -219,26 +219,28 @@ const AdminPanel = () => {
           </div>
         )}
 
-        {/* Status Cards - Only show for clients tab */}
+        {/* Compact Status Pills - Only show for clients tab */}
         {activeTab === "clients" && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            {statusCards.map((card) => (
-              <Card
-                key={card.key}
-                className={cn(
-                  "cursor-pointer transition-all",
-                  card.bgColor,
-                  statusFilter === card.key && "ring-2 ring-primary"
-                )}
-                onClick={() => setStatusFilter(statusFilter === card.key ? "all" : card.key)}
-              >
-                <CardContent className="pt-4 text-center">
-                  <card.icon className={cn("h-6 w-6 mx-auto mb-2", card.color)} />
-                  <p className={cn("text-2xl font-bold", card.color)}>{card.count}</p>
-                  <p className="text-sm text-muted-foreground">{card.label}</p>
-                </CardContent>
-              </Card>
-            ))}
+          <div className="flex flex-wrap gap-2 mb-4">
+            {statusCards.map((card) => {
+              const isActive = statusFilter === card.key;
+              return (
+                <Button
+                  key={card.key}
+                  variant={isActive ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setStatusFilter(isActive ? "all" : card.key)}
+                  className={cn(
+                    "h-8 gap-1.5 px-3",
+                    !isActive && card.color
+                  )}
+                >
+                  <card.icon className="h-3.5 w-3.5" />
+                  <span className="font-semibold">{card.count}</span>
+                  <span>{card.label}</span>
+                </Button>
+              );
+            })}
           </div>
         )}
 
