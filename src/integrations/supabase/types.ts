@@ -1112,6 +1112,36 @@ export type Database = {
           },
         ]
       }
+      business_application_documents: {
+        Row: {
+          application_id: string
+          created_at: string
+          file_path: string
+          file_size: number | null
+          id: string
+          kind: string
+          user_id: string
+        }
+        Insert: {
+          application_id: string
+          created_at?: string
+          file_path: string
+          file_size?: number | null
+          id?: string
+          kind: string
+          user_id: string
+        }
+        Update: {
+          application_id?: string
+          created_at?: string
+          file_path?: string
+          file_size?: number | null
+          id?: string
+          kind?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       client_file_downloads: {
         Row: {
           created_at: string
