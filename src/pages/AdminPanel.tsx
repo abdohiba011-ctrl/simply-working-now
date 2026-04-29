@@ -156,7 +156,7 @@ const AdminPanel = () => {
     } catch (error) {
       console.error('Error fetching status counts:', error);
     }
-  };
+  }, []);
 
   if (!isAuthenticated) {
     return (
