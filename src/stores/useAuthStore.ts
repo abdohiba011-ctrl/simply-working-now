@@ -261,7 +261,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   currentRole: null,
   session: null,
   isAuthenticated: false,
-  isLoading: false,
+  // Start in loading=true so route guards don't redirect on hard reloads
+  // before checkAuth() has had a chance to hydrate the session from Supabase.
+  isLoading: true,
   error: null,
   needsVerification: false,
   pendingEmail: null,
