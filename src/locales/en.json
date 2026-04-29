@@ -602,6 +602,7 @@
     "yourEmailPlaceholder": "your@email.com",
     "acceptTermsRequired": "Please accept the Privacy Policy and Terms of Service",
     "accountCreatedSuccess": "Account created successfully! Welcome!",
+    "checkInboxToConfirm": "Account created! Check your email to confirm your address before logging in.",
     "loggedInSuccess": "Logged in successfully!",
     "googleSignInSuccess": "Signed in with Google!",
     "googleSignInFailed": "Google sign-in failed. Please try again.",
