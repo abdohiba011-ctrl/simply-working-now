@@ -1,55 +1,47 @@
-## Goal
+# Fix everything found so far, then keep testing
 
-Walk every meaningful page on the platform as the admin account `abdrahimbamouh56@gmail.com`, capture every real error (broken renders, console errors, failed network calls, dead buttons, RLS denials, blank pages, broken redirects), then fix them. Plus eliminate the noisy "Function components cannot be given refs" dev warning that floods the console on every page load.
+You said "YES FIX ALL" — here is exactly what I'll do, in order. After approval I switch to build mode and execute.
 
-## Scope (all three roles)
+## Phase 1 — Fix the bugs already found
 
-**Public / Renter side (~16 routes)**
-- `/`, `/rent/casablanca` (+ a couple other cities), `/bike/:id`, `/booking-review`, `/checkout`, `/pay/youcanpay`, `/payment-status`, `/confirmation`
-- `/about`, `/blog`, `/blog/:slug`, `/agencies`, `/booking-fee`, `/affiliate`, `/contact`, `/fixers`
-- `/profile`, `/booking-history`, `/booking/:id`, `/inbox`, `/notifications`, `/settings`, `/verification`, `/billing`
+### 1. Add Google sign-in to Login + Signup (renter & agency)
+The backend is already wired (`src/integrations/lovable/index.ts`, `OAuthHashWatcher`, `check-account-method` knows about OAuth-only accounts). Only the UI button is missing.
 
-**Agency side (~20 routes under `/agency/*`)**
-- `dashboard`, `bookings`, `bookings/:id`, `motorbikes`, `motorbikes/new`, `motorbikes/:id`, `messages`, `calendar`
-- `finance` (wallet/transactions/subscription/invoices tabs), `agency-center` (profile/team/verification/analytics tabs), `settings` (preferences/notifications/integrations/help tabs)
+- Add a "Continue with Google" button above the email field on:
+  - `src/pages/auth/Login.tsx` (used by renter `/login` and agency `/agency/login`)
+  - `src/pages/auth/Signup.tsx` (used by renter `/signup` and agency `/agency/signup`)
+- Use `lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin })`
+- Add an "or" divider between the Google button and the email form
+- Style: white button, Google "G" icon, rounded-md, full width — matches existing brand
 
-**Admin side (~12 routes under `/admin/*`)**
-- `panel` (every tab: clients, agencies, bikes, bookings, finance, etc.), `bookings`, `bookings/:id`, `fleet`, `fleet/:id`, `analytics`, `verifications`, `agencies/verifications`, `bikes/approvals`, `clients/:id`, `users/:id`, `verifications/:id`, `contact-messages`
+### 2. Fix the React 18 "Function components cannot be given refs" warning
+Two distinct sources confirmed in the latest console logs:
 
-## Method
+- **Source A: `TopCitiesSection`** — the `<TooltipTrigger asChild>` wrapping at line 156-169 makes Radix forward a ref to its child. The `<div>` child accepts refs, but the warning chain points at lazy-mounted children. Fix: remove the redundant `<TooltipProvider>` wrapper inside the loop and hoist a single one to the top of the section (reduces re-mount churn that triggers the warning), and ensure `<Badge>` is not wrapped in a non-ref-forwarding fragment.
+- **Source B: `Help` lazy-loaded inside `SettingsHub`** — wrap `Help` with `React.forwardRef` (it currently does not accept a ref but `Suspense`/lazy expects forwardable components in some Radix integrations). Same for any other lazy children of `SettingsHub`.
 
-For each route:
-1. Navigate via browser tool
-2. Screenshot if anything looks off
-3. Pull console errors (filter out the known ref warning until it's fixed)
-4. Pull network requests, flag any 4xx/5xx
-5. Click into 2-3 representative items per list page (booking row, motorbike, client)
-6. Note bugs in the task tracker
+Verify in the live preview after the fix that the warning no longer fires on `/` and `/agency/settings`.
 
-I will **not** perform destructive actions (no deleting bookings, deleting users, sending real emails, processing real payments). For mutation flows, I will inspect the form/button reachability but stop short of submitting if data would change permanently.
+### 3. Consolidate the two parallel auth systems (defer if it grows scope)
+There are two stores: `AuthContext` (real Supabase) and `useAuthStore` (mock). `Login.tsx` uses the mock. This is technical debt, not a user-visible bug. **I will NOT touch this** unless I find a concrete bug caused by it during Phase 2 — refactoring it risks breaking working flows.
 
-## Fix phase
+## Phase 2 — Continue critical-path QA after fixes
 
-After the walkthrough, group findings by severity:
-- **P0** — page crashes, blank screens, infinite loaders, RLS-denied data, broken auth → fix all
-- **P1** — broken buttons, dead links, wrong navigation, missing translations on visible UI → fix all
-- **P2** — visual glitches, minor copy issues, console warnings → fix where cheap
+Walk through the rest of the platform end-to-end with the admin account, fix every real bug found:
 
-Fix the noisy `Function components cannot be given refs` warning by auditing the provider chain in `App.tsx` (most likely a ref forwarded into `LanguageSuggestionBanner`, `ScrollToTopButton`, or `AuthProvider` via Radix internals — needs targeted forwardRef wrapping or removing the offending ref-recipient).
+1. **Renter booking flow** — `/listings` → bike details → `/checkout` (10 MAD YouCan Pay) → confirmation → `/inbox` chat unlock
+2. **Agency dashboard** — `/agency/dashboard`, `/agency/motorbikes`, `/agency/bookings` (confirm a booking → 50 MAD wallet deduction), `/agency/finance`, `/agency/wallet`
+3. **Admin panel** — `/admin/panel`, `/admin/clients`, `/admin/bookings`, `/admin/verifications`, `/admin/agencies/verifications`, `/admin/bikes/approvals`
 
-## What you should expect
+For each: capture console errors, failed network requests, RLS denials, blank pages, broken interactions. Fix every P0/P1 (crashes, broken logic, security issues). Skip cosmetic P2 unless trivial.
 
-- Many tool calls (likely 80-150). I will batch where possible (parallel reads, parallel screenshots).
-- Periodic check-ins if I hit something large that deserves a decision (e.g. "this whole page is broken — rewrite or hot-fix?").
-- A final summary listing every bug found, severity, and what I fixed vs deferred.
+## What I will NOT do
 
-## Out of scope
+- Touch `src/integrations/supabase/client.ts`, `types.ts`, `.env`, or `supabase/config.toml` project-level settings (auto-generated).
+- Add new database migrations unless a real bug requires it.
+- Add features the user did not ask for.
+- Spend the session on the React ref warning if it proves intractable — I'll log it as a known dev-only annoyance and move on.
 
-- Lighthouse / performance audits
-- Mobile/RTL deep visual review (unless a route is clearly broken at 375px)
-- Writing new automated tests
-- Rebuilding any feature from scratch
+## Risk
 
-## Approve to proceed
-
-Once you approve, I switch to build mode and begin the walkthrough + fixes in one continuous run.
+This is a long session. If we run low on credits before finishing Phase 2, I'll stop after Phase 1 + the renter booking flow (the highest-impact path) and report what's left untested. You can resume in a follow-up message.
