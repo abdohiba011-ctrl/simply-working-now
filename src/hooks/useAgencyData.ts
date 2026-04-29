@@ -150,18 +150,16 @@ export const useCurrentUser = () => {
   const [loading, setLoading] = useState(true);
   useEffect(() => {
     let mounted = true;
-    supabase.auth.getUser().then(({ data }) => {
-      if (mounted) {
-        setUserId(data.user?.id ?? null);
-        setLoading(false);
-      }
-    });
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
-      if (mounted) setUserId(session?.user?.id ?? null);
+    // Use the broker — no extra getUser()/onAuthStateChange pair, which
+    // was contributing to the gotrue Web Lock contention.
+    const unsubscribe = subscribeAuth((_e, session) => {
+      if (!mounted) return;
+      setUserId(session?.user?.id ?? null);
+      setLoading(false);
     });
     return () => {
       mounted = false;
-      sub.subscription.unsubscribe();
+      unsubscribe();
     };
   }, []);
   return { userId, loading };

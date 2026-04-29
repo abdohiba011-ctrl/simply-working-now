@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, ReactNode, useCallback,
 import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from "@supabase/supabase-js";
 import { useAuthStore, writeCachedIsAdmin } from "@/stores/useAuthStore";
+import { subscribeAuth, getSessionShared } from "@/lib/authBroker";
 
 // Rate limit configuration
 const RATE_LIMITS = {
@@ -129,40 +130,32 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   useEffect(() => {
-    // Set up auth state listener first
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setIsLoading(true);
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        // Fetch user roles before allowing role-gated UI/routes to render.
-        if (session?.user) {
-          setTimeout(async () => {
-            await fetchUserRoles(session.user.id);
-            setIsLoading(false);
-          }, 0);
-        } else {
-          setUserRoles([]);
+    // Subscribe to the shared auth broker. The broker owns the single
+    // onAuthStateChange listener and de-dupes getSession() calls, which
+    // prevents the "Lock not released within 5000ms" / "Lock broken by
+    // steal" warnings caused by concurrent Supabase auth lock acquisitions.
+    const unsubscribe = subscribeAuth((_event, nextSession) => {
+      setSession(nextSession);
+      setUser(nextSession?.user ?? null);
+      if (nextSession?.user) {
+        // Defer DB call so we never block inside the listener.
+        setTimeout(async () => {
+          await fetchUserRoles(nextSession.user.id);
           setIsLoading(false);
-        }
-      }
-    );
-
-    // Then check for existing session
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        await fetchUserRoles(session.user.id);
+        }, 0);
       } else {
         setUserRoles([]);
+        setIsLoading(false);
       }
+    });
+
+    // Prime the cache once so the first paint has a session if there is one.
+    getSessionShared().catch((e) => {
+      console.warn("[AuthContext] getSessionShared failed", e);
       setIsLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    return () => unsubscribe();
   }, []);
 
   // Check and record rate limit for auth actions

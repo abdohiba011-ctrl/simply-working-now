@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { supabase } from "@/integrations/supabase/client";
 import type { Session, User } from "@supabase/supabase-js";
+import { subscribeAuth, getSessionShared } from "@/lib/authBroker";
 import {
   COMMON_PASSWORDS,
   checkResetRequestAllowed,
@@ -276,8 +277,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     if (get().authListenerInitialized) return;
     set({ authListenerInitialized: true });
 
-    supabase.auth.onAuthStateChange((_event, session) => {
-      // Defer DB calls to avoid deadlocks inside the auth listener
+    // Use the shared auth broker so we don't open a second
+    // onAuthStateChange subscription (which contends with AuthContext on
+    // the gotrue Web Lock and triggers "lock not released" warnings).
+    subscribeAuth((_event, session) => {
       if (session?.user) {
         setTimeout(async () => {
           try {
@@ -498,21 +501,24 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ isLoading: true });
     get().initAuthListener();
 
-    const { data } = await supabase.auth.getSession();
-    if (data.session?.user) {
-      try {
-        const mapped = await loadAuthUserModel(data.session.user);
+    try {
+      // Shared, de-duplicated session read with retry on transient
+      // "Failed to fetch" — prevents flicker-logouts during refresh.
+      const session = await getSessionShared();
+      if (session?.user) {
+        const mapped = await loadAuthUserModel(session.user);
         set({
           user: mapped,
-          session: data.session,
+          session,
           currentRole: mapped.last_active_role,
           isAuthenticated: true,
           isLoading: false,
         });
-      } catch {
+      } else {
         set({ isLoading: false });
       }
-    } else {
+    } catch (e) {
+      console.error("[useAuthStore] checkAuth failed", e);
       set({ isLoading: false });
     }
   },
