@@ -126,11 +126,8 @@ const BecomeBusiness = () => {
   const handleSubmitApplication = async () => {
     if (!user) return;
     
-    if (partnerType === "individual" && !autoEntrepreneurNumber) {
-      toast.error(t('becomeBusiness.autoEntrepreneurRequired') || "Please enter your Auto Entrepreneur number");
-      return;
-    }
-    
+    // Individual partners now upload documents instead of an auto-entrepreneur number
+
     if (partnerType === "shop" && (!companyRC || !businessName)) {
       toast.error(t('becomeBusiness.companyDetailsRequired') || "Please fill in all company details");
       return;
