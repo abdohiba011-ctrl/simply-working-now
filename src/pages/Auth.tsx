@@ -153,18 +153,24 @@ const Auth = () => {
           name
         });
         
-        // Create account directly (auto-confirm is enabled)
+        // Create account — email confirmation is required.
         await signup(
           validatedData.email, 
           validatedData.password, 
           validatedData.name,
           accountType === "business" ? "business" : "user"
         );
-        
-        toast.success(t('auth.accountCreatedSuccess'));
-        
-        // Navigate to home or return URL
-        navigate(returnUrl || '/');
+
+        // Supabase signUp does NOT return an active session when email
+        // confirmation is required. Tell the user to check their inbox
+        // and route them to the verification page instead of pretending
+        // they're logged in (which silently lands them back on /).
+        toast.success(
+          t('auth.checkInboxToConfirm', {
+            defaultValue: 'Account created! Check your email to confirm your address before logging in.',
+          })
+        );
+        navigate(`/verify-email?email=${encodeURIComponent(validatedData.email)}`);
       } else {
         // Validate login data
         const validatedData = loginSchema.parse({
