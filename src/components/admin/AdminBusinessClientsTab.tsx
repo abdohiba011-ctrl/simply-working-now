@@ -960,6 +960,9 @@ export const AdminBusinessClientsTab = () => {
                 <strong>Company RC:</strong> {selectedApplication.parsedData.companyRC}
               </p>
             )}
+            {selectedApplication?.parsedData?.partnerType === "individual" && (
+              <ApplicationDocumentsPreview applicationId={selectedApplication.id} />
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowApproveDialog(false)}>
