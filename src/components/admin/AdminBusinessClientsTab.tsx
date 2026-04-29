@@ -555,37 +555,10 @@ export const AdminBusinessClientsTab = () => {
                     Business Clients
                   </CardTitle>
                   <p className="text-sm text-muted-foreground mt-1">
-                    {shopsCount} shops · {individualsCount} individual owners
+                    {totalCount} business clients
                   </p>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
-                  <div className="flex gap-1">
-                    <Button
-                      size="sm"
-                      variant={typeFilter === "all" ? "default" : "outline"}
-                      onClick={() => setTypeFilter("all")}
-                    >
-                      All
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant={typeFilter === "shop" ? "default" : "outline"}
-                      onClick={() => setTypeFilter("shop")}
-                      className="gap-1"
-                    >
-                      <Store className="h-3 w-3" />
-                      Shops
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant={typeFilter === "individual" ? "default" : "outline"}
-                      onClick={() => setTypeFilter("individual")}
-                      className="gap-1"
-                    >
-                      <User className="h-3 w-3" />
-                      Individuals
-                    </Button>
-                  </div>
                   <div className="relative w-full md:w-72">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
