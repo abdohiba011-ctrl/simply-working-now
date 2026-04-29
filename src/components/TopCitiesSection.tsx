@@ -111,6 +111,7 @@ export const TopCitiesSection = () => {
   }
 
   return (
+    <TooltipProvider>
     <section className="py-20 bg-secondary/30" aria-label={t('cities.title')}>
       <div className="container mx-auto px-4">
         <header className="text-center mb-12 animate-fade-in">
@@ -153,20 +154,16 @@ export const TopCitiesSection = () => {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
                   {!isAvailable && (
                     <div className={`absolute top-4 ${isRTL ? 'left-4' : 'right-4'}`}>
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <div>
-                              <Badge className="bg-white text-black font-bold text-sm px-4 py-2 hover:bg-white/90">
-                                {t('cities.comingSoon')}
-                              </Badge>
-                            </div>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>{t('cities.comingSoonTooltip').replace('{city}', cityName)}</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Badge className="bg-white text-black font-bold text-sm px-4 py-2 hover:bg-white/90">
+                            {t('cities.comingSoon')}
+                          </Badge>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{t('cities.comingSoonTooltip').replace('{city}', cityName)}</p>
+                        </TooltipContent>
+                      </Tooltip>
                     </div>
                   )}
                   <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
@@ -185,5 +182,6 @@ export const TopCitiesSection = () => {
         </div>
       </div>
     </section>
+    </TooltipProvider>
   );
 };
