@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, ImageIcon } from "lucide-react";
+import { useParams, useNavigate, Link } from "react-router-dom";
+import { ArrowLeft, ImageIcon, ShieldAlert } from "lucide-react";
 import { AgencyLayout } from "@/components/agency/AgencyLayout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -19,6 +19,19 @@ import { toast } from "sonner";
 import { MotorbikeImageManager } from "@/components/agency/MotorbikeImageManager";
 import { AgencyVerificationBanner } from "@/components/agency/AgencyVerificationBanner";
 
+type FieldErrors = Partial<
+  Record<"name" | "dailyPrice" | "engineCc", string>
+>;
+
+// Lightweight Sentry-style logger shim. Replace with real Sentry binding when wired up.
+const captureException = (err: unknown, ctx?: Record<string, unknown>) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const w = window as any;
+  if (w?.Sentry?.captureException) {
+    w.Sentry.captureException(err, { extra: ctx });
+  }
+};
+
 const MotorbikeWizard = () => {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -28,17 +41,54 @@ const MotorbikeWizard = () => {
   const [ownerId, setOwnerId] = useState<string | null>(null);
   const [bikeId, setBikeId] = useState<string | null>(editing ? id || null : null);
   const [mainImageUrl, setMainImageUrl] = useState<string | null>(null);
+
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [dailyPrice, setDailyPrice] = useState<number>(150);
-  const [engineCc, setEngineCc] = useState<number>(125);
+  // Empty by default — agency must enter a real value, never accidentally submit a placeholder.
+  const [dailyPrice, setDailyPrice] = useState<string>("");
+  const [engineCc, setEngineCc] = useState<string>("");
   const [transmission, setTransmission] = useState("automatic");
   const [fuelType, setFuelType] = useState("petrol");
 
+  const [errors, setErrors] = useState<FieldErrors>({});
+
+  // Verification gate — Save is disabled until the agency is verified.
+  const [verifState, setVerifState] = useState<
+    "loading" | "verified" | "unverified"
+  >("loading");
+
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      setOwnerId(data.user?.id ?? null);
-    });
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase.auth.getUser();
+      if (cancelled) return;
+      const uid = data.user?.id ?? null;
+      setOwnerId(uid);
+      if (!uid) {
+        setVerifState("unverified");
+        return;
+      }
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("user_id", uid)
+        .maybeSingle();
+      if (cancelled) return;
+      if (!profile?.id) {
+        setVerifState("unverified");
+        return;
+      }
+      const { data: agency } = await supabase
+        .from("agencies")
+        .select("is_verified,verification_status")
+        .eq("profile_id", profile.id)
+        .maybeSingle();
+      if (cancelled) return;
+      setVerifState(agency?.is_verified ? "verified" : "unverified");
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
@@ -52,8 +102,8 @@ const MotorbikeWizard = () => {
         if (data) {
           setName(data.name || "");
           setDescription(data.description || "");
-          setDailyPrice(Number(data.daily_price || 0));
-          setEngineCc(Number(data.engine_cc || 0));
+          setDailyPrice(data.daily_price != null ? String(data.daily_price) : "");
+          setEngineCc(data.engine_cc != null ? String(data.engine_cc) : "");
           setTransmission(data.transmission || "automatic");
           setFuelType(data.fuel_type || "petrol");
           setMainImageUrl(data.main_image_url || null);
@@ -62,7 +112,6 @@ const MotorbikeWizard = () => {
       });
   }, [id, editing]);
 
-  // After image manager changes, refresh main_image_url from DB so the gallery stays in sync.
   const refreshMainImage = async () => {
     if (!bikeId) return;
     const { data } = await supabase
@@ -73,27 +122,60 @@ const MotorbikeWizard = () => {
     if (data) setMainImageUrl(data.main_image_url || null);
   };
 
+  const validate = (): FieldErrors => {
+    const e: FieldErrors = {};
+    if (!name.trim()) e.name = "Name is required";
+    const price = Number(dailyPrice);
+    if (dailyPrice === "" || Number.isNaN(price)) {
+      e.dailyPrice = "Daily price is required";
+    } else if (price <= 0) {
+      e.dailyPrice = "Daily price must be greater than 0";
+    }
+    const cc = Number(engineCc);
+    if (engineCc === "" || Number.isNaN(cc)) {
+      e.engineCc = "Engine size is required";
+    } else if (cc <= 0) {
+      e.engineCc = "Engine size must be greater than 0";
+    }
+    return e;
+  };
+
   const handleSave = async () => {
-    if (!name.trim()) return toast.error("Name is required");
+    if (verifState !== "verified") {
+      toast.error("Verify your shop before saving motorbikes");
+      return;
+    }
+    const v = validate();
+    setErrors(v);
+    if (Object.keys(v).length > 0) {
+      toast.error("Please fix the highlighted fields");
+      return;
+    }
+
     setSaving(true);
     try {
       const { data: u } = await supabase.auth.getUser();
-      if (!u.user) throw new Error("Not authenticated");
+      if (!u.user) throw new Error("You are signed out — please sign in again.");
+
       const payload = {
-        name,
-        description: description || null,
-        daily_price: dailyPrice,
-        engine_cc: engineCc,
+        name: name.trim(),
+        description: description.trim() || null,
+        daily_price: Number(dailyPrice),
+        engine_cc: Number(engineCc),
         transmission,
         fuel_type: fuelType,
         owner_id: u.user.id,
-        // Every new listing must be reviewed by an admin before it appears publicly.
         ...(editing ? {} : { approval_status: "pending", is_approved: false }),
       };
+
       if (editing && id) {
-        const { error } = await supabase.from("bike_types").update(payload).eq("id", id);
+        const { error } = await supabase
+          .from("bike_types")
+          .update(payload)
+          .eq("id", id);
         if (error) throw error;
-        toast.success("Motorbike updated");
+        toast.success("Motorbike saved");
+        navigate("/agency/motorbikes");
       } else {
         const { data, error } = await supabase
           .from("bike_types")
@@ -101,15 +183,16 @@ const MotorbikeWizard = () => {
           .select()
           .single();
         if (error) throw error;
-        toast.success(
-          "Motorbike submitted — pending admin approval. Add images while you wait."
-        );
-        // Switch into edit mode in place so user can manage images.
+        toast.success("Motorbike saved");
         setBikeId(data.id);
-        navigate(`/agency/motorbikes/${data.id}/edit`, { replace: true });
+        navigate("/agency/motorbikes");
       }
     } catch (e: unknown) {
-      const message = e instanceof Error ? e.message : "Failed to save";
+      const message =
+        e instanceof Error ? e.message : "Failed to save motorbike";
+      // Surface to dev tools and to error tracker so silent failures are visible.
+      console.error("[MotorbikeWizard] Save failed:", e);
+      captureException(e, { area: "MotorbikeWizard.save", editing, id });
       toast.error(message);
     } finally {
       setSaving(false);
@@ -123,6 +206,8 @@ const MotorbikeWizard = () => {
       </AgencyLayout>
     );
 
+  const saveDisabled = saving || verifState !== "verified";
+
   return (
     <AgencyLayout>
       <div className="mx-auto max-w-3xl space-y-4">
@@ -135,43 +220,109 @@ const MotorbikeWizard = () => {
 
         <AgencyVerificationBanner />
 
+        {verifState === "unverified" && (
+          <div
+            role="alert"
+            className="flex items-start gap-3 rounded-lg border border-destructive/40 bg-destructive/10 p-4 text-destructive"
+          >
+            <ShieldAlert className="h-5 w-5 mt-0.5 shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-sm">
+                Verify your shop to save motorbikes
+              </p>
+              <p className="text-sm mt-0.5">
+                Saving is disabled until your shop is verified by Motonita admins.
+              </p>
+            </div>
+            <Link
+              to="/agency/verification"
+              className="text-sm font-semibold underline whitespace-nowrap self-center"
+            >
+              Open verification
+            </Link>
+          </div>
+        )}
+
         <Card className="space-y-4 p-6">
           <h2 className="text-lg font-semibold">Details</h2>
+
           <div className="grid gap-2">
-            <Label>Name *</Label>
+            <Label htmlFor="mb-name">Name *</Label>
             <Input
+              id="mb-name"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) => {
+                setName(e.target.value);
+                if (errors.name) setErrors((p) => ({ ...p, name: undefined }));
+              }}
               placeholder="Yamaha MT-07"
+              aria-invalid={!!errors.name}
+              aria-describedby={errors.name ? "mb-name-err" : undefined}
             />
+            {errors.name && (
+              <p id="mb-name-err" className="text-sm text-destructive">
+                {errors.name}
+              </p>
+            )}
           </div>
+
           <div className="grid gap-2">
-            <Label>Description</Label>
+            <Label htmlFor="mb-desc">Description</Label>
             <Textarea
+              id="mb-desc"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
             />
           </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-2">
-              <Label>Daily price (MAD)</Label>
+              <Label htmlFor="mb-price">Daily price (MAD) *</Label>
               <Input
+                id="mb-price"
                 type="number"
                 min={0}
+                placeholder="e.g. 300"
                 value={dailyPrice}
-                onChange={(e) => setDailyPrice(Number(e.target.value))}
+                onChange={(e) => {
+                  setDailyPrice(e.target.value);
+                  if (errors.dailyPrice)
+                    setErrors((p) => ({ ...p, dailyPrice: undefined }));
+                }}
+                aria-invalid={!!errors.dailyPrice}
+                aria-describedby={errors.dailyPrice ? "mb-price-err" : undefined}
               />
+              {errors.dailyPrice && (
+                <p id="mb-price-err" className="text-sm text-destructive">
+                  {errors.dailyPrice}
+                </p>
+              )}
             </div>
+
             <div className="grid gap-2">
-              <Label>Engine (cc)</Label>
+              <Label htmlFor="mb-cc">Engine (cc) *</Label>
               <Input
+                id="mb-cc"
                 type="number"
                 min={0}
+                placeholder="e.g. 125"
                 value={engineCc}
-                onChange={(e) => setEngineCc(Number(e.target.value))}
+                onChange={(e) => {
+                  setEngineCc(e.target.value);
+                  if (errors.engineCc)
+                    setErrors((p) => ({ ...p, engineCc: undefined }));
+                }}
+                aria-invalid={!!errors.engineCc}
+                aria-describedby={errors.engineCc ? "mb-cc-err" : undefined}
               />
+              {errors.engineCc && (
+                <p id="mb-cc-err" className="text-sm text-destructive">
+                  {errors.engineCc}
+                </p>
+              )}
             </div>
+
             <div className="grid gap-2">
               <Label>Transmission</Label>
               <Select value={transmission} onValueChange={setTransmission}>
@@ -198,6 +349,7 @@ const MotorbikeWizard = () => {
               </Select>
             </div>
           </div>
+
           <div className="flex justify-end gap-2 pt-2">
             <Button
               variant="outline"
@@ -206,7 +358,15 @@ const MotorbikeWizard = () => {
             >
               Cancel
             </Button>
-            <Button onClick={handleSave} disabled={saving}>
+            <Button
+              onClick={handleSave}
+              disabled={saveDisabled}
+              title={
+                verifState !== "verified"
+                  ? "Verify your shop to enable saving"
+                  : undefined
+              }
+            >
               {saving ? "Saving…" : "Save details"}
             </Button>
           </div>
