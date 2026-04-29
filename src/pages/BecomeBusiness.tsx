@@ -61,6 +61,39 @@ const BecomeBusiness = () => {
   const [bikesCount, setBikesCount] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
+  // Individual partner document uploads (file_path in business-applications bucket)
+  type DocKind = "id_front" | "id_back" | "bike_photo" | "ownership_paper";
+  const [docPaths, setDocPaths] = useState<Record<DocKind, string | null>>({
+    id_front: null,
+    id_back: null,
+    bike_photo: null,
+    ownership_paper: null,
+  });
+  const [uploadingDoc, setUploadingDoc] = useState<DocKind | null>(null);
+
+  const uploadDoc = async (kind: DocKind, file: File) => {
+    if (!user) return;
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("File must be under 10MB");
+      return;
+    }
+    setUploadingDoc(kind);
+    try {
+      const ext = file.name.split('.').pop() || 'jpg';
+      const path = `${user.id}/${kind}-${Date.now()}.${ext}`;
+      const { error } = await supabase.storage
+        .from('business-applications')
+        .upload(path, file, { upsert: true, contentType: file.type });
+      if (error) throw error;
+      setDocPaths((prev) => ({ ...prev, [kind]: path }));
+      toast.success("Uploaded");
+    } catch (err) {
+      toast.error(getErrMsg(err) || "Upload failed");
+    } finally {
+      setUploadingDoc(null);
+    }
+  };
+
   useEffect(() => {
     if (user) {
       checkUserStatus();
