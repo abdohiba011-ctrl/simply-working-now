@@ -242,26 +242,33 @@ const MotorbikeWizard = () => {
     try {
       const isDraftFirstSubmit = !editing && currentStatus === "draft";
 
-      const payload: Record<string, unknown> = {
+      const payload: {
+        name: string;
+        description: string | null;
+        daily_price: number;
+        engine_cc: number;
+        transmission: string;
+        fuel_type: string;
+        city_id?: string | null;
+        neighborhood?: string | null;
+        approval_status?: string;
+        business_status?: string;
+        is_approved?: boolean;
+      } = {
         name: name.trim(),
         description: description.trim() || null,
         daily_price: Number(dailyPrice),
         engine_cc: Number(engineCc),
         transmission,
         fuel_type: fuelType,
-        // Inherit location (only set on first submit so admin edits stick)
-        ...(isDraftFirstSubmit && {
-          city_id: agencyLoc.city_id,
-          neighborhood: agencyLoc.neighborhood,
-        }),
-        // Promote draft → pending on first submit. Edits to already-submitted
-        // bikes go through the re-verification trigger automatically.
-        ...(isDraftFirstSubmit && {
-          approval_status: "pending",
-          business_status: "inactive",
-          is_approved: false,
-        }),
       };
+      if (isDraftFirstSubmit) {
+        payload.city_id = agencyLoc.city_id;
+        payload.neighborhood = agencyLoc.neighborhood;
+        payload.approval_status = "pending";
+        payload.business_status = "inactive";
+        payload.is_approved = false;
+      }
 
       const { error: updErr } = await supabase
         .from("bike_types")
