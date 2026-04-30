@@ -11,7 +11,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
 
-const PLATFORM_FEE_MAD = 10;
+const PLATFORM_FEE_MAD = 10;        // non-refundable
+const CONFIRMATION_FEE_MAD = 50;    // refundable as Motonita Credit if no alt
+const UPFRONT_TOTAL_MAD = PLATFORM_FEE_MAD + CONFIRMATION_FEE_MAD; // 60
 
 const Checkout = () => {
   const [searchParams] = useSearchParams();
@@ -107,13 +109,13 @@ const Checkout = () => {
 
       const needsVerification = profile.is_verified ? '0' : '1';
 
-      // 2. Create YouCanPay token for the 10 MAD platform fee.
+      // 2. Create YouCanPay token for the 60 MAD upfront (10 platform + 50 confirmation).
       const { data: tokenResp, error: tokenErr } = await supabase.functions.invoke(
         'youcanpay-create-token',
         {
           body: {
             purpose: 'booking_payment',
-            amount: PLATFORM_FEE_MAD,
+            amount: UPFRONT_TOTAL_MAD,
             currency: 'MAD',
             related_booking_id: bookingId,
             customer_email: profile.email,
@@ -149,7 +151,7 @@ const Checkout = () => {
         token: tokenResp.token_id,
         pubKey: tokenResp.public_key,
         pid: tokenResp.payment_id,
-        amount: String(PLATFORM_FEE_MAD),
+        amount: String(UPFRONT_TOTAL_MAD),
         currency: 'MAD',
         sandbox: tokenResp.is_sandbox ? '1' : '0',
         success: successPath,
@@ -194,10 +196,20 @@ const Checkout = () => {
                 <div className="rounded-lg border border-border p-4 space-y-3 bg-muted/30">
                   <div className="flex justify-between items-baseline">
                     <span className="text-sm text-muted-foreground">Amount due now</span>
-                    <span className="text-3xl font-bold text-foreground">{PLATFORM_FEE_MAD} MAD</span>
+                    <span className="text-3xl font-bold text-foreground">{UPFRONT_TOTAL_MAD} MAD</span>
+                  </div>
+                  <div className="text-xs text-muted-foreground space-y-1">
+                    <div className="flex justify-between">
+                      <span>Platform fee</span>
+                      <span>{PLATFORM_FEE_MAD} MAD</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Confirmation fee</span>
+                      <span>{CONFIRMATION_FEE_MAD} MAD</span>
+                    </div>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Flat Motonita booking fee. Card payment only — cash is not accepted for the platform fee.
+                    Card payment only — cash is not accepted for the upfront fee.
                   </p>
                 </div>
 
@@ -225,12 +237,13 @@ const Checkout = () => {
                       Redirecting to payment…
                     </>
                   ) : (
-                    <>Pay {PLATFORM_FEE_MAD} MAD with card</>
+                    <>Pay {UPFRONT_TOTAL_MAD} MAD with card</>
                   )}
                 </Button>
 
                 <p className="text-xs text-muted-foreground text-center">
-                  By paying, you agree the 10 MAD fee is non-refundable.
+                  The {PLATFORM_FEE_MAD} MAD platform fee is non-refundable. The {CONFIRMATION_FEE_MAD} MAD
+                  confirmation fee is refunded as Motonita Credit if no alternative bike is available.
                 </p>
               </CardContent>
             </Card>
@@ -282,12 +295,13 @@ const Checkout = () => {
                       <span>{rentalSubtotal} DH</span>
                     </div>
                     <p className="text-xs text-muted-foreground italic">
-                      Paid directly to the agency at pickup.
+                      Pay agency at pickup: {Math.max(0, rentalSubtotal - CONFIRMATION_FEE_MAD)} DH
+                      (rental − {CONFIRMATION_FEE_MAD} prepaid) + refundable deposit.
                     </p>
                     <Separator />
                     <div className="flex justify-between text-base font-bold pt-2">
                       <span className="text-foreground">Pay now</span>
-                      <span className="text-primary">{PLATFORM_FEE_MAD} DH</span>
+                      <span className="text-primary">{UPFRONT_TOTAL_MAD} DH</span>
                     </div>
                   </div>
                 </div>
