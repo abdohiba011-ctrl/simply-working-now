@@ -39,7 +39,7 @@ export const AgencyVerificationBanner = () => {
       if (!agency) return setState("not_started");
       if (agency.is_verified) return setState("verified");
       const s = agency.verification_status;
-      if (s === "pending_review" || s === "pending") return setState("pending");
+      if (s === "pending") return setState("pending");
       if (s === "rejected") return setState("rejected");
       setState("not_started");
     })();
