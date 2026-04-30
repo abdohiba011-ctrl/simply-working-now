@@ -196,10 +196,20 @@ const Checkout = () => {
                 <div className="rounded-lg border border-border p-4 space-y-3 bg-muted/30">
                   <div className="flex justify-between items-baseline">
                     <span className="text-sm text-muted-foreground">Amount due now</span>
-                    <span className="text-3xl font-bold text-foreground">{PLATFORM_FEE_MAD} MAD</span>
+                    <span className="text-3xl font-bold text-foreground">{UPFRONT_TOTAL_MAD} MAD</span>
+                  </div>
+                  <div className="text-xs text-muted-foreground space-y-1">
+                    <div className="flex justify-between">
+                      <span>Platform fee</span>
+                      <span>{PLATFORM_FEE_MAD} MAD</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Confirmation fee</span>
+                      <span>{CONFIRMATION_FEE_MAD} MAD</span>
+                    </div>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Flat Motonita booking fee. Card payment only — cash is not accepted for the platform fee.
+                    Card payment only — cash is not accepted for the upfront fee.
                   </p>
                 </div>
 
@@ -227,12 +237,13 @@ const Checkout = () => {
                       Redirecting to payment…
                     </>
                   ) : (
-                    <>Pay {PLATFORM_FEE_MAD} MAD with card</>
+                    <>Pay {UPFRONT_TOTAL_MAD} MAD with card</>
                   )}
                 </Button>
 
                 <p className="text-xs text-muted-foreground text-center">
-                  By paying, you agree the 10 MAD fee is non-refundable.
+                  The {PLATFORM_FEE_MAD} MAD platform fee is non-refundable. The {CONFIRMATION_FEE_MAD} MAD
+                  confirmation fee is refunded as Motonita Credit if no alternative bike is available.
                 </p>
               </CardContent>
             </Card>
