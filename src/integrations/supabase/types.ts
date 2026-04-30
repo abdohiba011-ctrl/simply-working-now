@@ -590,6 +590,9 @@ export type Database = {
           neighborhood: string | null
           owner_id: string | null
           rating: number | null
+          rejected_at: string | null
+          rejected_by: string | null
+          rejection_reason: string | null
           review_count: number | null
           seat_height: string | null
           slug: string
@@ -628,6 +631,9 @@ export type Database = {
           neighborhood?: string | null
           owner_id?: string | null
           rating?: number | null
+          rejected_at?: string | null
+          rejected_by?: string | null
+          rejection_reason?: string | null
           review_count?: number | null
           seat_height?: string | null
           slug?: string
@@ -666,6 +672,9 @@ export type Database = {
           neighborhood?: string | null
           owner_id?: string | null
           rating?: number | null
+          rejected_at?: string | null
+          rejected_by?: string | null
+          rejection_reason?: string | null
           review_count?: number | null
           seat_height?: string | null
           slug?: string
@@ -2393,6 +2402,7 @@ export type Database = {
         Args: { _booking_id: string; _credit_id: string }
         Returns: Json
       }
+      approve_bike_type: { Args: { p_bike_type_id: string }; Returns: Json }
       auto_cancel_stale_pending_bookings: { Args: never; Returns: number }
       cancel_booking_by_renter: { Args: { _booking_id: string }; Returns: Json }
       compute_bike_type_slug: {
@@ -2495,6 +2505,10 @@ export type Database = {
           msg_id: number
           read_ct: number
         }[]
+      }
+      reject_bike_type: {
+        Args: { p_bike_type_id: string; p_reason: string }
+        Returns: Json
       }
       report_no_show: { Args: { _booking_id: string }; Returns: Json }
       request_plan_downgrade: { Args: never; Returns: Json }
