@@ -171,7 +171,6 @@ const BookingDetail = () => {
   const hoursToPickup = (new Date(booking.pickup_date).getTime() - Date.now()) / 3.6e6;
   const isLastMinute = isConfirmed && hoursToPickup < 24;
   const pickupPast = new Date(booking.pickup_date).getTime() < Date.now();
-  const [cancelMode, setCancelMode] = useState<"decline" | "late">("decline");
 
   return (
     <AgencyLayout>
