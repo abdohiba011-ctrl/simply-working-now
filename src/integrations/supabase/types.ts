@@ -2354,6 +2354,7 @@ export type Database = {
         Args: { _booking_id: string; _credit_id: string }
         Returns: Json
       }
+      auto_cancel_stale_pending_bookings: { Args: never; Returns: number }
       cancel_booking_by_renter: { Args: { _booking_id: string }; Returns: Json }
       compute_bike_type_slug: {
         Args: { _name: string; _neighborhood: string }

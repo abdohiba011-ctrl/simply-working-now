@@ -84,6 +84,7 @@ const AdminBookings = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<AdminStatus>("all");
+  const [bookingStatusFilter, setBookingStatusFilter] = useState<string>("all");
   const [counts, setCounts] = useState<BookingCounts>({ new: 0, reviewed: 0, confirmed: 0, rejected: 0 });
 
   useEffect(() => {
@@ -104,23 +105,30 @@ const AdminBookings = () => {
 
   useEffect(() => {
     let filtered = bookings;
-    
+
     if (statusFilter !== "all") {
       filtered = filtered.filter(b => b.admin_status === statusFilter);
     }
-    
+
+    if (bookingStatusFilter !== "all") {
+      filtered = filtered.filter(b => {
+        const bs = (b as unknown as { booking_status?: string }).booking_status || b.status;
+        return bs === bookingStatusFilter;
+      });
+    }
+
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(booking => 
+      filtered = filtered.filter(booking =>
         booking.customer_name?.toLowerCase().includes(query) ||
         booking.customer_email?.toLowerCase().includes(query) ||
         booking.customer_phone?.includes(query) ||
         booking.id.toLowerCase().includes(query)
       );
     }
-    
+
     setFilteredBookings(filtered);
-  }, [searchQuery, statusFilter, bookings]);
+  }, [searchQuery, statusFilter, bookingStatusFilter, bookings]);
 
   // Set up realtime subscription
   useEffect(() => {
@@ -267,7 +275,22 @@ const AdminBookings = () => {
                   {filteredBookings.length} bookings found
                 </CardDescription>
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Select value={bookingStatusFilter} onValueChange={setBookingStatusFilter}>
+                  <SelectTrigger className="w-full sm:w-56">
+                    <SelectValue placeholder="Booking status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All booking statuses</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="confirmed">Confirmed</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
+                    <SelectItem value="cancelled">Cancelled by renter</SelectItem>
+                    <SelectItem value="cancelled_by_agency_late">Late cancel by agency</SelectItem>
+                    <SelectItem value="declined">Declined</SelectItem>
+                    <SelectItem value="no_show">No-show</SelectItem>
+                  </SelectContent>
+                </Select>
                 <div className="relative w-full md:w-72">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input

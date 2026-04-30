@@ -166,11 +166,19 @@ const BookingDetail = () => {
   };
 
   const status = (booking.booking_status || booking.status || "").toLowerCase();
-  const isPending = status === "pending";
+  const isPending = status === "pending" || status === "pending_confirmation";
   const isConfirmed = status === "confirmed";
-  const hoursToPickup = (new Date(booking.pickup_date).getTime() - Date.now()) / 3.6e6;
-  const isLastMinute = isConfirmed && hoursToPickup < 24;
-  const pickupPast = new Date(booking.pickup_date).getTime() < Date.now();
+  const pickupAt = (() => {
+    try {
+      const t = (booking.pickup_time || "00:00").padStart(5, "0");
+      return new Date(`${booking.pickup_date}T${t}:00`).getTime();
+    } catch {
+      return new Date(booking.pickup_date).getTime();
+    }
+  })();
+  const hoursToPickup = (pickupAt - Date.now()) / 3.6e6;
+  const isLastMinute = isConfirmed && hoursToPickup < 24 && hoursToPickup > -2;
+  const noShowEligible = isConfirmed && Date.now() - pickupAt > 2 * 3.6e6;
 
   return (
     <AgencyLayout>
@@ -202,7 +210,7 @@ const BookingDetail = () => {
                   <X className="h-4 w-4" /> Cancel (50 MAD penalty)
                 </Button>
               )}
-              {isConfirmed && pickupPast && (
+              {isConfirmed && noShowEligible && (
                 <Button variant="outline" size="sm" className="gap-2" onClick={reportNoShow} disabled={busy}>
                   Report no-show
                 </Button>

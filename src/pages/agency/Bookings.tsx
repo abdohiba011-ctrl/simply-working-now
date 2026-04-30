@@ -22,9 +22,11 @@ const STATUS_FILTERS = [
   { key: "all", label: "All" },
   { key: "pending", label: "Pending" },
   { key: "confirmed", label: "Confirmed" },
-  { key: "in_progress", label: "In Progress" },
   { key: "completed", label: "Completed" },
+  { key: "no_show", label: "No-show" },
+  { key: "declined", label: "Declined" },
   { key: "cancelled", label: "Cancelled" },
+  { key: "cancelled_by_agency_late", label: "Late cancel" },
 ];
 
 const escapeCsv = (val: unknown) => {
