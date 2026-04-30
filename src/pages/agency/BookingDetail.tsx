@@ -210,7 +210,7 @@ const BookingDetail = () => {
                   <X className="h-4 w-4" /> Cancel (50 MAD penalty)
                 </Button>
               )}
-              {isConfirmed && pickupPast && (
+              {isConfirmed && noShowEligible && (
                 <Button variant="outline" size="sm" className="gap-2" onClick={reportNoShow} disabled={busy}>
                   Report no-show
                 </Button>
