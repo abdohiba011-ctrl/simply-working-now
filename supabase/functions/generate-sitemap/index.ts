@@ -126,16 +126,16 @@ Deno.serve(async (req) => {
   try {
     const { data: bikes } = await supabase
       .from("bike_types")
-      .select("id, updated_at")
+      .select("id, slug, updated_at")
       .eq("is_approved", true)
       .eq("business_status", "active")
       .limit(5000);
 
     for (const b of bikes ?? []) {
-      const id = (b as { id: string }).id;
-      const lastmod =
-        (b as { updated_at?: string }).updated_at?.slice(0, 10) ?? today;
-      entries.push(urlEntry(`${SITE}/bike/${id}`, lastmod, "weekly", "0.8"));
+      const row = b as { id: string; slug?: string | null; updated_at?: string };
+      const path = row.slug && row.slug.length > 0 ? row.slug : row.id;
+      const lastmod = row.updated_at?.slice(0, 10) ?? today;
+      entries.push(urlEntry(`${SITE}/bike/${path}`, lastmod, "weekly", "0.8"));
     }
   } catch (e) {
     console.error("bikes query failed", e);
