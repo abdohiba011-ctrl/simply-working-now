@@ -42,11 +42,12 @@ export const useBikeTypes = () => {
   return useQuery({
     queryKey: ["bike-types"],
     queryFn: async () => {
-      // Only show admin-approved listings to public renters.
+      // Only show admin-approved + active listings to public renters.
       const { data, error } = await supabase
         .from("bike_types")
         .select("*")
         .eq("approval_status", "approved")
+        .eq("business_status", "active")
         .order("name");
 
       if (error) throw error;

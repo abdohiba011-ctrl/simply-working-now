@@ -211,7 +211,8 @@ export default function RentCity() {
           "id,slug,name,category,fuel_type,daily_price,weekly_price,monthly_price,rating,review_count,main_image_url,neighborhood,features,license_required,year,engine_cc,city_id"
         )
         .eq("is_approved", true)
-        .eq("approval_status", "approved");
+        .eq("approval_status", "approved")
+        .eq("business_status", "active");
 
       if (cityRow?.id) query = query.eq("city_id", cityRow.id);
 
