@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import {
   ShieldCheck,
@@ -29,6 +30,7 @@ type EntityType = "company" | "auto_entrepreneur";
 const SLOTS = {
   rc: "rc",
   ae_card: "ae_card",
+  ice_cert: "ice_cert",
   id_front: "id_front",
   id_back: "id_back",
 } as const;
@@ -50,6 +52,11 @@ const Verification = () => {
   const [submitting, setSubmitting] = useState(false);
   const [status, setStatus] = useState<string>("not_started");
   const [entityType, setEntityType] = useState<EntityType>("company");
+  const [ice, setIce] = useState<string>("");
+  const [iceTouched, setIceTouched] = useState(false);
+  const [rejectionReason, setRejectionReason] = useState<string | null>(null);
+  const [rejectedAt, setRejectedAt] = useState<string | null>(null);
+  const [agencyId, setAgencyId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!userId) return;
@@ -66,11 +73,17 @@ const Verification = () => {
       if (profile?.id) {
         const { data: agency } = await supabase
           .from("agencies")
-          .select("verification_status,is_verified")
+          .select("id,verification_status,is_verified,ice,rejection_reason,rejected_at")
           .eq("profile_id", profile.id)
           .maybeSingle();
-        if (agency?.is_verified) setStatus("verified");
-        else if (agency?.verification_status) setStatus(agency.verification_status);
+        if (agency) {
+          setAgencyId(agency.id);
+          setIce(agency.ice || "");
+          setRejectionReason(agency.rejection_reason || null);
+          setRejectedAt(agency.rejected_at || null);
+          if (agency.is_verified) setStatus("approved");
+          else if (agency.verification_status) setStatus(agency.verification_status);
+        }
       }
 
       const { data: files } = await supabase
@@ -85,6 +98,7 @@ const Verification = () => {
         const name = (f.file_name || "").toLowerCase();
         let matched: SlotKey | null = null;
         if (name.startsWith("ae_card")) matched = "ae_card";
+        else if (name.startsWith("ice_cert")) matched = "ice_cert";
         else if (name.startsWith("id_front")) matched = "id_front";
         else if (name.startsWith("id_back")) matched = "id_back";
         else if (name.startsWith("rc")) matched = "rc";
@@ -169,21 +183,26 @@ const Verification = () => {
       ? "A clear scan or photo of your RC document. Both pages if it has multiple."
       : "A clear photo of your auto-entrepreneur card, all corners visible.";
 
+  const iceValid = /^[0-9]{15}$/.test(ice);
   const hasBusiness = !!docs.find((d) => d.key === businessSlot);
+  const hasIceCert = !!docs.find((d) => d.key === "ice_cert");
   const hasIdFront = !!docs.find((d) => d.key === "id_front");
   const hasIdBack = !!docs.find((d) => d.key === "id_back");
-  const completed = [hasBusiness, hasIdFront, hasIdBack].filter(Boolean).length;
-  const total = 3;
+  const completed = [iceValid, hasBusiness, hasIceCert, hasIdFront, hasIdBack].filter(Boolean).length;
+  const total = 5;
   const allReady = completed === total;
   const progressPct = Math.round((completed / total) * 100);
 
   const handleSubmit = async () => {
     if (!userId) return;
-    if (!allReady) {
-      toast.error("Please upload all required documents first.");
+    if (!iceValid) {
+      toast.error("ICE must be exactly 15 digits.");
       return;
     }
-    // Guard against blob/data placeholders that never reached storage
+    if (!allReady) {
+      toast.error("Please complete all required items first.");
+      return;
+    }
     const bad = docs.find((d) => /^(blob:|data:)/i.test(d.file_url));
     if (bad) {
       toast.error("One of your files didn't upload properly. Please replace it.");
@@ -210,23 +229,33 @@ const Verification = () => {
         .eq("profile_id", profile.id)
         .maybeSingle();
 
+      const payload = {
+        verification_status: "pending",
+        ice,
+        rejection_reason: null,
+        rejected_at: null,
+        rejected_by: null,
+      } as const;
+
       if (existing?.id) {
         const { error: aErr } = await supabase
           .from("agencies")
-          .update({ verification_status: "pending_review" })
+          .update(payload)
           .eq("id", existing.id);
         if (aErr) throw aErr;
       } else {
         const { error: aErr } = await supabase.from("agencies").insert({
           profile_id: profile.id,
           business_name: profile.business_name || "Agency",
-          verification_status: "pending_review",
           is_verified: false,
+          ...payload,
         });
         if (aErr) throw aErr;
       }
 
-      setStatus("pending_review");
+      setStatus("pending");
+      setRejectionReason(null);
+      setRejectedAt(null);
       toast.success("Submitted! We'll review your documents within 24–48h.");
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Could not submit";
@@ -236,8 +265,8 @@ const Verification = () => {
     }
   };
 
-  const isPending = status === "pending_review";
-  const isVerified = status === "verified";
+  const isPending = status === "pending";
+  const isVerified = status === "approved";
   const isRejected = status === "rejected";
   const locked = isPending || isVerified;
 
@@ -285,13 +314,13 @@ const Verification = () => {
     if (isVerified)
       return (
         <Badge className="bg-success/15 text-success border border-success/30">
-          <CheckCircle2 className="mr-1 h-3 w-3" /> Verified
+          <CheckCircle2 className="mr-1 h-3 w-3" /> Approved
         </Badge>
       );
     if (isPending)
       return (
         <Badge variant="outline" className="border-amber-400 text-amber-700">
-          <Clock className="mr-1 h-3 w-3" /> Pending review
+          <Clock className="mr-1 h-3 w-3" /> Pending
         </Badge>
       );
     if (isRejected)
@@ -360,7 +389,7 @@ const Verification = () => {
               <div className="mt-3 flex items-center gap-2 text-xs">
                 <FileCheck2 className="h-3.5 w-3.5 text-success shrink-0" />
                 <span className="truncate text-muted-foreground" title={existing.file_name}>
-                  {existing.file_name.replace(/^(rc|ae_card|id_front|id_back)-/, "")}
+                  {existing.file_name.replace(/^(rc|ae_card|ice_cert|id_front|id_back)-/, "")}
                 </span>
               </div>
             )}
@@ -442,12 +471,33 @@ const Verification = () => {
           </div>
         </div>
 
+        {/* Rejection reason banner */}
+        {isRejected && rejectionReason && (
+          <div className="mt-4 rounded-lg border border-destructive/40 bg-destructive/10 p-4 text-destructive">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="h-5 w-5 mt-0.5 shrink-0" />
+              <div className="min-w-0 flex-1">
+                <div className="text-sm font-semibold">Your verification was rejected</div>
+                <p className="mt-1 text-sm whitespace-pre-wrap">{rejectionReason}</p>
+                <p className="mt-2 text-xs opacity-80">
+                  Please review the feedback above, update your documents, and resubmit for review.
+                </p>
+                {rejectedAt && (
+                  <p className="mt-1 text-xs opacity-70">
+                    Rejected on {new Date(rejectedAt).toLocaleString()}
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Progress (only when actionable) */}
         {!isVerified && (
           <div className="mt-5">
             <div className="mb-2 flex items-center justify-between text-xs text-muted-foreground">
               <span>
-                Progress · <span className="font-medium text-foreground">{completed}/{total} documents</span>
+                Progress · <span className="font-medium text-foreground">{completed}/{total} items</span>
               </span>
               <span>{progressPct}%</span>
             </div>
@@ -529,11 +579,56 @@ const Verification = () => {
             </div>
           </Card>
 
-          {/* Step 2 — Business document */}
+          {/* Step 2 — ICE Number */}
           <Card className="p-6">
             <div className="flex items-start gap-3">
               <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-semibold">
                 2
+              </div>
+              <div className="flex-1">
+                <Label htmlFor="ice" className="text-sm font-semibold">ICE Number</Label>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Your 15-digit ICE number from your Registre de Commerce. Required for invoicing
+                  your Motonita subscription and booking fees.
+                </p>
+                <div className="mt-3 max-w-xs">
+                  <Input
+                    id="ice"
+                    inputMode="numeric"
+                    maxLength={15}
+                    placeholder="000000000000000"
+                    value={ice}
+                    disabled={locked}
+                    onChange={(e) => {
+                      const v = e.target.value.replace(/[^0-9]/g, "").slice(0, 15);
+                      setIce(v);
+                    }}
+                    onBlur={() => setIceTouched(true)}
+                    className={cn(
+                      "font-mono",
+                      iceTouched && !iceValid && ice.length > 0 && "border-destructive",
+                    )}
+                  />
+                  {iceTouched && !iceValid && ice.length > 0 && (
+                    <p className="mt-1 text-xs text-destructive">
+                      ICE must be exactly 15 digits ({ice.length}/15).
+                    </p>
+                  )}
+                  {iceValid && (
+                    <p className="mt-1 text-xs text-success flex items-center gap-1">
+                      <CheckCircle2 className="h-3 w-3" /> Valid format
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </Card>
+
+          {/* Step 3 — Business document */}
+          <Card className="p-6">
+            <div className="flex items-start gap-3">
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-semibold">
+                3
               </div>
               <div className="flex-1">
                 <Label className="text-sm font-semibold">{businessLabel}</Label>
@@ -550,11 +645,34 @@ const Verification = () => {
             </div>
           </Card>
 
-          {/* Step 3 — CIN */}
+          {/* Step 4 — ICE Certificate */}
           <Card className="p-6">
             <div className="flex items-start gap-3">
               <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-semibold">
-                3
+                4
+              </div>
+              <div className="flex-1">
+                <Label className="text-sm font-semibold">ICE Certificate</Label>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  PDF or clear photo of your ICE certificate from the tax administration.
+                </p>
+                <div className="mt-4">
+                  <UploadTile
+                    slot="ice_cert"
+                    title="ICE Certificate"
+                    help="Must clearly show your 15-digit ICE number."
+                    icon={<FileCheck2 className="h-4 w-4" />}
+                  />
+                </div>
+              </div>
+            </div>
+          </Card>
+
+          {/* Step 5 — CIN */}
+          <Card className="p-6">
+            <div className="flex items-start gap-3">
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-semibold">
+                5
               </div>
               <div className="flex-1">
                 <Label className="text-sm font-semibold">Owner ID card (CIN)</Label>
@@ -605,7 +723,7 @@ const Verification = () => {
                   ) : (
                     <span>
                       <span className="font-medium text-foreground">{total - completed}</span>{" "}
-                      document{total - completed === 1 ? "" : "s"} left to upload.
+                      item{total - completed === 1 ? "" : "s"} left to complete.
                     </span>
                   )}
                 </div>

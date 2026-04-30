@@ -60,6 +60,9 @@ export type Database = {
           primary_neighborhood: string | null
           profile_id: string
           rc: string | null
+          rejected_at: string | null
+          rejected_by: string | null
+          rejection_reason: string | null
           subscription_plan: string | null
           trial_ends_at: string | null
           trial_started_at: string | null
@@ -81,6 +84,9 @@ export type Database = {
           primary_neighborhood?: string | null
           profile_id: string
           rc?: string | null
+          rejected_at?: string | null
+          rejected_by?: string | null
+          rejection_reason?: string | null
           subscription_plan?: string | null
           trial_ends_at?: string | null
           trial_started_at?: string | null
@@ -102,6 +108,9 @@ export type Database = {
           primary_neighborhood?: string | null
           profile_id?: string
           rc?: string | null
+          rejected_at?: string | null
+          rejected_by?: string | null
+          rejection_reason?: string | null
           subscription_plan?: string | null
           trial_ends_at?: string | null
           trial_started_at?: string | null

@@ -4,6 +4,16 @@ import { Footer } from "@/components/Footer";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -18,6 +28,7 @@ import {
   FileText,
   ExternalLink,
   AlertCircle,
+  Copy,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -37,7 +48,7 @@ interface PendingAgency {
   profile_id: string;
 }
 
-type SlotKey = "rc" | "ae_card" | "id_front" | "id_back";
+type SlotKey = "rc" | "ae_card" | "ice_cert" | "id_front" | "id_back";
 
 interface AgencyDoc {
   key: SlotKey;
@@ -55,6 +66,7 @@ interface AgencyDocsState {
 const SLOT_LABEL: Record<SlotKey, string> = {
   rc: "Registre de Commerce (RC)",
   ae_card: "Auto-entrepreneur card",
+  ice_cert: "ICE Certificate",
   id_front: "Owner ID — Front",
   id_back: "Owner ID — Back",
 };
@@ -62,22 +74,28 @@ const SLOT_LABEL: Record<SlotKey, string> = {
 const matchSlot = (fileName: string): SlotKey | null => {
   const n = (fileName || "").toLowerCase();
   if (n.startsWith("ae_card")) return "ae_card";
+  if (n.startsWith("ice_cert")) return "ice_cert";
   if (n.startsWith("id_front")) return "id_front";
   if (n.startsWith("id_back")) return "id_back";
   if (n.startsWith("rc")) return "rc";
   return null;
 };
 
-// Try to extract the bucket path from a stored file_url (signed URL or raw path)
 const extractBucketPath = (fileUrl: string): string | null => {
   if (!fileUrl) return null;
-  // signed URL pattern: /storage/v1/object/sign/client-files/<path>?token=...
   const m = fileUrl.match(/\/object\/(?:sign|public)\/client-files\/([^?]+)/);
   if (m) return decodeURIComponent(m[1]);
-  // already a raw path
   if (!fileUrl.startsWith("http")) return fileUrl;
   return null;
 };
+
+const REJECT_PRESETS = [
+  "Documents are unclear or low quality",
+  "Missing required document",
+  "Document doesn't match agency information",
+  "Documents appear to be expired",
+  "Information mismatch with public records",
+];
 
 const AdminAgencyVerifications = () => {
   const { hasRole, isAuthenticated } = useAuth();
@@ -86,6 +104,10 @@ const AdminAgencyVerifications = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [docsByAgency, setDocsByAgency] = useState<Record<string, AgencyDocsState>>({});
+
+  const [rejectTarget, setRejectTarget] = useState<PendingAgency | null>(null);
+  const [rejectReason, setRejectReason] = useState("");
+  const [rejectSubmitting, setRejectSubmitting] = useState(false);
 
   const isAdmin = hasRole("admin");
 
@@ -101,13 +123,12 @@ const AdminAgencyVerifications = () => {
       const { data, error } = await supabase
         .from("agencies")
         .select("*")
-        .in("verification_status", ["pending_review", "pending"])
+        .eq("verification_status", "pending")
         .eq("is_verified", false)
         .order("created_at", { ascending: false });
       if (error) throw error;
       const list = data || [];
       setPending(list);
-      // Fetch documents for each agency
       list.forEach((a) => loadDocsFor(a));
     } catch (e) {
       toast.error("Failed to load pending agencies");
@@ -123,7 +144,6 @@ const AdminAgencyVerifications = () => {
       [agency.id]: { loading: true, business_type: null, docs: [] },
     }));
     try {
-      // Get owner user_id + business_type from the linked profile
       const { data: profile } = await supabase
         .from("profiles")
         .select("user_id, business_type")
@@ -146,6 +166,7 @@ const AdminAgencyVerifications = () => {
       const found: Record<SlotKey, AgencyDoc | null> = {
         rc: null,
         ae_card: null,
+        ice_cert: null,
         id_front: null,
         id_back: null,
       };
@@ -187,7 +208,11 @@ const AdminAgencyVerifications = () => {
     }
   };
 
-  const notifyOwner = async (agency: PendingAgency, approved: boolean) => {
+  const notifyOwner = async (
+    agency: PendingAgency,
+    approved: boolean,
+    reason?: string,
+  ) => {
     try {
       const { data: profile } = await supabase
         .from("profiles")
@@ -197,10 +222,10 @@ const AdminAgencyVerifications = () => {
       if (!profile?.user_id) return;
       await supabase.from("notifications").insert({
         user_id: profile.user_id,
-        title: approved ? "Shop Verified!" : "Shop Verification Rejected",
+        title: approved ? "Shop Approved!" : "Shop Verification Rejected",
         message: approved
-          ? `Your shop "${agency.business_name}" has been verified. Approved motorbikes will now appear publicly.`
-          : `Your shop "${agency.business_name}" was not approved. Please review your documents and resubmit.`,
+          ? `Your shop "${agency.business_name}" has been approved. Approved motorbikes will now appear publicly.`
+          : `Your shop "${agency.business_name}" was rejected${reason ? `: ${reason}` : "."} Please review the feedback and resubmit.`,
         type: approved ? "success" : "warning",
         link: "/agency/verification",
         action_url: "/agency/verification",
@@ -215,36 +240,89 @@ const AdminAgencyVerifications = () => {
     try {
       const { error } = await supabase
         .from("agencies")
-        .update({ is_verified: true, verification_status: "verified" })
+        .update({
+          is_verified: true,
+          verification_status: "approved",
+          rejection_reason: null,
+          rejected_at: null,
+          rejected_by: null,
+        })
         .eq("id", agency.id);
       if (error) throw error;
       await notifyOwner(agency, true);
-      toast.success("Shop verified");
+      try {
+        await supabase.rpc("log_audit_event", {
+          _action: "agency_verification_approved",
+          _table_name: "agencies",
+          _record_id: agency.id,
+          _details: { business_name: agency.business_name },
+        });
+      } catch { /* non-fatal */ }
+      toast.success("Shop approved");
       fetchPending();
     } catch (e) {
-      toast.error("Failed to verify shop");
+      toast.error("Failed to approve shop");
       console.error(e);
     } finally {
       setActionLoading(null);
     }
   };
 
-  const handleReject = async (agency: PendingAgency) => {
-    setActionLoading(agency.id);
+  const openReject = (agency: PendingAgency) => {
+    setRejectTarget(agency);
+    setRejectReason("");
+  };
+
+  const submitReject = async () => {
+    if (!rejectTarget) return;
+    if (rejectReason.trim().length < 20) {
+      toast.error("Please provide at least 20 characters of feedback.");
+      return;
+    }
+    setRejectSubmitting(true);
     try {
+      const { data: u } = await supabase.auth.getUser();
       const { error } = await supabase
         .from("agencies")
-        .update({ is_verified: false, verification_status: "rejected" })
-        .eq("id", agency.id);
+        .update({
+          is_verified: false,
+          verification_status: "rejected",
+          rejection_reason: rejectReason.trim(),
+          rejected_at: new Date().toISOString(),
+          rejected_by: u.user?.id ?? null,
+        })
+        .eq("id", rejectTarget.id);
       if (error) throw error;
-      await notifyOwner(agency, false);
-      toast.success("Shop rejected");
+      await notifyOwner(rejectTarget, false, rejectReason.trim());
+      try {
+        await supabase.rpc("log_audit_event", {
+          _action: "agency_verification_rejected",
+          _table_name: "agencies",
+          _record_id: rejectTarget.id,
+          _details: {
+            business_name: rejectTarget.business_name,
+            reason: rejectReason.trim(),
+          },
+        });
+      } catch { /* non-fatal */ }
+      toast.success("Agency rejected and notified");
+      setRejectTarget(null);
+      setRejectReason("");
       fetchPending();
     } catch (e) {
-      toast.error("Failed to reject shop");
+      toast.error("Failed to reject agency");
       console.error(e);
     } finally {
-      setActionLoading(null);
+      setRejectSubmitting(false);
+    }
+  };
+
+  const copyText = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success("Copied");
+    } catch {
+      toast.error("Could not copy");
     }
   };
 
@@ -320,6 +398,7 @@ const AdminAgencyVerifications = () => {
                   businessType === "auto_entrepreneur" ? "ae_card" : "rc";
                 const requiredSlots: SlotKey[] = [
                   requiredBusinessSlot,
+                  "ice_cert",
                   "id_front",
                   "id_back",
                 ];
@@ -327,7 +406,9 @@ const AdminAgencyVerifications = () => {
                   (ds?.docs || []).map((d) => [d.key, d] as const),
                 );
                 const missing = requiredSlots.filter((s) => !docMap.get(s));
-                const canApprove = missing.length === 0 && !ds?.loading;
+                const iceValid = !!a.ice && /^[0-9]{15}$/.test(a.ice);
+                const canApprove =
+                  missing.length === 0 && iceValid && !ds?.loading;
 
                 return (
                   <Card key={a.id} className="hover:shadow-md transition-shadow">
@@ -348,9 +429,30 @@ const AdminAgencyVerifications = () => {
                                 ? ` · ${a.primary_neighborhood}`
                                 : ""}
                             </p>
-                            <div className="flex flex-wrap gap-2 mt-2 text-xs text-muted-foreground">
+                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-xs text-muted-foreground">
                               {a.rc && <span>RC: {a.rc}</span>}
-                              {a.ice && <span>ICE: {a.ice}</span>}
+                              {a.ice ? (
+                                <span className="inline-flex items-center gap-1">
+                                  ICE: <span className="font-mono">{a.ice}</span>
+                                  <button
+                                    type="button"
+                                    onClick={() => copyText(a.ice!)}
+                                    className="text-muted-foreground hover:text-foreground"
+                                    title="Copy ICE"
+                                  >
+                                    <Copy className="h-3 w-3" />
+                                  </button>
+                                  {!iceValid && (
+                                    <Badge variant="destructive" className="text-[10px] py-0">
+                                      invalid
+                                    </Badge>
+                                  )}
+                                </span>
+                              ) : (
+                                <Badge variant="destructive" className="text-[10px] py-0">
+                                  ICE missing
+                                </Badge>
+                              )}
                               {a.phone && <span>Tel: {a.phone}</span>}
                               {businessType && (
                                 <span>
@@ -370,7 +472,7 @@ const AdminAgencyVerifications = () => {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleReject(a)}
+                            onClick={() => openReject(a)}
                             disabled={actionLoading === a.id}
                           >
                             <XCircle className="h-4 w-4 mr-1" />
@@ -382,7 +484,7 @@ const AdminAgencyVerifications = () => {
                             disabled={actionLoading === a.id || !canApprove}
                             title={
                               !canApprove
-                                ? "Cannot approve: documents missing"
+                                ? "Cannot approve: missing documents or invalid ICE"
                                 : undefined
                             }
                           >
@@ -454,7 +556,7 @@ const AdminAgencyVerifications = () => {
                                     {d ? (
                                       <p className="text-[11px] text-muted-foreground truncate">
                                         {d.file_name.replace(
-                                          /^(rc|ae_card|id_front|id_back)-/,
+                                          /^(rc|ae_card|ice_cert|id_front|id_back)-/,
                                           "",
                                         )}
                                       </p>
@@ -490,6 +592,96 @@ const AdminAgencyVerifications = () => {
         </div>
       </main>
       <Footer />
+
+      {/* Reject modal */}
+      <Dialog
+        open={!!rejectTarget}
+        onOpenChange={(o) => {
+          if (!o && !rejectSubmitting) {
+            setRejectTarget(null);
+            setRejectReason("");
+          }
+        }}
+      >
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>
+              Reject verification — {rejectTarget?.business_name}
+            </DialogTitle>
+            <DialogDescription>
+              The agency will see this reason on their verification page. Be
+              specific so they can fix the issue and resubmit.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3">
+            <div>
+              <Label className="text-xs text-muted-foreground">
+                Quick fill
+              </Label>
+              <div className="mt-1 flex flex-wrap gap-2">
+                {REJECT_PRESETS.map((p) => (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() =>
+                      setRejectReason((cur) => (cur ? cur + "\n" + p : p))
+                    }
+                    className="text-xs px-2 py-1 rounded-md border border-border bg-muted hover:bg-muted/70"
+                  >
+                    {p}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="reject-reason" className="text-sm font-medium">
+                Reason for rejection (the agency will see this) *
+              </Label>
+              <Textarea
+                id="reject-reason"
+                rows={5}
+                placeholder="Explain what needs fixing so the agency can resubmit successfully…"
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                className="mt-1"
+              />
+              <p className="mt-1 text-xs text-muted-foreground">
+                {rejectReason.trim().length}/20 minimum characters
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setRejectTarget(null);
+                setRejectReason("");
+              }}
+              disabled={rejectSubmitting}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={submitReject}
+              disabled={
+                rejectSubmitting || rejectReason.trim().length < 20
+              }
+            >
+              {rejectSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Rejecting…
+                </>
+              ) : (
+                <>Reject and notify agency</>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
