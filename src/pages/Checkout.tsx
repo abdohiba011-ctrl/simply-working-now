@@ -295,12 +295,13 @@ const Checkout = () => {
                       <span>{rentalSubtotal} DH</span>
                     </div>
                     <p className="text-xs text-muted-foreground italic">
-                      Paid directly to the agency at pickup.
+                      Pay agency at pickup: {Math.max(0, rentalSubtotal - CONFIRMATION_FEE_MAD)} DH
+                      (rental − {CONFIRMATION_FEE_MAD} prepaid) + refundable deposit.
                     </p>
                     <Separator />
                     <div className="flex justify-between text-base font-bold pt-2">
                       <span className="text-foreground">Pay now</span>
-                      <span className="text-primary">{PLATFORM_FEE_MAD} DH</span>
+                      <span className="text-primary">{UPFRONT_TOTAL_MAD} DH</span>
                     </div>
                   </div>
                 </div>
