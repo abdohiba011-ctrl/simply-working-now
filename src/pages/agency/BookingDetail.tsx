@@ -274,26 +274,37 @@ const BookingDetail = () => {
         <Card className="p-6">
           <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Payment</h2>
           <div className="mt-4 space-y-2 text-sm">
-            <div className="flex justify-between"><span className="text-muted-foreground">Total</span><span className="font-medium">{Number(booking.total_price || 0).toLocaleString()} MAD</span></div>
-            <div className="flex justify-between"><span className="text-muted-foreground">Amount paid</span><span className="font-medium">{Number(booking.amount_paid || 0).toLocaleString()} MAD</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">Rental total (listed)</span><span className="font-medium">{Number(booking.total_price || 0).toLocaleString()} MAD</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">Renter prepaid Motonita</span><span className="font-medium">{Number((booking.platform_fee_paid_amount_mad || 0) + (booking.confirmation_fee_paid_amount_mad || 0)).toLocaleString()} MAD</span></div>
             <div className="my-2 border-t" />
-            <div className="flex justify-between"><span>Balance due</span><span className="text-base font-bold">{Math.max(0, Number(booking.total_price || 0) - Number(booking.amount_paid || 0)).toLocaleString()} MAD</span></div>
+            <div className="flex justify-between"><span>You collect at pickup</span><span className="text-base font-bold">{Number(booking.amount_due_at_pickup_mad || 0).toLocaleString()} MAD</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">+ Refundable deposit</span><span className="font-medium">{Number(booking.deposit_amount_mad || 0).toLocaleString()} MAD</span></div>
+            <p className="text-xs text-muted-foreground pt-2">Renter already paid Motonita the 50 MAD confirmation fee — collect rental minus 50, plus deposit.</p>
           </div>
         </Card>
       </div>
 
       <Dialog open={cancelOpen} onOpenChange={setCancelOpen}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Cancel booking</DialogTitle></DialogHeader>
+          <DialogHeader>
+            <DialogTitle>{cancelMode === "late" ? "Last-minute cancellation" : "Decline booking"}</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            {cancelMode === "late"
+              ? "Pickup is less than 24h away. A 50 MAD penalty will be deducted from your wallet, and the renter will receive 50 MAD as Motonita Credit. Two such incidents in 30 days suspend your agency."
+              : "The renter will receive 50 MAD as Motonita Credit. The 10 MAD platform fee is not refunded."}
+          </p>
           <Textarea
             value={cancelReason}
             onChange={(e) => setCancelReason(e.target.value)}
-            placeholder="Reason for cancellation…"
+            placeholder="Reason…"
             rows={3}
           />
           <DialogFooter>
             <Button variant="outline" onClick={() => setCancelOpen(false)} disabled={busy}>Back</Button>
-            <Button variant="destructive" onClick={cancel} disabled={busy}>Confirm cancel</Button>
+            <Button variant="destructive" onClick={cancelMode === "late" ? lateCancel : decline} disabled={busy}>
+              {cancelMode === "late" ? "Confirm late cancel" : "Confirm decline"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
