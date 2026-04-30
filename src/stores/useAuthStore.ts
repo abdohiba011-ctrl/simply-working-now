@@ -220,6 +220,10 @@ function mapSupabaseAuthError(message: string): AuthError {
   return makeAuthError("NETWORK", message || "Something went wrong");
 }
 
+function isAuthError(err: unknown): err is AuthError {
+  return !!err && typeof err === "object" && "code" in err && "message" in err;
+}
+
 // ---------------------------------------------------------------------
 // Store
 // ---------------------------------------------------------------------
@@ -335,76 +339,78 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       throw err;
     }
 
-    let signInResult;
-    if (idType === "email") {
-      signInResult = await supabase.auth.signInWithPassword({
-        email: id.toLowerCase(),
-        password,
-      });
-    } else {
-      const phone = normalizePhone(id);
-      if (!phone) {
-        const err = makeAuthError("INVALID_CREDENTIALS", "Invalid phone number.");
-        set({ isLoading: false, error: err.message });
+    try {
+      const signInResult = idType === "email"
+        ? await supabase.auth.signInWithPassword({
+            email: id.toLowerCase(),
+            password,
+          })
+        : await supabase.auth.signInWithPassword({
+            phone: normalizePhone(id) ?? id,
+            password,
+          });
+
+      if (signInResult.error || !signInResult.data.user) {
+        const err = mapSupabaseAuthError(signInResult.error?.message ?? "Login failed");
+        set({
+          isLoading: false,
+          error: err.message,
+          needsVerification: err.code === "EMAIL_NOT_VERIFIED",
+          pendingEmail: err.code === "EMAIL_NOT_VERIFIED" ? id.toLowerCase() : get().pendingEmail,
+        });
         throw err;
       }
-      signInResult = await supabase.auth.signInWithPassword({ phone, password });
-    }
 
-    if (signInResult.error || !signInResult.data.user) {
-      const err = mapSupabaseAuthError(signInResult.error?.message ?? "Login failed");
-      // Track client-side lockout heuristic on credential failures
-      if (err.code === "INVALID_CREDENTIALS") {
-        // Don't auto-lock from a single failure; let Supabase handle real limits.
+      clearLockout(emailOrPhone);
+      const mapped = await loadAuthUserModel(signInResult.data.user);
+
+      // Determine active role from login context + available roles
+      let currentRole: AppRole;
+      if (context === "agency" && mapped.roles.agency.active) {
+        currentRole = "agency";
+      } else if (context === "renter" && mapped.roles.renter.active) {
+        currentRole = "renter";
+      } else if (mapped.roles.agency.active && mapped.roles.renter.active) {
+        currentRole = mapped.last_active_role;
+      } else if (mapped.roles.agency.active) {
+        currentRole = "agency";
+      } else {
+        currentRole = "renter";
       }
+
+      const user: MockUser = { ...mapped, last_active_role: currentRole };
+      writeLastRole(currentRole);
+      if (rememberMe) {
+        try {
+          localStorage.setItem(REMEMBER_ME_KEY, "1");
+        } catch {
+          // ignore
+        }
+      }
+
+      set({
+        user,
+        session: signInResult.data.session,
+        currentRole,
+        isAuthenticated: true,
+        isLoading: false,
+        error: null,
+        needsVerification: false,
+        pendingEmail: null,
+      });
+      return user;
+    } catch (err) {
+      const mapped = isAuthError(err)
+        ? err
+        : mapSupabaseAuthError((err as Error)?.message ?? "Login failed");
       set({
         isLoading: false,
-        error: err.message,
-        needsVerification: err.code === "EMAIL_NOT_VERIFIED",
-        pendingEmail: err.code === "EMAIL_NOT_VERIFIED" ? id.toLowerCase() : get().pendingEmail,
+        error: mapped.message,
+        needsVerification: mapped.code === "EMAIL_NOT_VERIFIED",
+        pendingEmail: mapped.code === "EMAIL_NOT_VERIFIED" ? id.toLowerCase() : get().pendingEmail,
       });
-      throw err;
+      throw mapped;
     }
-
-    clearLockout(emailOrPhone);
-
-    const mapped = await loadAuthUserModel(signInResult.data.user);
-
-    // Determine active role from login context + available roles
-    let currentRole: AppRole;
-    if (context === "agency" && mapped.roles.agency.active) {
-      currentRole = "agency";
-    } else if (context === "renter" && mapped.roles.renter.active) {
-      currentRole = "renter";
-    } else if (mapped.roles.agency.active && mapped.roles.renter.active) {
-      currentRole = mapped.last_active_role;
-    } else if (mapped.roles.agency.active) {
-      currentRole = "agency";
-    } else {
-      currentRole = "renter";
-    }
-
-    const user: MockUser = { ...mapped, last_active_role: currentRole };
-    writeLastRole(currentRole);
-    if (rememberMe) {
-      try {
-        localStorage.setItem(REMEMBER_ME_KEY, "1");
-      } catch {
-        // ignore
-      }
-    }
-
-    set({
-      user,
-      session: signInResult.data.session,
-      currentRole,
-      isAuthenticated: true,
-      isLoading: false,
-      error: null,
-      needsVerification: false,
-      pendingEmail: null,
-    });
-    return user;
   },
 
   // -----------------------------------------------------------------

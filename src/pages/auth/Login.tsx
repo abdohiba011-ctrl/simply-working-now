@@ -66,8 +66,11 @@ export default function Login({ context = "renter" }: LoginProps) {
   const error = useAuthStore((s) => s.error);
   const needsVerification = useAuthStore((s) => s.needsVerification);
   const clearError = useAuthStore((s) => s.clearError);
+  const checkAuth = useAuthStore((s) => s.checkAuth);
+  const authListenerInitialized = useAuthStore((s) => s.authListenerInitialized);
 
   const [showPassword, setShowPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [resendingVerification, setResendingVerification] = useState(false);
   const [lockoutMs, setLockoutMs] = useState(0);
   const [accountHint, setAccountHint] = useState<AccountMethodStatus | null>(null);
@@ -102,6 +105,10 @@ export default function Login({ context = "renter" }: LoginProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated]);
 
+  useEffect(() => {
+    if (!authListenerInitialized) void checkAuth();
+  }, [authListenerInitialized, checkAuth]);
+
   // Lockout countdown ticker
   useEffect(() => {
     const id = window.setInterval(() => {
@@ -118,6 +125,7 @@ export default function Login({ context = "renter" }: LoginProps) {
   const onSubmit = async (values: LoginValues) => {
     clearError();
     setAccountHint(null);
+    setIsSubmitting(true);
     // Persist or clear the remembered identifier
     try {
       if (values.rememberMe) {
@@ -174,6 +182,8 @@ export default function Login({ context = "renter" }: LoginProps) {
         }
       }
       // error message already in store
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -189,7 +199,7 @@ export default function Login({ context = "renter" }: LoginProps) {
     }
   };
 
-  const submitDisabled = isLoading || lockoutMs > 0;
+  const submitDisabled = isSubmitting || lockoutMs > 0;
 
   const Layout = AgencyAuthLayout;
 
@@ -384,7 +394,7 @@ export default function Login({ context = "renter" }: LoginProps) {
             className="w-full h-10 rounded-md text-sm font-semibold"
             style={{ backgroundColor: "#9FE870", color: "#163300" }}
           >
-            {isLoading ? (
+            {isSubmitting ? (
               <span className="inline-flex items-center gap-2">
                 <Loader2 className="h-4 w-4 animate-spin" />
                 {t("mockAuth.logging_in", { defaultValue: "Logging in..." })}
