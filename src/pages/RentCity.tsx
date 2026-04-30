@@ -208,7 +208,7 @@ export default function RentCity() {
       let query = supabase
         .from("bike_types")
         .select(
-          "id,name,category,fuel_type,daily_price,weekly_price,monthly_price,rating,review_count,main_image_url,neighborhood,features,license_required,year,engine_cc,city_id"
+          "id,slug,name,category,fuel_type,daily_price,weekly_price,monthly_price,rating,review_count,main_image_url,neighborhood,features,license_required,year,engine_cc,city_id"
         )
         .eq("is_approved", true)
         .eq("approval_status", "approved");
