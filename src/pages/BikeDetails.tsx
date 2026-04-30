@@ -505,7 +505,7 @@ const BikeDetails = () => {
               {/* Title + trust row */}
               <section>
                 <h1 className="text-3xl font-bold text-foreground tracking-tight">
-                  {bikeType.name}{bikeType.year ? ` (${bikeType.year})` : ""}
+                  {bikeType.name}{bikeType.year && !String(bikeType.name).includes(String(bikeType.year)) ? ` (${bikeType.year})` : ""}
                 </h1>
                 <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
                   <span className="inline-flex items-center gap-1">
