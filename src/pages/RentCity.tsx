@@ -99,6 +99,7 @@ const DURATION_OPTIONS = [
 
 type BikeRow = {
   id: string;
+  slug: string | null;
   name: string;
   category: string | null;
   fuel_type: string | null;
