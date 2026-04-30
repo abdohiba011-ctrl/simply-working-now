@@ -99,6 +99,7 @@ const DURATION_OPTIONS = [
 
 type BikeRow = {
   id: string;
+  slug: string | null;
   name: string;
   category: string | null;
   fuel_type: string | null;
@@ -207,7 +208,7 @@ export default function RentCity() {
       let query = supabase
         .from("bike_types")
         .select(
-          "id,name,category,fuel_type,daily_price,weekly_price,monthly_price,rating,review_count,main_image_url,neighborhood,features,license_required,year,engine_cc,city_id"
+          "id,slug,name,category,fuel_type,daily_price,weekly_price,monthly_price,rating,review_count,main_image_url,neighborhood,features,license_required,year,engine_cc,city_id"
         )
         .eq("is_approved", true)
         .eq("approval_status", "approved");
@@ -612,7 +613,7 @@ export default function RentCity() {
                     bike={b}
                     favorite={favorites.has(b.id)}
                     onToggleFavorite={() => toggleFavorite(b.id, b.name)}
-                    onOpen={() => navigate(`/bike/${b.id}`)}
+                    onOpen={() => navigate(`/bike/${b.slug || b.id}`)}
                     totalDays={totalDays}
                   />
                 ))}

@@ -42,6 +42,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { usePricingTiers, getDailyPriceForDuration } from "@/hooks/usePricingTiers";
 import { DateRangePicker } from "@/components/DateRangePicker";
+import { useDocumentHead } from "@/hooks/useDocumentHead";
+
+const isUuid = (s: string) =>
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
+const SITE_URL = "https://motonita.ma";
 
 const timeSlots = [
   "08:00", "08:30", "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
@@ -78,6 +83,16 @@ const BikeDetails = () => {
       setDateRange({ from: new Date(pickupParam), to: new Date(endParam) });
     }
   }, [pickupParam, endParam]);
+
+  // If URL is a UUID but the bike has a slug, redirect to the slug URL.
+  // This preserves old links and gives a single canonical URL.
+  const bikeSlug = (bike?.bike_type as any)?.slug as string | undefined;
+  useEffect(() => {
+    if (id && isUuid(id) && bikeSlug && bikeSlug !== id) {
+      const search = window.location.search || "";
+      navigate(`/bike/${bikeSlug}${search}`, { replace: true });
+    }
+  }, [id, bikeSlug, navigate]);
 
   const allImages = useMemo(() => {
     if (!bike?.bike_type) return [];
@@ -133,6 +148,30 @@ const BikeDetails = () => {
     setDateRange(range);
     if (range?.from && range?.to) setIsEditingDates(false);
   };
+
+  // SEO meta — must run unconditionally before early returns
+  const seoSlug = bikeSlug || (id && !isUuid(id) ? id : "");
+  const seoTitle = bike?.bike_type
+    ? `${(bike.bike_type as any).name} — Rent in ${bike.location || "Casablanca"} | Motonita`
+    : "Motorbike rental | Motonita";
+  const seoDescription = bike?.bike_type
+    ? `Rent the ${(bike.bike_type as any).name} from ${(bike.bike_type as any).agency_name || "a verified agency"} in ${bike.location || "Morocco"}. Daily price ${Math.round(Number((bike.bike_type as any).daily_price) || 0)} MAD. Booked in 60 seconds, flat 10 MAD booking fee.`
+    : "Rent verified motorbikes and scooters across Morocco with flat fees and no commission on rental price.";
+  const canonicalUrl = seoSlug ? `${SITE_URL}/bike/${seoSlug}` : undefined;
+  useDocumentHead({
+    title: seoTitle,
+    description: seoDescription,
+    canonical: canonicalUrl,
+    meta: canonicalUrl
+      ? [
+          { property: "og:url", content: canonicalUrl },
+          { property: "og:type", content: "product" },
+          ...(bike?.bike_type && (bike.bike_type as any).main_image_url
+            ? [{ property: "og:image", content: (bike.bike_type as any).main_image_url as string }]
+            : []),
+        ]
+      : [],
+  });
 
   if (isLoadingBike || isLoadingImages) {
     return (
