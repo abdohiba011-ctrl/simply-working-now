@@ -2275,6 +2275,45 @@ export type Database = {
           },
         ]
       }
+      booking_counterparty_profiles: {
+        Row: {
+          avatar_url: string | null
+          business_address: string | null
+          business_city: string | null
+          business_name: string | null
+          business_type: string | null
+          full_name: string | null
+          name: string | null
+          phone: string | null
+          preferred_language: string | null
+          user_id: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          business_address?: string | null
+          business_city?: string | null
+          business_name?: string | null
+          business_type?: string | null
+          full_name?: string | null
+          name?: string | null
+          phone?: string | null
+          preferred_language?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          business_address?: string | null
+          business_city?: string | null
+          business_name?: string | null
+          business_type?: string | null
+          full_name?: string | null
+          name?: string | null
+          phone?: string | null
+          preferred_language?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       city_bike_counts: {
         Row: {
           bikes_available: number | null
