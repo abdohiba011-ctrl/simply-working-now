@@ -427,15 +427,45 @@ const BikeDetails = () => {
               </div>
             )}
             <div className="flex justify-between text-sm text-muted-foreground">
-              <span>Motonita booking fee</span>
-              <span>{bookingFee} MAD</span>
+              <span>Refundable deposit</span>
+              <span>{(deposit || 0).toLocaleString()} MAD</span>
             </div>
-            <div className="border-t border-border/60 pt-2 mt-2 flex justify-between text-base font-bold text-foreground">
-              <span>Total upfront</span>
-              <span>{totalUpfront} MAD</span>
+
+            <div className="border-t border-border/60 pt-3 mt-2 space-y-1">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Pay now via YouCan Pay</p>
+              <div className="flex justify-between text-sm text-muted-foreground">
+                <span>Platform fee</span>
+                <span>{PLATFORM_FEE} MAD</span>
+              </div>
+              <div className="flex justify-between text-sm text-muted-foreground">
+                <span>Confirmation fee</span>
+                <span>{CONFIRMATION_FEE} MAD</span>
+              </div>
+              <div className="flex justify-between text-base font-bold text-foreground pt-1">
+                <span>Total now</span>
+                <span>{upfrontTotal} MAD</span>
+              </div>
             </div>
-            <p className="text-xs text-muted-foreground">
-              Due at pickup: {Math.round(dueAtPickup)} MAD + {deposit || 1200} MAD deposit
+
+            <div className="border-t border-border/60 pt-3 mt-2 space-y-1">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Pay agency at pickup</p>
+              <div className="flex justify-between text-sm text-muted-foreground">
+                <span>Rental ({Math.round(subtotal).toLocaleString()} − {CONFIRMATION_FEE} prepaid)</span>
+                <span>{rentalDueAtPickup.toLocaleString()} MAD</span>
+              </div>
+              <div className="flex justify-between text-sm text-muted-foreground">
+                <span>Refundable deposit</span>
+                <span>{(deposit || 0).toLocaleString()} MAD</span>
+              </div>
+              <div className="flex justify-between text-base font-bold text-foreground pt-1">
+                <span>Total at pickup</span>
+                <span>{pickupTotal.toLocaleString()} MAD</span>
+              </div>
+            </div>
+
+            <p className="text-xs text-muted-foreground pt-2">
+              Total trip cost: <strong className="text-foreground">{tripTotal.toLocaleString()} MAD</strong>{" "}
+              (deposit refunded when bike is returned undamaged)
             </p>
           </div>
         )}
@@ -448,10 +478,11 @@ const BikeDetails = () => {
           onClick={handleBookNow}
           disabled={!dateRange?.from || !dateRange?.to || !pickupTime || !dropoffTime}
         >
-          Book Now — Pay {bookingFee} MAD
+          Book Now — Pay {upfrontTotal} MAD
         </Button>
         <p className="text-xs text-muted-foreground text-center leading-relaxed">
-          You'll pay {bookingFee} MAD now to confirm your booking. Rental and deposit paid directly to the agency at pickup.
+          You'll pay {upfrontTotal} MAD now via YouCan Pay ({PLATFORM_FEE} MAD platform fee + {CONFIRMATION_FEE} MAD confirmation fee).
+          Pay {pickupTotal.toLocaleString()} MAD to the agency at pickup.
         </p>
 
         {/* Trust badges */}
