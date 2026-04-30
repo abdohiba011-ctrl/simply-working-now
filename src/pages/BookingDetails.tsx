@@ -555,69 +555,6 @@ const BookingDetails = () => {
         </div>
       </main>
 
-      {/* Cancellation Dialog */}
-      <Dialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
-              <XCircle className="h-5 w-5 text-destructive" />
-              Cancel Booking
-            </DialogTitle>
-            <DialogDescription>
-              Please tell us why you want to cancel this booking. This helps us improve our service.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4 py-4">
-            <RadioGroup value={cancelReason} onValueChange={setCancelReason}>
-              {CANCELLATION_REASONS.map((reason) => (
-                <div key={reason.id} className={`flex items-center space-x-3 ${isRTL ? 'flex-row-reverse space-x-reverse' : ''}`}>
-                  <RadioGroupItem value={reason.id} id={reason.id} />
-                  <Label htmlFor={reason.id} className="font-normal cursor-pointer">
-                    {reason.label}
-                  </Label>
-                </div>
-              ))}
-            </RadioGroup>
-
-            {cancelReason === 'other' && (
-              <Textarea
-                placeholder="Please specify your reason..."
-                value={customCancelReason}
-                onChange={(e) => setCustomCancelReason(e.target.value)}
-                className="min-h-[80px]"
-              />
-            )}
-          </div>
-
-          <DialogFooter className={`gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setShowCancelDialog(false);
-                setCancelReason('');
-                setCustomCancelReason('');
-              }}
-            >
-              Keep Booking
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleCancelBooking}
-              disabled={isCancelling || !cancelReason || (cancelReason === 'other' && !customCancelReason.trim())}
-            >
-              {isCancelling ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  Cancelling...
-                </>
-              ) : (
-                'Confirm Cancellation'
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
