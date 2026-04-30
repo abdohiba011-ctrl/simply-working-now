@@ -11,7 +11,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
 
-const PLATFORM_FEE_MAD = 10;
+const PLATFORM_FEE_MAD = 10;        // non-refundable
+const CONFIRMATION_FEE_MAD = 50;    // refundable as Motonita Credit if no alt
+const UPFRONT_TOTAL_MAD = PLATFORM_FEE_MAD + CONFIRMATION_FEE_MAD; // 60
 
 const Checkout = () => {
   const [searchParams] = useSearchParams();
