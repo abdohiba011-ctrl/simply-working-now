@@ -577,6 +577,7 @@ export type Database = {
           rating: number | null
           review_count: number | null
           seat_height: string | null
+          slug: string
           top_speed: string | null
           transmission: string | null
           updated_at: string
@@ -614,6 +615,7 @@ export type Database = {
           rating?: number | null
           review_count?: number | null
           seat_height?: string | null
+          slug: string
           top_speed?: string | null
           transmission?: string | null
           updated_at?: string
@@ -651,6 +653,7 @@ export type Database = {
           rating?: number | null
           review_count?: number | null
           seat_height?: string | null
+          slug?: string
           top_speed?: string | null
           transmission?: string | null
           updated_at?: string
@@ -2239,6 +2242,10 @@ export type Database = {
           user_id: string
         }[]
       }
+      compute_bike_type_slug: {
+        Args: { _name: string; _neighborhood: string }
+        Returns: string
+      }
       confirm_booking: { Args: { _booking_id: string }; Returns: Json }
       create_bike_hold: {
         Args: { _bike_id: string; _pickup: string; _return: string }
@@ -2320,6 +2327,7 @@ export type Database = {
         }[]
       }
       request_plan_downgrade: { Args: never; Returns: Json }
+      slugify: { Args: { _input: string }; Returns: string }
     }
     Enums: {
       app_role: "renter" | "agency" | "admin"
