@@ -4,7 +4,15 @@ import { AgencyLayout } from "@/components/agency/AgencyLayout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, ExternalLink, Bike as BikeIcon } from "lucide-react";
+import {
+  ChevronLeft,
+  ExternalLink,
+  Bike as BikeIcon,
+  XCircle,
+  Clock,
+  CheckCircle2,
+  AlertTriangle,
+} from "lucide-react";
 import { useAgencyBike } from "@/hooks/useAgencyData";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -12,6 +20,7 @@ import {
   DialogContent,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { BikeApprovalBadge } from "@/components/agency/BikeApprovalBadge";
 
 interface GalleryImage {
   id?: string;
@@ -91,9 +100,66 @@ const MotorbikeDetail = () => {
           <ChevronLeft className="h-4 w-4" /> Back
         </button>
 
+        {bike.approval_status === "rejected" && (
+          <Card className="border-destructive/40 bg-destructive/10 p-4">
+            <div className="flex items-start gap-3">
+              <XCircle className="mt-0.5 h-5 w-5 shrink-0 text-destructive" />
+              <div className="flex-1">
+                <h3 className="font-semibold text-destructive">Your bike was rejected</h3>
+                <p className="mt-1 text-sm">
+                  {bike.rejection_reason || "No reason provided."}
+                </p>
+                {bike.rejected_at && (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Rejected on {new Date(bike.rejected_at).toLocaleString()}
+                  </p>
+                )}
+                <Button
+                  size="sm"
+                  className="mt-3"
+                  onClick={() => navigate(`/agency/motorbikes/${bike.id}/edit`)}
+                >
+                  Edit and resubmit for review
+                </Button>
+              </div>
+            </div>
+          </Card>
+        )}
+
+        {bike.approval_status === "pending" && (
+          <Card className="border-warning/30 bg-warning/10 p-4">
+            <div className="flex items-start gap-3">
+              <Clock className="mt-0.5 h-5 w-5 shrink-0 text-warning" />
+              <div>
+                <h3 className="font-semibold">Awaiting review</h3>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Our team will review this bike within 24-48 hours. You'll be notified.
+                </p>
+              </div>
+            </div>
+          </Card>
+        )}
+
+        {bike.approval_status === "approved" && bike.business_status !== "active" && (
+          <Card className="border-amber-500/30 bg-amber-500/10 p-4">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-700 dark:text-amber-400" />
+              <div>
+                <h3 className="font-semibold">Suspended</h3>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  This bike is currently suspended by Motonita admins and is not visible to renters.
+                </p>
+              </div>
+            </div>
+          </Card>
+        )}
+
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">{bike.name}</h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-3xl font-bold tracking-tight">{bike.name}</h1>
+              <BikeApprovalBadge bike={bike} />
+            </div>
             <p className="text-sm text-muted-foreground">
               {bike.engine_cc ? `${bike.engine_cc}cc` : ""} {bike.transmission || ""}{" "}
               {bike.fuel_type || ""}

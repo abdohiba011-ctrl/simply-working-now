@@ -97,6 +97,9 @@ export interface AgencyBike {
   is_approved: boolean | null;
   rating: number | null;
   review_count: number | null;
+  rejection_reason?: string | null;
+  rejected_at?: string | null;
+  rejected_by?: string | null;
   created_at: string;
 }
 

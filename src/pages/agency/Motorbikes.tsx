@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { BikeApprovalBadge } from "@/components/agency/BikeApprovalBadge";
 import { useAgencyBikes } from "@/hooks/useAgencyData";
 import {
   Table,
@@ -143,6 +144,9 @@ const Motorbikes = () => {
                   <p className="text-xs text-muted-foreground">
                     {bike.engine_cc ? `${bike.engine_cc}cc` : ""} {bike.transmission || ""}
                   </p>
+                  <div className="mt-2">
+                    <BikeApprovalBadge bike={bike} />
+                  </div>
                   <div className="mt-2 flex items-center justify-between">
                     <span className="text-sm font-bold text-primary">
                       {Number(bike.daily_price || 0)} MAD/day
@@ -199,9 +203,7 @@ const Motorbikes = () => {
                       {Number(bike.daily_price || 0)} MAD
                     </TableCell>
                     <TableCell>
-                      <span className="rounded-full border border-border bg-muted px-2 py-0.5 text-[10px] capitalize">
-                        {bike.availability_status || "available"}
-                      </span>
+                      <BikeApprovalBadge bike={bike} />
                     </TableCell>
                     <TableCell
                       className="text-right"
