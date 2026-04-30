@@ -50,6 +50,7 @@ const BookingDetail = () => {
   const [cancelOpen, setCancelOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
   const [busy, setBusy] = useState(false);
+  const [cancelMode, setCancelMode] = useState<"decline" | "late">("decline");
 
   useEffect(() => {
     if (!id) return;
