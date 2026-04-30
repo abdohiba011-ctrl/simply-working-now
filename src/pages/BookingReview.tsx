@@ -261,26 +261,30 @@ const BookingReview = () => {
             </CardContent>
           </Card>
 
-          {/* Platform Fee Notice */}
+          {/* Upfront Fee Notice */}
           <Card className="border-2 border-primary/30 bg-primary/5">
             <CardContent className="p-6 space-y-3">
               <h3 className="font-semibold text-foreground flex items-center gap-2">
-                <CreditCard className="h-5 w-5 text-primary" />
-                <span>Motonita booking fee</span>
+                <AlertTriangle className="h-5 w-5 text-primary" />
+                <span>Before you continue</span>
               </h3>
               <p className="text-sm text-muted-foreground">
-                You'll pay a flat <strong className="text-foreground">10 MAD</strong> platform fee now by card.
-                This confirms your booking and unlocks chat with the agency.
+                You'll pay <strong className="text-foreground">{UPFRONT_TOTAL} MAD</strong> now to confirm this booking:
+              </p>
+              <ul className="text-sm text-muted-foreground space-y-1 pl-1">
+                <li>• <strong className="text-foreground">{PLATFORM_FEE} MAD</strong> platform fee (non-refundable)</li>
+                <li>• <strong className="text-foreground">{CONFIRMATION_FEE} MAD</strong> confirmation fee</li>
+              </ul>
+              <p className="text-sm text-muted-foreground">
+                The {UPFRONT_TOTAL} MAD is non-refundable if you cancel and we can find you an alternative bike.
+                If no alternative is available (the agency cancels, doesn't confirm, or has no replacement),
+                the {CONFIRMATION_FEE} MAD is refunded as <strong className="text-foreground">Motonita Credit</strong>,
+                and the {PLATFORM_FEE} MAD platform fee is kept.
               </p>
               <p className="text-sm text-muted-foreground">
-                The rental price and any deposit are paid <strong className="text-foreground">directly to the agency at pickup</strong> — not to Motonita.
+                You'll pay the agency <strong className="text-foreground">{dueAtPickup} MAD</strong> at pickup
+                (rental minus {CONFIRMATION_FEE} MAD already paid), plus a refundable deposit.
               </p>
-              <div className="flex items-start gap-2 p-3 rounded-md bg-yellow-500/10 border border-yellow-500/30">
-                <AlertTriangle className="h-4 w-4 text-yellow-600 dark:text-yellow-400 mt-0.5 flex-shrink-0" />
-                <p className="text-xs text-yellow-700 dark:text-yellow-300">
-                  The 10 MAD fee is non-refundable once paid. Please review everything below before continuing.
-                </p>
-              </div>
             </CardContent>
           </Card>
 
@@ -302,12 +306,12 @@ const BookingReview = () => {
                 )}
                 <Separator />
                 <div className="flex justify-between text-sm text-muted-foreground">
-                  <span>Rental total (paid to agency at pickup)</span>
-                  <span>{total} DH</span>
+                  <span>Pay agency at pickup ({total} − {CONFIRMATION_FEE} prepaid)</span>
+                  <span>{dueAtPickup} DH</span>
                 </div>
                 <div className="flex justify-between text-base font-semibold">
-                  <span className="text-foreground">Pay now (Motonita fee)</span>
-                  <span className="text-primary">10 DH</span>
+                  <span className="text-foreground">Pay now (platform + confirmation)</span>
+                  <span className="text-primary">{UPFRONT_TOTAL} DH</span>
                 </div>
               </div>
             </CardContent>
@@ -327,7 +331,7 @@ const BookingReview = () => {
                 {t('booking.processing')}
               </>
             ) : (
-              <>Continue to payment — 10 MAD</>
+              <>Continue to payment — {UPFRONT_TOTAL} MAD</>
             )}
           </Button>
         </div>
