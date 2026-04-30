@@ -66,6 +66,10 @@ const BookingReview = () => {
   const deliveryFee = deliveryMethod === "delivery" ? 25 : 0;
   const subtotal = days * dailyPrice;
   const total = subtotal + deliveryFee;
+  const PLATFORM_FEE = 10;
+  const CONFIRMATION_FEE = 50;
+  const UPFRONT_TOTAL = PLATFORM_FEE + CONFIRMATION_FEE; // 60
+  const dueAtPickup = Math.max(0, total - CONFIRMATION_FEE);
 
 
   const [isProcessing, setIsProcessing] = useState(false);
