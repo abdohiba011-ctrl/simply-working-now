@@ -1,0 +1,1 @@
+ALTER TABLE public.bike_types ALTER COLUMN slug SET DEFAULT '';

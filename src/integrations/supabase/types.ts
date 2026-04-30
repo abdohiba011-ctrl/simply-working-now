@@ -615,7 +615,7 @@ export type Database = {
           rating?: number | null
           review_count?: number | null
           seat_height?: string | null
-          slug: string
+          slug?: string
           top_speed?: string | null
           transmission?: string | null
           updated_at?: string
