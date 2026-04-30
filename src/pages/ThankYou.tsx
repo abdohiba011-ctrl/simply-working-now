@@ -100,7 +100,7 @@ const ThankYou = () => {
       }
       return {
         title: "Booking request sent! 🎉",
-        description: "Your 10 MAD booking fee was received. The agency will contact you in the chat within 5–10 minutes to confirm pickup details.",
+        description: "Your 60 MAD upfront payment was received (10 MAD platform fee + 50 MAD confirmation fee). The agency will contact you in the chat within 5–10 minutes to confirm pickup details.",
         details: "You can chat with the agency from your booking page.",
         verificationInfo: false,
         businessInfo: false,
