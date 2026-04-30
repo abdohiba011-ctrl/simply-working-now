@@ -63,7 +63,7 @@ export const Header = memo(() => {
   // if `currentRole` is briefly stale.
   const isBusiness =
     rolesReady &&
-    (hasRole('agency') || hasRole('business') || !!storeUser?.roles?.agency?.active);
+    (hasRole('agency') || !!storeUser?.roles?.agency?.active);
   // Combine live role check with cached admin flag so the Admin button shows
   // instantly on refresh, even before user_roles finishes loading.
   const isAdmin =

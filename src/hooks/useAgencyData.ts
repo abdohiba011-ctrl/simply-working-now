@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { subscribeAuth } from "@/lib/authBroker";
+import { useAuthStore } from "@/stores/useAuthStore";
 
 export interface AgencyWallet {
   id: string;
@@ -147,23 +147,20 @@ const ensureSubscription = async (userId: string): Promise<AgencySubscription> =
 };
 
 export const useCurrentUser = () => {
-  const [userId, setUserId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  // Read directly from the single auth source of truth (Zustand store).
+  // No extra Supabase listener — useAuthStore already owns the broker
+  // subscription, so this is a pure derived read.
+  const userId = useAuthStore((s) => s.user?.id ?? null);
+  const isLoading = useAuthStore((s) => s.isLoading);
+  const authListenerInitialized = useAuthStore((s) => s.authListenerInitialized);
+  const checkAuth = useAuthStore((s) => s.checkAuth);
+
+  // Make sure the listener exists for first-paint reads.
   useEffect(() => {
-    let mounted = true;
-    // Use the broker — no extra getUser()/onAuthStateChange pair, which
-    // was contributing to the gotrue Web Lock contention.
-    const unsubscribe = subscribeAuth((_e, session) => {
-      if (!mounted) return;
-      setUserId(session?.user?.id ?? null);
-      setLoading(false);
-    });
-    return () => {
-      mounted = false;
-      unsubscribe();
-    };
-  }, []);
-  return { userId, loading };
+    if (!authListenerInitialized) void checkAuth();
+  }, [authListenerInitialized, checkAuth]);
+
+  return { userId, loading: isLoading && !authListenerInitialized };
 };
 
 export const useAgencyWallet = () => {
