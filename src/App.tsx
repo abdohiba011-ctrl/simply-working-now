@@ -56,6 +56,7 @@ const AdminAgencyVerifications = lazy(() => import("./pages/admin/AdminAgencyVer
 const AdminBikeApprovals = lazy(() => import("./pages/admin/AdminBikeApprovals"));
 const AdminPanel = lazy(() => import("./pages/AdminPanel"));
 const AdminBookings = lazy(() => import("./pages/admin/AdminBookings"));
+const AdminCredits = lazy(() => import("./pages/admin/AdminCredits"));
 const AdminBookingDetails = lazy(() => import("./pages/admin/AdminBookingDetails"));
 const AdminFleet = lazy(() => import("./pages/admin/AdminFleet"));
 const AdminBikeTypeDetails = lazy(() => import("./pages/admin/AdminBikeTypeDetails"));
