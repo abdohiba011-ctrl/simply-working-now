@@ -24,7 +24,7 @@ const Settings = () => {
   const [savingPush, setSavingPush] = useState(false);
   const [savingEmail, setSavingEmail] = useState(false);
   const [loaded, setLoaded] = useState(false);
-  const isBusiness = hasRole('business');
+  const isBusiness = hasRole('agency');
 
   // Load saved preferences from DB
   useEffect(() => {
