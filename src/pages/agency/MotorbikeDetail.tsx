@@ -4,7 +4,15 @@ import { AgencyLayout } from "@/components/agency/AgencyLayout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, ExternalLink, Bike as BikeIcon } from "lucide-react";
+import {
+  ChevronLeft,
+  ExternalLink,
+  Bike as BikeIcon,
+  XCircle,
+  Clock,
+  CheckCircle2,
+  AlertTriangle,
+} from "lucide-react";
 import { useAgencyBike } from "@/hooks/useAgencyData";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -12,6 +20,7 @@ import {
   DialogContent,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { BikeApprovalBadge } from "@/components/agency/BikeApprovalBadge";
 
 interface GalleryImage {
   id?: string;
