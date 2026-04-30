@@ -109,13 +109,13 @@ const Checkout = () => {
 
       const needsVerification = profile.is_verified ? '0' : '1';
 
-      // 2. Create YouCanPay token for the 10 MAD platform fee.
+      // 2. Create YouCanPay token for the 60 MAD upfront (10 platform + 50 confirmation).
       const { data: tokenResp, error: tokenErr } = await supabase.functions.invoke(
         'youcanpay-create-token',
         {
           body: {
             purpose: 'booking_payment',
-            amount: PLATFORM_FEE_MAD,
+            amount: UPFRONT_TOTAL_MAD,
             currency: 'MAD',
             related_booking_id: bookingId,
             customer_email: profile.email,
