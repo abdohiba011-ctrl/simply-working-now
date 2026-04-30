@@ -194,7 +194,19 @@ const AdminBikeApprovals = () => {
                   <h2 className="font-semibold mb-3">Listings (catalog)</h2>
                   <div className="grid gap-3">
                     {types.map((t) => (
-                      <Card key={t.id}>
+                      <Card
+                        key={t.id}
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => navigate(`/admin/bikes/${t.id}`)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            navigate(`/admin/bikes/${t.id}`);
+                          }
+                        }}
+                        className="cursor-pointer transition-shadow hover:shadow-md focus:outline-none focus:ring-2 focus:ring-ring"
+                      >
                         <CardContent className="p-4 flex items-center gap-4">
                           {t.main_image_url ? (
                             <img
@@ -213,29 +225,16 @@ const AdminBikeApprovals = () => {
                               {t.daily_price ? `${t.daily_price} MAD/day` : "—"}
                             </p>
                           </div>
-                          <div className="flex gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => updateType(t.id, "rejected")}
-                              disabled={actionLoading === t.id}
-                            >
-                              <XCircle className="h-4 w-4 mr-1" />
-                              Reject
-                            </Button>
-                            <Button
-                              size="sm"
-                              onClick={() => updateType(t.id, "approved")}
-                              disabled={actionLoading === t.id}
-                            >
-                              {actionLoading === t.id ? (
-                                <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                              ) : (
-                                <CheckCircle className="h-4 w-4 mr-1" />
-                              )}
-                              Approve
-                            </Button>
-                          </div>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/admin/bikes/${t.id}`);
+                            }}
+                          >
+                            Review
+                          </Button>
                         </CardContent>
                       </Card>
                     ))}
