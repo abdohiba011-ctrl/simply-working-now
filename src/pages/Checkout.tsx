@@ -151,7 +151,7 @@ const Checkout = () => {
         token: tokenResp.token_id,
         pubKey: tokenResp.public_key,
         pid: tokenResp.payment_id,
-        amount: String(PLATFORM_FEE_MAD),
+        amount: String(UPFRONT_TOTAL_MAD),
         currency: 'MAD',
         sandbox: tokenResp.is_sandbox ? '1' : '0',
         success: successPath,
