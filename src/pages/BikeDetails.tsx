@@ -149,6 +149,30 @@ const BikeDetails = () => {
     if (range?.from && range?.to) setIsEditingDates(false);
   };
 
+  // SEO meta — must run unconditionally before early returns
+  const seoSlug = bikeSlug || (id && !isUuid(id) ? id : "");
+  const seoTitle = bike?.bike_type
+    ? `${(bike.bike_type as any).name} — Rent in ${bike.location || "Casablanca"} | Motonita`
+    : "Motorbike rental | Motonita";
+  const seoDescription = bike?.bike_type
+    ? `Rent the ${(bike.bike_type as any).name} from ${(bike.bike_type as any).agency_name || "a verified agency"} in ${bike.location || "Morocco"}. Daily price ${Math.round(Number((bike.bike_type as any).daily_price) || 0)} MAD. Booked in 60 seconds, flat 10 MAD booking fee.`
+    : "Rent verified motorbikes and scooters across Morocco with flat fees and no commission on rental price.";
+  const canonicalUrl = seoSlug ? `${SITE_URL}/bike/${seoSlug}` : undefined;
+  useDocumentHead({
+    title: seoTitle,
+    description: seoDescription,
+    canonical: canonicalUrl,
+    meta: canonicalUrl
+      ? [
+          { property: "og:url", content: canonicalUrl },
+          { property: "og:type", content: "product" },
+          ...(bike?.bike_type && (bike.bike_type as any).main_image_url
+            ? [{ property: "og:image", content: (bike.bike_type as any).main_image_url as string }]
+            : []),
+        ]
+      : [],
+  });
+
   if (isLoadingBike || isLoadingImages) {
     return (
       <div className="min-h-screen bg-background">
