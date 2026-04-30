@@ -101,26 +101,6 @@ const AdminBikeApprovals = () => {
     }
   };
 
-  const updateType = async (id: string, status: "approved" | "rejected") => {
-    setActionLoading(id);
-    try {
-      const { error } = await supabase
-        .from("bike_types")
-        .update({
-          approval_status: status,
-          is_approved: status === "approved",
-        })
-        .eq("id", id);
-      if (error) throw error;
-      toast.success(`Listing ${status}`);
-      fetchPending();
-    } catch (e) {
-      toast.error(`Failed to ${status} listing`);
-      console.error(e);
-    } finally {
-      setActionLoading(null);
-    }
-  };
 
   if (!isAuthenticated) {
     return (
