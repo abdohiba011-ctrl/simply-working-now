@@ -110,38 +110,61 @@ export const useBikes = (location?: string, bikeTypeId?: string) => {
   });
 };
 
-export const useBike = (bikeId: string) => {
+export const useBike = (idOrSlug: string) => {
   return useQuery({
-    queryKey: ["bike", bikeId],
+    queryKey: ["bike", idOrSlug],
     queryFn: async () => {
-      if (!isValidUUID(bikeId)) {
-        throw new Error("Invalid bike ID format");
+      if (!idOrSlug) throw new Error("Missing bike identifier");
+
+      const isUuid = isValidUUID(idOrSlug);
+
+      // Resolve to a bike_type_id. Slug is on bike_types.
+      let bikeTypeId: string | null = null;
+
+      if (isUuid) {
+        // Could be either a bikes.id or a bike_types.id — try bike_types first by id.
+        const { data: bt } = await supabase
+          .from("bike_types")
+          .select("id")
+          .eq("id", idOrSlug)
+          .maybeSingle();
+        if (bt?.id) bikeTypeId = bt.id;
+      } else {
+        const { data: bt, error } = await supabase
+          .from("bike_types")
+          .select("id")
+          .eq("slug", idOrSlug)
+          .maybeSingle();
+        if (error) throw error;
+        if (bt?.id) bikeTypeId = bt.id;
       }
 
       // Public reads must go through bikes_public — anon has no SELECT on bikes.
-      // Try direct id lookup first
-      const direct = await supabase
-        .from("bikes_public" as any)
-        .select(`*, bike_type:bike_types(*)`)
-        .eq("id", bikeId)
-        .maybeSingle();
+      if (bikeTypeId) {
+        const viaType = await supabase
+          .from("bikes_public" as any)
+          .select(`*, bike_type:bike_types(*)`)
+          .eq("bike_type_id", bikeTypeId)
+          .limit(1)
+          .maybeSingle();
+        if (viaType.error) throw viaType.error;
+        if (viaType.data) return (viaType.data as unknown) as Bike;
+      }
 
-      if (direct.error) throw direct.error;
-      if (direct.data) return (direct.data as unknown) as Bike;
+      // Legacy: idOrSlug may be a bikes.id (physical unit)
+      if (isUuid) {
+        const direct = await supabase
+          .from("bikes_public" as any)
+          .select(`*, bike_type:bike_types(*)`)
+          .eq("id", idOrSlug)
+          .maybeSingle();
+        if (direct.error) throw direct.error;
+        if (direct.data) return (direct.data as unknown) as Bike;
+      }
 
-      // Fallback: id may be a bike_type_id coming from listings cards
-      const viaType = await supabase
-        .from("bikes_public" as any)
-        .select(`*, bike_type:bike_types(*)`)
-        .eq("bike_type_id", bikeId)
-        .limit(1)
-        .maybeSingle();
-
-      if (viaType.error) throw viaType.error;
-      if (!viaType.data) throw new Error("Bike not found");
-      return (viaType.data as unknown) as Bike;
+      throw new Error("Bike not found");
     },
-    enabled: !!bikeId && isValidUUID(bikeId),
+    enabled: !!idOrSlug,
   });
 };
 
