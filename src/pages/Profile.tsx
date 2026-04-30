@@ -11,7 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { VerifiedBadge } from "@/components/ui/verified-badge";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { toast } from "sonner";
 import { Camera, User, Mail, Phone, MapPin, Save, Loader2, CheckCircle, Shield, Clock, Upload, ImageIcon, Trash2, Plus, Edit2, ShieldCheck, ArrowRight } from "lucide-react";

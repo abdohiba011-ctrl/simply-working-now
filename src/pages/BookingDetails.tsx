@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ChevronLeft, ChevronRight, Calendar, MapPin, Bike, Loader2, Phone, User, Home, Package, Truck, CheckCircle, FileText, Download, Upload, AlertCircle, XCircle, Clock } from "lucide-react";
 import { BookingCardSkeleton } from "@/components/ui/bike-skeleton";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { getBikeImageUrl } from "@/lib/bikeImages";

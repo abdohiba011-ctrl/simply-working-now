@@ -9,7 +9,7 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { BookingCardSkeleton } from "@/components/ui/bike-skeleton";
 import { ChevronLeft, Calendar, MapPin, Bike, Clock, Package, Truck, CheckCircle, Shield, Phone, AlertTriangle, ArrowRight, Mail, RotateCcw, Timer } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { format, differenceInDays, differenceInHours, differenceInMinutes } from "date-fns";
 import { getBikeImageUrl } from "@/lib/bikeImages";

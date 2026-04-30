@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import { signupSchema, loginSchema } from "@/lib/validationSchemas";
 import { z } from "zod";
 import { Eye, EyeOff } from "lucide-react";

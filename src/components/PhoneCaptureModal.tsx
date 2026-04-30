@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Phone, Loader2, PartyPopper, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 
 interface PhoneCaptureModalProps {
   isOpen: boolean;

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { getErrMsg } from "@/lib/errorMessages";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 
 // ============= TYPES =============
 export type AccountStatus = "ACTIVE" | "BLOCKED" | "SUSPENDED";
