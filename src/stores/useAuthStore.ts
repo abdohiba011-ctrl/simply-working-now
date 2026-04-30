@@ -220,6 +220,10 @@ function mapSupabaseAuthError(message: string): AuthError {
   return makeAuthError("NETWORK", message || "Something went wrong");
 }
 
+function isAuthError(err: unknown): err is AuthError {
+  return !!err && typeof err === "object" && "code" in err && "message" in err;
+}
+
 // ---------------------------------------------------------------------
 // Store
 // ---------------------------------------------------------------------
@@ -396,7 +400,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       });
       return user;
     } catch (err) {
-      const mapped = "code" in (err as AuthError) ? (err as AuthError) : mapSupabaseAuthError((err as Error)?.message ?? "Login failed");
+      const mapped = isAuthError(err)
+        ? err
+        : mapSupabaseAuthError((err as Error)?.message ?? "Login failed");
       set({
         isLoading: false,
         error: mapped.message,
