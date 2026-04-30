@@ -79,13 +79,10 @@ const BookingDetail = () => {
 
   const confirm = async () => {
     setBusy(true);
-    const { data, error } = await supabase.rpc("confirm_booking", { _booking_id: booking.id });
+    const { error } = await supabase.rpc("confirm_booking", { _booking_id: booking.id });
     setBusy(false);
     if (error) {
       const msg = error.message || "";
-      if (msg.includes("INSUFFICIENT_WALLET_BALANCE")) {
-        return toast.error("Not enough wallet balance — top up at least 50 MAD to confirm.");
-      }
       if (msg.includes("NOT_PENDING")) {
         return toast.error("Booking is no longer pending.");
       }
@@ -94,8 +91,55 @@ const BookingDetail = () => {
       }
       return toast.error(msg);
     }
-    toast.success(`Booking confirmed — 50 MAD fee deducted${(data as any)?.new_balance != null ? ` (balance: ${(data as any).new_balance} MAD)` : ""}`);
+    toast.success("Booking confirmed — renter prepaid the confirmation fee, no wallet charge.");
     setBooking({ ...booking, status: "confirmed", booking_status: "confirmed" });
+  };
+
+  const decline = async () => {
+    if (!cancelReason.trim()) return toast.error("Please add a reason");
+    setBusy(true);
+    const { error } = await supabase.rpc("decline_booking", {
+      _booking_id: booking.id,
+      _reason: cancelReason,
+    });
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success("Booking declined — renter received 50 MAD Motonita Credit.");
+    setCancelOpen(false);
+    navigate("/agency/bookings");
+  };
+
+  const lateCancel = async () => {
+    if (!cancelReason.trim()) return toast.error("Please add a reason");
+    setBusy(true);
+    const { error } = await supabase.rpc("last_minute_cancel_by_agency", {
+      _booking_id: booking.id,
+      _reason: cancelReason,
+    });
+    setBusy(false);
+    if (error) {
+      if ((error.message || "").includes("NOT_LAST_MINUTE")) {
+        return toast.error("Use Decline — pickup is more than 24h away.");
+      }
+      return toast.error(error.message);
+    }
+    toast.error("Late cancellation — 50 MAD penalty deducted; renter refunded as credit.");
+    setCancelOpen(false);
+    navigate("/agency/bookings");
+  };
+
+  const reportNoShow = async () => {
+    setBusy(true);
+    const { error } = await supabase.rpc("report_no_show", { _booking_id: booking.id });
+    setBusy(false);
+    if (error) {
+      if ((error.message || "").includes("PICKUP_NOT_PAST")) {
+        return toast.error("You can only report no-show after the pickup date.");
+      }
+      return toast.error(error.message);
+    }
+    toast.success("No-show reported. Renter's account flagged.");
+    setBooking({ ...booking, status: "no_show", booking_status: "no_show" });
   };
 
   const cancel = async () => {
