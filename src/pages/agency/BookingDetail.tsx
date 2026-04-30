@@ -32,6 +32,10 @@ interface Booking {
   bike_id: string | null;
   notes: string | null;
   created_at: string;
+  amount_due_at_pickup_mad: number | null;
+  deposit_amount_mad: number | null;
+  platform_fee_paid_amount_mad: number | null;
+  confirmation_fee_paid_amount_mad: number | null;
 }
 
 const safeDate = (s: string) => {
