@@ -275,7 +275,22 @@ const AdminBookings = () => {
                   {filteredBookings.length} bookings found
                 </CardDescription>
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Select value={bookingStatusFilter} onValueChange={setBookingStatusFilter}>
+                  <SelectTrigger className="w-full sm:w-56">
+                    <SelectValue placeholder="Booking status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All booking statuses</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="confirmed">Confirmed</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
+                    <SelectItem value="cancelled">Cancelled by renter</SelectItem>
+                    <SelectItem value="cancelled_by_agency_late">Late cancel by agency</SelectItem>
+                    <SelectItem value="declined">Declined</SelectItem>
+                    <SelectItem value="no_show">No-show</SelectItem>
+                  </SelectContent>
+                </Select>
                 <div className="relative w-full md:w-72">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
