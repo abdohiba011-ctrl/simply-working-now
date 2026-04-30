@@ -84,6 +84,7 @@ const AdminBookings = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<AdminStatus>("all");
+  const [bookingStatusFilter, setBookingStatusFilter] = useState<string>("all");
   const [counts, setCounts] = useState<BookingCounts>({ new: 0, reviewed: 0, confirmed: 0, rejected: 0 });
 
   useEffect(() => {
