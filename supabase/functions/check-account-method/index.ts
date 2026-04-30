@@ -137,7 +137,6 @@ Deno.serve(async (req) => {
       // Surface the canonical primary provider so the UI can suggest
       // exactly which button to use.
       primary_provider: providers[0] ?? meta.provider ?? null,
-      email_confirmed: !!match.email_confirmed_at,
     }),
     { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
   );
