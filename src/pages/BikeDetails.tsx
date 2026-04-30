@@ -42,6 +42,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { usePricingTiers, getDailyPriceForDuration } from "@/hooks/usePricingTiers";
 import { DateRangePicker } from "@/components/DateRangePicker";
+import { useDocumentHead } from "@/hooks/useDocumentHead";
+
+const isUuid = (s: string) =>
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
+const SITE_URL = "https://motonita.ma";
 
 const timeSlots = [
   "08:00", "08:30", "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
