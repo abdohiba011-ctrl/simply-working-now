@@ -21,7 +21,7 @@ import {
   Lock,
 } from "lucide-react";
 import { toast } from "sonner";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import { useRenterWallet } from "@/hooks/useRenterWallet";
 import { supabase } from "@/integrations/supabase/client";
 import { buildYouCanPayUrl } from "@/lib/openHostedPayment";

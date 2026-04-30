@@ -12,6 +12,7 @@ function makeUser(opts: {
   agencyVerified?: boolean;
   renter?: boolean;
   emailVerified?: boolean;
+  isAdmin?: boolean;
 }): MockUser {
   return {
     id: "u1",
@@ -34,8 +35,29 @@ function makeUser(opts: {
     last_active_role: opts.agency ? "agency" : "renter",
     failed_login_attempts: 0,
     locked_until: null,
+    isAdmin: !!opts.isAdmin,
   };
 }
+
+describe("getDestinationForUser — admin", () => {
+  it("admin role → /admin/panel regardless of other roles or context", () => {
+    const u = makeUser({ isAdmin: true, renter: true });
+    expect(getDestinationForUser(u)).toBe("/admin/panel");
+    expect(getDestinationForUser(u, "renter")).toBe("/admin/panel");
+    expect(getDestinationForUser(u, "agency")).toBe("/admin/panel");
+    expect(getDestinationForUser(u, "admin")).toBe("/admin/panel");
+  });
+
+  it("admin + agency still goes to /admin/panel", () => {
+    const u = makeUser({ isAdmin: true, agency: true, agencyVerified: true });
+    expect(getDestinationForUser(u)).toBe("/admin/panel");
+  });
+
+  it("admin with unverified email still gets /verify-email first", () => {
+    const u = makeUser({ isAdmin: true, emailVerified: false });
+    expect(getDestinationForUser(u)).toBe("/verify-email");
+  });
+});
 
 describe("getDestinationForUser — agency isolation", () => {
   it("verified agency → /agency/dashboard regardless of context", () => {

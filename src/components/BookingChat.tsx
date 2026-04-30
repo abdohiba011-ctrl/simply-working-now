@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import { useBookingMessages } from "@/hooks/useBookingMessages";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";

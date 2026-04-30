@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { MessageCircle, Loader2, ChevronLeft, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { BookingChat } from "@/components/BookingChat";

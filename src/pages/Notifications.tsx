@@ -33,7 +33,7 @@ import {
   FileText
 } from "lucide-react";
 import { UnifiedVerificationModal } from "@/components/UnifiedVerificationModal";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 
 interface Notification {

@@ -141,7 +141,7 @@ export default function Login({ context = "renter" }: LoginProps) {
         values.identifier,
         values.password,
         values.rememberMe,
-        context,
+        context === "admin" ? undefined : context,
       );
       toast.success(
         t("mockAuth.welcome_toast", {

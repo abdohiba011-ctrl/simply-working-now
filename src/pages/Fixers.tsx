@@ -38,7 +38,7 @@ import {
   Frown,
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import { Link } from "react-router-dom";
 import { Lock } from "lucide-react";
 import { cn } from "@/lib/utils";

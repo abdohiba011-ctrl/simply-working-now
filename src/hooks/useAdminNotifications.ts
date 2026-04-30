@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 
@@ -23,7 +23,7 @@ interface BikeTypePayload {
 export const useAdminNotifications = () => {
   const { user, hasRole } = useAuth();
   const isAdmin = hasRole("admin");
-  const isBusiness = hasRole("business");
+  const isBusiness = hasRole("agency");
 
   useEffect(() => {
     if (!user) return;

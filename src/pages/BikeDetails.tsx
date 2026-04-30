@@ -37,7 +37,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useBike, useBikeTypeImages } from "@/hooks/useBikes";
 import { getBikeImageUrl } from "@/lib/bikeImages";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { usePricingTiers, getDailyPriceForDuration } from "@/hooks/usePricingTiers";

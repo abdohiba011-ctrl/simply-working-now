@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Calendar, Clock, MapPin, Home, Store, CreditCard, Wallet, Bike, CheckCircle2, Edit2, Shield, Phone, AlertTriangle, Loader2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { safeGetItem, safeSetItem, safeRemoveItem } from "@/lib/safeStorage";
