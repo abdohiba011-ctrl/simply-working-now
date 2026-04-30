@@ -164,7 +164,13 @@ const BookingDetail = () => {
     navigate("/agency/bookings");
   };
 
-  const isPending = (booking.booking_status || booking.status || "").toLowerCase() === "pending";
+  const status = (booking.booking_status || booking.status || "").toLowerCase();
+  const isPending = status === "pending";
+  const isConfirmed = status === "confirmed";
+  const hoursToPickup = (new Date(booking.pickup_date).getTime() - Date.now()) / 3.6e6;
+  const isLastMinute = isConfirmed && hoursToPickup < 24;
+  const pickupPast = new Date(booking.pickup_date).getTime() < Date.now();
+  const [cancelMode, setCancelMode] = useState<"decline" | "late">("decline");
 
   return (
     <AgencyLayout>
@@ -182,13 +188,25 @@ const BookingDetail = () => {
             </div>
             <div className="flex flex-wrap gap-2">
               {isPending && (
-                <Button size="sm" className="gap-2" onClick={confirm} disabled={busy}>
-                  <Check className="h-4 w-4" /> Confirm
+                <>
+                  <Button size="sm" className="gap-2" onClick={confirm} disabled={busy}>
+                    <Check className="h-4 w-4" /> Confirm
+                  </Button>
+                  <Button variant="outline" size="sm" className="gap-2 text-destructive" onClick={() => { setCancelMode("decline"); setCancelOpen(true); }}>
+                    <X className="h-4 w-4" /> Decline
+                  </Button>
+                </>
+              )}
+              {isConfirmed && isLastMinute && (
+                <Button variant="outline" size="sm" className="gap-2 text-destructive" onClick={() => { setCancelMode("late"); setCancelOpen(true); }}>
+                  <X className="h-4 w-4" /> Cancel (50 MAD penalty)
                 </Button>
               )}
-              <Button variant="outline" size="sm" className="gap-2 text-destructive" onClick={() => setCancelOpen(true)}>
-                <X className="h-4 w-4" /> Cancel
-              </Button>
+              {isConfirmed && pickupPast && (
+                <Button variant="outline" size="sm" className="gap-2" onClick={reportNoShow} disabled={busy}>
+                  Report no-show
+                </Button>
+              )}
               <Button variant="outline" size="sm" className="gap-2" onClick={() => window.print()}>
                 <Printer className="h-4 w-4" /> Print
               </Button>
