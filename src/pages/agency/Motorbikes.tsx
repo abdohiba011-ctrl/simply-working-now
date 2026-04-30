@@ -143,6 +143,9 @@ const Motorbikes = () => {
                   <p className="text-xs text-muted-foreground">
                     {bike.engine_cc ? `${bike.engine_cc}cc` : ""} {bike.transmission || ""}
                   </p>
+                  <div className="mt-2">
+                    <BikeApprovalBadge bike={bike} />
+                  </div>
                   <div className="mt-2 flex items-center justify-between">
                     <span className="text-sm font-bold text-primary">
                       {Number(bike.daily_price || 0)} MAD/day
