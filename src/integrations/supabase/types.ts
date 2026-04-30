@@ -54,7 +54,10 @@ export type Database = {
           ice: string | null
           id: string
           is_locked: boolean | null
+          is_suspended: boolean
           is_verified: boolean | null
+          last_minute_cancel_count: number
+          last_minute_cancel_reset_at: string | null
           logo_url: string | null
           phone: string | null
           primary_neighborhood: string | null
@@ -64,6 +67,8 @@ export type Database = {
           rejected_by: string | null
           rejection_reason: string | null
           subscription_plan: string | null
+          suspended_at: string | null
+          suspended_reason: string | null
           trial_ends_at: string | null
           trial_started_at: string | null
           updated_at: string
@@ -78,7 +83,10 @@ export type Database = {
           ice?: string | null
           id?: string
           is_locked?: boolean | null
+          is_suspended?: boolean
           is_verified?: boolean | null
+          last_minute_cancel_count?: number
+          last_minute_cancel_reset_at?: string | null
           logo_url?: string | null
           phone?: string | null
           primary_neighborhood?: string | null
@@ -88,6 +96,8 @@ export type Database = {
           rejected_by?: string | null
           rejection_reason?: string | null
           subscription_plan?: string | null
+          suspended_at?: string | null
+          suspended_reason?: string | null
           trial_ends_at?: string | null
           trial_started_at?: string | null
           updated_at?: string
@@ -102,7 +112,10 @@ export type Database = {
           ice?: string | null
           id?: string
           is_locked?: boolean | null
+          is_suspended?: boolean
           is_verified?: boolean | null
+          last_minute_cancel_count?: number
+          last_minute_cancel_reset_at?: string | null
           logo_url?: string | null
           phone?: string | null
           primary_neighborhood?: string | null
@@ -112,6 +125,8 @@ export type Database = {
           rejected_by?: string | null
           rejection_reason?: string | null
           subscription_plan?: string | null
+          suspended_at?: string | null
+          suspended_reason?: string | null
           trial_ends_at?: string | null
           trial_started_at?: string | null
           updated_at?: string
@@ -954,6 +969,7 @@ export type Database = {
         Row: {
           admin_notes: string | null
           admin_status: string | null
+          amount_due_at_pickup_mad: number
           amount_paid: number | null
           assigned_at: string | null
           assigned_to_business: string | null
@@ -961,6 +977,8 @@ export type Database = {
           booking_status: string | null
           cancellation_reason: string | null
           cancelled_at: string | null
+          confirmation_fee_paid_amount_mad: number
+          confirmation_fee_refunded: boolean
           confirmed_at: string | null
           confirmed_by: string | null
           contract_status: string | null
@@ -972,18 +990,25 @@ export type Database = {
           delivery_fee: number | null
           delivery_location: string | null
           delivery_method: string | null
+          deposit_amount_mad: number
           discount_amount: number | null
           helmet_included: boolean | null
           id: string
           insurance_included: boolean | null
+          no_show_reported_at: string | null
+          no_show_reported_by: string | null
           notes: string | null
           payment_method: string | null
           payment_status: string | null
           pickup_date: string
           pickup_location: string | null
           pickup_time: string | null
+          platform_fee_paid_amount_mad: number
+          platform_fee_refunded: boolean
           pricing_breakdown: Json | null
           rating: number | null
+          refund_reason: string | null
+          refunded_at: string | null
           rejected_at: string | null
           rejected_by: string | null
           rejected_reason_code: string | null
@@ -1006,6 +1031,7 @@ export type Database = {
         Insert: {
           admin_notes?: string | null
           admin_status?: string | null
+          amount_due_at_pickup_mad?: number
           amount_paid?: number | null
           assigned_at?: string | null
           assigned_to_business?: string | null
@@ -1013,6 +1039,8 @@ export type Database = {
           booking_status?: string | null
           cancellation_reason?: string | null
           cancelled_at?: string | null
+          confirmation_fee_paid_amount_mad?: number
+          confirmation_fee_refunded?: boolean
           confirmed_at?: string | null
           confirmed_by?: string | null
           contract_status?: string | null
@@ -1024,18 +1052,25 @@ export type Database = {
           delivery_fee?: number | null
           delivery_location?: string | null
           delivery_method?: string | null
+          deposit_amount_mad?: number
           discount_amount?: number | null
           helmet_included?: boolean | null
           id?: string
           insurance_included?: boolean | null
+          no_show_reported_at?: string | null
+          no_show_reported_by?: string | null
           notes?: string | null
           payment_method?: string | null
           payment_status?: string | null
           pickup_date: string
           pickup_location?: string | null
           pickup_time?: string | null
+          platform_fee_paid_amount_mad?: number
+          platform_fee_refunded?: boolean
           pricing_breakdown?: Json | null
           rating?: number | null
+          refund_reason?: string | null
+          refunded_at?: string | null
           rejected_at?: string | null
           rejected_by?: string | null
           rejected_reason_code?: string | null
@@ -1058,6 +1093,7 @@ export type Database = {
         Update: {
           admin_notes?: string | null
           admin_status?: string | null
+          amount_due_at_pickup_mad?: number
           amount_paid?: number | null
           assigned_at?: string | null
           assigned_to_business?: string | null
@@ -1065,6 +1101,8 @@ export type Database = {
           booking_status?: string | null
           cancellation_reason?: string | null
           cancelled_at?: string | null
+          confirmation_fee_paid_amount_mad?: number
+          confirmation_fee_refunded?: boolean
           confirmed_at?: string | null
           confirmed_by?: string | null
           contract_status?: string | null
@@ -1076,18 +1114,25 @@ export type Database = {
           delivery_fee?: number | null
           delivery_location?: string | null
           delivery_method?: string | null
+          deposit_amount_mad?: number
           discount_amount?: number | null
           helmet_included?: boolean | null
           id?: string
           insurance_included?: boolean | null
+          no_show_reported_at?: string | null
+          no_show_reported_by?: string | null
           notes?: string | null
           payment_method?: string | null
           payment_status?: string | null
           pickup_date?: string
           pickup_location?: string | null
           pickup_time?: string | null
+          platform_fee_paid_amount_mad?: number
+          platform_fee_refunded?: boolean
           pricing_breakdown?: Json | null
           rating?: number | null
+          refund_reason?: string | null
+          refunded_at?: string | null
           rejected_at?: string | null
           rejected_by?: string | null
           rejected_reason_code?: string | null
@@ -1450,6 +1495,57 @@ export type Database = {
         }
         Relationships: []
       }
+      motonita_credits: {
+        Row: {
+          amount_mad: number
+          created_at: string
+          expires_at: string
+          id: string
+          reason: string
+          source_booking_id: string | null
+          used_at: string | null
+          used_on_booking_id: string | null
+          user_id: string
+        }
+        Insert: {
+          amount_mad: number
+          created_at?: string
+          expires_at?: string
+          id?: string
+          reason: string
+          source_booking_id?: string | null
+          used_at?: string | null
+          used_on_booking_id?: string | null
+          user_id: string
+        }
+        Update: {
+          amount_mad?: number
+          created_at?: string
+          expires_at?: string
+          id?: string
+          reason?: string
+          source_booking_id?: string | null
+          used_at?: string | null
+          used_on_booking_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "motonita_credits_source_booking_id_fkey"
+            columns: ["source_booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "motonita_credits_used_on_booking_id_fkey"
+            columns: ["used_on_booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           action_url: string | null
@@ -1545,6 +1641,8 @@ export type Database = {
           address: string | null
           address_line: string | null
           avatar_url: string | null
+          banned_at: string | null
+          banned_reason: string | null
           bio: string | null
           blocked_reason: string | null
           business_address: string | null
@@ -1575,6 +1673,7 @@ export type Database = {
           id_card_number: string | null
           id_card_url: string | null
           id_front_image_url: string | null
+          is_banned: boolean
           is_blocked: boolean | null
           is_frozen: boolean | null
           is_verified: boolean | null
@@ -1587,6 +1686,7 @@ export type Database = {
           loyalty_points: number | null
           name: string | null
           nationality: string | null
+          no_show_count: number
           phone: string | null
           phone_verified: boolean | null
           preferred_language: string | null
@@ -1612,6 +1712,8 @@ export type Database = {
           address?: string | null
           address_line?: string | null
           avatar_url?: string | null
+          banned_at?: string | null
+          banned_reason?: string | null
           bio?: string | null
           blocked_reason?: string | null
           business_address?: string | null
@@ -1642,6 +1744,7 @@ export type Database = {
           id_card_number?: string | null
           id_card_url?: string | null
           id_front_image_url?: string | null
+          is_banned?: boolean
           is_blocked?: boolean | null
           is_frozen?: boolean | null
           is_verified?: boolean | null
@@ -1654,6 +1757,7 @@ export type Database = {
           loyalty_points?: number | null
           name?: string | null
           nationality?: string | null
+          no_show_count?: number
           phone?: string | null
           phone_verified?: boolean | null
           preferred_language?: string | null
@@ -1679,6 +1783,8 @@ export type Database = {
           address?: string | null
           address_line?: string | null
           avatar_url?: string | null
+          banned_at?: string | null
+          banned_reason?: string | null
           bio?: string | null
           blocked_reason?: string | null
           business_address?: string | null
@@ -1709,6 +1815,7 @@ export type Database = {
           id_card_number?: string | null
           id_card_url?: string | null
           id_front_image_url?: string | null
+          is_banned?: boolean
           is_blocked?: boolean | null
           is_frozen?: boolean | null
           is_verified?: boolean | null
@@ -1721,6 +1828,7 @@ export type Database = {
           loyalty_points?: number | null
           name?: string | null
           nationality?: string | null
+          no_show_count?: number
           phone?: string | null
           phone_verified?: boolean | null
           preferred_language?: string | null
@@ -2242,6 +2350,11 @@ export type Database = {
           user_id: string
         }[]
       }
+      apply_motonita_credit: {
+        Args: { _booking_id: string; _credit_id: string }
+        Returns: Json
+      }
+      cancel_booking_by_renter: { Args: { _booking_id: string }; Returns: Json }
       compute_bike_type_slug: {
         Args: { _name: string; _neighborhood: string }
         Returns: string
@@ -2263,6 +2376,10 @@ export type Database = {
           _reference?: string
           _user_id: string
         }
+        Returns: Json
+      }
+      decline_booking: {
+        Args: { _booking_id: string; _reason: string }
         Returns: Json
       }
       delete_email: {
@@ -2289,6 +2406,19 @@ export type Database = {
         Returns: boolean
       }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
+      issue_motonita_credit: {
+        Args: {
+          _amount_mad: number
+          _reason: string
+          _source_booking_id?: string
+          _user_id: string
+        }
+        Returns: string
+      }
+      last_minute_cancel_by_agency: {
+        Args: { _booking_id: string; _reason: string }
+        Returns: Json
+      }
       log_audit_event: {
         Args: {
           _action: string
@@ -2326,6 +2456,7 @@ export type Database = {
           read_ct: number
         }[]
       }
+      report_no_show: { Args: { _booking_id: string }; Returns: Json }
       request_plan_downgrade: { Args: never; Returns: Json }
       slugify: { Args: { _input: string }; Returns: string }
     }
