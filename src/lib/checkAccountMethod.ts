@@ -9,7 +9,6 @@ export type AccountMethodStatus =
 export interface AccountMethodResult {
   status: AccountMethodStatus;
   primary_provider?: string | null;
-  email_confirmed?: boolean;
 }
 
 /**
