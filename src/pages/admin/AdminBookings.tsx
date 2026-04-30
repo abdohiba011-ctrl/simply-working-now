@@ -105,23 +105,30 @@ const AdminBookings = () => {
 
   useEffect(() => {
     let filtered = bookings;
-    
+
     if (statusFilter !== "all") {
       filtered = filtered.filter(b => b.admin_status === statusFilter);
     }
-    
+
+    if (bookingStatusFilter !== "all") {
+      filtered = filtered.filter(b => {
+        const bs = (b as unknown as { booking_status?: string }).booking_status || b.status;
+        return bs === bookingStatusFilter;
+      });
+    }
+
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(booking => 
+      filtered = filtered.filter(booking =>
         booking.customer_name?.toLowerCase().includes(query) ||
         booking.customer_email?.toLowerCase().includes(query) ||
         booking.customer_phone?.includes(query) ||
         booking.id.toLowerCase().includes(query)
       );
     }
-    
+
     setFilteredBookings(filtered);
-  }, [searchQuery, statusFilter, bookings]);
+  }, [searchQuery, statusFilter, bookingStatusFilter, bookings]);
 
   // Set up realtime subscription
   useEffect(() => {
