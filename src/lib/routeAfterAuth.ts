@@ -1,7 +1,7 @@
 import type { NavigateFunction } from "react-router-dom";
 import type { MockUser } from "@/lib/mockAuth";
 
-export type LoginContext = "renter" | "agency";
+export type LoginContext = "renter" | "agency" | "admin";
 
 /**
  * Lightweight audit hook. Logs to the console (always) and best-effort
@@ -16,6 +16,7 @@ function auditAuthRouting(
 ): void {
   const hasAgency = !!user.roles.agency.active;
   const hasRenter = !!user.roles.renter.active;
+  const isAdmin = !!user.isAdmin;
   const violation = hasAgency && destination.startsWith("/rent");
 
   // eslint-disable-next-line no-console
@@ -24,6 +25,7 @@ function auditAuthRouting(
     context: context ?? null,
     hasAgency,
     hasRenter,
+    isAdmin,
     destination,
     violation,
   });
@@ -50,6 +52,7 @@ function auditAuthRouting(
           destination,
           has_agency: hasAgency,
           has_renter: hasRenter,
+          is_admin: isAdmin,
         } as never,
       });
     } catch {
@@ -82,11 +85,13 @@ export function consumeBecomeBusinessPrompt(): boolean {
  * Decide where to send the user after they authenticate or land on an
  * auth-entry page while already authenticated.
  *
- * - If the user has only one role active, they go there.
- * - If they have both roles, the login `context` (which "door" they used)
- *   wins. Without a context, we fall back to last_active_role then to the
- *   business-priority rule.
- * - If their email is not verified, they go to /verify-email.
+ * Priority:
+ *   1. Email not verified → /verify-email
+ *   2. Admin role → /admin/panel (admins always go to admin panel; if
+ *      they need a different surface, they switch via UI)
+ *   3. Agency role + verified → /agency/dashboard
+ *      Agency role + unverified → /agency/verification
+ *   4. Renter only → /rent
  */
 export function getDestinationForUser(
   user: MockUser,
@@ -94,8 +99,14 @@ export function getDestinationForUser(
 ): string {
   if (!user.email_verified) return "/verify-email";
 
-  const hasRenter = user.roles.renter.active;
-  const hasAgency = user.roles.agency.active;
+  const hasRenter = !!user.roles.renter.active;
+  const hasAgency = !!user.roles.agency.active;
+  const isAdmin = !!user.isAdmin;
+
+  // Admin is the highest-privilege surface. If the user has admin, that
+  // wins regardless of which login door they used (a logged-in admin
+  // hitting /agency/login should still land in the admin panel).
+  if (isAdmin) return "/admin/panel";
 
   // Agency users are agency-only. They always land on the agency
   // dashboard (or verification screen), regardless of which login door
