@@ -87,11 +87,14 @@ Deno.serve(async (req) => {
     { auth: { persistSession: false } },
   );
 
-  // We use the admin REST endpoint so we don't need a custom DB function.
-  // listUsers supports filtering by exact email (case-insensitive in auth.users).
+  // Look up the user by exact email via the admin API's email filter.
+  // This avoids scanning the first N users (which silently produced false
+  // "not_found" results once the user base grew past the page size).
   const { data, error } = await supabaseAdmin.auth.admin.listUsers({
     page: 1,
-    perPage: 200,
+    perPage: 1,
+    // @ts-expect-error - `filter` is supported by GoTrue admin API
+    filter: `email.eq.${email}`,
   });
 
   if (error) {
