@@ -84,6 +84,16 @@ const BikeDetails = () => {
     }
   }, [pickupParam, endParam]);
 
+  // If URL is a UUID but the bike has a slug, redirect to the slug URL.
+  // This preserves old links and gives a single canonical URL.
+  const bikeSlug = (bike?.bike_type as any)?.slug as string | undefined;
+  useEffect(() => {
+    if (id && isUuid(id) && bikeSlug && bikeSlug !== id) {
+      const search = window.location.search || "";
+      navigate(`/bike/${bikeSlug}${search}`, { replace: true });
+    }
+  }, [id, bikeSlug, navigate]);
+
   const allImages = useMemo(() => {
     if (!bike?.bike_type) return [];
     const main = getBikeImageUrl(bike.bike_type.main_image_url);
