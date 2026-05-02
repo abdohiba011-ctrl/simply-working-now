@@ -640,21 +640,12 @@ const AdminBookingDetails = () => {
   if (!booking) {
     return (
       <AdminLayout>
-        <div className="container mx-auto px-4 py-20 text-center">
-          <AlertCircle className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-foreground">Unable to load this record</h1>
-          <p className="text-muted-foreground mt-2">The booking could not be found or failed to load.</p>
-          <div className="flex items-center justify-center gap-2 mt-4">
-            <Button variant="outline" onClick={() => fetchBooking()}>
-              <Loader2 className="h-4 w-4 mr-2" />
-              Retry
-            </Button>
-            <Button onClick={() => navigate('/admin/panel?tab=bookings')}>
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Admin
-            </Button>
-          </div>
-        </div>
+        <AdminErrorState
+          title="Unable to load this booking"
+          message="The booking could not be found or failed to load."
+          onRetry={fetchBooking}
+          backTo="/admin/panel?tab=bookings"
+        />
       </AdminLayout>
     );
   }
