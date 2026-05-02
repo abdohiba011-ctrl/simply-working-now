@@ -35,6 +35,7 @@ import { toast } from "sonner";
 import { resolveBikeImageUrl } from "@/lib/bikeImageResolver";
 import { useFleetRealtime } from "@/hooks/useBikeTypesRealtime";
 import { AdminFleetSkeleton } from "@/components/ui/admin-skeleton";
+import { DangerConfirmDialog } from "@/components/admin/DangerConfirmDialog";
 
 interface BikeType {
   id: string;
@@ -234,9 +235,11 @@ const AdminFleet = () => {
     }
   };
 
-  const handleDelete = async (bikeId: string) => {
-    if (!confirm("Are you sure you want to delete this bike type?")) return;
-    
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+
+  const handleDelete = (bikeId: string) => setDeleteId(bikeId);
+
+  const performDelete = async (bikeId: string) => {
     try {
       const { error } = await supabase
         .from('bike_types')
@@ -535,6 +538,14 @@ const AdminFleet = () => {
           </TabsContent>
         </Tabs>
       </div>
+      <DangerConfirmDialog
+        open={!!deleteId}
+        onOpenChange={(o) => !o && setDeleteId(null)}
+        title="Delete this bike type?"
+        description="This will permanently remove the bike type. This cannot be undone."
+        confirmLabel="Delete"
+        onConfirm={async () => { if (deleteId) await performDelete(deleteId); }}
+      />
     </AdminLayout>
   );
 };

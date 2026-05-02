@@ -35,6 +35,7 @@ import {
   Trash2
 } from "lucide-react";
 import { AdminUserDetailsSkeleton } from "@/components/ui/admin-skeleton";
+import { AdminErrorState } from "@/components/admin/AdminErrorState";
 import { format } from "date-fns";
 import {
   Dialog,
@@ -548,12 +549,11 @@ const UserDetails = () => {
   if (!user) {
     return (
       <AdminLayout>
-        <div className="container mx-auto px-4 py-8 text-center">
-          <p className="text-muted-foreground">{t('admin.userNotFound')}</p>
-          <Button className="mt-4" onClick={() => navigate("/admin/panel")}>
-            {t('admin.backToAdminPanel')}
-          </Button>
-        </div>
+        <AdminErrorState
+          title={t('admin.userNotFound')}
+          message="This user doesn't exist or has been removed."
+          onRetry={fetchUser}
+        />
       </AdminLayout>
     );
   }

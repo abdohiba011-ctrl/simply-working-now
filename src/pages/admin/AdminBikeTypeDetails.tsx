@@ -48,6 +48,7 @@ import { toast } from "sonner";
 import { ImageUpload, UploadedImage } from "@/components/admin/ImageUpload";
 import { deleteBikeImage } from "@/lib/imageUpload";
 import { AdminBikeTypeDetailsSkeleton } from "@/components/ui/admin-skeleton";
+import { AdminErrorState } from "@/components/admin/AdminErrorState";
 
 interface BikeType {
   id: string;
@@ -424,15 +425,12 @@ const AdminBikeTypeDetails = () => {
   if (notFound) {
     return (
       <AdminLayout>
-        <div className="container mx-auto px-4 py-20 text-center">
-          <AlertTriangle className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-foreground">Bike Not Found</h1>
-          <p className="text-muted-foreground mt-2">The bike you're looking for doesn't exist or has been deleted.</p>
-          <Button onClick={() => navigate('/admin/panel?tab=fleet')} className="mt-4">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Fleet
-          </Button>
-        </div>
+        <AdminErrorState
+          title="Bike not found"
+          message="This bike type doesn't exist or has been deleted."
+          onRetry={() => { setNotFound(false); fetchBikeType(); }}
+          backTo="/admin/panel?tab=fleet"
+        />
       </AdminLayout>
     );
   }
