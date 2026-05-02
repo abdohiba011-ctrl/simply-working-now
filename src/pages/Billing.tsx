@@ -36,7 +36,6 @@ import {
 export default function Billing() {
   const { user, userRoles, isLoading: authLoading } = useAuth();
   const [params, setParams] = useSearchParams();
-  const navigate = useNavigate();
   const { balance, currency, isLoading, transactions, refetch, refetchTransactions } = useRenterWallet();
 
   // A user qualifies as a renter (and so can see Credits/Billing) whenever they have the
