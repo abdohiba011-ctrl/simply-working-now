@@ -843,3 +843,101 @@ function BikeCard({
     </article>
   );
 }
+
+// ─────────────────────────────────────────────────────────────────────
+// Coming Soon page (FIX 4) — shown when admin marks a city as
+// is_available=false AND is_coming_soon=true. Captures emails into
+// city_waitlist for marketing follow-up when the city goes live.
+// ─────────────────────────────────────────────────────────────────────
+function RentCityComingSoon({ city }: { city: CityRow }) {
+  const [email, setEmail] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [done, setDone] = useState(false);
+
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = email.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+      toast.error("Please enter a valid email");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const { error } = await supabase
+        .from("city_waitlist" as never)
+        .insert({
+          city_id: city.id,
+          city_name: city.name,
+          email: trimmed,
+        } as never);
+      if (error && !String(error.message || "").includes("duplicate")) throw error;
+      setDone(true);
+      toast.success("You're on the list — we'll email you when we launch.");
+    } catch {
+      toast.error("Could not save your email. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Header />
+      <main className="container mx-auto px-4 py-12 max-w-2xl">
+        <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
+          {city.image_url && (
+            <div className="aspect-[16/7] bg-muted overflow-hidden">
+              <img
+                src={city.image_url}
+                alt={city.name}
+                className="w-full h-full object-cover"
+              />
+            </div>
+          )}
+          <div className="p-6 md:p-10">
+            <Badge className="mb-3 bg-warning/10 text-warning border-warning/30">
+              Coming Soon
+            </Badge>
+            <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
+              Motorbike rental in {city.name} — Coming Soon
+            </h1>
+            <p className="text-muted-foreground mt-3">
+              We're expanding to {city.name} soon. Sign up to be the first to
+              know when verified agencies are live.
+            </p>
+
+            {done ? (
+              <div className="mt-6 p-4 rounded-lg bg-primary/10 border border-primary/20 text-sm">
+                Thanks — we've added you to the {city.name} waitlist.
+              </div>
+            ) : (
+              <form onSubmit={onSubmit} className="mt-6 flex flex-col sm:flex-row gap-2">
+                <input
+                  type="email"
+                  required
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="flex-1 h-11 px-3 rounded-md border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+                <Button type="submit" disabled={submitting} className="h-11">
+                  {submitting ? "Saving..." : "Notify me"}
+                </Button>
+              </form>
+            )}
+
+            <div className="mt-8 pt-6 border-t border-border">
+              <Link
+                to="/rent/casablanca"
+                className="text-sm font-medium text-primary hover:underline inline-flex items-center gap-1"
+              >
+                Browse bikes in Casablanca instead <ChevronRight className="w-4 h-4" />
+              </Link>
+            </div>
+          </div>
+        </div>
+      </main>
+      <Footer />
+    </div>
+  );
+}
