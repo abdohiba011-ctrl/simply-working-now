@@ -79,36 +79,6 @@ const allCities = [
   "Chefchaouen",
 ];
 
-const neighborhoodsByCity: Record<string, string[]> = {
-  Casablanca: [
-    "Anfa",
-    "Maârif",
-    "Derb Sultan",
-    "Sidi Maârouf",
-    "Aïn Diab",
-    "Gauthier",
-    "Bourgogne",
-    "Hay Hassani",
-    "Sidi Bernoussi",
-    "Ain Sebaa",
-  ],
-  Marrakech: ["Guéliz", "Médina", "Hivernage", "Palmeraie", "Daoudiate", "Agdal"],
-  Rabat: ["Agdal", "Hassan", "Souissi", "Médina", "Hay Riad"],
-  Tangier: ["Malabata", "Centre-Ville", "Marshan", "Iberia", "Playa"],
-  Agadir: ["Centre-Ville", "Founty", "Talborjt", "Dakhla"],
-  Fes: ["Médina (Fes el-Bali)", "Ville Nouvelle", "Fes el-Jdid", "Aïn Chkef"],
-  Dakhla: ["Centre", "Lagune"],
-  Essaouira: ["Médina", "Quartier des Dunes"],
-  Meknes: ["Médina", "Hamria", "Ville Nouvelle"],
-  Oujda: ["Centre-Ville", "Médina"],
-  Tetouan: ["Centre-Ville", "Médina"],
-  "El Jadida": ["Centre-Ville", "Médina"],
-  Kenitra: ["Centre-Ville", "Médina"],
-  Nador: ["Centre-Ville", "Médina"],
-  Ifrane: ["Centre-Ville"],
-  Chefchaouen: ["Centre-Ville", "Médina"],
-};
-
 const ALL_NEIGHBORHOODS = "all";
 
 export const HeroSection = memo(() => {
@@ -126,31 +96,63 @@ export const HeroSection = memo(() => {
   // Cities loaded from DB so the dropdown reflects real availability.
   const [availableCities, setAvailableCities] = useState<string[]>([]);
   const [comingSoonCities, setComingSoonCities] = useState<string[]>([]);
+  const [cityIdByName, setCityIdByName] = useState<Record<string, string>>({});
+  const [neighborhoods, setNeighborhoods] = useState<string[]>([]);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       const { data } = await supabase
         .from("service_cities")
-        .select("name, is_available, is_coming_soon")
+        .select("id, name, is_available, is_coming_soon")
         .order("display_order", { ascending: true })
         .order("name", { ascending: true });
       if (cancelled || !data) return;
       const avail: string[] = [];
       const soon: string[] = [];
+      const idMap: Record<string, string> = {};
       for (const row of data) {
-        // Coming-soon takes precedence over is_available so back-office can
-        // park a city as "coming soon" without flipping availability semantics.
+        idMap[row.name] = row.id;
         if (row.is_coming_soon) soon.push(row.name);
         else if (row.is_available) avail.push(row.name);
       }
       setAvailableCities(avail);
       setComingSoonCities(soon);
+      setCityIdByName(idMap);
     })();
     return () => {
       cancelled = true;
     };
   }, []);
+
+  // Load neighborhoods live from service_locations whenever the selected city changes.
+  useEffect(() => {
+    let cancelled = false;
+    if (!city) {
+      setNeighborhoods([]);
+      return;
+    }
+    const cityId = cityIdByName[city];
+    if (!cityId) {
+      setNeighborhoods([]);
+      return;
+    }
+    (async () => {
+      const { data } = await supabase
+        .from("service_locations")
+        .select("name, is_popular, display_order")
+        .eq("city_id", cityId)
+        .eq("is_active", true)
+        .order("is_popular", { ascending: false })
+        .order("display_order", { ascending: true })
+        .order("name", { ascending: true });
+      if (cancelled) return;
+      setNeighborhoods((data ?? []).map((r) => r.name));
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [city, cityIdByName]);
 
   // Preload images on mount
   useEffect(() => {
@@ -183,8 +185,8 @@ export const HeroSection = memo(() => {
 
   const neighborhoodOptions = useMemo(() => {
     if (!city) return [];
-    return neighborhoodsByCity[city] || [];
-  }, [city]);
+    return neighborhoods;
+  }, [city, neighborhoods]);
 
   const handleCityChange = useCallback((value: string) => {
     setCity(value);
