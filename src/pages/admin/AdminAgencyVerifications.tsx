@@ -326,28 +326,19 @@ const AdminAgencyVerifications = () => {
     }
   };
 
-  if (!isAuthenticated) {
+  // Access control is handled exclusively by ProtectedRoute requireRole="admin".
+  // Do NOT add in-page navigate("/") or navigate("/auth") guards here — they
+  // race with role hydration and bounce admins off the page on refresh.
+  if (!isAuthenticated || !isAdmin) {
     return (
       <div className="min-h-screen bg-background flex flex-col">
         <Header />
         <main className="flex-1 py-16 container mx-auto px-4 text-center">
-          <h1 className="text-2xl font-bold">Please log in</h1>
-          <Button className="mt-4" onClick={() => navigate("/auth")}>
-            Log In
-          </Button>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
-
-  if (!isAdmin) {
-    return (
-      <div className="min-h-screen bg-background flex flex-col">
-        <Header />
-        <main className="flex-1 py-16 container mx-auto px-4 text-center">
-          <AlertTriangle className="h-16 w-16 text-destructive mx-auto mb-4" />
-          <h1 className="text-2xl font-bold">Access Denied</h1>
+          <AlertTriangle className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+          <h1 className="text-2xl font-bold">Loading admin session…</h1>
+          <p className="text-sm text-muted-foreground mt-2">
+            If this persists, try refreshing the page.
+          </p>
         </main>
         <Footer />
       </div>
