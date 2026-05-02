@@ -137,7 +137,9 @@ const App = () => (
             <ScrollToTop />
             <OAuthHashWatcher />
             <ScrollToTopButton />
-            <Suspense fallback={<PageLoadingSkeleton />}>
+            <AuthModalProvider>
+              <AuthModal />
+              <Suspense fallback={<PageLoadingSkeleton />}>
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/listings" element={<Navigate to="/rent/casablanca" replace />} />
