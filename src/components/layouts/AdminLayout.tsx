@@ -32,9 +32,10 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
 
   const hasAdmin = hasRole("admin");
   const hasAgency = !!storeUser?.roles.agency?.active;
-  // Agency-only accounts cannot use renter mode (product rule). Renter
-  // destination is offered to anyone whose account is not agency-active.
-  const canGoRenter = !hasAgency;
+  // Renter Site is a public VIEW available to any authenticated user —
+  // including agency-only and admin-only accounts. It does not remove
+  // or mutate their existing permissions.
+  const canGoRenter = true;
 
   useEffect(() => {
     if (user) {
