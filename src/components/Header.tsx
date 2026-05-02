@@ -2,7 +2,7 @@ import { useState, useEffect, memo, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Menu, X, Globe, User, LogOut, Settings, Lock, Building2, Calendar as CalendarIcon, MoreHorizontal, Users, Phone, Shield, MapPin, Bell, ShieldCheck, LayoutDashboard, BadgeCheck, Tag, ShoppingBag, Bike, Receipt, Wrench, MessageCircle, Wallet } from "lucide-react";
-import { useRenterWallet } from "@/hooks/useRenterWallet";
+
 import logoLight from "@/assets/motonita-logo.svg";
 import logoDark from "@/assets/motonita-logo-dark.svg";
 import { useTheme } from "@/hooks/useTheme";
