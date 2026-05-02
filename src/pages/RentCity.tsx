@@ -216,15 +216,29 @@ export default function RentCity() {
       const { data, error } = await supabase
         .from("bike_types")
         .select(
-          "id,slug,name,category,fuel_type,daily_price,weekly_price,monthly_price,rating,review_count,main_image_url,neighborhood,features,license_required,year,engine_cc,city_id"
+          "id,slug,name,category,fuel_type,daily_price,weekly_price,monthly_price,rating,review_count,main_image_url,neighborhood,features,license_required,year,engine_cc,city_id,bikes!inner(id,available,approval_status,archived_at)"
         )
         .eq("is_approved", true)
         .eq("approval_status", "approved")
         .eq("business_status", "active")
-        .in("city_id", cityIds);
+        .is("archived_at", null)
+        .in("city_id", cityIds)
+        .eq("bikes.available", true)
+        .eq("bikes.approval_status", "approved")
+        .is("bikes.archived_at", null);
 
       if (error) throw error;
-      return (data || []) as BikeRow[];
+      // Deduplicate (inner join may yield multiple rows per bike_type when there
+      // are several available units) and drop the joined `bikes` array from the row.
+      const seen = new Set<string>();
+      const unique: BikeRow[] = [];
+      for (const row of (data || []) as Array<BikeRow & { bikes?: unknown }>) {
+        if (seen.has(row.id)) continue;
+        seen.add(row.id);
+        const { bikes: _bikes, ...rest } = row as Record<string, unknown>;
+        unique.push(rest as BikeRow);
+      }
+      return unique;
     },
   });
 

@@ -9,8 +9,8 @@ import {
 
 const TABS = [
   { to: "/agency/dashboard", label: "Home", icon: Home },
-  { to: "/agency/bookings", label: "Bookings", icon: Calendar },
   { to: "/agency/motorbikes", label: "Bikes", icon: Bike },
+  { to: "/agency/bookings", label: "Bookings", icon: Calendar },
   { to: "/agency/messages", label: "Messages", icon: MessageCircle },
 ];
 

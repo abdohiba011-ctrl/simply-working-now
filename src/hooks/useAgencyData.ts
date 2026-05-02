@@ -100,6 +100,7 @@ export interface AgencyBike {
   rejection_reason?: string | null;
   rejected_at?: string | null;
   rejected_by?: string | null;
+  archived_at?: string | null;
   created_at: string;
 }
 
@@ -304,7 +305,8 @@ export const useAgencyBike = (id: string | undefined) => {
   return { bike, loading };
 };
 
-export const useAgencyBikes = () => {
+export const useAgencyBikes = (opts?: { archived?: boolean }) => {
+  const archived = !!opts?.archived;
   const { userId } = useCurrentUser();
   const [bikes, setBikes] = useState<AgencyBike[]>([]);
   const [loading, setLoading] = useState(true);
@@ -316,15 +318,16 @@ export const useAgencyBikes = () => {
       return;
     }
     setLoading(true);
-    const { data, error } = await supabase
+    let q = supabase
       .from("bike_types")
       .select("*")
       .eq("owner_id", userId)
-      .is("archived_at", null)
       .order("created_at", { ascending: false });
+    q = archived ? q.not("archived_at", "is", null) : q.is("archived_at", null);
+    const { data, error } = await q;
     if (!error) setBikes((data || []) as AgencyBike[]);
     setLoading(false);
-  }, [userId]);
+  }, [userId, archived]);
 
   useEffect(() => {
     refresh();

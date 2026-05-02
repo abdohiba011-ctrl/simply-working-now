@@ -23,8 +23,8 @@ interface NavItem {
 
 const NAV: NavItem[] = [
   { to: "/agency/dashboard", label: "Dashboard", icon: Home },
-  { to: "/agency/bookings", label: "Bookings", icon: Calendar },
   { to: "/agency/motorbikes", label: "Motorbikes", icon: Bike },
+  { to: "/agency/bookings", label: "Bookings", icon: Calendar },
   { to: "/agency/messages", label: "Messages", icon: MessageCircle },
   { to: "/agency/calendar", label: "Calendar", icon: CalendarDays },
   { to: "/agency/finance", label: "Finance", icon: Wallet },
