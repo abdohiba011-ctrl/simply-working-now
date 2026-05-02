@@ -201,7 +201,7 @@ const AdminPanel = () => {
         ) : (
           /* Top Navigation Tabs — sticky on scroll, horizontally scrollable on mobile */
           <div className="sticky top-14 z-[50] -mx-4 px-4 mb-6 bg-muted/30 backdrop-blur supports-[backdrop-filter]:bg-muted/50 border-b">
-            <div className="flex gap-2 pb-3 pt-1 overflow-x-auto scrollbar-none [-ms-overflow-style:none] [scrollbar-width:none]">
+            <div className="flex gap-2 pb-3 pt-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none]">
               {tabs.map((tab) => {
                 const isActive = activeTab === tab.value;
                 return (
