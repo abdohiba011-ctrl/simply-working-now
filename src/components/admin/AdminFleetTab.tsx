@@ -600,6 +600,27 @@ export const AdminFleetTab = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <DangerConfirmDialog
+        open={!!softDeleteId}
+        onOpenChange={(o) => !o && setSoftDeleteId(null)}
+        title="Remove this bike?"
+        description="The bike will be hidden from the public site. The agency can re-submit it later."
+        confirmLabel="Remove bike"
+        onConfirm={async () => { if (softDeleteId) await performSoftDelete(softDeleteId); }}
+      />
+
+      <DangerConfirmDialog
+        open={!!hardDeleteId}
+        onOpenChange={(o) => !o && setHardDeleteId(null)}
+        title="Permanently delete bike type?"
+        description="This cannot be undone. All references to this bike type will be lost."
+        confirmLabel="Delete permanently"
+        withReason
+        requireReason
+        reasonLabel="Why are you deleting this?"
+        onConfirm={async () => { if (hardDeleteId) await performHardDelete(hardDeleteId); }}
+      />
     </div>
   );
 };
