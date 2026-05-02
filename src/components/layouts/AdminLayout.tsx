@@ -95,16 +95,24 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
     <div className="min-h-screen bg-muted/30 flex flex-col">
       {/* Admin Header - Compact, neutral colors */}
       <header className="sticky top-0 z-[100] w-full bg-background border-b border-border">
-        <div className="px-4">
-          <div className="flex items-center justify-between h-14">
-            <Link to="/admin/panel" className="flex items-center gap-2">
-              <img src={logo} alt="Motonita Logo" className="h-8 w-auto" />
-              <span className="font-bold text-sm hidden sm:inline bg-gradient-to-r from-gray-900 via-gray-700 to-gray-900 dark:from-gray-100 dark:via-gray-300 dark:to-gray-100 bg-clip-text text-transparent">
+        <div className="px-3 sm:px-4">
+          <div className="flex items-center justify-between h-14 gap-2">
+            <Link to="/admin/panel" className="flex items-center gap-2 min-w-0">
+              <img src={logo} alt="Motonita Logo" className="h-8 w-auto flex-shrink-0" />
+              <span className="font-bold text-sm hidden sm:inline bg-gradient-to-r from-gray-900 via-gray-700 to-gray-900 dark:from-gray-100 dark:via-gray-300 dark:to-gray-100 bg-clip-text text-transparent truncate">
                 Motonita Admin
+              </span>
+              {/* Current view chip — clarifies which interface user is in */}
+              <span
+                className="hidden md:inline-flex items-center gap-1 ml-2 px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[11px] font-medium border border-primary/20"
+                aria-label="Current interface"
+              >
+                <Shield className="h-3 w-3" />
+                Admin view
               </span>
             </Link>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2">
               {/* Role Switcher */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -113,13 +121,15 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
                     <span className="hidden sm:inline">Switch view</span>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56 bg-background border-border shadow-lg z-[200]">
+                <DropdownMenuContent align="end" className="w-60 bg-background border-border shadow-lg z-[200]">
                   <DropdownMenuLabel>Switch interface</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem disabled className="opacity-100">
                     <Shield className="mr-2 h-4 w-4 text-primary" />
-                    Admin Panel
-                    <span className="ml-auto text-[10px] text-muted-foreground">current</span>
+                    <span className="flex-1">Admin Panel</span>
+                    <span className="ml-2 text-[10px] uppercase tracking-wide text-primary font-semibold">
+                      current
+                    </span>
                   </DropdownMenuItem>
                   {hasAgency && (
                     <DropdownMenuItem onClick={goAgencyDashboard}>
@@ -130,7 +140,7 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
                   {canGoRenter && (
                     <DropdownMenuItem onClick={goRenterSite}>
                       <Home className="mr-2 h-4 w-4 text-muted-foreground" />
-                      Renter Site
+                      Back to Renter Site
                     </DropdownMenuItem>
                   )}
                 </DropdownMenuContent>
@@ -148,11 +158,11 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
                     </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-52 bg-background border-border shadow-lg z-[200]">
+                <DropdownMenuContent align="end" className="w-60 bg-background border-border shadow-lg z-[200]">
                   <DropdownMenuLabel className="text-foreground font-medium">
-                    {userName || "Admin Account"}
+                    <div className="truncate">{userName || "Admin Account"}</div>
                     {user?.email && (
-                      <div className="text-[11px] font-normal text-muted-foreground truncate">
+                      <div className="text-[11px] font-normal text-muted-foreground truncate mt-0.5">
                         {user.email}
                       </div>
                     )}
@@ -171,7 +181,7 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
                   {canGoRenter && (
                     <DropdownMenuItem onClick={goRenterSite} className="text-foreground hover:bg-muted">
                       <Home className="mr-2 h-4 w-4 text-muted-foreground" />
-                      Renter Site
+                      Back to Renter Site
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuSeparator className="bg-border" />
