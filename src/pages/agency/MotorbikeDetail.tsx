@@ -277,7 +277,7 @@ const MotorbikeDetail = () => {
               {bike.fuel_type || ""}
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button
               variant="outline"
               className="gap-1"
@@ -287,6 +287,14 @@ const MotorbikeDetail = () => {
             </Button>
             <Button onClick={() => navigate(`/agency/motorbikes/${bike.id}/edit`)}>
               Edit
+            </Button>
+            <Button
+              variant="outline"
+              className="gap-1 border-destructive/40 text-destructive hover:bg-destructive/10"
+              onClick={() => setArchiveOpen(true)}
+              disabled={busy}
+            >
+              <Archive className="h-4 w-4" /> Archive
             </Button>
           </div>
         </div>
