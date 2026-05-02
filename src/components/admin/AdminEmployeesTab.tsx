@@ -188,14 +188,14 @@ export const AdminEmployeesTab = () => {
       if (userIds.length > 0) {
         const { data: profiles, error: profilesError } = await supabase
           .from('profiles')
-          .select('id, name, email, avatar_url')
-          .in('id', userIds);
+          .select('user_id, name, email, avatar_url')
+          .in('user_id', userIds);
 
         if (profilesError) throw profilesError;
 
         const employeesWithProfiles = adminRoles?.map(role => {
           const adminEmp = adminEmployees?.find(e => e.user_id === role.user_id);
-          const profile = profiles?.find(p => p.id === role.user_id);
+          const profile = profiles?.find(p => p.user_id === role.user_id);
           
           // Parse permissions from JSON
           let permissions: AdminPermissions = DEFAULT_PERMISSIONS;
