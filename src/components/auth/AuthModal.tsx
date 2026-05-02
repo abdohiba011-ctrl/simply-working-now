@@ -235,7 +235,7 @@ export function AuthModal() {
           <X className="h-5 w-5" />
         </button>
 
-        <div className="p-6 md:p-8 pt-12 md:pt-10">
+        <div className="p-6 md:p-8 pt-12 md:pt-[20px] py-[24px] px-[24px]">
           {/* Logo */}
           <div className="flex justify-center mb-4">
             <img src={logo} alt="Motonita" className="h-12 w-auto" />
