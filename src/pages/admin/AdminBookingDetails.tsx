@@ -251,13 +251,23 @@ const AdminBookingDetails = () => {
 
       if (businessRoles && businessRoles.length > 0) {
         const userIds = businessRoles.map(r => r.user_id);
+        // user_roles.user_id is an auth uid → join via profiles.user_id.
+        // Map id → user_id so downstream lookups (assigned_to_business) match.
         const { data: profiles, error: profilesError } = await supabase
           .from('profiles')
-          .select('id, name, email, phone, address, business_type')
-          .in('id', userIds);
+          .select('user_id, name, email, phone, address, business_type')
+          .in('user_id', userIds);
 
         if (profilesError) throw profilesError;
-        setBusinessUsers(profiles || []);
+        const mapped = (profiles || []).map(p => ({
+          id: p.user_id,
+          name: p.name,
+          email: p.email,
+          phone: p.phone,
+          address: p.address,
+          business_type: p.business_type,
+        }));
+        setBusinessUsers(mapped);
       }
     } catch (error) {
       console.error('Error fetching business users:', error);
