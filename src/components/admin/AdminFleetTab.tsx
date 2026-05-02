@@ -273,8 +273,10 @@ export const AdminFleetTab = () => {
     }
   };
 
-  const handleSoftDelete = async (id: string) => {
-    if (!confirm("Mark this bike as deleted for the business? They can re-submit.")) return;
+  const [softDeleteId, setSoftDeleteId] = useState<string | null>(null);
+  const [hardDeleteId, setHardDeleteId] = useState<string | null>(null);
+
+  const performSoftDelete = async (id: string) => {
     try {
       const { error } = await supabase
         .from("bike_types")
@@ -288,8 +290,7 @@ export const AdminFleetTab = () => {
     }
   };
 
-  const handleHardDelete = async (id: string) => {
-    if (!confirm("Permanently delete this bike type? This cannot be undone.")) return;
+  const performHardDelete = async (id: string) => {
     try {
       const { error } = await supabase.from("bike_types").delete().eq("id", id);
       if (error) throw error;
