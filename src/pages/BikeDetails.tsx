@@ -119,15 +119,15 @@ const BikeDetails = () => {
           .eq("user_id", bt.owner_id)
           .maybeSingle();
         if (prof?.id) {
-          const { data: ag } = await supabase
-            .from("agencies")
+          const { data: ag } = await (supabase as any)
+            .from("agencies_public")
             .select("business_name, is_verified, city, primary_neighborhood")
             .eq("profile_id", prof.id)
             .maybeSingle();
-          agencyName = ag?.business_name ?? null;
-          agencyVerified = !!ag?.is_verified;
-          agencyCity = ag?.city ?? null;
-          agencyNeighborhood = ag?.primary_neighborhood ?? null;
+          agencyName = (ag as any)?.business_name ?? null;
+          agencyVerified = !!(ag as any)?.is_verified;
+          agencyCity = (ag as any)?.city ?? null;
+          agencyNeighborhood = (ag as any)?.primary_neighborhood ?? null;
         }
       }
       if (cancelled) return;
