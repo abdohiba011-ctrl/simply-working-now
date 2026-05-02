@@ -1,47 +1,79 @@
-# Fix everything found so far, then keep testing
+## What's wrong (verified against the database)
 
-You said "YES FIX ALL" — here is exactly what I'll do, in order. After approval I switch to build mode and execute.
+### 1. Homepage shows 6 / city page shows 7 for Casablanca
+- `city_bike_counts` view returns **7** for Casablanca (correct).
+- `RentCity` query also returns **7** approved active bike_types.
+- Both are reading the same underlying data; the "6" the user sees is a **stale render** of the homepage card before realtime refresh kicked in. The "test" bike was just added/approved and the homepage cache was a step behind.
+- Real bug: the homepage and city-page query different tables (`city_bike_counts` view vs. raw `bike_types`). They mostly agree, but they can diverge when one bike type has **no available `bikes` unit** — the view excludes it, the city-page query includes it. We need both pages to use the **same visibility rule**.
 
-## Phase 1 — Fix the bugs already found
+### 2. "test" bike — agency sees 1 image, public sees 2 (or different image)
+Verified in DB:
+- `bike_types.main_image_url` = **NULL**
+- `bike_type_images` gallery = **1 uploaded image**
+- The agency Motorbikes list and detail header use `main_image_url` → shows placeholder.
+- Public `BikeDetails` reads the gallery → shows the uploaded image.
 
-### 1. Add Google sign-in to Login + Signup (renter & agency)
-The backend is already wired (`src/integrations/lovable/index.ts`, `OAuthHashWatcher`, `check-account-method` knows about OAuth-only accounts). Only the UI button is missing.
+Root cause: `MotorbikeWizard` uploads to `bike_type_images` but never writes the first image back to `bike_types.main_image_url`. Result: the two surfaces disagree.
 
-- Add a "Continue with Google" button above the email field on:
-  - `src/pages/auth/Login.tsx` (used by renter `/login` and agency `/agency/login`)
-  - `src/pages/auth/Signup.tsx` (used by renter `/signup` and agency `/agency/signup`)
-- Use `lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin })`
-- Add an "or" divider between the Google button and the email form
-- Style: white button, Google "G" icon, rounded-md, full width — matches existing brand
+### 3. Agency sidebar order
+Currently: Dashboard → Bookings → Motorbikes → Messages → …  
+Wanted: Dashboard → **Motorbikes** → **Bookings** → Messages → …
 
-### 2. Fix the React 18 "Function components cannot be given refs" warning
-Two distinct sources confirmed in the latest console logs:
+### 4. Archived bikes — no way to view, no delete option
+- Agency Motorbikes list filters out archived bikes (correct), but there's **no "Archived" tab/filter**, so once archived a bike disappears entirely from the agency UI.
+- There is no hard-delete option. Per locked decision (soft archive only), we should add an **"Unarchive"** action and clearly signal that hard delete is not allowed if bookings exist.
 
-- **Source A: `TopCitiesSection`** — the `<TooltipTrigger asChild>` wrapping at line 156-169 makes Radix forward a ref to its child. The `<div>` child accepts refs, but the warning chain points at lazy-mounted children. Fix: remove the redundant `<TooltipProvider>` wrapper inside the loop and hoist a single one to the top of the section (reduces re-mount churn that triggers the warning), and ensure `<Badge>` is not wrapped in a non-ref-forwarding fragment.
-- **Source B: `Help` lazy-loaded inside `SettingsHub`** — wrap `Help` with `React.forwardRef` (it currently does not accept a ref but `Suspense`/lazy expects forwardable components in some Radix integrations). Same for any other lazy children of `SettingsHub`.
+---
 
-Verify in the live preview after the fix that the warning no longer fires on `/` and `/agency/settings`.
+## Fix plan
 
-### 3. Consolidate the two parallel auth systems (defer if it grows scope)
-There are two stores: `AuthContext` (real Supabase) and `useAuthStore` (mock). `Login.tsx` uses the mock. This is technical debt, not a user-visible bug. **I will NOT touch this** unless I find a concrete bug caused by it during Phase 2 — refactoring it risks breaking working flows.
+### A. Sync homepage and city-page visibility (consistency)
+- Update `RentCity.tsx` query so it matches `city_bike_counts` rule: only return bike_types that **have at least one available, approved, non-archived `bikes` unit**, owner is a verified agency, `archived_at IS NULL`. Use an `EXISTS` filter via a small view or inline filter.
+- Result: both pages will always show the same count for the same city.
 
-## Phase 2 — Continue critical-path QA after fixes
+### B. Keep `main_image_url` in sync with the gallery (`MotorbikeWizard.tsx`)
+- After uploading the first gallery image (or whenever the user reorders), set `bike_types.main_image_url` to the first `bike_type_images.image_url`.
+- Backfill once for existing rows where `main_image_url IS NULL` but `bike_type_images` has at least one row → migration UPDATE.
 
-Walk through the rest of the platform end-to-end with the admin account, fix every real bug found:
+### C. Reorder agency sidebar (`src/components/agency/Sidebar.tsx`)
+- Swap `Bookings` and `Motorbikes` in the `NAV` array.
+- Mirror the same change in `MobileNav.tsx` if it duplicates the order.
 
-1. **Renter booking flow** — `/listings` → bike details → `/checkout` (10 MAD YouCan Pay) → confirmation → `/inbox` chat unlock
-2. **Agency dashboard** — `/agency/dashboard`, `/agency/motorbikes`, `/agency/bookings` (confirm a booking → 50 MAD wallet deduction), `/agency/finance`, `/agency/wallet`
-3. **Admin panel** — `/admin/panel`, `/admin/clients`, `/admin/bookings`, `/admin/verifications`, `/admin/agencies/verifications`, `/admin/bikes/approvals`
+### D. Archived bikes UX in the agency dashboard
+1. Add a tab/segmented control on `/agency/motorbikes` with two views: **Active** (default) and **Archived**.
+2. `useAgencyBikes` hook gets an optional `{ includeArchived?: boolean }` arg. The active view filters `archived_at IS NULL`; the archived view filters `archived_at IS NOT NULL`.
+3. On a row in the Archived list, expose:
+   - **Unarchive** button → new RPC `unarchive_bike_type(p_bike_type_id)` that clears `archived_at` on the bike_type and its `bikes` units, sets `business_status = 'inactive'` so the agency must explicitly toggle availability back on (no surprise re-publishing).
+   - **Delete permanently** button → only enabled when `NOT EXISTS bookings.bike_id IN (SELECT id FROM bikes WHERE bike_type_id = $1)`. Otherwise show a tooltip: "Cannot delete — this bike has booking history. Keep it archived." Implemented as RPC `delete_bike_type_if_safe(p_bike_type_id)`.
+4. Keep the existing **Archive** button on the active detail page (already implemented).
 
-For each: capture console errors, failed network requests, RLS denials, blank pages, broken interactions. Fix every P0/P1 (crashes, broken logic, security issues). Skip cosmetic P2 unless trivial.
+### E. Small polish
+- On the agency Motorbikes grid + table, fall back to the first `bike_type_images.image_url` when `main_image_url` is NULL, so existing bikes look correct even before the migration runs.
 
-## What I will NOT do
+---
 
-- Touch `src/integrations/supabase/client.ts`, `types.ts`, `.env`, or `supabase/config.toml` project-level settings (auto-generated).
-- Add new database migrations unless a real bug requires it.
-- Add features the user did not ask for.
-- Spend the session on the React ref warning if it proves intractable — I'll log it as a known dev-only annoyance and move on.
+## Files to change
 
-## Risk
+- `supabase/migrations/<new>.sql` — backfill `main_image_url`; add `unarchive_bike_type` RPC; add `delete_bike_type_if_safe` RPC.
+- `src/pages/RentCity.tsx` — tighten query to match `city_bike_counts`.
+- `src/pages/agency/MotorbikeWizard.tsx` — write `main_image_url` after gallery upload / reorder.
+- `src/components/agency/Sidebar.tsx` and `src/components/agency/MobileNav.tsx` — reorder nav.
+- `src/pages/agency/Motorbikes.tsx` — Active/Archived tabs, fallback image.
+- `src/hooks/useAgencyData.ts` — `useAgencyBikes({ includeArchived })`; new mutations for unarchive + delete.
+- `src/pages/agency/MotorbikeDetail.tsx` — show Unarchive + Delete-if-safe when viewing an archived bike.
 
-This is a long session. If we run low on credits before finishing Phase 2, I'll stop after Phase 1 + the renter booking flow (the highest-impact path) and report what's left untested. You can resume in a follow-up message.
+## Risks
+- Backfilling `main_image_url` overwrites NULLs only — safe.
+- The tighter RentCity query could drop a bike if its `bikes` unit row is missing. Acceptable: that bike was never bookable anyway, and the homepage already hides it. We surface the same truth in both places.
+- New RPCs are SECURITY DEFINER and check `owner_id = auth.uid()` (or admin) before mutating.
+
+## QA checklist after fix
+- Homepage Casablanca count = `/rent/casablanca` result count.
+- Marrakech / Rabat still show 0 and an empty state.
+- "test" bike shows the same image on agency list, agency detail, and public bike page.
+- Agency sidebar order: Dashboard, Motorbikes, Bookings, Messages, Calendar, Finance, Agency, Settings.
+- Archive a bike → it disappears from Active and appears under Archived.
+- Unarchive → reappears under Active with `business_status = inactive` (renter cannot see it until agency re-enables availability).
+- Delete a bike with no bookings → row is gone permanently.
+- Try to delete a bike with bookings → blocked with explanatory toast.
+- Arabic RTL: tabs, buttons, sidebar order all mirror correctly.

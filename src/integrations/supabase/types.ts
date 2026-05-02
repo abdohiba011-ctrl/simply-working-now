@@ -2439,6 +2439,10 @@ export type Database = {
         Args: { _booking_id: string; _reason: string }
         Returns: Json
       }
+      delete_bike_type_if_safe: {
+        Args: { p_bike_type_id: string }
+        Returns: undefined
+      }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
@@ -2528,6 +2532,10 @@ export type Database = {
         Returns: Json
       }
       slugify: { Args: { _input: string }; Returns: string }
+      unarchive_bike_type: {
+        Args: { p_bike_type_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "renter" | "agency" | "admin"
