@@ -18,6 +18,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { StatusChip } from "@/components/shared/StatusChip";
+import { AdminErrorState } from "@/components/admin/AdminErrorState";
 
 const QUICK_REASONS = [
   "Photos are unclear or low quality",
