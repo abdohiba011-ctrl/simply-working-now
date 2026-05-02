@@ -133,12 +133,6 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
                       Renter Site
                     </DropdownMenuItem>
                   )}
-                  {!canGoRenter && !hasAgency && (
-                    <DropdownMenuItem onClick={() => navigate("/")}>
-                      <Home className="mr-2 h-4 w-4 text-muted-foreground" />
-                      Public Site
-                    </DropdownMenuItem>
-                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
 
