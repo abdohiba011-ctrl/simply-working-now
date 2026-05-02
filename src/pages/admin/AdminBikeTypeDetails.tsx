@@ -505,14 +505,14 @@ const AdminBikeTypeDetails = () => {
               <div>
                 <Label>City</Label>
                 <Select
-                  value={formData.city_id || ''}
-                  onValueChange={(value) => setFormData({ ...formData, city_id: value || null })}
+                  value={formData.city_id || '__none__'}
+                  onValueChange={(value) => setFormData({ ...formData, city_id: value === '__none__' ? null : value })}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select a city (optional)" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">No specific city</SelectItem>
+                    <SelectItem value="__none__">No specific city</SelectItem>
                     {cities.map((city) => (
                       <SelectItem key={city.id} value={city.id}>
                         {city.name}
