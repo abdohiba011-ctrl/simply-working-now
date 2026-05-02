@@ -16,6 +16,7 @@ const corsHeaders = {
 
 interface Body {
   payment_id: string;
+  transaction_id?: string;
 }
 
 Deno.serve(async (req) => {
@@ -102,7 +103,7 @@ Deno.serve(async (req) => {
     // transaction_id, which the webhook normally fills. If we don't have
     // one yet, we fall back to a tokenize-status probe.
     let providerStatus: string | null = null;
-    let providerTxn: string | null = payment.transaction_id || null;
+    let providerTxn: string | null = body.transaction_id || payment.transaction_id || null;
     let providerRaw: any = null;
 
     const tryFetch = async (url: string, init: RequestInit) => {
