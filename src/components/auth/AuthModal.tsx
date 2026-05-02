@@ -114,7 +114,7 @@ export function AuthModal() {
     }
     setSubmitting(true);
     try {
-      const u = await login(identifier.trim(), password, false, "renter");
+      const u = await login(identifier.trim(), password, rememberMe, "renter");
       handleAfterAuth(u.name);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Incorrect email or password";
