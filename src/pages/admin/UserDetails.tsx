@@ -143,13 +143,13 @@ const UserDetails = () => {
         const creatorIds = [...new Set(notesData.map(n => n.created_by))];
         const { data: profiles } = await supabase
           .from('profiles')
-          .select('id, name, email')
-          .in('id', creatorIds);
+          .select('user_id, name, email')
+          .in('user_id', creatorIds);
 
         const notesWithCreators = notesData.map(note => ({
           ...note,
-          creator_name: profiles?.find(p => p.id === note.created_by)?.name || 
-                        profiles?.find(p => p.id === note.created_by)?.email || 
+          creator_name: profiles?.find(p => p.user_id === note.created_by)?.name || 
+                        profiles?.find(p => p.user_id === note.created_by)?.email || 
                         'Unknown'
         }));
         setNotes(notesWithCreators);
