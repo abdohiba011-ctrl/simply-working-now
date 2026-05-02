@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 
 import { AgencyAuthLayout } from "@/components/auth/AgencyAuthLayout";
+import { RenterAuthLayout } from "@/components/auth/RenterAuthLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -752,7 +753,7 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
 
   // ---------------- RENTER (single page) ----------------
   return (
-    <AgencyAuthLayout>
+    <RenterAuthLayout>
       <div className="space-y-6">
         <div className="space-y-2">
           <h1 className="text-2xl font-bold tracking-tight text-foreground">
@@ -913,8 +914,21 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
             {t("mockAuth.login", { defaultValue: "Log in" })}
           </Link>
         </p>
+
+        {/* Cross-door link → agency signup */}
+        <p className="text-center text-xs text-muted-foreground">
+          {t("mockAuth.want_to_list", {
+            defaultValue: "Want to list your bikes?",
+          })}{" "}
+          <Link
+            to="/agency/signup"
+            className="hover:underline font-medium text-foreground"
+          >
+            {t("mockAuth.register_as_agency", { defaultValue: "Register as agency" })}
+          </Link>
+        </p>
       </div>
-    </AgencyAuthLayout>
+    </RenterAuthLayout>
   );
 }
 
