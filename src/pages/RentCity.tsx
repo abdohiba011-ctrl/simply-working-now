@@ -126,7 +126,7 @@ export default function RentCity() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const neighborhoodOptions = useMemo(() => getNeighborhoodsForCity(city), [city]);
+  const neighborhoodOptions = useMemo(() => getNeighborhoodsForCity(citySlug), [citySlug]);
   const allCityLabel = neighborhoodOptions[0]; // e.g. "All Casablanca"
 
   // Initial neighborhood from URL — but ONLY accept it if it belongs to this city.
