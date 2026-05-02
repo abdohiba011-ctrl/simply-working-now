@@ -141,47 +141,7 @@ export default function Billing() {
 
   const filteredTx = useMemo(() => applyFilters(transactions, filters), [transactions, filters]);
 
-  const submitTopup = async () => {
-    if (!isRenter) {
-      toast.error("Only renters can top up credits");
-      return;
-    }
-    const num = Number(amount);
-    if (!num || num < 10) {
-      toast.error("Minimum top up is 10 MAD");
-      return;
-    }
-    setSubmitting(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("youcanpay-create-token", {
-        body: {
-          purpose: "renter_topup",
-          amount: num,
-          currency: "MAD",
-          customer_email: profile.email || user?.email,
-          customer_name: profile.name,
-        },
-      });
-      if (error || !data?.token_id || !data?.public_key) {
-        throw new Error(error?.message || data?.error || "Failed to start payment");
-      }
-      const url = buildYouCanPayUrl({
-        resp: data,
-        amount: num,
-        currency: "MAD",
-        successPath: "/billing?topup=success",
-        errorPath: "/billing?topup=error",
-        title: "Top up credits",
-      });
-      setTopupOpen(false);
-      navigate(url);
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : "Top up failed";
-      toast.error(msg);
-    } finally {
-      setSubmitting(false);
-    }
-  };
+  // Top-up flow removed for renters — booking fees are paid one-time per booking via YouCan Pay.
 
   const downloadReceipt = async (txId: string) => {
     setDownloadingId(txId);
