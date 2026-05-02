@@ -82,7 +82,7 @@ export const Header = memo(() => {
     setIsMenuOpen(false);
     navigate("/agency/agency-center");
   }, [switchRoleStore, navigate]);
-  const { balance: renterBalance, currency: renterCurrency, isLoading: renterWalletLoading } = useRenterWallet();
+  // Renter wallet balance hook removed — renters no longer have a top-up wallet.
 
   // Track scroll position for dynamic menu positioning
   useEffect(() => {
