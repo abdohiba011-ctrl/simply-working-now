@@ -247,8 +247,8 @@ export default function Billing() {
           </div>
           <h1 className="text-2xl font-bold">Credits are for renters</h1>
           <p className="mt-2 max-w-md text-sm text-muted-foreground">
-            Billing & credits are part of the renter experience. Sign up as a renter to top up
-            credits and pay platform booking fees.
+            Motonita Credits are part of the renter experience. Sign up as a renter to receive
+            and use credits on future bookings.
           </p>
           <Button className="mt-6" asChild>
             <a href="/signup">Sign up as renter</a>
