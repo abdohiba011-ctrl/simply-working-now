@@ -620,7 +620,7 @@ const AdminAnalytics = () => {
               {locationData.length > 0 ? (
                 <div className="flex items-center gap-4">
                   <div className="w-1/2 h-[200px]">
-                    <ResponsiveContainerComponent width="100%" height="100%">
+                    <ChartContainer config={chartConfig} className="h-full w-full">
                       <PieChartComponent>
                         <PieComponent
                           data={locationData}
@@ -637,7 +637,7 @@ const AdminAnalytics = () => {
                         </PieComponent>
                         <ChartTooltip content={<ChartTooltipContent nameKey="name" />} />
                       </PieChartComponent>
-                    </ResponsiveContainerComponent>
+                    </ChartContainer>
                   </div>
                   <div className="w-1/2 space-y-2">
                     {locationData.map((loc, index) => (
