@@ -185,8 +185,8 @@ export const HeroSection = memo(() => {
 
   const neighborhoodOptions = useMemo(() => {
     if (!city) return [];
-    return neighborhoodsByCity[city] || [];
-  }, [city]);
+    return neighborhoods;
+  }, [city, neighborhoods]);
 
   const handleCityChange = useCallback((value: string) => {
     setCity(value);
