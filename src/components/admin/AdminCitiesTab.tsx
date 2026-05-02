@@ -616,11 +616,14 @@ export const AdminCitiesTab = () => {
                         </div>
                       </div>
 
-                      <div className="hidden md:flex items-center gap-2">
-                        <Label className="text-xs text-muted-foreground">Homepage</Label>
+                      <div className="hidden md:flex items-center gap-2" title="Show this city as a card on the public homepage">
+                        <Label className="text-xs text-muted-foreground cursor-help">
+                          Show on homepage
+                        </Label>
                         <Switch
                           checked={city.show_in_homepage}
                           onCheckedChange={(checked) => handleToggleHomepage(city.id, checked)}
+                          aria-label="Show on homepage"
                         />
                       </div>
 
@@ -628,13 +631,20 @@ export const AdminCitiesTab = () => {
                         variant="ghost"
                         size="sm"
                         onClick={() => handleToggleAvailability(city)}
-                        title={city.is_available ? "Set Coming Soon" : "Set Available"}
+                        title={
+                          city.is_available
+                            ? "City is bookable. Click to mark as Coming Soon."
+                            : "City is in Coming Soon mode. Click to make it available for booking."
+                        }
                       >
                         {city.is_available ? (
                           <Clock className="h-4 w-4" />
                         ) : (
                           <CheckCircle className="h-4 w-4" />
                         )}
+                        <span className="ml-1.5 hidden lg:inline text-xs">
+                          {city.is_available ? "Available" : "Coming soon"}
+                        </span>
                       </Button>
 
                       <Button
