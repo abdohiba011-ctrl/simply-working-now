@@ -196,18 +196,26 @@ export const AdminCitiesTab = () => {
     if (!editingCity) return;
     setIsSaving(true);
     try {
+      const oldCity = cities.find((c) => c.id === editingCity.id);
+      const updatePayload = {
+        name: editingCity.name,
+        image_url: editingCity.image_url,
+        price_from: editingCity.price_from,
+        is_available: editingCity.is_available,
+        is_coming_soon: editingCity.is_coming_soon,
+        show_in_homepage: editingCity.show_in_homepage,
+      };
       const { error } = await supabase
         .from("service_cities")
-        .update({
-          name: editingCity.name,
-          image_url: editingCity.image_url,
-          price_from: editingCity.price_from,
-          is_available: editingCity.is_available,
-          is_coming_soon: editingCity.is_coming_soon,
-          show_in_homepage: editingCity.show_in_homepage,
-        })
+        .update(updatePayload)
         .eq("id", editingCity.id);
       if (error) throw error;
+      await supabase.rpc("log_audit_event", {
+        _action: "city_updated",
+        _table_name: "service_cities",
+        _record_id: editingCity.id,
+        _details: { old_value: oldCity, new_value: updatePayload } as never,
+      });
       toast.success("City updated");
       setShowEditCityDialog(false);
       setEditingCity(null);
