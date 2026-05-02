@@ -35,6 +35,7 @@ import {
   Trash2
 } from "lucide-react";
 import { AdminUserDetailsSkeleton } from "@/components/ui/admin-skeleton";
+import { AdminErrorState } from "@/components/admin/AdminErrorState";
 import { format } from "date-fns";
 import {
   Dialog,
