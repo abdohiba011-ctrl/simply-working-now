@@ -306,24 +306,10 @@ export default function Billing() {
                 />
 
                 <div>
-                  <p className="mb-2 text-sm text-muted-foreground">
-                    Use credits to pay booking fees and other platform charges.
+                  <p className="text-sm text-muted-foreground">
+                    Motonita Credits are issued as refunds and promo rewards. They are applied
+                    automatically toward your next booking and expire 6 months after issuance.
                   </p>
-                  <div className="flex flex-wrap gap-2">
-                    {PRESETS.map((p) => (
-                      <Button
-                        key={p}
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setAmount(String(p));
-                          setTopupOpen(true);
-                        }}
-                      >
-                        + {p} MAD
-                      </Button>
-                    ))}
-                  </div>
                 </div>
               </CardContent>
             </Card>
