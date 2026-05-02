@@ -235,9 +235,11 @@ const AdminFleet = () => {
     }
   };
 
-  const handleDelete = async (bikeId: string) => {
-    if (!confirm("Are you sure you want to delete this bike type?")) return;
-    
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+
+  const handleDelete = (bikeId: string) => setDeleteId(bikeId);
+
+  const performDelete = async (bikeId: string) => {
     try {
       const { error } = await supabase
         .from('bike_types')
