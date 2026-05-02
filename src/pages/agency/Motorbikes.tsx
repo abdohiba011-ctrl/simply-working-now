@@ -176,19 +176,22 @@ const Motorbikes = () => {
         ) : filtered.length === 0 ? (
           <Card>
             <EmptyState
-              icon={BikeIcon}
-              title={bikes.length === 0 ? "No motorbikes yet" : "No matches"}
+              icon={tab === "archived" ? Archive : BikeIcon}
+              title={
+                bikes.length === 0
+                  ? tab === "archived" ? "No archived bikes" : "No motorbikes yet"
+                  : "No matches"
+              }
               description={
                 bikes.length === 0
-                  ? "Add your first motorbike to start receiving bookings."
+                  ? tab === "archived"
+                    ? "Bikes you archive will appear here. They are hidden from renters but kept for your records."
+                    : "Add your first motorbike to start receiving bookings."
                   : "Try a different search."
               }
               action={
-                bikes.length === 0
-                  ? {
-                      label: "Add motorbike",
-                      onClick: () => navigate("/agency/motorbikes/new"),
-                    }
+                bikes.length === 0 && tab === "active"
+                  ? { label: "Add motorbike", onClick: () => navigate("/agency/motorbikes/new") }
                   : undefined
               }
             />
@@ -199,7 +202,10 @@ const Motorbikes = () => {
               <Card
                 key={bike.id}
                 onClick={() => open(bike.id)}
-                className="cursor-pointer overflow-hidden transition-shadow hover:shadow-lg"
+                className={cn(
+                  "cursor-pointer overflow-hidden transition-shadow hover:shadow-lg",
+                  tab === "archived" && "opacity-80"
+                )}
               >
                 <div className="aspect-[4/3] bg-muted">
                   {bike.main_image_url ? (
@@ -220,16 +226,50 @@ const Motorbikes = () => {
                     {bike.engine_cc ? `${bike.engine_cc}cc` : ""} {bike.transmission || ""}
                   </p>
                   <div className="mt-2">
-                    <BikeApprovalBadge bike={bike} />
+                    {tab === "archived" ? (
+                      <span className="inline-flex items-center gap-1 rounded-full border border-border bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                        <Archive className="h-3 w-3" /> Archived
+                      </span>
+                    ) : (
+                      <BikeApprovalBadge bike={bike} />
+                    )}
                   </div>
                   <div className="mt-2 flex items-center justify-between">
                     <span className="text-sm font-bold text-primary">
                       {Number(bike.daily_price || 0)} MAD/day
                     </span>
-                    <span className="rounded-full border border-border bg-muted px-2 py-0.5 text-[10px] capitalize">
-                      {bike.availability_status || "available"}
-                    </span>
+                    {tab === "active" && (
+                      <span className="rounded-full border border-border bg-muted px-2 py-0.5 text-[10px] capitalize">
+                        {bike.availability_status || "available"}
+                      </span>
+                    )}
                   </div>
+                  {tab === "archived" && (
+                    <div
+                      className="mt-3 flex gap-2"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="flex-1"
+                        disabled={busyId === bike.id}
+                        onClick={() => handleUnarchive(bike.id)}
+                      >
+                        <RotateCcw className="mr-1.5 h-3.5 w-3.5" /> Unarchive
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                        disabled={busyId === bike.id}
+                        onClick={() => setConfirmDelete({ id: bike.id, name: bike.name })}
+                        aria-label="Delete permanently"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </Card>
             ))}
@@ -278,41 +318,69 @@ const Motorbikes = () => {
                       {Number(bike.daily_price || 0)} MAD
                     </TableCell>
                     <TableCell>
-                      <BikeApprovalBadge bike={bike} />
+                      {tab === "archived" ? (
+                        <span className="inline-flex items-center gap-1 rounded-full border border-border bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                          <Archive className="h-3 w-3" /> Archived
+                        </span>
+                      ) : (
+                        <BikeApprovalBadge bike={bike} />
+                      )}
                     </TableCell>
                     <TableCell
                       className="text-right"
                       onClick={(e) => e.stopPropagation()}
                     >
                       <div className="inline-flex gap-1">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => open(bike.id)}
-                          aria-label="View"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() =>
-                            navigate(`/agency/motorbikes/${bike.id}/edit`)
-                          }
-                          aria-label="Edit"
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() =>
-                            window.open(`/bikes/${bike.id}`, "_blank")
-                          }
-                          aria-label="Public view"
-                        >
-                          <ExternalLink className="h-4 w-4" />
-                        </Button>
+                        {tab === "archived" ? (
+                          <>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              disabled={busyId === bike.id}
+                              onClick={() => handleUnarchive(bike.id)}
+                              aria-label="Unarchive"
+                            >
+                              <RotateCcw className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                              disabled={busyId === bike.id}
+                              onClick={() => setConfirmDelete({ id: bike.id, name: bike.name })}
+                              aria-label="Delete permanently"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </>
+                        ) : (
+                          <>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => open(bike.id)}
+                              aria-label="View"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => navigate(`/agency/motorbikes/${bike.id}/edit`)}
+                              aria-label="Edit"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => window.open(`/bikes/${bike.id}`, "_blank")}
+                              aria-label="Public view"
+                            >
+                              <ExternalLink className="h-4 w-4" />
+                            </Button>
+                          </>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -322,6 +390,27 @@ const Motorbikes = () => {
           </Card>
         )}
       </div>
+
+      <Dialog open={!!confirmDelete} onOpenChange={(o) => !o && setConfirmDelete(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete this bike permanently?</DialogTitle>
+            <DialogDescription>
+              <strong>{confirmDelete?.name}</strong> will be removed for good. This is only allowed if the bike has no booking history. If it does, you'll be told to keep it archived instead.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmDelete(null)}>Cancel</Button>
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={!!busyId}
+            >
+              Delete permanently
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AgencyLayout>
   );
 };
