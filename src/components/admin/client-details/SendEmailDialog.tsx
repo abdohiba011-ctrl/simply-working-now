@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { getErrMsg } from "@/lib/errorMessages";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -8,19 +8,13 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Mail, Image, X, Upload } from "lucide-react";
+import { Loader2, Mail } from "lucide-react";
 
 interface SendEmailDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   clientEmail: string;
   clientName: string;
-}
-
-interface AttachedImage {
-  id: string;
-  file: File;
-  preview: string;
 }
 
 export const SendEmailDialog = ({
@@ -32,45 +26,6 @@ export const SendEmailDialog = ({
   const [subject, setSubject] = useState("");
   const [content, setContent] = useState("");
   const [isSending, setIsSending] = useState(false);
-  const [attachedImages, setAttachedImages] = useState<AttachedImage[]>([]);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const handleImageAttach = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files) return;
-
-    const maxSize = 5 * 1024 * 1024; // 5MB per image
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-
-    Array.from(files).forEach(file => {
-      if (!allowedTypes.includes(file.type)) {
-        toast.error(`${file.name} is not a valid image type`);
-        return;
-      }
-      if (file.size > maxSize) {
-        toast.error(`${file.name} is too large (max 5MB)`);
-        return;
-      }
-
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setAttachedImages(prev => [...prev, {
-          id: Math.random().toString(36).substr(2, 9),
-          file,
-          preview: event.target?.result as string,
-        }]);
-      };
-      reader.readAsDataURL(file);
-    });
-
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
-  };
-
-  const removeImage = (id: string) => {
-    setAttachedImages(prev => prev.filter(img => img.id !== id));
-  };
 
   const handleSend = async () => {
     if (!subject.trim()) {
@@ -85,10 +40,6 @@ export const SendEmailDialog = ({
     setIsSending(true);
 
     try {
-      if (attachedImages.length > 0) {
-        toast.warning("Image attachments are not supported yet — sending text only.");
-      }
-
       const { error } = await supabase.functions.invoke('send-transactional-email', {
         body: {
           templateName: 'admin-message',
@@ -113,10 +64,8 @@ export const SendEmailDialog = ({
 
       toast.success("Email sent successfully!");
 
-      // Reset form
       setSubject("");
       setContent("");
-      setAttachedImages([]);
       onOpenChange(false);
     } catch (error: unknown) {
       console.error('Send email error:', error);
@@ -130,7 +79,6 @@ export const SendEmailDialog = ({
     if (!isSending) {
       setSubject("");
       setContent("");
-      setAttachedImages([]);
       onOpenChange(false);
     }
   };
@@ -185,52 +133,12 @@ export const SendEmailDialog = ({
             />
           </div>
 
-          {/* Image Attachments */}
+          {/* Attachments — not supported yet */}
           <div className="space-y-2">
-            <Label>Attach Images (optional)</Label>
-            <div className="flex flex-wrap gap-3">
-              {attachedImages.map((img) => (
-                <div 
-                  key={img.id} 
-                  className="relative w-20 h-20 rounded-lg overflow-hidden border group"
-                >
-                  <img
-                    src={img.preview}
-                    alt="Attachment"
-                    className="w-full h-full object-cover"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => removeImage(img.id)}
-                    className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
-                    disabled={isSending}
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </div>
-              ))}
-              
-              {attachedImages.length < 5 && (
-                <label className="w-20 h-20 rounded-lg border-2 border-dashed border-muted-foreground/25 flex items-center justify-center cursor-pointer hover:border-primary hover:bg-primary/5 transition-colors">
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    onChange={handleImageAttach}
-                    className="sr-only"
-                    disabled={isSending}
-                  />
-                  <div className="text-center">
-                    <Image className="h-5 w-5 mx-auto text-muted-foreground" />
-                    <span className="text-xs text-muted-foreground">Add</span>
-                  </div>
-                </label>
-              )}
+            <Label className="text-muted-foreground">Attachments</Label>
+            <div className="rounded-md border border-dashed border-muted-foreground/30 bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+              Attachments are not supported yet.
             </div>
-            <p className="text-xs text-muted-foreground">
-              Max 5 images, 5MB each. Supported: JPG, PNG, GIF, WebP
-            </p>
           </div>
 
           {/* Email Templates (quick actions) */}
