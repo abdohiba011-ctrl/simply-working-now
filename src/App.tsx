@@ -16,6 +16,9 @@ import { ScrollToTopButton } from "./components/ScrollToTopButton";
 import { LanguageSuggestionBanner } from "./components/LanguageSuggestionBanner";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { AgencyShell } from "./components/agency/AgencyShell";
+import { AuthModalProvider } from "./contexts/AuthModalContext";
+import { AuthModal } from "./components/auth/AuthModal";
+import { AuthModalRedirect } from "./components/auth/AuthModalRedirect";
 
 // Eagerly load critical above-the-fold pages
 import Index from "./pages/Index";
