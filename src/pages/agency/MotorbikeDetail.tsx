@@ -308,6 +308,43 @@ const MotorbikeDetail = () => {
           </Card>
         </div>
 
+        {/* Pickup location */}
+        <Card className="p-5">
+          <div className="flex items-start gap-3">
+            <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/15">
+              <MapPin className="h-4 w-4 text-foreground" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2">
+                <h3 className="font-semibold">Pickup location</h3>
+                {pickup?.usingAgencyFallback && (
+                  <Badge variant="outline" className="text-[10px]">
+                    Using agency location
+                  </Badge>
+                )}
+              </div>
+              {pickup && (pickup.city || pickup.neighborhood || pickup.address) ? (
+                <div className="mt-2 space-y-0.5 text-sm">
+                  {pickup.neighborhood && (
+                    <p className="text-foreground">{pickup.neighborhood}</p>
+                  )}
+                  {pickup.city && (
+                    <p className="text-muted-foreground">{pickup.city}</p>
+                  )}
+                  {pickup.address && (
+                    <p className="text-muted-foreground">{pickup.address}</p>
+                  )}
+                </div>
+              ) : (
+                <p className="mt-2 text-sm text-muted-foreground">
+                  No pickup location set. Add one in Edit, or update your agency
+                  location in Agency Center.
+                </p>
+              )}
+            </div>
+          </div>
+        </Card>
+
         {bike.description && (
           <Card className="p-5">
             <h3 className="font-semibold">Description</h3>
