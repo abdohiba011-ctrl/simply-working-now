@@ -432,7 +432,7 @@ const BikeDetails = () => {
           >
             <div>
               <p className="text-sm font-semibold text-foreground">Pickup at shop</p>
-              <p className="text-xs text-muted-foreground">Residence El Amal, {neighborhood}</p>
+              <p className="text-xs text-muted-foreground">{neighborhood}, {cityName}</p>
             </div>
             <span className="text-xs font-medium text-foreground">Free</span>
           </button>
