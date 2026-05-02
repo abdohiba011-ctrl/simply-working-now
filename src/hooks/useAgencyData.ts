@@ -320,6 +320,7 @@ export const useAgencyBikes = () => {
       .from("bike_types")
       .select("*")
       .eq("owner_id", userId)
+      .is("archived_at", null)
       .order("created_at", { ascending: false });
     if (!error) setBikes((data || []) as AgencyBike[]);
     setLoading(false);
