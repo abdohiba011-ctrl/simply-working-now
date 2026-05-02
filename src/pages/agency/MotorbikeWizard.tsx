@@ -306,8 +306,9 @@ const MotorbikeWizard = () => {
           });
         if (bikeErr) {
           console.error("[MotorbikeWizard] bikes row insert failed:", bikeErr);
-          // Don't fail the whole flow — admin can fix this later.
-          toast.warning("Bike saved, but inventory row could not be created. Contact support.");
+          throw new Error(
+            `Could not create the inventory record for this motorbike: ${bikeErr.message}`,
+          );
         }
       }
 
