@@ -27,6 +27,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { AdminFleetSkeleton } from "@/components/ui/admin-skeleton";
+import { DangerConfirmDialog } from "@/components/admin/DangerConfirmDialog";
 import {
   Bike as BikeIcon,
   Plus,
