@@ -2455,6 +2455,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_owner_verified_agency: {
+        Args: { _owner_id: string }
+        Returns: boolean
+      }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
       issue_motonita_credit: {
         Args: {
