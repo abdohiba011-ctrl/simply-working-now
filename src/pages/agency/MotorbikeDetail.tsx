@@ -4,24 +4,30 @@ import { AgencyLayout } from "@/components/agency/AgencyLayout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import {
   ChevronLeft,
   ExternalLink,
   Bike as BikeIcon,
   XCircle,
   Clock,
-  CheckCircle2,
   AlertTriangle,
   MapPin,
+  Archive,
 } from "lucide-react";
 import { useAgencyBike } from "@/hooks/useAgencyData";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Dialog,
   DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { BikeApprovalBadge } from "@/components/agency/BikeApprovalBadge";
+import { toast } from "sonner";
 
 interface GalleryImage {
   id?: string;
@@ -44,6 +50,49 @@ const MotorbikeDetail = () => {
   const [activeIndex, setActiveIndex] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [pickup, setPickup] = useState<PickupLocation | null>(null);
+  const [available, setAvailable] = useState<boolean>(true);
+  const [archiveOpen, setArchiveOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    setAvailable((bike?.availability_status ?? "available") === "available");
+  }, [bike?.availability_status]);
+
+  const toggleAvailability = async (next: boolean) => {
+    if (!id) return;
+    setBusy(true);
+    const prev = available;
+    setAvailable(next);
+    const { error } = await supabase.rpc(
+      "set_bike_type_availability" as never,
+      { p_bike_type_id: id, p_available: next } as never,
+    );
+    setBusy(false);
+    if (error) {
+      setAvailable(prev);
+      toast.error(error.message || "Could not update availability");
+      return;
+    }
+    toast.success(next ? "Bike is now available" : "Bike taken off the market");
+  };
+
+  const archiveBike = async () => {
+    if (!id) return;
+    setBusy(true);
+    const { error } = await supabase.rpc(
+      "archive_bike_type" as never,
+      { p_bike_type_id: id } as never,
+    );
+    setBusy(false);
+    setArchiveOpen(false);
+    if (error) {
+      toast.error(error.message || "Could not archive bike");
+      return;
+    }
+    toast.success("Bike archived. It is no longer visible to renters.");
+    navigate("/agency/motorbikes");
+  };
+
 
   useEffect(() => {
     if (!id) return;
@@ -228,7 +277,7 @@ const MotorbikeDetail = () => {
               {bike.fuel_type || ""}
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button
               variant="outline"
               className="gap-1"
@@ -238,6 +287,14 @@ const MotorbikeDetail = () => {
             </Button>
             <Button onClick={() => navigate(`/agency/motorbikes/${bike.id}/edit`)}>
               Edit
+            </Button>
+            <Button
+              variant="outline"
+              className="gap-1 border-destructive/40 text-destructive hover:bg-destructive/10"
+              onClick={() => setArchiveOpen(true)}
+              disabled={busy}
+            >
+              <Archive className="h-4 w-4" /> Archive
             </Button>
           </div>
         </div>
@@ -299,12 +356,25 @@ const MotorbikeDetail = () => {
             </p>
           </Card>
           <Card className="p-4">
-            <p className="text-xs text-muted-foreground">Status</p>
-            <p className="mt-1">
-              <Badge variant="outline" className="capitalize">
-                {bike.availability_status || "—"}
-              </Badge>
-            </p>
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-xs text-muted-foreground">Availability</p>
+                <p className="mt-1">
+                  <Badge variant="outline" className="capitalize">
+                    {available ? "available" : "unavailable"}
+                  </Badge>
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Toggle on/off without re-review.
+                </p>
+              </div>
+              <Switch
+                checked={available}
+                onCheckedChange={toggleAvailability}
+                disabled={busy || bike.approval_status !== "approved"}
+                aria-label="Toggle availability"
+              />
+            </div>
           </Card>
         </div>
 
@@ -364,6 +434,27 @@ const MotorbikeDetail = () => {
               className="max-h-[85vh] w-full rounded-lg object-contain"
             />
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={archiveOpen} onOpenChange={setArchiveOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Archive "{bike.name}"?</DialogTitle>
+            <DialogDescription>
+              This bike will be hidden from renters and search results
+              immediately. Your booking history is preserved. You can ask
+              support to restore it later.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setArchiveOpen(false)} disabled={busy}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={archiveBike} disabled={busy}>
+              {busy ? "Archiving…" : "Archive bike"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </AgencyLayout>

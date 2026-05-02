@@ -84,6 +84,62 @@ const BikeDetails = () => {
     }
   }, [pickupParam, endParam]);
 
+  // Resolve real city + agency from DB (no hardcoded Casablanca / Casa Moto Rent).
+  const [resolvedCity, setResolvedCity] = useState<string | null>(null);
+  const [resolvedNeighborhood, setResolvedNeighborhood] = useState<string | null>(null);
+  const [resolvedAgency, setResolvedAgency] = useState<{
+    name: string | null;
+    verified: boolean;
+  }>({ name: null, verified: false });
+
+  useEffect(() => {
+    const bt: any = bike?.bike_type;
+    if (!bt) return;
+    let cancelled = false;
+    (async () => {
+      // City
+      let cityName: string | null = null;
+      if (bt.city_id) {
+        const { data: city } = await supabase
+          .from("service_cities")
+          .select("name")
+          .eq("id", bt.city_id)
+          .maybeSingle();
+        cityName = city?.name ?? null;
+      }
+      // Agency from owner_id → profiles → agencies
+      let agencyName: string | null = null;
+      let agencyVerified = false;
+      let agencyCity: string | null = null;
+      let agencyNeighborhood: string | null = null;
+      if (bt.owner_id) {
+        const { data: prof } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("user_id", bt.owner_id)
+          .maybeSingle();
+        if (prof?.id) {
+          const { data: ag } = await supabase
+            .from("agencies")
+            .select("business_name, is_verified, city, primary_neighborhood")
+            .eq("profile_id", prof.id)
+            .maybeSingle();
+          agencyName = ag?.business_name ?? null;
+          agencyVerified = !!ag?.is_verified;
+          agencyCity = ag?.city ?? null;
+          agencyNeighborhood = ag?.primary_neighborhood ?? null;
+        }
+      }
+      if (cancelled) return;
+      setResolvedCity(cityName || agencyCity);
+      setResolvedNeighborhood(bt.neighborhood || agencyNeighborhood || bike?.location || null);
+      setResolvedAgency({ name: agencyName, verified: agencyVerified });
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [bike?.bike_type, bike?.location]);
+
   // If URL is a UUID but the bike has a slug, redirect to the slug URL.
   // This preserves old links and gives a single canonical URL.
   const bikeSlug = (bike?.bike_type as any)?.slug as string | undefined;
@@ -155,11 +211,13 @@ const BikeDetails = () => {
 
   // SEO meta — must run unconditionally before early returns
   const seoSlug = bikeSlug || (id && !isUuid(id) ? id : "");
+  const seoCity = resolvedCity || bike?.location || "Morocco";
+  const seoAgency = resolvedAgency.name || "a verified agency";
   const seoTitle = bike?.bike_type
-    ? `${(bike.bike_type as any).name} — Rent in ${bike.location || "Casablanca"} | Motonita`
+    ? `${(bike.bike_type as any).name} — Rent in ${seoCity} | Motonita`
     : "Motorbike rental | Motonita";
   const seoDescription = bike?.bike_type
-    ? `Rent the ${(bike.bike_type as any).name} from ${(bike.bike_type as any).agency_name || "a verified agency"} in ${bike.location || "Morocco"}. Daily price ${Math.round(Number((bike.bike_type as any).daily_price) || 0)} MAD. Booked in 60 seconds, flat 10 MAD booking fee.`
+    ? `Rent the ${(bike.bike_type as any).name} from ${seoAgency} in ${seoCity}. Daily price ${Math.round(Number((bike.bike_type as any).daily_price) || 0)} MAD. Booked in 60 seconds, flat 10 MAD booking fee.`
     : "Rent verified motorbikes and scooters across Morocco with flat fees and no commission on rental price.";
   const canonicalUrl = seoSlug ? `${SITE_URL}/bike/${seoSlug}` : undefined;
   useDocumentHead({
@@ -201,9 +259,10 @@ const BikeDetails = () => {
   }
 
   const bikeType: any = bike.bike_type;
-  const neighborhood = bike.location || "Bouskoura";
-  const cityName = "Casablanca";
-  const agencyName = (bikeType as any)?.agency_name || "Casa Moto Rent";
+  const cityName = resolvedCity || bike.location || "Morocco";
+  const neighborhood = resolvedNeighborhood || bike.location || cityName;
+  const agencyName = resolvedAgency.name || "your local agency";
+  const agencyVerified = resolvedAgency.verified;
 
   const handleBookNow = async () => {
     if (!dateRange?.from || !dateRange?.to) {
@@ -373,7 +432,7 @@ const BikeDetails = () => {
           >
             <div>
               <p className="text-sm font-semibold text-foreground">Pickup at shop</p>
-              <p className="text-xs text-muted-foreground">Residence El Amal, {neighborhood}</p>
+              <p className="text-xs text-muted-foreground">{neighborhood}, {cityName}</p>
             </div>
             <span className="text-xs font-medium text-foreground">Free</span>
           </button>
