@@ -417,6 +417,13 @@ export const AdminBusinessClientsTab = () => {
         action_url: "/business-dashboard",
       });
 
+      await supabase.rpc("log_audit_event", {
+        _action: "business_application_approved",
+        _table_name: "contact_messages",
+        _record_id: selectedApplication.id,
+        _details: { user_id: userId, business_type, partner_type: partnerType },
+      });
+
       toast.success("Application approved successfully");
       setShowApproveDialog(false);
       setSelectedApplication(null);
