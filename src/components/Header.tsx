@@ -13,6 +13,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { LogoutConfirmDialog } from "@/components/LogoutConfirmDialog";
 import { AnnouncementBanner } from "@/components/AnnouncementBanner";
+import { useAuthModal } from "@/contexts/AuthModalContext";
 
 import { cn } from "@/lib/utils";
 import {
@@ -45,6 +46,7 @@ export const Header = memo(() => {
   const { language, setLanguage, t } = useLanguage();
   const { user, isAuthenticated, isLoading: authLoading, logout, hasRole } = useAuth();
   const navigate = useNavigate();
+  const { openAuthModal } = useAuthModal();
   const storeUser = useAuthStore((s) => s.user);
   const storeIsAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const storeIsLoading = useAuthStore((s) => s.isLoading);
@@ -530,10 +532,10 @@ export const Header = memo(() => {
               </>
             ) : (
               <>
-                <Button variant="outline" onClick={() => navigate("/auth")}>
+                <Button variant="outline" onClick={() => openAuthModal("login")}>
                   {t('header.login')}
                 </Button>
-                <Button variant="hero" onClick={() => navigate("/auth?mode=signup")}>
+                <Button variant="hero" onClick={() => openAuthModal("signup")}>
                   {t('header.signup')}
                 </Button>
               </>
@@ -687,10 +689,10 @@ export const Header = memo(() => {
                 </>
               ) : (
                 <div className="flex flex-col gap-2 px-2">
-                  <Button variant="outline" size="lg" className="text-base min-h-[48px] font-semibold" onClick={() => { navigate("/auth"); setIsMenuOpen(false); }}>
+                  <Button variant="outline" size="lg" className="text-base min-h-[48px] font-semibold" onClick={() => { openAuthModal("login"); setIsMenuOpen(false); }}>
                     {t('header.login')}
                   </Button>
-                  <Button variant="hero" size="lg" className="text-base min-h-[48px] font-semibold" onClick={() => { navigate("/auth?mode=signup"); setIsMenuOpen(false); }}>
+                  <Button variant="hero" size="lg" className="text-base min-h-[48px] font-semibold" onClick={() => { openAuthModal("signup"); setIsMenuOpen(false); }}>
                     {t('header.signup')}
                   </Button>
                 </div>

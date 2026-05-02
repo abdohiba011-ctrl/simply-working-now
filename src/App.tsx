@@ -16,6 +16,9 @@ import { ScrollToTopButton } from "./components/ScrollToTopButton";
 import { LanguageSuggestionBanner } from "./components/LanguageSuggestionBanner";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { AgencyShell } from "./components/agency/AgencyShell";
+import { AuthModalProvider } from "./contexts/AuthModalContext";
+import { AuthModal } from "./components/auth/AuthModal";
+import { AuthModalRedirect } from "./components/auth/AuthModalRedirect";
 
 // Eagerly load critical above-the-fold pages
 import Index from "./pages/Index";
@@ -134,7 +137,9 @@ const App = () => (
             <ScrollToTop />
             <OAuthHashWatcher />
             <ScrollToTopButton />
-            <Suspense fallback={<PageLoadingSkeleton />}>
+            <AuthModalProvider>
+              <AuthModal />
+              <Suspense fallback={<PageLoadingSkeleton />}>
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/listings" element={<Navigate to="/rent/casablanca" replace />} />
@@ -157,10 +162,10 @@ const App = () => (
                 <Route path="/gps-tracking" element={<GPSTracking />} />
                 {/* Legacy /auth → /login */}
                 <Route path="/auth" element={<Navigate to="/login" replace />} />
-                <Route path="/login" element={<MockLogin />} />
+                <Route path="/login" element={<AuthModalRedirect tab="login" />} />
                 <Route path="/agency/login" element={<AgencyLogin />} />
                 <Route path="/admin/login" element={<AdminLogin />} />
-                <Route path="/signup" element={<MockSignup />} />
+                <Route path="/signup" element={<AuthModalRedirect tab="signup" />} />
                 <Route path="/agency/signup" element={<AgencySignup />} />
                 <Route path="/rent" element={<Navigate to="/rent/casablanca" replace />} />
                 <Route path="/verify-email" element={<MockVerifyEmail />} />
@@ -260,7 +265,8 @@ const App = () => (
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
-            </Suspense>
+              </Suspense>
+            </AuthModalProvider>
           </BrowserRouter>
         </LanguageProvider>
       </TooltipProvider>
