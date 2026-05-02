@@ -263,17 +263,27 @@ Deno.serve(async (req) => {
         .update({ payment_status: "paid" })
         .eq("id", payment.related_booking_id);
 
-      await admin.from("booking_payments").insert({
-        booking_id: payment.related_booking_id,
-        amount: payment.amount,
-        currency: payment.currency,
-        provider: "youcanpay",
-        method: "card",
-        payment_type: "platform_fee",
-        status: "completed",
-        paid_at: new Date().toISOString(),
-        external_reference: providerTxn,
-      });
+      const { data: existingLedger } = await admin
+        .from("booking_payments")
+        .select("id")
+        .eq("booking_id", payment.related_booking_id)
+        .eq("provider", "youcanpay")
+        .eq("payment_type", "platform_fee")
+        .maybeSingle();
+
+      if (!existingLedger) {
+        await admin.from("booking_payments").insert({
+          booking_id: payment.related_booking_id,
+          amount: payment.amount,
+          currency: payment.currency,
+          provider: "youcanpay",
+          method: "card",
+          payment_type: "platform_fee",
+          status: "completed",
+          paid_at: new Date().toISOString(),
+          external_reference: providerTxn,
+        });
+      }
 
       if (booking?.assigned_to_business) {
         await admin.from("notifications").insert({
