@@ -120,7 +120,7 @@ const BikeDetails = () => {
           .maybeSingle();
         if (prof?.id) {
           const { data: ag } = await supabase
-            .from("agencies")
+            .from("agencies_public" as any)
             .select("business_name, is_verified, city, primary_neighborhood")
             .eq("profile_id", prof.id)
             .maybeSingle();
