@@ -45,17 +45,18 @@ describe("useAuthStore role isolation guards", () => {
     });
   });
 
-  it("switchRole('renter') is blocked for agency users", () => {
+  it("switchRole('renter') is allowed for agency users (renter is a public view, not a privileged role)", () => {
     useAuthStore.getState().switchRole("renter");
     const { currentRole, user } = useAuthStore.getState();
-    expect(currentRole).toBe("agency");
-    expect(user?.last_active_role).toBe("agency");
+    expect(currentRole).toBe("renter");
+    expect(user?.last_active_role).toBe("renter");
+    // Agency permission is preserved
+    expect(user?.roles.agency.active).toBe(true);
   });
 
-  it("activateRenterRole() throws for agency users", async () => {
-    await expect(useAuthStore.getState().activateRenterRole()).rejects.toThrow(
-      /agency/i,
-    );
-    expect(useAuthStore.getState().currentRole).toBe("agency");
+  it("activateRenterRole() succeeds for agency users without removing agency permission", async () => {
+    const next = await useAuthStore.getState().activateRenterRole();
+    expect(next.roles.agency.active).toBe(true);
+    expect(useAuthStore.getState().currentRole).toBe("renter");
   });
 });

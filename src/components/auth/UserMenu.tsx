@@ -51,15 +51,23 @@ export function UserMenu({ align = "end" }: Props) {
 
   const hasRenter = !!user.roles.renter?.active;
   const hasAgency = !!user.roles.agency?.active;
-  const canSwitchRoles = hasRenter && hasAgency;
+  // Renter Site is a public view available to any authenticated user.
+  // Agency-only accounts can switch to Renter Site without losing
+  // agency permissions.
+  const canSwitchToRenter = currentRole !== "renter";
+  const canSwitchToAgency = hasAgency && currentRole !== "agency";
   // Use store value if loaded; fall back to localStorage cache for instant render on refresh.
   const showAdmin = user.isAdmin || readCachedIsAdmin(user.id);
 
-  const handleSwitchRole = () => {
-    const target = currentRole === "agency" ? "renter" : "agency";
-    switchRole(target);
-    toast.success(target === "agency" ? t("switch_to_business") : t("switch_to_renter"));
-    navigate(target === "agency" ? "/agency/agency-center" : "/profile");
+  const handleSwitchToRenter = () => {
+    switchRole("renter");
+    toast.success(t("switch_to_renter"));
+    navigate("/");
+  };
+  const handleSwitchToAgency = () => {
+    switchRole("agency");
+    toast.success(t("switch_to_business"));
+    navigate("/agency/agency-center");
   };
   const initials = (user.name || user.email).slice(0, 1).toUpperCase();
 
@@ -138,20 +146,18 @@ export function UserMenu({ align = "end" }: Props) {
             </>
           )}
 
-          {canSwitchRoles && (
-            <>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleSwitchRole}>
-                {currentRole === "agency" ? (
-                  <UserIcon className="mr-2 h-4 w-4" />
-                ) : (
-                  <Briefcase className="mr-2 h-4 w-4" />
-                )}
-                {currentRole === "agency"
-                  ? t("switch_to_renter")
-                  : t("switch_to_business")}
-              </DropdownMenuItem>
-            </>
+          {(canSwitchToRenter || canSwitchToAgency) && <DropdownMenuSeparator />}
+          {canSwitchToAgency && (
+            <DropdownMenuItem onClick={handleSwitchToAgency}>
+              <Briefcase className="mr-2 h-4 w-4" />
+              {t("switch_to_business")}
+            </DropdownMenuItem>
+          )}
+          {canSwitchToRenter && (
+            <DropdownMenuItem onClick={handleSwitchToRenter}>
+              <UserIcon className="mr-2 h-4 w-4" />
+              {t("switch_to_renter")}
+            </DropdownMenuItem>
           )}
 
           {!hasAgency && hasRenter && (
