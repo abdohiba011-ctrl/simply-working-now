@@ -466,6 +466,13 @@ export const AdminBusinessClientsTab = () => {
         action_url: "/contact",
       });
 
+      await supabase.rpc("log_audit_event", {
+        _action: "business_application_rejected",
+        _table_name: "contact_messages",
+        _record_id: selectedApplication.id,
+        _details: { user_id: userId, reason: rejectReason.trim() },
+      });
+
       toast.success("Application rejected");
       setShowRejectDialog(false);
       setSelectedApplication(null);
