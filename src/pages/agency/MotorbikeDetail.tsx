@@ -4,24 +4,30 @@ import { AgencyLayout } from "@/components/agency/AgencyLayout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import {
   ChevronLeft,
   ExternalLink,
   Bike as BikeIcon,
   XCircle,
   Clock,
-  CheckCircle2,
   AlertTriangle,
   MapPin,
+  Archive,
 } from "lucide-react";
 import { useAgencyBike } from "@/hooks/useAgencyData";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Dialog,
   DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { BikeApprovalBadge } from "@/components/agency/BikeApprovalBadge";
+import { toast } from "sonner";
 
 interface GalleryImage {
   id?: string;
