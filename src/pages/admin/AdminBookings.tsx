@@ -87,21 +87,12 @@ const AdminBookings = () => {
   const [bookingStatusFilter, setBookingStatusFilter] = useState<string>("all");
   const [counts, setCounts] = useState<BookingCounts>({ new: 0, reviewed: 0, confirmed: 0, rejected: 0 });
 
+  // Access is enforced by <ProtectedRoute requireRole="admin"> in App.tsx.
+  // Do NOT add in-page navigate("/") here — it races with role hydration
+  // and bounces admins to the public homepage.
   useEffect(() => {
-    const checkAccess = async () => {
-      if (!isAuthenticated) {
-        navigate("/auth");
-        return;
-      }
-      const isAdmin = hasRole('admin');
-      if (!isAdmin) {
-        navigate("/");
-        return;
-      }
-      fetchBookings();
-    };
-    checkAccess();
-  }, [isAuthenticated, hasRole, navigate]);
+    fetchBookings();
+  }, []);
 
   useEffect(() => {
     let filtered = bookings;
