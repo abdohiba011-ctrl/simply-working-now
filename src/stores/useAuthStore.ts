@@ -435,10 +435,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   switchRole: (newRole) => {
     const { user } = get();
     if (!user) return;
-    if (!user.roles[newRole]?.active) return;
-    // Hard guard: agency accounts can never switch into renter mode.
-    if (newRole === "renter" && user.roles.agency.active) {
-      console.warn("[useAuthStore] blocked switchRole('renter') for agency user", user.id);
+    // "Renter" is treated as a public/site VIEW, not a permission.
+    // Any authenticated user can browse the renter/public site without
+    // losing or mutating their agency/admin permissions.
+    if (newRole === "agency" && !user.roles.agency?.active) {
+      console.warn("[useAuthStore] blocked switchRole('agency') — no agency role", user.id);
       return;
     }
 
@@ -450,12 +451,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   activateRenterRole: async () => {
     const { user } = get();
     if (!user) throw new Error("Not authenticated");
-    // Agency accounts are agency-only by product rule.
-    if (user.roles.agency.active) {
-      throw new Error("Agency accounts cannot activate renter mode");
-    }
-    // Renter role is always implicitly active in our mapping; no DB write
-    // is required. Just flip the active role and persist it.
+    // Renter is a view, not a privileged role. Any authenticated user
+    // may switch into the renter/public interface — this never removes
+    // or alters their agency/admin permissions.
     const updated: MockUser = {
       ...user,
       roles: { ...user.roles, renter: { ...user.roles.renter, active: true } },
