@@ -147,6 +147,7 @@ export const AnnouncementBanner = () => {
 
   return (
     <div
+      data-announcement-banner
       className="relative z-[110] w-full"
       style={{ backgroundColor: LIME, height: 40 }}
       role="region"
