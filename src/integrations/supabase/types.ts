@@ -564,6 +564,7 @@ export type Database = {
       bike_types: {
         Row: {
           approval_status: string | null
+          archived_at: string | null
           availability_status: string | null
           business_status: string | null
           category: string | null
@@ -605,6 +606,7 @@ export type Database = {
         }
         Insert: {
           approval_status?: string | null
+          archived_at?: string | null
           availability_status?: string | null
           business_status?: string | null
           category?: string | null
@@ -646,6 +648,7 @@ export type Database = {
         }
         Update: {
           approval_status?: string | null
+          archived_at?: string | null
           availability_status?: string | null
           business_status?: string | null
           category?: string | null
@@ -706,6 +709,7 @@ export type Database = {
         Row: {
           agency_id: string | null
           approval_status: string
+          archived_at: string | null
           available: boolean | null
           bike_type_id: string
           condition: string | null
@@ -720,6 +724,7 @@ export type Database = {
         Insert: {
           agency_id?: string | null
           approval_status?: string
+          archived_at?: string | null
           available?: boolean | null
           bike_type_id: string
           condition?: string | null
@@ -734,6 +739,7 @@ export type Database = {
         Update: {
           agency_id?: string | null
           approval_status?: string
+          archived_at?: string | null
           available?: boolean | null
           bike_type_id?: string
           condition?: string | null
