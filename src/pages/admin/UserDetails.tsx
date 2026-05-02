@@ -295,11 +295,13 @@ const UserDetails = () => {
   const fetchUser = async () => {
     setIsLoading(true);
     try {
+      // The :id route param is an auth uid (from booking.user_id, etc.),
+      // not a profiles.id. Join via profiles.user_id.
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', userId)
-        .single();
+        .eq('user_id', userId)
+        .maybeSingle();
 
       if (error) throw error;
       setUser(data);
@@ -308,7 +310,7 @@ const UserDetails = () => {
       }
     } catch (error: unknown) {
       toast.error(t('errors.loadFailed'));
-      navigate("/admin/panel");
+      // Do NOT redirect — show inline empty/error state instead.
     } finally {
       setIsLoading(false);
     }
