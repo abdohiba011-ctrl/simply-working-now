@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { Eye, EyeOff, Mail, Phone, AlertCircle, Loader2 } from "lucide-react";
 
 import { AgencyAuthLayout } from "@/components/auth/AgencyAuthLayout";
+import { RenterAuthLayout } from "@/components/auth/RenterAuthLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -201,7 +202,7 @@ export default function Login({ context = "renter" }: LoginProps) {
 
   const submitDisabled = isSubmitting || lockoutMs > 0;
 
-  const Layout = AgencyAuthLayout;
+  const Layout = context === "renter" ? RenterAuthLayout : AgencyAuthLayout;
 
   return (
     <Layout>
@@ -419,20 +420,32 @@ export default function Login({ context = "renter" }: LoginProps) {
             </Link>
           </p>
 
-          {/* Cross-door link — only on agency login (renters reach agency auth via /agencies) */}
+          {/* Cross-door link */}
           {context === "agency" ? (
             <p className="text-center text-xs text-muted-foreground">
               {t("mockAuth.are_you_renter", {
-                defaultValue: "Are you a renter?",
+                defaultValue: "Looking to rent a bike?",
               })}{" "}
               <Link
                 to="/login"
                 className="hover:underline font-medium text-foreground"
               >
+                {t("mockAuth.login_as_renter", { defaultValue: "Log in as renter" })}
+              </Link>
+            </p>
+          ) : (
+            <p className="text-center text-xs text-muted-foreground">
+              {t("mockAuth.are_you_agency", {
+                defaultValue: "Are you an agency?",
+              })}{" "}
+              <Link
+                to="/agency/login"
+                className="hover:underline font-medium text-foreground"
+              >
                 {t("mockAuth.login_here", { defaultValue: "Log in here" })}
               </Link>
             </p>
-          ) : null}
+          )}
         </form>
       </div>
     </Layout>
