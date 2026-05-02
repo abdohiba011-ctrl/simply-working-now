@@ -244,31 +244,47 @@ export const AdminClientsTab = () => {
     }
   };
 
-  const handleFreeze = async (userId: string, freeze: boolean) => {
+  const handleFreeze = async (profileId: string, freeze: boolean) => {
     setActionLoading(true);
     try {
+      // Look up the auth user_id for this profile so notifications reach the
+      // real account (profile.id is the row PK, not the auth UID).
+      const target = clients.find((c) => c.id === profileId);
+      const authUserId = target?.user_id ?? null;
+
       const { error } = await supabase
         .from('profiles')
-        .update({ 
+        .update({
           is_frozen: freeze,
           frozen_reason: freeze ? 'Frozen by admin' : null
         })
-        .eq('id', userId);
+        .eq('id', profileId);
 
       if (error) throw error;
 
-      await supabase.from('notifications').insert({
-        user_id: userId,
-        title: freeze ? 'Account Frozen' : 'Account Unfrozen',
-        message: freeze 
-          ? 'Your account has been frozen. Please contact support for assistance.'
-          : 'Your account has been unfrozen. You can now access all features.',
-        type: freeze ? 'warning' : 'success'
+      if (authUserId) {
+        await supabase.from('notifications').insert({
+          user_id: authUserId,
+          title: freeze ? 'Account Frozen' : 'Account Unfrozen',
+          message: freeze
+            ? 'Your account has been frozen. Please contact support for assistance.'
+            : 'Your account has been unfrozen. You can now access all features.',
+          type: freeze ? 'warning' : 'success'
+        });
+      }
+
+      // Audit (best-effort)
+      await supabase.rpc('log_audit_event', {
+        _action: freeze ? 'renter_frozen' : 'renter_unfrozen',
+        _table_name: 'profiles',
+        _record_id: profileId,
+        _details: { auth_user_id: authUserId, frozen: freeze },
       });
 
       toast.success(freeze ? t('admin.frozen') : t('admin.unblock'));
       fetchClients();
     } catch (error: unknown) {
+      console.error('[AdminClientsTab] freeze failed', error);
       toast.error(t('errors.updateFailed'));
     } finally {
       setActionLoading(false);
@@ -277,11 +293,15 @@ export const AdminClientsTab = () => {
 
   const handleSendNotification = async () => {
     if (!selectedClient || !notificationTitle || !notificationMessage) return;
+    if (!selectedClient.user_id) {
+      toast.error('Cannot send: missing user reference');
+      return;
+    }
 
     setActionLoading(true);
     try {
       const { error } = await supabase.from('notifications').insert({
-        user_id: selectedClient.id,
+        user_id: selectedClient.user_id,
         title: notificationTitle,
         message: notificationMessage,
         type: 'info'
@@ -289,11 +309,19 @@ export const AdminClientsTab = () => {
 
       if (error) throw error;
 
+      await supabase.rpc('log_audit_event', {
+        _action: 'admin_notification_sent',
+        _table_name: 'notifications',
+        _record_id: selectedClient.user_id,
+        _details: { title: notificationTitle, recipient_profile_id: selectedClient.id },
+      });
+
       toast.success(t('success.notificationSent'));
       setShowNotificationDialog(false);
       setNotificationTitle("");
       setNotificationMessage("");
     } catch (error: unknown) {
+      console.error('[AdminClientsTab] send notification failed', error);
       toast.error(t('errors.notificationFailed'));
     } finally {
       setActionLoading(false);
