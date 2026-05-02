@@ -36,6 +36,7 @@ export default function PaymentStatus() {
   const next = params.get("next") || "/";
   const retry = params.get("retry") || "/";
   const outcomeHint = params.get("outcome");
+  const transactionId = params.get("transaction_id") || "";
   const title = params.get("title") || "Payment";
 
   const [phase, setPhase] = useState<Phase>(
@@ -56,7 +57,7 @@ export default function PaymentStatus() {
     try {
       const { data, error } = await supabase.functions.invoke(
         "youcanpay-verify-payment",
-        { body: { payment_id: pid } },
+        { body: { payment_id: pid, transaction_id: transactionId || undefined } },
       );
       if (error) throw error;
       const status = (data as any)?.status;
@@ -93,7 +94,7 @@ export default function PaymentStatus() {
       if (cancelled) return;
       const { data } = await supabase
         .from("youcanpay_payments")
-        .select("status")
+        .select("status,transaction_id")
         .eq("id", pid)
         .maybeSingle();
       if (cancelled) return;
@@ -109,6 +110,10 @@ export default function PaymentStatus() {
       }
 
       const e = Date.now() - start;
+      if (transactionId && !data?.transaction_id && e >= 4500) {
+        await handleVerifyNow();
+        return;
+      }
       setElapsed(e);
       if (e >= POLL_TIMEOUT_MS) {
         setPhase("timeout");

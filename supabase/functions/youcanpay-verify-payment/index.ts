@@ -16,6 +16,7 @@ const corsHeaders = {
 
 interface Body {
   payment_id: string;
+  transaction_id?: string;
 }
 
 Deno.serve(async (req) => {
@@ -102,7 +103,7 @@ Deno.serve(async (req) => {
     // transaction_id, which the webhook normally fills. If we don't have
     // one yet, we fall back to a tokenize-status probe.
     let providerStatus: string | null = null;
-    let providerTxn: string | null = payment.transaction_id || null;
+    let providerTxn: string | null = body.transaction_id || payment.transaction_id || null;
     let providerRaw: any = null;
 
     const tryFetch = async (url: string, init: RequestInit) => {
@@ -118,15 +119,25 @@ Deno.serve(async (req) => {
     };
 
     if (providerTxn) {
-      const r = await tryFetch(`${baseUrl}/transactions/${providerTxn}`, {
+      let r = await tryFetch(`${baseUrl}/payments/${providerTxn}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${PRIVATE_KEY}`,
         },
       });
+      if (!r.ok) {
+        r = await tryFetch(`${baseUrl}/transactions/${providerTxn}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${PRIVATE_KEY}`,
+          },
+        });
+      }
       providerRaw = r.body;
-      const s = (r.body?.status || r.body?.transaction?.status || "").toString().toLowerCase();
+      const raw = r.body?.status ?? r.body?.payment?.status ?? r.body?.transaction?.status ?? "";
+      const s = raw === 1 ? "paid" : raw === 0 ? "pending" : raw.toString().toLowerCase();
       if (s) providerStatus = s;
     }
 
@@ -262,17 +273,27 @@ Deno.serve(async (req) => {
         .update({ payment_status: "paid" })
         .eq("id", payment.related_booking_id);
 
-      await admin.from("booking_payments").insert({
-        booking_id: payment.related_booking_id,
-        amount: payment.amount,
-        currency: payment.currency,
-        provider: "youcanpay",
-        method: "card",
-        payment_type: "platform_fee",
-        status: "completed",
-        paid_at: new Date().toISOString(),
-        external_reference: providerTxn,
-      });
+      const { data: existingLedger } = await admin
+        .from("booking_payments")
+        .select("id")
+        .eq("booking_id", payment.related_booking_id)
+        .eq("provider", "youcanpay")
+        .eq("payment_type", "platform_fee")
+        .maybeSingle();
+
+      if (!existingLedger) {
+        await admin.from("booking_payments").insert({
+          booking_id: payment.related_booking_id,
+          amount: payment.amount,
+          currency: payment.currency,
+          provider: "youcanpay",
+          method: "card",
+          payment_type: "platform_fee",
+          status: "completed",
+          paid_at: new Date().toISOString(),
+          external_reference: providerTxn,
+        });
+      }
 
       if (booking?.assigned_to_business) {
         await admin.from("notifications").insert({

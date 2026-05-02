@@ -113,7 +113,7 @@ export default function PayYouCan() {
     };
   }, [token, pubKey, isSandbox]);
 
-  const buildStatusUrl = (outcome: "success" | "error") => {
+  const buildStatusUrl = (outcome: "success" | "error", transactionId?: string) => {
     const qs = new URLSearchParams({
       pid,
       next: successPath,
@@ -121,6 +121,7 @@ export default function PayYouCan() {
       outcome,
       title,
     });
+    if (transactionId) qs.set("transaction_id", transactionId);
     return `/payment-status?${qs.toString()}`;
   };
 
@@ -129,10 +130,11 @@ export default function PayYouCan() {
     if (!yc) return;
     setStatus("paying");
     yc.pay(token)
-      .then(() => {
+      .then((response: any) => {
         toast.success("Payment submitted");
+        const transactionId = getYouCanTransactionId(response);
         // Don't trust the client outcome — let PaymentStatus poll the webhook.
-        navigate(buildStatusUrl("success"), { replace: true });
+        navigate(buildStatusUrl("success", transactionId), { replace: true });
       })
       .catch((err: any) => {
         console.error("YouCan Pay error", err);
@@ -259,4 +261,13 @@ function appendPid(path: string, pid: string): string {
   if (path.includes("pid=")) return path;
   const sep = path.includes("?") ? "&" : "?";
   return `${path}${sep}pid=${encodeURIComponent(pid)}`;
+}
+
+function getYouCanTransactionId(response: any): string | undefined {
+  const candidate =
+    response?.transaction_id ||
+    response?.transactionId ||
+    response?.transaction?.id ||
+    response?.id;
+  return typeof candidate === "string" && candidate.length > 0 ? candidate : undefined;
 }

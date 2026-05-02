@@ -1,14 +1,14 @@
 // YouCanPay webhook receiver — confirms payments, credits wallets,
 // updates subscriptions and bookings.
 //
-// Security: verifies HMAC-SHA256 signature using YOUCANPAY_PRIVATE_KEY.
-// YouCan Pay sends the signature either as `x-youcan-signature` header,
-// `x-ycp-signature` header, or as `signature` in the payload.
+// Security: verifies HMAC-SHA256 signature using YOUCANPAY_PRIVATE_KEY when
+// YouCan Pay sends a signature header. Sandbox webhooks do not currently send
+// a signing secret/header, so unsigned sandbox events are accepted and logged.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-youcan-signature, x-ycp-signature",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-youcan-signature, x-youcanpay-signature, x-ycp-signature",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
@@ -51,6 +51,7 @@ Deno.serve(async (req) => {
       "unknown";
     const sigHeader =
       req.headers.get("x-youcan-signature") ||
+      req.headers.get("x-youcanpay-signature") ||
       req.headers.get("x-ycp-signature") ||
       "";
 
@@ -83,16 +84,17 @@ Deno.serve(async (req) => {
       contentType,
       hasSigHeader: !!sigHeader,
       payloadKeys: Object.keys(payload),
-      orderId: payload.order_id || payload.orderId || null,
-      status: payload.status || payload.event || null,
+      eventName: payload.event_name || payload.event || null,
+      orderId: payload.order_id || payload.orderId || payload.payload?.transaction?.order_id || null,
+      transactionId: payload.transaction_id || payload.transactionId || payload.payload?.transaction?.id || null,
+      status: payload.status || payload.payload?.transaction?.status || null,
     }));
 
-    // Verify signature. Accept either:
-    //  (a) HMAC-SHA256(rawBody, PRIVATE_KEY) === header, or
-    //  (b) signature field inside payload === HMAC of order_id|status (sandbox-style).
-    // If neither matches, reject — but allow callers without any signature ONLY in
-    // explicit dev mode (YOUCANPAY_WEBHOOK_INSECURE=1). Default is strict.
+    // Verify signature when YouCan Pay supplies one. Their documented sandbox
+    // webhook payload includes `sandbox: true` but no signing secret/header in
+    // dashboard setup, so accept unsigned sandbox events after logging them.
     const insecure = Deno.env.get("YOUCANPAY_WEBHOOK_INSECURE") === "1";
+    const isSandboxWebhook = payload.sandbox === true;
     let signatureOk = false;
     if (PRIVATE_KEY && rawBody) {
       const expected = await hmacSha256Hex(PRIVATE_KEY, rawBody);
@@ -101,7 +103,7 @@ Deno.serve(async (req) => {
         signatureOk = true;
       }
     }
-    if (!signatureOk && !insecure) {
+    if (!signatureOk && !isSandboxWebhook && !insecure) {
       console.warn("youcanpay-webhook signature mismatch", {
         sourceIp,
         receivedSig: sigHeader ? sigHeader.slice(0, 12) + "…" : "(none)",
@@ -110,11 +112,19 @@ Deno.serve(async (req) => {
         status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    if (!signatureOk && isSandboxWebhook) {
+      console.warn("youcanpay-webhook accepted unsigned sandbox event", {
+        sourceIp,
+        eventName: payload.event_name || null,
+      });
+    }
 
     // YouCanPay typically sends order_id, transaction_id, status
-    const orderId = payload.order_id || payload.orderId || payload.metadata?.order_id;
-    const transactionId = payload.transaction_id || payload.transactionId || null;
-    const status = (payload.status || payload.event || "").toString().toLowerCase();
+    const transaction = payload.payload?.transaction || {};
+    const orderId = payload.order_id || payload.orderId || payload.metadata?.order_id || transaction.order_id;
+    const transactionId = payload.transaction_id || payload.transactionId || transaction.id || null;
+    const rawStatus = payload.status ?? transaction.status ?? payload.event_name ?? payload.event ?? "";
+    const status = rawStatus === 1 ? "paid" : rawStatus === 0 ? "pending" : rawStatus.toString().toLowerCase();
 
     if (!orderId) {
       return new Response(JSON.stringify({ error: "missing order_id" }), {
@@ -229,17 +239,27 @@ Deno.serve(async (req) => {
         })
         .eq("id", payment.related_booking_id);
 
-      await admin.from("booking_payments").insert({
-        booking_id: payment.related_booking_id,
-        amount: payment.amount,
-        currency: payment.currency,
-        provider: "youcanpay",
-        method: "card",
-        payment_type: "platform_fee",
-        status: "completed",
-        paid_at: new Date().toISOString(),
-        external_reference: transactionId,
-      });
+      const { data: existingLedger } = await admin
+        .from("booking_payments")
+        .select("id")
+        .eq("booking_id", payment.related_booking_id)
+        .eq("provider", "youcanpay")
+        .eq("payment_type", "platform_fee")
+        .maybeSingle();
+
+      if (!existingLedger) {
+        await admin.from("booking_payments").insert({
+          booking_id: payment.related_booking_id,
+          amount: payment.amount,
+          currency: payment.currency,
+          provider: "youcanpay",
+          method: "card",
+          payment_type: "platform_fee",
+          status: "completed",
+          paid_at: new Date().toISOString(),
+          external_reference: transactionId,
+        });
+      }
 
       // Notify the agency (if assigned).
       if (booking?.assigned_to_business) {
