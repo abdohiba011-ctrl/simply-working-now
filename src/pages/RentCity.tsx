@@ -599,6 +599,21 @@ export default function RentCity() {
                   </div>
                 ))}
               </div>
+            ) : bikes.length === 0 ? (
+              <div className="bg-card border border-border rounded-xl p-12 text-center">
+                <div className="mx-auto w-14 h-14 rounded-full bg-muted flex items-center justify-center mb-4">
+                  <MapPin className="w-7 h-7 text-muted-foreground" />
+                </div>
+                <h3 className="text-lg font-semibold mb-1">
+                  No bikes available in {cityName} yet
+                </h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  We're working on bringing verified agencies to this city. Check back soon.
+                </p>
+                <Button variant="outline" onClick={() => navigate("/")}>
+                  Browse other cities
+                </Button>
+              </div>
             ) : filtered.length === 0 ? (
               <div className="bg-card border border-border rounded-xl p-12 text-center">
                 <div className="mx-auto w-14 h-14 rounded-full bg-muted flex items-center justify-center mb-4">
