@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { getErrMsg } from "@/lib/errorMessages";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -8,19 +8,13 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Mail, Image, X, Upload } from "lucide-react";
+import { Loader2, Mail } from "lucide-react";
 
 interface SendEmailDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   clientEmail: string;
   clientName: string;
-}
-
-interface AttachedImage {
-  id: string;
-  file: File;
-  preview: string;
 }
 
 export const SendEmailDialog = ({
@@ -32,45 +26,6 @@ export const SendEmailDialog = ({
   const [subject, setSubject] = useState("");
   const [content, setContent] = useState("");
   const [isSending, setIsSending] = useState(false);
-  const [attachedImages, setAttachedImages] = useState<AttachedImage[]>([]);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const handleImageAttach = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files) return;
-
-    const maxSize = 5 * 1024 * 1024; // 5MB per image
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-
-    Array.from(files).forEach(file => {
-      if (!allowedTypes.includes(file.type)) {
-        toast.error(`${file.name} is not a valid image type`);
-        return;
-      }
-      if (file.size > maxSize) {
-        toast.error(`${file.name} is too large (max 5MB)`);
-        return;
-      }
-
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setAttachedImages(prev => [...prev, {
-          id: Math.random().toString(36).substr(2, 9),
-          file,
-          preview: event.target?.result as string,
-        }]);
-      };
-      reader.readAsDataURL(file);
-    });
-
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
-  };
-
-  const removeImage = (id: string) => {
-    setAttachedImages(prev => prev.filter(img => img.id !== id));
-  };
 
   const handleSend = async () => {
     if (!subject.trim()) {
@@ -85,10 +40,6 @@ export const SendEmailDialog = ({
     setIsSending(true);
 
     try {
-      if (attachedImages.length > 0) {
-        toast.warning("Image attachments are not supported yet — sending text only.");
-      }
-
       const { error } = await supabase.functions.invoke('send-transactional-email', {
         body: {
           templateName: 'admin-message',
@@ -113,10 +64,8 @@ export const SendEmailDialog = ({
 
       toast.success("Email sent successfully!");
 
-      // Reset form
       setSubject("");
       setContent("");
-      setAttachedImages([]);
       onOpenChange(false);
     } catch (error: unknown) {
       console.error('Send email error:', error);
@@ -130,7 +79,6 @@ export const SendEmailDialog = ({
     if (!isSending) {
       setSubject("");
       setContent("");
-      setAttachedImages([]);
       onOpenChange(false);
     }
   };
