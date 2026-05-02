@@ -146,20 +146,18 @@ export function UserMenu({ align = "end" }: Props) {
             </>
           )}
 
-          {canSwitchRoles && (
-            <>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleSwitchRole}>
-                {currentRole === "agency" ? (
-                  <UserIcon className="mr-2 h-4 w-4" />
-                ) : (
-                  <Briefcase className="mr-2 h-4 w-4" />
-                )}
-                {currentRole === "agency"
-                  ? t("switch_to_renter")
-                  : t("switch_to_business")}
-              </DropdownMenuItem>
-            </>
+          {(canSwitchToRenter || canSwitchToAgency) && <DropdownMenuSeparator />}
+          {canSwitchToAgency && (
+            <DropdownMenuItem onClick={handleSwitchToAgency}>
+              <Briefcase className="mr-2 h-4 w-4" />
+              {t("switch_to_business")}
+            </DropdownMenuItem>
+          )}
+          {canSwitchToRenter && (
+            <DropdownMenuItem onClick={handleSwitchToRenter}>
+              <UserIcon className="mr-2 h-4 w-4" />
+              {t("switch_to_renter")}
+            </DropdownMenuItem>
           )}
 
           {!hasAgency && hasRenter && (
