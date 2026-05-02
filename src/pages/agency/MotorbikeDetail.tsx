@@ -12,6 +12,7 @@ import {
   Clock,
   CheckCircle2,
   AlertTriangle,
+  MapPin,
 } from "lucide-react";
 import { useAgencyBike } from "@/hooks/useAgencyData";
 import { supabase } from "@/integrations/supabase/client";
