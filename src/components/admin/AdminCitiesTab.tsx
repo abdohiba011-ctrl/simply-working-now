@@ -637,7 +637,7 @@ export const AdminCitiesTab = () => {
                         </div>
                         <div className="text-xs text-muted-foreground mt-0.5">
                           {liveBikes} bike{liveBikes === 1 ? "" : "s"} · {hoods.length} neighborhood
-                          {hoods.length === 1 ? "" : "s"} · From {city.price_from} DH/day
+                          {hoods.length === 1 ? "" : "s"}
                         </div>
                       </div>
 
@@ -796,19 +796,9 @@ export const AdminCitiesTab = () => {
                 onImageChange={(url) => setNewCity({ ...newCity, image_url: url })}
               />
             </div>
-            <div className="space-y-2">
-              <Label>Price From (DH/day)</Label>
-              <Input
-                type="number"
-                value={newCity.price_from}
-                onChange={(e) =>
-                  setNewCity({ ...newCity, price_from: parseFloat(e.target.value) || 0 })
-                }
-              />
-              <p className="text-xs text-muted-foreground">
-                Bike count is calculated automatically from real listings.
-              </p>
-            </div>
+            <p className="text-xs text-muted-foreground -mt-2">
+              Bike count and prices come from real listings. Agencies set their own prices per bike.
+            </p>
             <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
               <Label>Is Available (not coming soon)</Label>
               <Switch
@@ -863,25 +853,10 @@ export const AdminCitiesTab = () => {
                   onImageChange={(url) => setEditingCity({ ...editingCity, image_url: url })}
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Live Bikes</Label>
-                  <div className="h-10 px-3 flex items-center rounded-md border bg-muted text-sm">
-                    {liveCounts.get(editingCity.id) ?? 0} bikes
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>Price From (DH/day)</Label>
-                  <Input
-                    type="number"
-                    value={editingCity.price_from}
-                    onChange={(e) =>
-                      setEditingCity({
-                        ...editingCity,
-                        price_from: parseFloat(e.target.value) || 0,
-                      })
-                    }
-                  />
+              <div className="space-y-2">
+                <Label>Live Bikes</Label>
+                <div className="h-10 px-3 flex items-center rounded-md border bg-muted text-sm">
+                  {liveCounts.get(editingCity.id) ?? 0} bikes (from real listings)
                 </div>
               </div>
               <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
