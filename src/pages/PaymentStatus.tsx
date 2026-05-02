@@ -94,7 +94,7 @@ export default function PaymentStatus() {
       if (cancelled) return;
       const { data } = await supabase
         .from("youcanpay_payments")
-        .select("status")
+        .select("status,transaction_id")
         .eq("id", pid)
         .maybeSingle();
       if (cancelled) return;
@@ -106,6 +106,11 @@ export default function PaymentStatus() {
       }
       if (status === "failed" || status === "cancelled" || status === "canceled") {
         setPhase("failed");
+        return;
+      }
+
+      if (transactionId && !data?.transaction_id && e >= 4500) {
+        await handleVerifyNow();
         return;
       }
 
