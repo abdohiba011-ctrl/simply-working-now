@@ -110,6 +110,10 @@ export default function PaymentStatus() {
       }
 
       const e = Date.now() - start;
+      if (transactionId && !data?.transaction_id && e >= 4500) {
+        await handleVerifyNow();
+        return;
+      }
       setElapsed(e);
       if (e >= POLL_TIMEOUT_MS) {
         setPhase("timeout");
