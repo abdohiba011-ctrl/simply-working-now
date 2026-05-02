@@ -2409,6 +2409,7 @@ export type Database = {
         Returns: Json
       }
       approve_bike_type: { Args: { p_bike_type_id: string }; Returns: Json }
+      archive_bike_type: { Args: { p_bike_type_id: string }; Returns: Json }
       auto_cancel_stale_pending_bookings: { Args: never; Returns: number }
       cancel_booking_by_renter: { Args: { _booking_id: string }; Returns: Json }
       compute_bike_type_slug: {
@@ -2522,6 +2523,10 @@ export type Database = {
       }
       report_no_show: { Args: { _booking_id: string }; Returns: Json }
       request_plan_downgrade: { Args: never; Returns: Json }
+      set_bike_type_availability: {
+        Args: { p_available: boolean; p_bike_type_id: string }
+        Returns: Json
+      }
       slugify: { Args: { _input: string }; Returns: string }
     }
     Enums: {
