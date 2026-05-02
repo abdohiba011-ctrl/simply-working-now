@@ -27,6 +27,7 @@ import {
 } from "@/components/admin/client-details";
 import { CreateBookingDialog } from "@/components/admin/client-details/CreateBookingDialog";
 import { SendEmailDialog } from "@/components/admin/client-details/SendEmailDialog";
+import { AdminErrorState } from "@/components/admin/AdminErrorState";
 
 // ============= LOADING SKELETON =============
 const ClientDetailsSkeleton = () => (
