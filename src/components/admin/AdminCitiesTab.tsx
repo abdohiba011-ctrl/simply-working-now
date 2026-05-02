@@ -158,7 +158,7 @@ export const AdminCitiesTab = () => {
     }
     setIsSaving(true);
     try {
-      const { error } = await supabase.from("service_cities").insert({
+      const insertPayload = {
         name: newCity.name.trim(),
         name_key: generateNameKey(newCity.name),
         image_url: newCity.image_url || null,
@@ -167,8 +167,19 @@ export const AdminCitiesTab = () => {
         is_coming_soon: newCity.is_coming_soon,
         show_in_homepage: newCity.show_in_homepage,
         display_order: cities.length + 1,
-      });
+      };
+      const { data, error } = await supabase
+        .from("service_cities")
+        .insert(insertPayload)
+        .select("id")
+        .single();
       if (error) throw error;
+      await supabase.rpc("log_audit_event", {
+        _action: "city_created",
+        _table_name: "service_cities",
+        _record_id: data?.id ?? null,
+        _details: { new_value: insertPayload } as never,
+      });
       toast.success("City added");
       setShowAddCityDialog(false);
       setNewCity(emptyNewCity);
