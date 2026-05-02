@@ -391,14 +391,26 @@ export default function RentCity() {
           </AccordionTrigger>
           <AccordionContent>
             <RadioGroup value={neighborhood} onValueChange={setNeighborhood} className="space-y-2">
-              {neighborhoodOptions.map((n) => (
-                <div key={n} className="flex items-center gap-2">
-                  <RadioGroupItem value={n} id={`n-${n}`} />
-                  <Label htmlFor={`n-${n}`} className="text-sm font-normal cursor-pointer">
-                    {n}
-                  </Label>
-                </div>
-              ))}
+              {neighborhoodOptions.map((n) => {
+                const isPopular = popularNeighborhoodSet.has(n);
+                return (
+                  <div key={n} className="flex items-center gap-2">
+                    <RadioGroupItem value={n} id={`n-${n}`} />
+                    <Label
+                      htmlFor={`n-${n}`}
+                      className="text-sm font-normal cursor-pointer flex items-center gap-1.5"
+                    >
+                      {n}
+                      {isPopular && (
+                        <Star
+                          className="h-3 w-3 fill-primary text-primary"
+                          aria-label="Popular"
+                        />
+                      )}
+                    </Label>
+                  </div>
+                );
+              })}
             </RadioGroup>
           </AccordionContent>
         </AccordionItem>
@@ -555,6 +567,20 @@ export default function RentCity() {
     </div>
   );
 
+  // ─── FIX 4: Coming Soon / unknown city gating ───
+  // - city resolved + is_coming_soon → show waitlist page
+  // - city resolved + not available + not coming soon → 404 (homepage)
+  // - city not found in DB at all → 404 (homepage)
+  if (!cityLoading && !cityRow) {
+    return <Navigate to="/" replace />;
+  }
+  if (!cityLoading && cityRow && cityRow.is_available === false) {
+    if (cityRow.is_coming_soon) {
+      return <RentCityComingSoon city={cityRow} />;
+    }
+    return <Navigate to="/" replace />;
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -579,7 +605,7 @@ export default function RentCity() {
               Motorbike Rental in {cityName}
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
-              {bikes.length} verified bike{bikes.length !== 1 ? "s" : ""} across {neighborhoodOptions.length - 1} neighborhoods
+              {bikes.length} verified bike{bikes.length !== 1 ? "s" : ""} across {neighborhoodRows.length} neighborhood{neighborhoodRows.length === 1 ? "" : "s"}
             </p>
           </div>
 
