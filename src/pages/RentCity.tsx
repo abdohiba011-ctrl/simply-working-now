@@ -195,28 +195,34 @@ export default function RentCity() {
     } catch {}
   }, []);
 
-  // Fetch bikes for the city
-  const { data: bikes = [], isLoading } = useQuery({
-    queryKey: ["rent-city-bikes", cityName],
+  // Fetch bikes for the city. CRITICAL: fail closed — if we cannot resolve a
+  // city_id, return [] instead of dropping the filter (which would leak other
+  // cities' bikes, e.g. Casablanca bikes appearing under /rent/marrakech).
+  const { data: bikes = [], isLoading, isError } = useQuery({
+    queryKey: ["rent-city-bikes", citySlug],
     queryFn: async () => {
-      const { data: cityRow } = await supabase
-        .from("service_cities")
-        .select("id")
-        .ilike("name", cityName)
-        .maybeSingle();
+      const variants = slugToCityNameVariants(citySlug);
+      if (variants.length === 0) return [] as BikeRow[];
 
-      let query = supabase
+      const { data: cityRows, error: cityErr } = await supabase
+        .from("service_cities")
+        .select("id, name")
+        .in("name", variants);
+      if (cityErr) throw cityErr;
+
+      const cityIds = (cityRows || []).map((r) => r.id);
+      if (cityIds.length === 0) return [] as BikeRow[]; // fail closed
+
+      const { data, error } = await supabase
         .from("bike_types")
         .select(
           "id,slug,name,category,fuel_type,daily_price,weekly_price,monthly_price,rating,review_count,main_image_url,neighborhood,features,license_required,year,engine_cc,city_id"
         )
         .eq("is_approved", true)
         .eq("approval_status", "approved")
-        .eq("business_status", "active");
+        .eq("business_status", "active")
+        .in("city_id", cityIds);
 
-      if (cityRow?.id) query = query.eq("city_id", cityRow.id);
-
-      const { data, error } = await query;
       if (error) throw error;
       return (data || []) as BikeRow[];
     },
