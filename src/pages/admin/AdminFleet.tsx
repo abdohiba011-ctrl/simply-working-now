@@ -35,6 +35,7 @@ import { toast } from "sonner";
 import { resolveBikeImageUrl } from "@/lib/bikeImageResolver";
 import { useFleetRealtime } from "@/hooks/useBikeTypesRealtime";
 import { AdminFleetSkeleton } from "@/components/ui/admin-skeleton";
+import { DangerConfirmDialog } from "@/components/admin/DangerConfirmDialog";
 
 interface BikeType {
   id: string;
