@@ -471,7 +471,7 @@ export const Header = memo(() => {
                   {isRenter && (
                     <DropdownMenuItem onClick={() => navigate("/billing")}>
                       <Wallet className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
-                      {t('header.credits') || 'Credits'} · {Math.round(renterBalance)} {renterCurrency}
+                      {t('header.credits') || 'Credits'}
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuItem onClick={() => navigate("/inbox")} className="relative">
