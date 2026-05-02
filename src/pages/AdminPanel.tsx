@@ -199,34 +199,23 @@ const AdminPanel = () => {
             ))}
           </div>
         ) : (
-          /* Top Navigation Tabs — sticky on scroll, horizontally scrollable on mobile */
-          <div className="sticky top-14 z-[50] -mx-4 px-4 mb-6 bg-muted/30 backdrop-blur supports-[backdrop-filter]:bg-muted/50 border-b">
-            <div className="flex gap-2 pb-3 pt-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none]">
-              {tabs.map((tab) => {
-                const isActive = activeTab === tab.value;
-                return (
-                  <Button
-                    key={tab.value}
-                    variant={isActive ? "default" : "ghost"}
-                    onClick={() => {
-                      setActiveTab(tab.value);
-                      setStatusFilter("all");
-                    }}
-                    className={cn(
-                      "gap-2 flex-shrink-0 rounded-full transition-all",
-                      isActive
-                        ? "shadow-sm"
-                        : "text-muted-foreground hover:text-foreground hover:bg-background"
-                    )}
-                    size="sm"
-                    aria-current={isActive ? "page" : undefined}
-                  >
-                    <tab.icon className="h-4 w-4" />
-                    {tab.label}
-                  </Button>
-                );
-              })}
-            </div>
+          /* Top Navigation Tabs */
+          <div className="flex flex-wrap gap-2 mb-6 border-b pb-4">
+            {tabs.map((tab) => (
+              <Button
+                key={tab.value}
+                variant={activeTab === tab.value ? "default" : "outline"}
+                onClick={() => {
+                  setActiveTab(tab.value);
+                  setStatusFilter("all");
+                }}
+                className="gap-2"
+                size="sm"
+              >
+                <tab.icon className="h-4 w-4" />
+                {tab.label}
+              </Button>
+            ))}
           </div>
         )}
 

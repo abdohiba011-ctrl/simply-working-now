@@ -27,7 +27,6 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { AdminFleetSkeleton } from "@/components/ui/admin-skeleton";
-import { DangerConfirmDialog } from "@/components/admin/DangerConfirmDialog";
 import {
   Bike as BikeIcon,
   Plus,
@@ -273,10 +272,8 @@ export const AdminFleetTab = () => {
     }
   };
 
-  const [softDeleteId, setSoftDeleteId] = useState<string | null>(null);
-  const [hardDeleteId, setHardDeleteId] = useState<string | null>(null);
-
-  const performSoftDelete = async (id: string) => {
+  const handleSoftDelete = async (id: string) => {
+    if (!confirm("Mark this bike as deleted for the business? They can re-submit.")) return;
     try {
       const { error } = await supabase
         .from("bike_types")
@@ -290,7 +287,8 @@ export const AdminFleetTab = () => {
     }
   };
 
-  const performHardDelete = async (id: string) => {
+  const handleHardDelete = async (id: string) => {
+    if (!confirm("Permanently delete this bike type? This cannot be undone.")) return;
     try {
       const { error } = await supabase.from("bike_types").delete().eq("id", id);
       if (error) throw error;
@@ -544,7 +542,7 @@ export const AdminFleetTab = () => {
                               <Button
                                 size="sm"
                                 variant="ghost"
-                                onClick={() => setSoftDeleteId(bike.id)}
+                                onClick={() => handleSoftDelete(bike.id)}
                                 title="Soft delete"
                               >
                                 <Trash2 className="h-4 w-4 text-destructive" />
@@ -553,7 +551,7 @@ export const AdminFleetTab = () => {
                               <Button
                                 size="sm"
                                 variant="ghost"
-                                onClick={() => setHardDeleteId(bike.id)}
+                                onClick={() => handleHardDelete(bike.id)}
                                 title="Permanently delete"
                               >
                                 <Trash2 className="h-4 w-4 text-destructive" />
@@ -600,27 +598,6 @@ export const AdminFleetTab = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      <DangerConfirmDialog
-        open={!!softDeleteId}
-        onOpenChange={(o) => !o && setSoftDeleteId(null)}
-        title="Remove this bike?"
-        description="The bike will be hidden from the public site. The agency can re-submit it later."
-        confirmLabel="Remove bike"
-        onConfirm={async () => { if (softDeleteId) await performSoftDelete(softDeleteId); }}
-      />
-
-      <DangerConfirmDialog
-        open={!!hardDeleteId}
-        onOpenChange={(o) => !o && setHardDeleteId(null)}
-        title="Permanently delete bike type?"
-        description="This cannot be undone. All references to this bike type will be lost."
-        confirmLabel="Delete permanently"
-        withReason
-        requireReason
-        reasonLabel="Why are you deleting this?"
-        onConfirm={async () => { if (hardDeleteId) await performHardDelete(hardDeleteId); }}
-      />
     </div>
   );
 };
