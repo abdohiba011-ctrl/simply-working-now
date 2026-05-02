@@ -23,7 +23,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { useRenterWallet } from "@/hooks/useRenterWallet";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
+
 import { BalanceChart } from "@/components/billing/BalanceChart";
 import { TransactionFilters } from "@/components/billing/TransactionFilters";
 import {
