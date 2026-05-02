@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { Link, Navigate, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import {
   ChevronRight,
   Filter as FilterIcon,
@@ -44,26 +44,15 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
-const NEIGHBORHOODS_BY_CITY: Record<string, string[]> = {
-  casablanca: [
-    "Anfa", "Maârif", "Derb Sultan", "Sidi Maârouf", "Aïn Diab",
-    "Gauthier", "Bourgogne", "Hay Hassani", "Sidi Bernoussi", "Ain Sebaa", "Bouskoura",
-  ],
-  marrakesh: ["Guéliz", "Médina", "Hivernage", "Palmeraie", "Daoudiate", "Agdal"],
-  marrakech: ["Guéliz", "Médina", "Hivernage", "Palmeraie", "Daoudiate", "Agdal"],
-  rabat: ["Agdal", "Hassan", "Souissi", "Médina", "Hay Riad"],
-  tangier: ["Malabata", "Centre-Ville", "Marshan", "Iberia", "Playa"],
-  agadir: ["Centre-Ville", "Founty", "Talborjt"],
-  fes: ["Médina (Fes el-Bali)", "Ville Nouvelle", "Fes el-Jdid", "Aïn Chkef"],
-  essaouira: ["Médina", "Centre-Ville", "Borj"],
-  chefchaouen: ["Médina", "Ras El Maa", "Centre-Ville"],
-};
-
-const getNeighborhoodsForCity = (citySlug: string): string[] => {
-  const key = citySlug.toLowerCase();
-  const list = NEIGHBORHOODS_BY_CITY[key] || [];
-  const cityLabel = key.charAt(0).toUpperCase() + key.slice(1);
-  return [`All ${cityLabel}`, ...list];
+// Neighborhoods are loaded live from `service_locations` per city — no hardcoded list.
+// This means whenever an admin adds/edits/disables a neighborhood, the renter
+// filter sidebar reflects the change immediately on next page load.
+type NeighborhoodRow = {
+  id: string;
+  name: string;
+  is_active: boolean;
+  is_popular: boolean;
+  display_order: number;
 };
 
 const BIKE_TYPES = [
@@ -119,6 +108,15 @@ type BikeRow = {
 
 import { slugToDisplayName, slugToCityNameVariants, cityToSlug } from "@/lib/citySlug";
 
+type CityRow = {
+  id: string;
+  name: string;
+  is_available: boolean | null;
+  is_coming_soon: boolean | null;
+  image_url: string | null;
+  description: string | null;
+};
+
 export default function RentCity() {
   const { city = "casablanca" } = useParams();
   const citySlug = cityToSlug(city);
@@ -126,17 +124,61 @@ export default function RentCity() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const neighborhoodOptions = useMemo(() => getNeighborhoodsForCity(citySlug), [citySlug]);
-  const allCityLabel = neighborhoodOptions[0]; // e.g. "All Casablanca"
+  const allCityLabel = `All ${cityName}`;
 
-  // Initial neighborhood from URL — but ONLY accept it if it belongs to this city.
-  // This prevents Casablanca neighborhoods leaking into Marrakech, etc.
-  const initialNeighborhood = (() => {
+  // ─── Resolve the city row first ─────────────────────────────────────
+  // Drives gating (Coming Soon vs available vs 404) and is the parent
+  // for the neighborhoods + bikes queries.
+  const { data: cityRow, isLoading: cityLoading } = useQuery({
+    queryKey: ["rent-city-row", citySlug],
+    queryFn: async () => {
+      const variants = slugToCityNameVariants(citySlug);
+      if (variants.length === 0) return null;
+      const { data, error } = await supabase
+        .from("service_cities")
+        .select("id, name, is_available, is_coming_soon, image_url, description")
+        .in("name", variants)
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return (data as CityRow | null) ?? null;
+    },
+  });
+
+  // ─── Live neighborhoods from service_locations ──────────────────────
+  // Sorted by is_popular DESC then display_order so the renter filter
+  // mirrors the admin's curation. No more hardcoded list.
+  const { data: neighborhoodRows = [] } = useQuery({
+    queryKey: ["rent-city-neighborhoods", cityRow?.id],
+    enabled: !!cityRow?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("service_locations")
+        .select("id, name, is_active, is_popular, display_order")
+        .eq("city_id", cityRow!.id)
+        .eq("is_active", true)
+        .order("is_popular", { ascending: false })
+        .order("display_order", { ascending: true });
+      if (error) throw error;
+      return (data || []) as NeighborhoodRow[];
+    },
+  });
+
+  const neighborhoodOptions = useMemo<string[]>(
+    () => [allCityLabel, ...neighborhoodRows.map((n) => n.name)],
+    [allCityLabel, neighborhoodRows],
+  );
+  const popularNeighborhoodSet = useMemo(
+    () => new Set(neighborhoodRows.filter((n) => n.is_popular).map((n) => n.name)),
+    [neighborhoodRows],
+  );
+
+  // Initial neighborhood from URL — accept any name; will be reset later
+  // if it doesn't belong to this city (after neighborhoods load).
+  const [neighborhood, setNeighborhood] = useState<string>(() => {
     const fromUrl = searchParams.get("neighborhood");
-    if (fromUrl && neighborhoodOptions.includes(fromUrl)) return fromUrl;
-    return allCityLabel;
-  })();
-  const [neighborhood, setNeighborhood] = useState<string>(initialNeighborhood);
+    return fromUrl || allCityLabel;
+  });
   const [duration, setDuration] = useState<string>(
     searchParams.get("duration") || "1"
   );
@@ -179,13 +221,19 @@ export default function RentCity() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [neighborhood, duration, priceRange, selectedTypes, fuel, licenses, features, sortBy]);
 
-  // Reset neighborhood when city changes (avoid carrying over a Casablanca neighborhood to Marrakesh, etc.)
+  // Reset neighborhood when city changes OR when the live neighborhood list
+  // finishes loading and doesn't include the current selection (avoids
+  // carrying over a Casablanca neighborhood to Marrakesh, etc.).
   useEffect(() => {
-    if (!neighborhoodOptions.includes(neighborhood)) {
+    if (neighborhoodRows.length === 0) return;
+    if (
+      neighborhood !== allCityLabel &&
+      !neighborhoodOptions.includes(neighborhood)
+    ) {
       setNeighborhood(allCityLabel);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [city]);
+  }, [city, neighborhoodRows]);
 
   // Load favorites from localStorage
   useEffect(() => {
@@ -195,24 +243,13 @@ export default function RentCity() {
     } catch {}
   }, []);
 
-  // Fetch bikes for the city. CRITICAL: fail closed — if we cannot resolve a
-  // city_id, return [] instead of dropping the filter (which would leak other
-  // cities' bikes, e.g. Casablanca bikes appearing under /rent/marrakech).
-  const { data: bikes = [], isLoading } = useQuery({
-    queryKey: ["rent-city-bikes", citySlug],
+  // ─── Fetch bikes for the resolved city ──────────────────────────────
+  // Only runs once we have a city.id. Skipped for unknown / not-found
+  // cities so we never leak other cities' inventory.
+  const { data: bikes = [], isLoading: bikesLoading } = useQuery({
+    queryKey: ["rent-city-bikes", cityRow?.id],
+    enabled: !!cityRow?.id,
     queryFn: async () => {
-      const variants = slugToCityNameVariants(citySlug);
-      if (variants.length === 0) return [] as BikeRow[];
-
-      const { data: cityRows, error: cityErr } = await supabase
-        .from("service_cities")
-        .select("id, name")
-        .in("name", variants);
-      if (cityErr) throw cityErr;
-
-      const cityIds = (cityRows || []).map((r) => r.id);
-      if (cityIds.length === 0) return [] as BikeRow[]; // fail closed
-
       const { data, error } = await supabase
         .from("bike_types")
         .select(
@@ -222,7 +259,7 @@ export default function RentCity() {
         .eq("approval_status", "approved")
         .eq("business_status", "active")
         .is("archived_at", null)
-        .in("city_id", cityIds)
+        .eq("city_id", cityRow!.id)
         .eq("bikes.available", true)
         .eq("bikes.approval_status", "approved")
         .is("bikes.archived_at", null);
@@ -241,6 +278,8 @@ export default function RentCity() {
       return unique;
     },
   });
+
+  const isLoading = cityLoading || bikesLoading;
 
   const filtered = useMemo(() => {
     let list = bikes.filter((b) => {
@@ -352,14 +391,26 @@ export default function RentCity() {
           </AccordionTrigger>
           <AccordionContent>
             <RadioGroup value={neighborhood} onValueChange={setNeighborhood} className="space-y-2">
-              {neighborhoodOptions.map((n) => (
-                <div key={n} className="flex items-center gap-2">
-                  <RadioGroupItem value={n} id={`n-${n}`} />
-                  <Label htmlFor={`n-${n}`} className="text-sm font-normal cursor-pointer">
-                    {n}
-                  </Label>
-                </div>
-              ))}
+              {neighborhoodOptions.map((n) => {
+                const isPopular = popularNeighborhoodSet.has(n);
+                return (
+                  <div key={n} className="flex items-center gap-2">
+                    <RadioGroupItem value={n} id={`n-${n}`} />
+                    <Label
+                      htmlFor={`n-${n}`}
+                      className="text-sm font-normal cursor-pointer flex items-center gap-1.5"
+                    >
+                      {n}
+                      {isPopular && (
+                        <Star
+                          className="h-3 w-3 fill-primary text-primary"
+                          aria-label="Popular"
+                        />
+                      )}
+                    </Label>
+                  </div>
+                );
+              })}
             </RadioGroup>
           </AccordionContent>
         </AccordionItem>
@@ -516,6 +567,20 @@ export default function RentCity() {
     </div>
   );
 
+  // ─── FIX 4: Coming Soon / unknown city gating ───
+  // - city resolved + is_coming_soon → show waitlist page
+  // - city resolved + not available + not coming soon → 404 (homepage)
+  // - city not found in DB at all → 404 (homepage)
+  if (!cityLoading && !cityRow) {
+    return <Navigate to="/" replace />;
+  }
+  if (!cityLoading && cityRow && cityRow.is_available === false) {
+    if (cityRow.is_coming_soon) {
+      return <RentCityComingSoon city={cityRow} />;
+    }
+    return <Navigate to="/" replace />;
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -540,7 +605,7 @@ export default function RentCity() {
               Motorbike Rental in {cityName}
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
-              {bikes.length} verified bike{bikes.length !== 1 ? "s" : ""} across {neighborhoodOptions.length - 1} neighborhoods
+              {bikes.length} verified bike{bikes.length !== 1 ? "s" : ""} across {neighborhoodRows.length} neighborhood{neighborhoodRows.length === 1 ? "" : "s"}
             </p>
           </div>
 
@@ -776,5 +841,103 @@ function BikeCard({
         </div>
       </div>
     </article>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// Coming Soon page (FIX 4) — shown when admin marks a city as
+// is_available=false AND is_coming_soon=true. Captures emails into
+// city_waitlist for marketing follow-up when the city goes live.
+// ─────────────────────────────────────────────────────────────────────
+function RentCityComingSoon({ city }: { city: CityRow }) {
+  const [email, setEmail] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [done, setDone] = useState(false);
+
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = email.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+      toast.error("Please enter a valid email");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const { error } = await supabase
+        .from("city_waitlist" as never)
+        .insert({
+          city_id: city.id,
+          city_name: city.name,
+          email: trimmed,
+        } as never);
+      if (error && !String(error.message || "").includes("duplicate")) throw error;
+      setDone(true);
+      toast.success("You're on the list — we'll email you when we launch.");
+    } catch {
+      toast.error("Could not save your email. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Header />
+      <main className="container mx-auto px-4 py-12 max-w-2xl">
+        <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
+          {city.image_url && (
+            <div className="aspect-[16/7] bg-muted overflow-hidden">
+              <img
+                src={city.image_url}
+                alt={city.name}
+                className="w-full h-full object-cover"
+              />
+            </div>
+          )}
+          <div className="p-6 md:p-10">
+            <Badge className="mb-3 bg-warning/10 text-warning border-warning/30">
+              Coming Soon
+            </Badge>
+            <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
+              Motorbike rental in {city.name} — Coming Soon
+            </h1>
+            <p className="text-muted-foreground mt-3">
+              We're expanding to {city.name} soon. Sign up to be the first to
+              know when verified agencies are live.
+            </p>
+
+            {done ? (
+              <div className="mt-6 p-4 rounded-lg bg-primary/10 border border-primary/20 text-sm">
+                Thanks — we've added you to the {city.name} waitlist.
+              </div>
+            ) : (
+              <form onSubmit={onSubmit} className="mt-6 flex flex-col sm:flex-row gap-2">
+                <input
+                  type="email"
+                  required
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="flex-1 h-11 px-3 rounded-md border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+                <Button type="submit" disabled={submitting} className="h-11">
+                  {submitting ? "Saving..." : "Notify me"}
+                </Button>
+              </form>
+            )}
+
+            <div className="mt-8 pt-6 border-t border-border">
+              <Link
+                to="/rent/casablanca"
+                className="text-sm font-medium text-primary hover:underline inline-flex items-center gap-1"
+              >
+                Browse bikes in Casablanca instead <ChevronRight className="w-4 h-4" />
+              </Link>
+            </div>
+          </div>
+        </div>
+      </main>
+      <Footer />
+    </div>
   );
 }
