@@ -36,6 +36,7 @@ export default function PaymentStatus() {
   const next = params.get("next") || "/";
   const retry = params.get("retry") || "/";
   const outcomeHint = params.get("outcome");
+  const transactionId = params.get("transaction_id") || "";
   const title = params.get("title") || "Payment";
 
   const [phase, setPhase] = useState<Phase>(
@@ -56,7 +57,7 @@ export default function PaymentStatus() {
     try {
       const { data, error } = await supabase.functions.invoke(
         "youcanpay-verify-payment",
-        { body: { payment_id: pid } },
+        { body: { payment_id: pid, transaction_id: transactionId || undefined } },
       );
       if (error) throw error;
       const status = (data as any)?.status;
