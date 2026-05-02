@@ -544,7 +544,7 @@ export const AdminFleetTab = () => {
                               <Button
                                 size="sm"
                                 variant="ghost"
-                                onClick={() => handleSoftDelete(bike.id)}
+                                onClick={() => setSoftDeleteId(bike.id)}
                                 title="Soft delete"
                               >
                                 <Trash2 className="h-4 w-4 text-destructive" />
@@ -553,7 +553,7 @@ export const AdminFleetTab = () => {
                               <Button
                                 size="sm"
                                 variant="ghost"
-                                onClick={() => handleHardDelete(bike.id)}
+                                onClick={() => setHardDeleteId(bike.id)}
                                 title="Permanently delete"
                               >
                                 <Trash2 className="h-4 w-4 text-destructive" />
