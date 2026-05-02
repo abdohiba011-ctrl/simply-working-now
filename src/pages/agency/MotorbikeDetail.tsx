@@ -50,6 +50,49 @@ const MotorbikeDetail = () => {
   const [activeIndex, setActiveIndex] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [pickup, setPickup] = useState<PickupLocation | null>(null);
+  const [available, setAvailable] = useState<boolean>(true);
+  const [archiveOpen, setArchiveOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    setAvailable((bike?.availability_status ?? "available") === "available");
+  }, [bike?.availability_status]);
+
+  const toggleAvailability = async (next: boolean) => {
+    if (!id) return;
+    setBusy(true);
+    const prev = available;
+    setAvailable(next);
+    const { error } = await supabase.rpc(
+      "set_bike_type_availability" as never,
+      { p_bike_type_id: id, p_available: next } as never,
+    );
+    setBusy(false);
+    if (error) {
+      setAvailable(prev);
+      toast.error(error.message || "Could not update availability");
+      return;
+    }
+    toast.success(next ? "Bike is now available" : "Bike taken off the market");
+  };
+
+  const archiveBike = async () => {
+    if (!id) return;
+    setBusy(true);
+    const { error } = await supabase.rpc(
+      "archive_bike_type" as never,
+      { p_bike_type_id: id } as never,
+    );
+    setBusy(false);
+    setArchiveOpen(false);
+    if (error) {
+      toast.error(error.message || "Could not archive bike");
+      return;
+    }
+    toast.success("Bike archived. It is no longer visible to renters.");
+    navigate("/agency/motorbikes");
+  };
+
 
   useEffect(() => {
     if (!id) return;
