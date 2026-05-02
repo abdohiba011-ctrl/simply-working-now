@@ -351,17 +351,12 @@ const AdminClientDetails = () => {
   if (error || !client) {
     return (
       <AdminLayout>
-        <div className="p-4 md:p-6 max-w-7xl mx-auto">
-          <Card>
-            <CardContent className="py-12 text-center">
-              <p className="text-destructive mb-4">{error || "Client not found"}</p>
-              <Button onClick={handleRetry} disabled={isRetrying}>
-                {isRetrying ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
-                Retry
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
+        <AdminErrorState
+          title={error ? "Couldn't load client" : "Client not found"}
+          message={error ? "There was a problem loading this client." : "This client doesn't exist or has been removed."}
+          error={error}
+          onRetry={handleRetry}
+        />
       </AdminLayout>
     );
   }
