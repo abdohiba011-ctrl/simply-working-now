@@ -169,7 +169,8 @@ const App = () => (
                 <Route path="/agency/signup" element={<AgencySignup />} />
                 <Route path="/rent" element={<Navigate to="/rent/casablanca" replace />} />
                 <Route path="/verify-email" element={<MockVerifyEmail />} />
-                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/forgot-password" element={<AuthModalRedirect tab="login" initialView="forgot" />} />
+                <Route path="/reset-password" element={<AuthModalRedirect tab="login" initialView="forgot" />} />
                 <Route path="/reset-password/verify" element={<ResetPasswordVerify />} />
                 <Route path="/reset-password/new" element={<ResetPasswordNew />} />
                 {/* Legacy renter password reset paths → unified routes */}
