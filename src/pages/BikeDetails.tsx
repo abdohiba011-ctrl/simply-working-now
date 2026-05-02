@@ -211,11 +211,13 @@ const BikeDetails = () => {
 
   // SEO meta — must run unconditionally before early returns
   const seoSlug = bikeSlug || (id && !isUuid(id) ? id : "");
+  const seoCity = resolvedCity || bike?.location || "Morocco";
+  const seoAgency = resolvedAgency.name || "a verified agency";
   const seoTitle = bike?.bike_type
-    ? `${(bike.bike_type as any).name} — Rent in ${bike.location || "Casablanca"} | Motonita`
+    ? `${(bike.bike_type as any).name} — Rent in ${seoCity} | Motonita`
     : "Motorbike rental | Motonita";
   const seoDescription = bike?.bike_type
-    ? `Rent the ${(bike.bike_type as any).name} from ${(bike.bike_type as any).agency_name || "a verified agency"} in ${bike.location || "Morocco"}. Daily price ${Math.round(Number((bike.bike_type as any).daily_price) || 0)} MAD. Booked in 60 seconds, flat 10 MAD booking fee.`
+    ? `Rent the ${(bike.bike_type as any).name} from ${seoAgency} in ${seoCity}. Daily price ${Math.round(Number((bike.bike_type as any).daily_price) || 0)} MAD. Booked in 60 seconds, flat 10 MAD booking fee.`
     : "Rent verified motorbikes and scooters across Morocco with flat fees and no commission on rental price.";
   const canonicalUrl = seoSlug ? `${SITE_URL}/bike/${seoSlug}` : undefined;
   useDocumentHead({
