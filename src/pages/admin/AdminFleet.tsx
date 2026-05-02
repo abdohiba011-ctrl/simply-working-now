@@ -71,21 +71,12 @@ const AdminFleet = () => {
   // Enable real-time updates for fleet data
   useFleetRealtime();
 
+  // Access is enforced by <ProtectedRoute requireRole="admin"> in App.tsx.
+  // Do NOT add in-page navigate("/") here — it races with role hydration
+  // and bounces admins to the public homepage.
   useEffect(() => {
-    const checkAccess = async () => {
-      if (!isAuthenticated) {
-        navigate("/auth");
-        return;
-      }
-      const isAdmin = hasRole('admin');
-      if (!isAdmin) {
-        navigate("/");
-        return;
-      }
-      fetchData();
-    };
-    checkAccess();
-  }, [isAuthenticated, hasRole, navigate]);
+    fetchData();
+  }, []);
 
   const fetchData = async () => {
     setIsLoading(true);
