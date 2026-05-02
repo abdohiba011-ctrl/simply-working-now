@@ -530,10 +530,10 @@ export const Header = memo(() => {
               </>
             ) : (
               <>
-                <Button variant="outline" onClick={() => navigate("/auth")}>
+                <Button variant="outline" onClick={() => openAuthModal("login")}>
                   {t('header.login')}
                 </Button>
-                <Button variant="hero" onClick={() => navigate("/auth?mode=signup")}>
+                <Button variant="hero" onClick={() => openAuthModal("signup")}>
                   {t('header.signup')}
                 </Button>
               </>
