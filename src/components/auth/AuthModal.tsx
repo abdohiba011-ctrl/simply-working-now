@@ -44,6 +44,7 @@ export function AuthModal() {
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [showPwd, setShowPwd] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
 
   // Signup state
   const [name, setName] = useState("");
