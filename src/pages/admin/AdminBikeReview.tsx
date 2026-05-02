@@ -162,11 +162,12 @@ const AdminBikeReview = () => {
     return (
       <div className="min-h-screen flex flex-col">
         <Header />
-        <main className="flex-1 container mx-auto px-4 py-16 text-center">
-          <h1 className="text-2xl font-bold">Bike not found</h1>
-          <Button className="mt-4" onClick={() => navigate("/admin/bikes/approvals")}>
-            Back to queue
-          </Button>
+        <main className="flex-1">
+          <AdminErrorState
+            title="Bike not found"
+            message="This bike doesn't exist or has been removed from the queue."
+            backTo="/admin/bikes/approvals"
+          />
         </main>
         <Footer />
       </div>
