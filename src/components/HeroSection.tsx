@@ -104,25 +104,55 @@ export const HeroSection = memo(() => {
     (async () => {
       const { data } = await supabase
         .from("service_cities")
-        .select("name, is_available, is_coming_soon")
+        .select("id, name, is_available, is_coming_soon")
         .order("display_order", { ascending: true })
         .order("name", { ascending: true });
       if (cancelled || !data) return;
       const avail: string[] = [];
       const soon: string[] = [];
+      const idMap: Record<string, string> = {};
       for (const row of data) {
-        // Coming-soon takes precedence over is_available so back-office can
-        // park a city as "coming soon" without flipping availability semantics.
+        idMap[row.name] = row.id;
         if (row.is_coming_soon) soon.push(row.name);
         else if (row.is_available) avail.push(row.name);
       }
       setAvailableCities(avail);
       setComingSoonCities(soon);
+      setCityIdByName(idMap);
     })();
     return () => {
       cancelled = true;
     };
   }, []);
+
+  // Load neighborhoods live from service_locations whenever the selected city changes.
+  useEffect(() => {
+    let cancelled = false;
+    if (!city) {
+      setNeighborhoods([]);
+      return;
+    }
+    const cityId = cityIdByName[city];
+    if (!cityId) {
+      setNeighborhoods([]);
+      return;
+    }
+    (async () => {
+      const { data } = await supabase
+        .from("service_locations")
+        .select("name, is_popular, display_order")
+        .eq("city_id", cityId)
+        .eq("is_active", true)
+        .order("is_popular", { ascending: false })
+        .order("display_order", { ascending: true })
+        .order("name", { ascending: true });
+      if (cancelled) return;
+      setNeighborhoods((data ?? []).map((r) => r.name));
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [city, cityIdByName]);
 
   // Preload images on mount
   useEffect(() => {
