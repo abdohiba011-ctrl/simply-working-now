@@ -746,6 +746,19 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
               {t("mockAuth.login", { defaultValue: "Log in" })}
             </Link>
           </p>
+
+          {/* Cross-door link → renter signup */}
+          <p className="text-center text-xs text-muted-foreground">
+            {t("mockAuth.want_to_rent_instead", {
+              defaultValue: "Want to rent instead?",
+            })}{" "}
+            <Link
+              to="/signup"
+              className="hover:underline font-medium text-foreground"
+            >
+              {t("mockAuth.signup_as_renter", { defaultValue: "Sign up as renter" })}
+            </Link>
+          </p>
         </div>
       </AgencyAuthLayout>
     );
