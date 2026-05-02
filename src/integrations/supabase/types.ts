@@ -1265,6 +1265,48 @@ export type Database = {
         }
         Relationships: []
       }
+      city_waitlist: {
+        Row: {
+          city_id: string | null
+          city_name: string
+          created_at: string
+          email: string
+          id: string
+          user_id: string | null
+        }
+        Insert: {
+          city_id?: string | null
+          city_name: string
+          created_at?: string
+          email: string
+          id?: string
+          user_id?: string | null
+        }
+        Update: {
+          city_id?: string | null
+          city_name?: string
+          created_at?: string
+          email?: string
+          id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "city_waitlist_city_id_fkey"
+            columns: ["city_id"]
+            isOneToOne: false
+            referencedRelation: "city_bike_counts"
+            referencedColumns: ["city_id"]
+          },
+          {
+            foreignKeyName: "city_waitlist_city_id_fkey"
+            columns: ["city_id"]
+            isOneToOne: false
+            referencedRelation: "service_cities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_file_downloads: {
         Row: {
           created_at: string
@@ -2545,9 +2587,14 @@ export type Database = {
         Args: { p_bike_type_id: string }
         Returns: undefined
       }
+      delete_city_safe: { Args: { p_city_id: string }; Returns: Json }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
+      }
+      delete_neighborhood_safe: {
+        Args: { p_location_id: string }
+        Returns: Json
       }
       enforce_subscription_lifecycle: {
         Args: never
@@ -2625,6 +2672,10 @@ export type Database = {
       }
       reject_bike_type: {
         Args: { p_bike_type_id: string; p_reason: string }
+        Returns: Json
+      }
+      rename_neighborhood: {
+        Args: { p_location_id: string; p_new_name: string }
         Returns: Json
       }
       report_no_show: { Args: { _booking_id: string }; Returns: Json }
