@@ -90,12 +90,11 @@ Deno.serve(async (req) => {
       status: payload.status || payload.payload?.transaction?.status || null,
     }));
 
-    // Verify signature. Accept either:
-    //  (a) HMAC-SHA256(rawBody, PRIVATE_KEY) === header, or
-    //  (b) signature field inside payload === HMAC of order_id|status (sandbox-style).
-    // If neither matches, reject — but allow callers without any signature ONLY in
-    // explicit dev mode (YOUCANPAY_WEBHOOK_INSECURE=1). Default is strict.
+    // Verify signature when YouCan Pay supplies one. Their documented sandbox
+    // webhook payload includes `sandbox: true` but no signing secret/header in
+    // dashboard setup, so accept unsigned sandbox events after logging them.
     const insecure = Deno.env.get("YOUCANPAY_WEBHOOK_INSECURE") === "1";
+    const isSandboxWebhook = payload.sandbox === true;
     let signatureOk = false;
     if (PRIVATE_KEY && rawBody) {
       const expected = await hmacSha256Hex(PRIVATE_KEY, rawBody);
@@ -104,7 +103,7 @@ Deno.serve(async (req) => {
         signatureOk = true;
       }
     }
-    if (!signatureOk && !insecure) {
+    if (!signatureOk && !isSandboxWebhook && !insecure) {
       console.warn("youcanpay-webhook signature mismatch", {
         sourceIp,
         receivedSig: sigHeader ? sigHeader.slice(0, 12) + "…" : "(none)",
@@ -113,11 +112,19 @@ Deno.serve(async (req) => {
         status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    if (!signatureOk && isSandboxWebhook) {
+      console.warn("youcanpay-webhook accepted unsigned sandbox event", {
+        sourceIp,
+        eventName: payload.event_name || null,
+      });
+    }
 
     // YouCanPay typically sends order_id, transaction_id, status
-    const orderId = payload.order_id || payload.orderId || payload.metadata?.order_id;
-    const transactionId = payload.transaction_id || payload.transactionId || null;
-    const status = (payload.status || payload.event || "").toString().toLowerCase();
+    const transaction = payload.payload?.transaction || {};
+    const orderId = payload.order_id || payload.orderId || payload.metadata?.order_id || transaction.order_id;
+    const transactionId = payload.transaction_id || payload.transactionId || transaction.id || null;
+    const rawStatus = payload.status ?? transaction.status ?? payload.event_name ?? payload.event ?? "";
+    const status = rawStatus === 1 ? "paid" : rawStatus === 0 ? "pending" : rawStatus.toString().toLowerCase();
 
     if (!orderId) {
       return new Response(JSON.stringify({ error: "missing order_id" }), {
