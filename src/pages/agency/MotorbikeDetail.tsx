@@ -29,6 +29,13 @@ interface GalleryImage {
   display_order: number;
 }
 
+interface PickupLocation {
+  city: string | null;
+  neighborhood: string | null;
+  address: string | null;
+  usingAgencyFallback: boolean;
+}
+
 const MotorbikeDetail = () => {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -36,6 +43,7 @@ const MotorbikeDetail = () => {
   const [gallery, setGallery] = useState<GalleryImage[]>([]);
   const [activeIndex, setActiveIndex] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [pickup, setPickup] = useState<PickupLocation | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -67,6 +75,60 @@ const MotorbikeDetail = () => {
       setActiveIndex(0);
     })();
   }, [id, bike?.main_image_url]);
+
+  // Resolve pickup location: bike-specific fields first, then fall back to
+  // the owning agency's onboarding location.
+  useEffect(() => {
+    if (!bike) {
+      setPickup(null);
+      return;
+    }
+    (async () => {
+      let cityName: string | null = null;
+      const bikeCityId = (bike as any).city_id as string | null | undefined;
+      if (bikeCityId) {
+        const { data: cityRow } = await supabase
+          .from("service_cities")
+          .select("name")
+          .eq("id", bikeCityId)
+          .maybeSingle();
+        cityName = cityRow?.name ?? null;
+      }
+
+      const bikeNeighborhood = (bike as any).neighborhood as string | null | undefined;
+      const ownerId = (bike as any).owner_id as string | null | undefined;
+
+      // Pull agency fallbacks
+      let agencyCity: string | null = null;
+      let agencyNeighborhood: string | null = null;
+      let agencyAddress: string | null = null;
+      if (ownerId) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("user_id", ownerId)
+          .maybeSingle();
+        if (profile?.id) {
+          const { data: agency } = await supabase
+            .from("agencies")
+            .select("city, primary_neighborhood, address")
+            .eq("profile_id", profile.id)
+            .maybeSingle();
+          agencyCity = agency?.city ?? null;
+          agencyNeighborhood = agency?.primary_neighborhood ?? null;
+          agencyAddress = agency?.address ?? null;
+        }
+      }
+
+      const hasBikeLocation = !!(cityName || bikeNeighborhood);
+      setPickup({
+        city: cityName || agencyCity,
+        neighborhood: bikeNeighborhood || agencyNeighborhood,
+        address: hasBikeLocation ? null : agencyAddress,
+        usingAgencyFallback: !hasBikeLocation && !!(agencyCity || agencyNeighborhood || agencyAddress),
+      });
+    })();
+  }, [bike]);
 
   if (loading) {
     return (
