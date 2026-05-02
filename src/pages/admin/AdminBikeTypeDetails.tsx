@@ -48,6 +48,7 @@ import { toast } from "sonner";
 import { ImageUpload, UploadedImage } from "@/components/admin/ImageUpload";
 import { deleteBikeImage } from "@/lib/imageUpload";
 import { AdminBikeTypeDetailsSkeleton } from "@/components/ui/admin-skeleton";
+import { AdminErrorState } from "@/components/admin/AdminErrorState";
 
 interface BikeType {
   id: string;
