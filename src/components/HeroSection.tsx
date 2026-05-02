@@ -96,6 +96,8 @@ export const HeroSection = memo(() => {
   // Cities loaded from DB so the dropdown reflects real availability.
   const [availableCities, setAvailableCities] = useState<string[]>([]);
   const [comingSoonCities, setComingSoonCities] = useState<string[]>([]);
+  const [cityIdByName, setCityIdByName] = useState<Record<string, string>>({});
+  const [neighborhoods, setNeighborhoods] = useState<string[]>([]);
 
   useEffect(() => {
     let cancelled = false;
