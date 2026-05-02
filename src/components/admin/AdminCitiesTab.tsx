@@ -539,14 +539,25 @@ export const AdminCitiesTab = () => {
         <CardHeader>
           <CardTitle>Cities & Neighborhoods</CardTitle>
           <CardDescription>
-            Manage cities and the neighborhoods inside each one. Changes apply immediately to the renter and agency sides.
+            Manage cities and their neighborhoods. <strong>Show on homepage</strong>{" "}
+            controls whether the city appears as a card on the public homepage.{" "}
+            <strong>Available for booking</strong> (the clock/check button) controls
+            whether renters can browse and book bikes in that city — disabled cities
+            show as &ldquo;Coming soon&rdquo;. Changes apply immediately to the renter and agency sides.
           </CardDescription>
         </CardHeader>
         <CardContent>
           {isLoading ? (
             <AdminTableSkeleton />
           ) : filteredCities.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">No cities found</div>
+            <div className="text-center py-12">
+              <MapPin className="h-10 w-10 mx-auto text-muted-foreground/50 mb-3" />
+              <p className="text-sm text-muted-foreground">
+                {searchQuery
+                  ? "No cities match your search."
+                  : "No cities yet — click \u201cAdd City\u201d to create your first one."}
+              </p>
+            </div>
           ) : (
             <div className="space-y-3">
               {filteredCities.map((city) => {
