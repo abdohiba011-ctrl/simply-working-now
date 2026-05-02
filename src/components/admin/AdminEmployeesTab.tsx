@@ -254,12 +254,13 @@ export const AdminEmployeesTab = () => {
 
     setActionLoading(true);
     try {
-      // Find user by email
+      // Find user by email — select user_id (auth uid), since user_roles.user_id
+      // and admin_employees.user_id store the auth uid, not profiles.id.
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('id, email')
+        .select('user_id, email')
         .eq('email', newEmployeeEmail.toLowerCase())
-        .single();
+        .maybeSingle();
 
       if (profileError) {
         if (profileError.code === 'PGRST116') {
