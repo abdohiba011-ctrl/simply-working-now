@@ -355,6 +355,12 @@ export const AdminBusinessClientsTab = () => {
         type: "info",
       });
       if (error) throw error;
+      await supabase.rpc("log_audit_event", {
+        _action: "admin_notification_sent",
+        _table_name: "notifications",
+        _record_id: selected.user_id,
+        _details: { title: notificationTitle, recipient_profile_id: selected.id, recipient_kind: "business" },
+      });
       toast.success("Notification sent!");
       setShowNotificationDialog(false);
       setNotificationTitle("");
