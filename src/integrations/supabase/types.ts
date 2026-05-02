@@ -398,6 +398,48 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_runs: {
+        Row: {
+          backup_type: string
+          created_at: string
+          created_by: string | null
+          error_message: string | null
+          file_path: string | null
+          file_size: number | null
+          finished_at: string | null
+          id: string
+          manifest: Json | null
+          started_at: string
+          status: string
+        }
+        Insert: {
+          backup_type: string
+          created_at?: string
+          created_by?: string | null
+          error_message?: string | null
+          file_path?: string | null
+          file_size?: number | null
+          finished_at?: string | null
+          id?: string
+          manifest?: Json | null
+          started_at?: string
+          status: string
+        }
+        Update: {
+          backup_type?: string
+          created_at?: string
+          created_by?: string | null
+          error_message?: string | null
+          file_path?: string | null
+          file_size?: number | null
+          finished_at?: string | null
+          id?: string
+          manifest?: Json | null
+          started_at?: string
+          status?: string
+        }
+        Relationships: []
+      }
       bike_holds: {
         Row: {
           bike_id: string
