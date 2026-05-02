@@ -57,6 +57,7 @@ import {
 } from "@/components/admin/bookings";
 import { BookingMessagesCard } from "@/components/admin/bookings/BookingMessagesCard";
 import { AdminBookingDetailsSkeleton } from "@/components/ui/admin-skeleton";
+import { AdminErrorState } from "@/components/admin/AdminErrorState";
 
 interface Booking {
   id: string;
