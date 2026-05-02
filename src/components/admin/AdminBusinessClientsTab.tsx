@@ -322,6 +322,13 @@ export const AdminBusinessClientsTab = () => {
         });
       }
 
+      await supabase.rpc("log_audit_event", {
+        _action: freeze ? "business_frozen" : "business_unfrozen",
+        _table_name: "profiles",
+        _record_id: profileId,
+        _details: { auth_user_id: target?.user_id ?? null, frozen: freeze },
+      });
+
       toast.success(freeze ? "Account frozen" : "Account unfrozen");
       fetchBusinesses();
       fetchAggregates();
