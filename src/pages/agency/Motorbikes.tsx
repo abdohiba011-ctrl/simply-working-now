@@ -107,7 +107,9 @@ const Motorbikes = () => {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Motorbikes</h1>
-            <p className="text-sm text-muted-foreground">{bikes.length} in your fleet</p>
+            <p className="text-sm text-muted-foreground">
+              {bikes.length} {tab === "archived" ? "archived" : "in your fleet"}
+            </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <div className="relative w-64">
@@ -145,6 +147,28 @@ const Motorbikes = () => {
               <Plus className="mr-2 h-4 w-4" /> Add motorbike
             </Button>
           </div>
+        </div>
+
+        {/* Active / Archived tabs */}
+        <div className="inline-flex rounded-md border border-border p-0.5">
+          <button
+            onClick={() => setTab("active")}
+            className={cn(
+              "rounded px-3 py-1.5 text-xs font-medium transition-colors",
+              tab === "active" ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            Active
+          </button>
+          <button
+            onClick={() => setTab("archived")}
+            className={cn(
+              "inline-flex items-center gap-1 rounded px-3 py-1.5 text-xs font-medium transition-colors",
+              tab === "archived" ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <Archive className="h-3 w-3" /> Archived
+          </button>
         </div>
 
         {loading ? (
