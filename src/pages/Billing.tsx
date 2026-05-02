@@ -265,14 +265,12 @@ export default function Billing() {
       <main className="mx-auto max-w-5xl px-4 py-8">
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Billing & Credits</h1>
+            <h1 className="text-2xl font-bold tracking-tight">Motonita Credits</h1>
             <p className="text-sm text-muted-foreground">
-              Manage your credits, top up your account, and view transactions.
+              View your refund credits, transactions, and billing information. Credits are issued
+              by Motonita and applied automatically to future bookings.
             </p>
           </div>
-          <Button onClick={() => setTopupOpen(true)} className="gap-2">
-            <Plus className="h-4 w-4" /> Top up credits
-          </Button>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
