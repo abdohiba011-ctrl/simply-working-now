@@ -44,26 +44,15 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
-const NEIGHBORHOODS_BY_CITY: Record<string, string[]> = {
-  casablanca: [
-    "Anfa", "Maârif", "Derb Sultan", "Sidi Maârouf", "Aïn Diab",
-    "Gauthier", "Bourgogne", "Hay Hassani", "Sidi Bernoussi", "Ain Sebaa", "Bouskoura",
-  ],
-  marrakesh: ["Guéliz", "Médina", "Hivernage", "Palmeraie", "Daoudiate", "Agdal"],
-  marrakech: ["Guéliz", "Médina", "Hivernage", "Palmeraie", "Daoudiate", "Agdal"],
-  rabat: ["Agdal", "Hassan", "Souissi", "Médina", "Hay Riad"],
-  tangier: ["Malabata", "Centre-Ville", "Marshan", "Iberia", "Playa"],
-  agadir: ["Centre-Ville", "Founty", "Talborjt"],
-  fes: ["Médina (Fes el-Bali)", "Ville Nouvelle", "Fes el-Jdid", "Aïn Chkef"],
-  essaouira: ["Médina", "Centre-Ville", "Borj"],
-  chefchaouen: ["Médina", "Ras El Maa", "Centre-Ville"],
-};
-
-const getNeighborhoodsForCity = (citySlug: string): string[] => {
-  const key = citySlug.toLowerCase();
-  const list = NEIGHBORHOODS_BY_CITY[key] || [];
-  const cityLabel = key.charAt(0).toUpperCase() + key.slice(1);
-  return [`All ${cityLabel}`, ...list];
+// Neighborhoods are loaded live from `service_locations` per city — no hardcoded list.
+// This means whenever an admin adds/edits/disables a neighborhood, the renter
+// filter sidebar reflects the change immediately on next page load.
+type NeighborhoodRow = {
+  id: string;
+  name: string;
+  is_active: boolean;
+  is_popular: boolean;
+  display_order: number;
 };
 
 const BIKE_TYPES = [
