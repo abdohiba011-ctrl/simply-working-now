@@ -84,6 +84,62 @@ const BikeDetails = () => {
     }
   }, [pickupParam, endParam]);
 
+  // Resolve real city + agency from DB (no hardcoded Casablanca / Casa Moto Rent).
+  const [resolvedCity, setResolvedCity] = useState<string | null>(null);
+  const [resolvedNeighborhood, setResolvedNeighborhood] = useState<string | null>(null);
+  const [resolvedAgency, setResolvedAgency] = useState<{
+    name: string | null;
+    verified: boolean;
+  }>({ name: null, verified: false });
+
+  useEffect(() => {
+    const bt: any = bike?.bike_type;
+    if (!bt) return;
+    let cancelled = false;
+    (async () => {
+      // City
+      let cityName: string | null = null;
+      if (bt.city_id) {
+        const { data: city } = await supabase
+          .from("service_cities")
+          .select("name")
+          .eq("id", bt.city_id)
+          .maybeSingle();
+        cityName = city?.name ?? null;
+      }
+      // Agency from owner_id → profiles → agencies
+      let agencyName: string | null = null;
+      let agencyVerified = false;
+      let agencyCity: string | null = null;
+      let agencyNeighborhood: string | null = null;
+      if (bt.owner_id) {
+        const { data: prof } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("user_id", bt.owner_id)
+          .maybeSingle();
+        if (prof?.id) {
+          const { data: ag } = await supabase
+            .from("agencies")
+            .select("business_name, is_verified, city, primary_neighborhood")
+            .eq("profile_id", prof.id)
+            .maybeSingle();
+          agencyName = ag?.business_name ?? null;
+          agencyVerified = !!ag?.is_verified;
+          agencyCity = ag?.city ?? null;
+          agencyNeighborhood = ag?.primary_neighborhood ?? null;
+        }
+      }
+      if (cancelled) return;
+      setResolvedCity(cityName || agencyCity);
+      setResolvedNeighborhood(bt.neighborhood || agencyNeighborhood || bike?.location || null);
+      setResolvedAgency({ name: agencyName, verified: agencyVerified });
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [bike?.bike_type, bike?.location]);
+
   // If URL is a UUID but the bike has a slug, redirect to the slug URL.
   // This preserves old links and gives a single canonical URL.
   const bikeSlug = (bike?.bike_type as any)?.slug as string | undefined;
