@@ -153,8 +153,11 @@ const BikeDetails = () => {
   const allImages = useMemo(() => {
     if (!bike?.bike_type) return [];
     const main = getBikeImageUrl(bike.bike_type.main_image_url);
-    const extras = (detailImages || []).map((d: any) => d.image_url).filter(Boolean);
-    return [main, ...extras];
+    const rawMain = bike.bike_type.main_image_url || null;
+    const extras = (detailImages || [])
+      .map((d: any) => d.image_url as string | null)
+      .filter((u): u is string => !!u && u !== main && u !== rawMain);
+    return main ? [main, ...extras] : extras;
   }, [bike, detailImages]);
 
   const days = dateRange?.from && dateRange?.to
