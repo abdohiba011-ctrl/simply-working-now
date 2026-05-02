@@ -56,13 +56,13 @@ export function AuthModal() {
   // Forgot password state
   const [forgotEmail, setForgotEmail] = useState("");
 
-  // Sync external tab changes (when openAuthModal is called)
+  // Sync external tab/view changes (when openAuthModal is called)
   useEffect(() => {
     if (isOpen) {
-      setView(tab);
+      setView((ctx.initialView as View) ?? tab);
       setError(null);
     }
-  }, [isOpen, tab]);
+  }, [isOpen, tab, ctx.initialView]);
 
   // Reset on close
   useEffect(() => {
