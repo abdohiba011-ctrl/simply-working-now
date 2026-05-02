@@ -623,7 +623,7 @@ export const AdminEmployeesTab = () => {
                         </Avatar>
                         <div>
                           <div className="flex items-center gap-2">
-                            <p className="font-medium">{employee.profile?.name || 'No name'}</p>
+                            <p className="font-medium">{employee.profile?.name || employee.profile?.email || 'No name'}</p>
                             {employee.user_id === user?.id && (
                               <Badge variant="outline" className="gap-1">
                                 <Crown className="h-3 w-3" />
