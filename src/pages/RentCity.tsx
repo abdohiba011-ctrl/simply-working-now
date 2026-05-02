@@ -108,6 +108,15 @@ type BikeRow = {
 
 import { slugToDisplayName, slugToCityNameVariants, cityToSlug } from "@/lib/citySlug";
 
+type CityRow = {
+  id: string;
+  name: string;
+  is_available: boolean | null;
+  is_coming_soon: boolean | null;
+  image_url: string | null;
+  description: string | null;
+};
+
 export default function RentCity() {
   const { city = "casablanca" } = useParams();
   const citySlug = cityToSlug(city);
@@ -115,17 +124,61 @@ export default function RentCity() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const neighborhoodOptions = useMemo(() => getNeighborhoodsForCity(citySlug), [citySlug]);
-  const allCityLabel = neighborhoodOptions[0]; // e.g. "All Casablanca"
+  const allCityLabel = `All ${cityName}`;
 
-  // Initial neighborhood from URL — but ONLY accept it if it belongs to this city.
-  // This prevents Casablanca neighborhoods leaking into Marrakech, etc.
-  const initialNeighborhood = (() => {
+  // ─── Resolve the city row first ─────────────────────────────────────
+  // Drives gating (Coming Soon vs available vs 404) and is the parent
+  // for the neighborhoods + bikes queries.
+  const { data: cityRow, isLoading: cityLoading } = useQuery({
+    queryKey: ["rent-city-row", citySlug],
+    queryFn: async () => {
+      const variants = slugToCityNameVariants(citySlug);
+      if (variants.length === 0) return null;
+      const { data, error } = await supabase
+        .from("service_cities")
+        .select("id, name, is_available, is_coming_soon, image_url, description")
+        .in("name", variants)
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return (data as CityRow | null) ?? null;
+    },
+  });
+
+  // ─── Live neighborhoods from service_locations ──────────────────────
+  // Sorted by is_popular DESC then display_order so the renter filter
+  // mirrors the admin's curation. No more hardcoded list.
+  const { data: neighborhoodRows = [] } = useQuery({
+    queryKey: ["rent-city-neighborhoods", cityRow?.id],
+    enabled: !!cityRow?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("service_locations")
+        .select("id, name, is_active, is_popular, display_order")
+        .eq("city_id", cityRow!.id)
+        .eq("is_active", true)
+        .order("is_popular", { ascending: false })
+        .order("display_order", { ascending: true });
+      if (error) throw error;
+      return (data || []) as NeighborhoodRow[];
+    },
+  });
+
+  const neighborhoodOptions = useMemo<string[]>(
+    () => [allCityLabel, ...neighborhoodRows.map((n) => n.name)],
+    [allCityLabel, neighborhoodRows],
+  );
+  const popularNeighborhoodSet = useMemo(
+    () => new Set(neighborhoodRows.filter((n) => n.is_popular).map((n) => n.name)),
+    [neighborhoodRows],
+  );
+
+  // Initial neighborhood from URL — accept any name; will be reset later
+  // if it doesn't belong to this city (after neighborhoods load).
+  const [neighborhood, setNeighborhood] = useState<string>(() => {
     const fromUrl = searchParams.get("neighborhood");
-    if (fromUrl && neighborhoodOptions.includes(fromUrl)) return fromUrl;
-    return allCityLabel;
-  })();
-  const [neighborhood, setNeighborhood] = useState<string>(initialNeighborhood);
+    return fromUrl || allCityLabel;
+  });
   const [duration, setDuration] = useState<string>(
     searchParams.get("duration") || "1"
   );
@@ -168,13 +221,19 @@ export default function RentCity() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [neighborhood, duration, priceRange, selectedTypes, fuel, licenses, features, sortBy]);
 
-  // Reset neighborhood when city changes (avoid carrying over a Casablanca neighborhood to Marrakesh, etc.)
+  // Reset neighborhood when city changes OR when the live neighborhood list
+  // finishes loading and doesn't include the current selection (avoids
+  // carrying over a Casablanca neighborhood to Marrakesh, etc.).
   useEffect(() => {
-    if (!neighborhoodOptions.includes(neighborhood)) {
+    if (neighborhoodRows.length === 0) return;
+    if (
+      neighborhood !== allCityLabel &&
+      !neighborhoodOptions.includes(neighborhood)
+    ) {
       setNeighborhood(allCityLabel);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [city]);
+  }, [city, neighborhoodRows]);
 
   // Load favorites from localStorage
   useEffect(() => {
@@ -184,24 +243,13 @@ export default function RentCity() {
     } catch {}
   }, []);
 
-  // Fetch bikes for the city. CRITICAL: fail closed — if we cannot resolve a
-  // city_id, return [] instead of dropping the filter (which would leak other
-  // cities' bikes, e.g. Casablanca bikes appearing under /rent/marrakech).
-  const { data: bikes = [], isLoading } = useQuery({
-    queryKey: ["rent-city-bikes", citySlug],
+  // ─── Fetch bikes for the resolved city ──────────────────────────────
+  // Only runs once we have a city.id. Skipped for unknown / not-found
+  // cities so we never leak other cities' inventory.
+  const { data: bikes = [], isLoading: bikesLoading } = useQuery({
+    queryKey: ["rent-city-bikes", cityRow?.id],
+    enabled: !!cityRow?.id,
     queryFn: async () => {
-      const variants = slugToCityNameVariants(citySlug);
-      if (variants.length === 0) return [] as BikeRow[];
-
-      const { data: cityRows, error: cityErr } = await supabase
-        .from("service_cities")
-        .select("id, name")
-        .in("name", variants);
-      if (cityErr) throw cityErr;
-
-      const cityIds = (cityRows || []).map((r) => r.id);
-      if (cityIds.length === 0) return [] as BikeRow[]; // fail closed
-
       const { data, error } = await supabase
         .from("bike_types")
         .select(
@@ -211,7 +259,7 @@ export default function RentCity() {
         .eq("approval_status", "approved")
         .eq("business_status", "active")
         .is("archived_at", null)
-        .in("city_id", cityIds)
+        .eq("city_id", cityRow!.id)
         .eq("bikes.available", true)
         .eq("bikes.approval_status", "approved")
         .is("bikes.archived_at", null);
@@ -230,6 +278,8 @@ export default function RentCity() {
       return unique;
     },
   });
+
+  const isLoading = cityLoading || bikesLoading;
 
   const filtered = useMemo(() => {
     let list = bikes.filter((b) => {
