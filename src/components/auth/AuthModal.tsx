@@ -340,7 +340,15 @@ export function AuthModal() {
                   </button>
                 </div>
               </div>
-              <div className="flex justify-end">
+              <div className="flex items-center justify-between">
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <Checkbox
+                    id="am-remember"
+                    checked={rememberMe}
+                    onCheckedChange={(v) => setRememberMe(v === true)}
+                  />
+                  <span className="text-sm text-[#163300]/80">Remember me</span>
+                </label>
                 <button
                   type="button"
                   onClick={() => {
