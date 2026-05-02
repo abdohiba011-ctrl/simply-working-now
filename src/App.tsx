@@ -104,7 +104,7 @@ const MockSignup = lazy(() => import("./pages/auth/Signup"));
 const AgencySignup = lazy(() => import("./pages/auth/AgencySignup"));
 const MockVerifyEmail = lazy(() => import("./pages/auth/VerifyEmail"));
 
-const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword"));
+
 const ResetPasswordVerify = lazy(() => import("./pages/auth/ResetPasswordVerify"));
 const ResetPasswordNew = lazy(() => import("./pages/auth/ResetPasswordNew"));
 const SignupExtra = lazy(() => import("./pages/auth/SignupExtra"));
