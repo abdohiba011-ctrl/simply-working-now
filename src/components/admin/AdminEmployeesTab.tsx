@@ -280,7 +280,7 @@ export const AdminEmployeesTab = () => {
       const { data: existingRole } = await supabase
         .from('user_roles')
         .select('*')
-        .eq('user_id', profile.id)
+        .eq('user_id', profile.user_id)
         .eq('role', 'admin')
         .single();
 
@@ -293,7 +293,7 @@ export const AdminEmployeesTab = () => {
       const { error: insertError } = await supabase
         .from('user_roles')
         .insert({
-          user_id: profile.id,
+          user_id: profile.user_id,
           role: 'admin'
         });
 
@@ -319,7 +319,7 @@ export const AdminEmployeesTab = () => {
       const { error: empError } = await supabase
         .from('admin_employees')
         .insert([{
-          user_id: profile.id,
+          user_id: profile.user_id,
           role: newEmployeeRole,
           is_super_admin: false,
           permissions: JSON.parse(JSON.stringify(permissionsToSave))
@@ -332,7 +332,7 @@ export const AdminEmployeesTab = () => {
 
       // Send notification
       await supabase.from('notifications').insert({
-        user_id: profile.id,
+        user_id: profile.user_id,
         title: newEmployeeRole === 'full_admin' ? 'Full Admin Access Granted' : 'Support Access Granted',
         message: newEmployeeRole === 'full_admin' 
           ? 'You have been granted full admin access to the Motonita platform. You can now manage users, bookings, and settings.'
