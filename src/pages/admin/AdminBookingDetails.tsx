@@ -187,14 +187,15 @@ const AdminBookingDetails = () => {
       
       setBooking(data as Booking);
 
-      // Fetch customer profile info
+      // Fetch customer profile info — booking.user_id is an auth uid,
+      // so join via profiles.user_id (not profiles.id).
       if (data?.user_id) {
         const { data: profile } = await supabase
           .from('profiles')
           .select('is_verified, verification_status, trust_score')
-          .eq('id', data.user_id)
-          .single();
-        
+          .eq('user_id', data.user_id)
+          .maybeSingle();
+
         setCustomerProfile(profile);
 
         // Fetch customer bookings count
@@ -202,18 +203,18 @@ const AdminBookingDetails = () => {
           .from('bookings')
           .select('id', { count: 'exact', head: true })
           .eq('user_id', data.user_id);
-        
+
         setCustomerBookingsCount(count || 0);
       }
 
-      // Fetch assigned business name
+      // Fetch assigned business name — assigned_to_business is an auth uid.
       if (data?.assigned_to_business) {
         const { data: businessProfile } = await supabase
           .from('profiles')
           .select('name, email')
-          .eq('id', data.assigned_to_business)
-          .single();
-        
+          .eq('user_id', data.assigned_to_business)
+          .maybeSingle();
+
         setAssignedBusinessName(businessProfile?.name || businessProfile?.email || null);
       }
     } catch (error) {
