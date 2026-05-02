@@ -1,14 +1,14 @@
 // YouCanPay webhook receiver — confirms payments, credits wallets,
 // updates subscriptions and bookings.
 //
-// Security: verifies HMAC-SHA256 signature using YOUCANPAY_PRIVATE_KEY.
-// YouCan Pay sends the signature either as `x-youcan-signature` header,
-// `x-ycp-signature` header, or as `signature` in the payload.
+// Security: verifies HMAC-SHA256 signature using YOUCANPAY_PRIVATE_KEY when
+// YouCan Pay sends a signature header. Sandbox webhooks do not currently send
+// a signing secret/header, so unsigned sandbox events are accepted and logged.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-youcan-signature, x-ycp-signature",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-youcan-signature, x-youcanpay-signature, x-ycp-signature",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
@@ -51,6 +51,7 @@ Deno.serve(async (req) => {
       "unknown";
     const sigHeader =
       req.headers.get("x-youcan-signature") ||
+      req.headers.get("x-youcanpay-signature") ||
       req.headers.get("x-ycp-signature") ||
       "";
 
@@ -83,8 +84,10 @@ Deno.serve(async (req) => {
       contentType,
       hasSigHeader: !!sigHeader,
       payloadKeys: Object.keys(payload),
-      orderId: payload.order_id || payload.orderId || null,
-      status: payload.status || payload.event || null,
+      eventName: payload.event_name || payload.event || null,
+      orderId: payload.order_id || payload.orderId || payload.payload?.transaction?.order_id || null,
+      transactionId: payload.transaction_id || payload.transactionId || payload.payload?.transaction?.id || null,
+      status: payload.status || payload.payload?.transaction?.status || null,
     }));
 
     // Verify signature. Accept either:
