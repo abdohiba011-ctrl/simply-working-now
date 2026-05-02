@@ -117,12 +117,12 @@ type BikeRow = {
   city_id: string | null;
 };
 
-const cityFromSlug = (slug: string) =>
-  slug.charAt(0).toUpperCase() + slug.slice(1).toLowerCase();
+import { slugToDisplayName, slugToCityNameVariants, cityToSlug } from "@/lib/citySlug";
 
 export default function RentCity() {
   const { city = "casablanca" } = useParams();
-  const cityName = cityFromSlug(city);
+  const citySlug = cityToSlug(city);
+  const cityName = slugToDisplayName(citySlug);
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
