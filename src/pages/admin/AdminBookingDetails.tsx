@@ -157,25 +157,15 @@ const AdminBookingDetails = () => {
   const { events, isLoading: eventsLoading, addEvent } = useBookingEvents(bookingId);
   const { payments, isLoading: paymentsLoading, recordPayment, totalPaid } = useBookingPayments(bookingId);
 
+  // Access is enforced by <ProtectedRoute requireRole="admin"> in App.tsx.
+  // Do NOT add in-page navigate("/") here — it races with role hydration.
   useEffect(() => {
-    const checkAccess = async () => {
-      if (!isAuthenticated) {
-        navigate("/auth");
-        return;
-      }
-      const isAdmin = hasRole('admin');
-      if (!isAdmin) {
-        navigate("/");
-        return;
-      }
-      if (bookingId) {
-        fetchBooking();
-        fetchBusinessUsers();
-        fetchNotes();
-      }
-    };
-    checkAccess();
-  }, [isAuthenticated, hasRole, navigate, bookingId]);
+    if (bookingId) {
+      fetchBooking();
+      fetchBusinessUsers();
+      fetchNotes();
+    }
+  }, [bookingId]);
 
   const fetchBooking = async () => {
     setIsLoading(true);
@@ -197,14 +187,15 @@ const AdminBookingDetails = () => {
       
       setBooking(data as Booking);
 
-      // Fetch customer profile info
+      // Fetch customer profile info — booking.user_id is an auth uid,
+      // so join via profiles.user_id (not profiles.id).
       if (data?.user_id) {
         const { data: profile } = await supabase
           .from('profiles')
           .select('is_verified, verification_status, trust_score')
-          .eq('id', data.user_id)
-          .single();
-        
+          .eq('user_id', data.user_id)
+          .maybeSingle();
+
         setCustomerProfile(profile);
 
         // Fetch customer bookings count
@@ -212,18 +203,18 @@ const AdminBookingDetails = () => {
           .from('bookings')
           .select('id', { count: 'exact', head: true })
           .eq('user_id', data.user_id);
-        
+
         setCustomerBookingsCount(count || 0);
       }
 
-      // Fetch assigned business name
+      // Fetch assigned business name — assigned_to_business is an auth uid.
       if (data?.assigned_to_business) {
         const { data: businessProfile } = await supabase
           .from('profiles')
           .select('name, email')
-          .eq('id', data.assigned_to_business)
-          .single();
-        
+          .eq('user_id', data.assigned_to_business)
+          .maybeSingle();
+
         setAssignedBusinessName(businessProfile?.name || businessProfile?.email || null);
       }
     } catch (error) {
@@ -260,13 +251,23 @@ const AdminBookingDetails = () => {
 
       if (businessRoles && businessRoles.length > 0) {
         const userIds = businessRoles.map(r => r.user_id);
+        // user_roles.user_id is an auth uid → join via profiles.user_id.
+        // Map id → user_id so downstream lookups (assigned_to_business) match.
         const { data: profiles, error: profilesError } = await supabase
           .from('profiles')
-          .select('id, name, email, phone, address, business_type')
-          .in('id', userIds);
+          .select('user_id, name, email, phone, address, business_type')
+          .in('user_id', userIds);
 
         if (profilesError) throw profilesError;
-        setBusinessUsers(profiles || []);
+        const mapped = (profiles || []).map(p => ({
+          id: p.user_id,
+          name: p.name,
+          email: p.email,
+          phone: p.phone,
+          address: p.address,
+          business_type: p.business_type,
+        }));
+        setBusinessUsers(mapped);
       }
     } catch (error) {
       console.error('Error fetching business users:', error);
@@ -639,8 +640,20 @@ const AdminBookingDetails = () => {
   if (!booking) {
     return (
       <AdminLayout>
-        <div className="container mx-auto px-4 py-6">
-          <p className="text-center text-muted-foreground">Booking not found</p>
+        <div className="container mx-auto px-4 py-20 text-center">
+          <AlertCircle className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-foreground">Unable to load this record</h1>
+          <p className="text-muted-foreground mt-2">The booking could not be found or failed to load.</p>
+          <div className="flex items-center justify-center gap-2 mt-4">
+            <Button variant="outline" onClick={() => fetchBooking()}>
+              <Loader2 className="h-4 w-4 mr-2" />
+              Retry
+            </Button>
+            <Button onClick={() => navigate('/admin/panel?tab=bookings')}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Admin
+            </Button>
+          </div>
         </div>
       </AdminLayout>
     );

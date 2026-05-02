@@ -127,26 +127,16 @@ const AdminBikeTypeDetails = () => {
   });
   const [featuresText, setFeaturesText] = useState('');
 
+  // Access is enforced by <ProtectedRoute requireRole="admin"> in App.tsx.
+  // Do NOT add in-page navigate("/") here — it races with role hydration.
   useEffect(() => {
-    const checkAccess = async () => {
-      if (!isAuthenticated) {
-        navigate("/auth");
-        return;
-      }
-      const isAdmin = hasRole('admin');
-      if (!isAdmin) {
-        navigate("/");
-        return;
-      }
-      fetchCitiesAndLocations();
-      if (!isNewBike && bikeId) {
-        fetchBikeType();
-        fetchInventory();
-        fetchGalleryImages();
-      }
-    };
-    checkAccess();
-  }, [isAuthenticated, hasRole, navigate, bikeId, isNewBike]);
+    fetchCitiesAndLocations();
+    if (!isNewBike && bikeId) {
+      fetchBikeType();
+      fetchInventory();
+      fetchGalleryImages();
+    }
+  }, [bikeId, isNewBike]);
 
   const fetchCitiesAndLocations = async () => {
     try {

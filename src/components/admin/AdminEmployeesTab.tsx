@@ -188,14 +188,14 @@ export const AdminEmployeesTab = () => {
       if (userIds.length > 0) {
         const { data: profiles, error: profilesError } = await supabase
           .from('profiles')
-          .select('id, name, email, avatar_url')
-          .in('id', userIds);
+          .select('user_id, name, email, avatar_url')
+          .in('user_id', userIds);
 
         if (profilesError) throw profilesError;
 
         const employeesWithProfiles = adminRoles?.map(role => {
           const adminEmp = adminEmployees?.find(e => e.user_id === role.user_id);
-          const profile = profiles?.find(p => p.id === role.user_id);
+          const profile = profiles?.find(p => p.user_id === role.user_id);
           
           // Parse permissions from JSON
           let permissions: AdminPermissions = DEFAULT_PERMISSIONS;
@@ -254,12 +254,13 @@ export const AdminEmployeesTab = () => {
 
     setActionLoading(true);
     try {
-      // Find user by email
+      // Find user by email — select user_id (auth uid), since user_roles.user_id
+      // and admin_employees.user_id store the auth uid, not profiles.id.
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('id, email')
+        .select('user_id, email')
         .eq('email', newEmployeeEmail.toLowerCase())
-        .single();
+        .maybeSingle();
 
       if (profileError) {
         if (profileError.code === 'PGRST116') {
@@ -279,7 +280,7 @@ export const AdminEmployeesTab = () => {
       const { data: existingRole } = await supabase
         .from('user_roles')
         .select('*')
-        .eq('user_id', profile.id)
+        .eq('user_id', profile.user_id)
         .eq('role', 'admin')
         .single();
 
@@ -292,7 +293,7 @@ export const AdminEmployeesTab = () => {
       const { error: insertError } = await supabase
         .from('user_roles')
         .insert({
-          user_id: profile.id,
+          user_id: profile.user_id,
           role: 'admin'
         });
 
@@ -318,7 +319,7 @@ export const AdminEmployeesTab = () => {
       const { error: empError } = await supabase
         .from('admin_employees')
         .insert([{
-          user_id: profile.id,
+          user_id: profile.user_id,
           role: newEmployeeRole,
           is_super_admin: false,
           permissions: JSON.parse(JSON.stringify(permissionsToSave))
@@ -331,7 +332,7 @@ export const AdminEmployeesTab = () => {
 
       // Send notification
       await supabase.from('notifications').insert({
-        user_id: profile.id,
+        user_id: profile.user_id,
         title: newEmployeeRole === 'full_admin' ? 'Full Admin Access Granted' : 'Support Access Granted',
         message: newEmployeeRole === 'full_admin' 
           ? 'You have been granted full admin access to the Motonita platform. You can now manage users, bookings, and settings.'
@@ -622,7 +623,7 @@ export const AdminEmployeesTab = () => {
                         </Avatar>
                         <div>
                           <div className="flex items-center gap-2">
-                            <p className="font-medium">{employee.profile?.name || 'No name'}</p>
+                            <p className="font-medium">{employee.profile?.name || employee.profile?.email || 'No name'}</p>
                             {employee.user_id === user?.id && (
                               <Badge variant="outline" className="gap-1">
                                 <Crown className="h-3 w-3" />
