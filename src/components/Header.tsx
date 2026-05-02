@@ -687,10 +687,10 @@ export const Header = memo(() => {
                 </>
               ) : (
                 <div className="flex flex-col gap-2 px-2">
-                  <Button variant="outline" size="lg" className="text-base min-h-[48px] font-semibold" onClick={() => { navigate("/auth"); setIsMenuOpen(false); }}>
+                  <Button variant="outline" size="lg" className="text-base min-h-[48px] font-semibold" onClick={() => { openAuthModal("login"); setIsMenuOpen(false); }}>
                     {t('header.login')}
                   </Button>
-                  <Button variant="hero" size="lg" className="text-base min-h-[48px] font-semibold" onClick={() => { navigate("/auth?mode=signup"); setIsMenuOpen(false); }}>
+                  <Button variant="hero" size="lg" className="text-base min-h-[48px] font-semibold" onClick={() => { openAuthModal("signup"); setIsMenuOpen(false); }}>
                     {t('header.signup')}
                   </Button>
                 </div>
