@@ -162,10 +162,10 @@ const App = () => (
                 <Route path="/gps-tracking" element={<GPSTracking />} />
                 {/* Legacy /auth → /login */}
                 <Route path="/auth" element={<Navigate to="/login" replace />} />
-                <Route path="/login" element={<MockLogin />} />
+                <Route path="/login" element={<AuthModalRedirect tab="login" />} />
                 <Route path="/agency/login" element={<AgencyLogin />} />
                 <Route path="/admin/login" element={<AdminLogin />} />
-                <Route path="/signup" element={<MockSignup />} />
+                <Route path="/signup" element={<AuthModalRedirect tab="signup" />} />
                 <Route path="/agency/signup" element={<AgencySignup />} />
                 <Route path="/rent" element={<Navigate to="/rent/casablanca" replace />} />
                 <Route path="/verify-email" element={<MockVerifyEmail />} />
