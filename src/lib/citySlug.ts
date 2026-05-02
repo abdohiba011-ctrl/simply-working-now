@@ -38,3 +38,38 @@ export function slugToCityLabel(slug: string): string {
     .map((p) => p.charAt(0).toUpperCase() + p.slice(1))
     .join(" ");
 }
+
+// All known display-name variants for a given canonical slug. Used when
+// looking up a city in service_cities (which may store either spelling, e.g.
+// "Marrakesh" vs "Marrakech", "Tangier" vs "Tanger", "Fes" vs "Fez").
+export const CITY_NAME_VARIANTS: Record<string, string[]> = {
+  casablanca: ["Casablanca"],
+  marrakech: ["Marrakech", "Marrakesh"],
+  rabat: ["Rabat"],
+  tangier: ["Tangier", "Tanger"],
+  agadir: ["Agadir"],
+  fes: ["Fes", "Fez"],
+  dakhla: ["Dakhla"],
+  essaouira: ["Essaouira"],
+  meknes: ["Meknes", "Meknès"],
+  oujda: ["Oujda"],
+  tetouan: ["Tetouan", "Tétouan"],
+  "el-jadida": ["El Jadida", "El-Jadida"],
+  kenitra: ["Kenitra", "Kénitra"],
+  nador: ["Nador"],
+  ifrane: ["Ifrane"],
+  chefchaouen: ["Chefchaouen"],
+};
+
+/** Returns the canonical display variants to try when querying service_cities by name. */
+export function slugToCityNameVariants(slug: string): string[] {
+  if (!slug) return [];
+  const canonical = cityToSlug(slug);
+  return CITY_NAME_VARIANTS[canonical] || [slugToCityLabel(canonical)];
+}
+
+/** Best-effort label for the page heading: prefers the first known variant. */
+export function slugToDisplayName(slug: string): string {
+  const variants = slugToCityNameVariants(slug);
+  return variants[0] || slugToCityLabel(slug);
+}

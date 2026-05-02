@@ -12,6 +12,7 @@ import {
   Clock,
   CheckCircle2,
   AlertTriangle,
+  MapPin,
 } from "lucide-react";
 import { useAgencyBike } from "@/hooks/useAgencyData";
 import { supabase } from "@/integrations/supabase/client";
@@ -28,6 +29,13 @@ interface GalleryImage {
   display_order: number;
 }
 
+interface PickupLocation {
+  city: string | null;
+  neighborhood: string | null;
+  address: string | null;
+  usingAgencyFallback: boolean;
+}
+
 const MotorbikeDetail = () => {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -35,6 +43,7 @@ const MotorbikeDetail = () => {
   const [gallery, setGallery] = useState<GalleryImage[]>([]);
   const [activeIndex, setActiveIndex] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [pickup, setPickup] = useState<PickupLocation | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -66,6 +75,60 @@ const MotorbikeDetail = () => {
       setActiveIndex(0);
     })();
   }, [id, bike?.main_image_url]);
+
+  // Resolve pickup location: bike-specific fields first, then fall back to
+  // the owning agency's onboarding location.
+  useEffect(() => {
+    if (!bike) {
+      setPickup(null);
+      return;
+    }
+    (async () => {
+      let cityName: string | null = null;
+      const bikeCityId = (bike as any).city_id as string | null | undefined;
+      if (bikeCityId) {
+        const { data: cityRow } = await supabase
+          .from("service_cities")
+          .select("name")
+          .eq("id", bikeCityId)
+          .maybeSingle();
+        cityName = cityRow?.name ?? null;
+      }
+
+      const bikeNeighborhood = (bike as any).neighborhood as string | null | undefined;
+      const ownerId = (bike as any).owner_id as string | null | undefined;
+
+      // Pull agency fallbacks
+      let agencyCity: string | null = null;
+      let agencyNeighborhood: string | null = null;
+      let agencyAddress: string | null = null;
+      if (ownerId) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("user_id", ownerId)
+          .maybeSingle();
+        if (profile?.id) {
+          const { data: agency } = await supabase
+            .from("agencies")
+            .select("city, primary_neighborhood, address")
+            .eq("profile_id", profile.id)
+            .maybeSingle();
+          agencyCity = agency?.city ?? null;
+          agencyNeighborhood = agency?.primary_neighborhood ?? null;
+          agencyAddress = agency?.address ?? null;
+        }
+      }
+
+      const hasBikeLocation = !!(cityName || bikeNeighborhood);
+      setPickup({
+        city: cityName || agencyCity,
+        neighborhood: bikeNeighborhood || agencyNeighborhood,
+        address: hasBikeLocation ? null : agencyAddress,
+        usingAgencyFallback: !hasBikeLocation && !!(agencyCity || agencyNeighborhood || agencyAddress),
+      });
+    })();
+  }, [bike]);
 
   if (loading) {
     return (
@@ -244,6 +307,43 @@ const MotorbikeDetail = () => {
             </p>
           </Card>
         </div>
+
+        {/* Pickup location */}
+        <Card className="p-5">
+          <div className="flex items-start gap-3">
+            <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/15">
+              <MapPin className="h-4 w-4 text-foreground" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2">
+                <h3 className="font-semibold">Pickup location</h3>
+                {pickup?.usingAgencyFallback && (
+                  <Badge variant="outline" className="text-[10px]">
+                    Using agency location
+                  </Badge>
+                )}
+              </div>
+              {pickup && (pickup.city || pickup.neighborhood || pickup.address) ? (
+                <div className="mt-2 space-y-0.5 text-sm">
+                  {pickup.neighborhood && (
+                    <p className="text-foreground">{pickup.neighborhood}</p>
+                  )}
+                  {pickup.city && (
+                    <p className="text-muted-foreground">{pickup.city}</p>
+                  )}
+                  {pickup.address && (
+                    <p className="text-muted-foreground">{pickup.address}</p>
+                  )}
+                </div>
+              ) : (
+                <p className="mt-2 text-sm text-muted-foreground">
+                  No pickup location set. Add one in Edit, or update your agency
+                  location in Agency Center.
+                </p>
+              )}
+            </div>
+          </div>
+        </Card>
 
         {bike.description && (
           <Card className="p-5">

@@ -117,16 +117,16 @@ type BikeRow = {
   city_id: string | null;
 };
 
-const cityFromSlug = (slug: string) =>
-  slug.charAt(0).toUpperCase() + slug.slice(1).toLowerCase();
+import { slugToDisplayName, slugToCityNameVariants, cityToSlug } from "@/lib/citySlug";
 
 export default function RentCity() {
   const { city = "casablanca" } = useParams();
-  const cityName = cityFromSlug(city);
+  const citySlug = cityToSlug(city);
+  const cityName = slugToDisplayName(citySlug);
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const neighborhoodOptions = useMemo(() => getNeighborhoodsForCity(city), [city]);
+  const neighborhoodOptions = useMemo(() => getNeighborhoodsForCity(citySlug), [citySlug]);
   const allCityLabel = neighborhoodOptions[0]; // e.g. "All Casablanca"
 
   // Initial neighborhood from URL — but ONLY accept it if it belongs to this city.
@@ -195,28 +195,34 @@ export default function RentCity() {
     } catch {}
   }, []);
 
-  // Fetch bikes for the city
+  // Fetch bikes for the city. CRITICAL: fail closed — if we cannot resolve a
+  // city_id, return [] instead of dropping the filter (which would leak other
+  // cities' bikes, e.g. Casablanca bikes appearing under /rent/marrakech).
   const { data: bikes = [], isLoading } = useQuery({
-    queryKey: ["rent-city-bikes", cityName],
+    queryKey: ["rent-city-bikes", citySlug],
     queryFn: async () => {
-      const { data: cityRow } = await supabase
-        .from("service_cities")
-        .select("id")
-        .ilike("name", cityName)
-        .maybeSingle();
+      const variants = slugToCityNameVariants(citySlug);
+      if (variants.length === 0) return [] as BikeRow[];
 
-      let query = supabase
+      const { data: cityRows, error: cityErr } = await supabase
+        .from("service_cities")
+        .select("id, name")
+        .in("name", variants);
+      if (cityErr) throw cityErr;
+
+      const cityIds = (cityRows || []).map((r) => r.id);
+      if (cityIds.length === 0) return [] as BikeRow[]; // fail closed
+
+      const { data, error } = await supabase
         .from("bike_types")
         .select(
           "id,slug,name,category,fuel_type,daily_price,weekly_price,monthly_price,rating,review_count,main_image_url,neighborhood,features,license_required,year,engine_cc,city_id"
         )
         .eq("is_approved", true)
         .eq("approval_status", "approved")
-        .eq("business_status", "active");
+        .eq("business_status", "active")
+        .in("city_id", cityIds);
 
-      if (cityRow?.id) query = query.eq("city_id", cityRow.id);
-
-      const { data, error } = await query;
       if (error) throw error;
       return (data || []) as BikeRow[];
     },
@@ -592,6 +598,21 @@ export default function RentCity() {
                     </div>
                   </div>
                 ))}
+              </div>
+            ) : bikes.length === 0 ? (
+              <div className="bg-card border border-border rounded-xl p-12 text-center">
+                <div className="mx-auto w-14 h-14 rounded-full bg-muted flex items-center justify-center mb-4">
+                  <MapPin className="w-7 h-7 text-muted-foreground" />
+                </div>
+                <h3 className="text-lg font-semibold mb-1">
+                  No bikes available in {cityName} yet
+                </h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  We're working on bringing verified agencies to this city. Check back soon.
+                </p>
+                <Button variant="outline" onClick={() => navigate("/")}>
+                  Browse other cities
+                </Button>
               </div>
             ) : filtered.length === 0 ? (
               <div className="bg-card border border-border rounded-xl p-12 text-center">
