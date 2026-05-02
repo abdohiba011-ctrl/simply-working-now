@@ -34,7 +34,7 @@ export function AuthModal() {
   const login = useAuthStore((s) => s.login);
   const signup = useAuthStore((s) => s.signup);
 
-  const [view, setView] = useState<View>(tab);
+  const [view, setView] = useState<View>((ctx.initialView as View) ?? tab);
   const [shake, setShake] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
