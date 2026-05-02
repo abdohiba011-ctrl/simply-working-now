@@ -119,15 +119,25 @@ Deno.serve(async (req) => {
     };
 
     if (providerTxn) {
-      const r = await tryFetch(`${baseUrl}/transactions/${providerTxn}`, {
+      let r = await tryFetch(`${baseUrl}/payments/${providerTxn}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${PRIVATE_KEY}`,
         },
       });
+      if (!r.ok) {
+        r = await tryFetch(`${baseUrl}/transactions/${providerTxn}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${PRIVATE_KEY}`,
+          },
+        });
+      }
       providerRaw = r.body;
-      const s = (r.body?.status || r.body?.transaction?.status || "").toString().toLowerCase();
+      const raw = r.body?.status ?? r.body?.payment?.status ?? r.body?.transaction?.status ?? "";
+      const s = raw === 1 ? "paid" : raw === 0 ? "pending" : raw.toString().toLowerCase();
       if (s) providerStatus = s;
     }
 
