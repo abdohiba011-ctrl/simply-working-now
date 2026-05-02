@@ -11,7 +11,6 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Wallet,
-  Plus,
   ArrowDownLeft,
   ArrowUpRight,
   CreditCard,
@@ -24,11 +23,9 @@ import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { useRenterWallet } from "@/hooks/useRenterWallet";
 import { supabase } from "@/integrations/supabase/client";
-import { buildYouCanPayUrl } from "@/lib/openHostedPayment";
-import { useNavigate } from "react-router-dom";
+
 import { BalanceChart } from "@/components/billing/BalanceChart";
 import { TransactionFilters } from "@/components/billing/TransactionFilters";
-import { TopupConfirmDialog } from "@/components/billing/TopupConfirmDialog";
 import {
   applyFilters,
   readFiltersFromParams,
@@ -36,12 +33,9 @@ import {
   type BillingFilterState,
 } from "@/lib/billingFilters";
 
-const PRESETS = [50, 100, 200, 500];
-
 export default function Billing() {
   const { user, userRoles, isLoading: authLoading } = useAuth();
   const [params, setParams] = useSearchParams();
-  const navigate = useNavigate();
   const { balance, currency, isLoading, transactions, refetch, refetchTransactions } = useRenterWallet();
 
   // A user qualifies as a renter (and so can see Credits/Billing) whenever they have the
@@ -52,11 +46,7 @@ export default function Billing() {
     !!userRoles && userRoles.length > 0 && !hasRenterRole;
   const isRenter = hasRenterRole || !hasOnlyNonRenterRoles;
 
-  const [topupOpen, setTopupOpen] = useState(false);
-  const [amount, setAmount] = useState<string>("100");
-  const [submitting, setSubmitting] = useState(false);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
-  const [pendingPaymentUrl, setPendingPaymentUrl] = useState<string | null>(null);
 
   // ---- URL-driven tab + filters ----
   const activeTab = params.get("tab") ?? "credits";
@@ -141,47 +131,7 @@ export default function Billing() {
 
   const filteredTx = useMemo(() => applyFilters(transactions, filters), [transactions, filters]);
 
-  const submitTopup = async () => {
-    if (!isRenter) {
-      toast.error("Only renters can top up credits");
-      return;
-    }
-    const num = Number(amount);
-    if (!num || num < 10) {
-      toast.error("Minimum top up is 10 MAD");
-      return;
-    }
-    setSubmitting(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("youcanpay-create-token", {
-        body: {
-          purpose: "renter_topup",
-          amount: num,
-          currency: "MAD",
-          customer_email: profile.email || user?.email,
-          customer_name: profile.name,
-        },
-      });
-      if (error || !data?.token_id || !data?.public_key) {
-        throw new Error(error?.message || data?.error || "Failed to start payment");
-      }
-      const url = buildYouCanPayUrl({
-        resp: data,
-        amount: num,
-        currency: "MAD",
-        successPath: "/billing?topup=success",
-        errorPath: "/billing?topup=error",
-        title: "Top up credits",
-      });
-      setTopupOpen(false);
-      navigate(url);
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : "Top up failed";
-      toast.error(msg);
-    } finally {
-      setSubmitting(false);
-    }
-  };
+  // Top-up flow removed for renters — booking fees are paid one-time per booking via YouCan Pay.
 
   const downloadReceipt = async (txId: string) => {
     setDownloadingId(txId);
@@ -247,8 +197,8 @@ export default function Billing() {
           </div>
           <h1 className="text-2xl font-bold">Credits are for renters</h1>
           <p className="mt-2 max-w-md text-sm text-muted-foreground">
-            Billing & credits are part of the renter experience. Sign up as a renter to top up
-            credits and pay platform booking fees.
+            Motonita Credits are part of the renter experience. Sign up as a renter to receive
+            and use credits on future bookings.
           </p>
           <Button className="mt-6" asChild>
             <a href="/signup">Sign up as renter</a>
@@ -265,14 +215,12 @@ export default function Billing() {
       <main className="mx-auto max-w-5xl px-4 py-8">
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Billing & Credits</h1>
+            <h1 className="text-2xl font-bold tracking-tight">Motonita Credits</h1>
             <p className="text-sm text-muted-foreground">
-              Manage your credits, top up your account, and view transactions.
+              View your refund credits, transactions, and billing information. Credits are issued
+              by Motonita and applied automatically to future bookings.
             </p>
           </div>
-          <Button onClick={() => setTopupOpen(true)} className="gap-2">
-            <Plus className="h-4 w-4" /> Top up credits
-          </Button>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -308,24 +256,10 @@ export default function Billing() {
                 />
 
                 <div>
-                  <p className="mb-2 text-sm text-muted-foreground">
-                    Use credits to pay booking fees and other platform charges.
+                  <p className="text-sm text-muted-foreground">
+                    Motonita Credits are issued as refunds and promo rewards. They are applied
+                    automatically toward your next booking and expire 6 months after issuance.
                   </p>
-                  <div className="flex flex-wrap gap-2">
-                    {PRESETS.map((p) => (
-                      <Button
-                        key={p}
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setAmount(String(p));
-                          setTopupOpen(true);
-                        }}
-                      >
-                        + {p} MAD
-                      </Button>
-                    ))}
-                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -428,14 +362,10 @@ export default function Billing() {
               </CardHeader>
               <CardContent className="space-y-3 text-sm text-muted-foreground">
                 <p>
-                  Top-ups are processed via <strong>YouCan Pay</strong> using your bank card or{" "}
-                  <strong>Cash Plus</strong>. No card details are stored on Motonita — every payment
-                  is handled securely on YouCan Pay's hosted page, so there are no saved cards to
-                  manage here.
+                  Booking fees are paid one time per booking via <strong>YouCan Pay</strong> using
+                  your bank card or <strong>Cash Plus</strong>. No card details are stored on
+                  Motonita — every payment is handled securely on YouCan Pay's hosted page.
                 </p>
-                <Button onClick={() => setTopupOpen(true)} variant="outline" className="gap-2">
-                  <Plus className="h-4 w-4" /> Top up now
-                </Button>
               </CardContent>
             </Card>
           </TabsContent>
@@ -485,20 +415,6 @@ export default function Billing() {
         </Tabs>
       </main>
 
-      <TopupConfirmDialog
-        open={topupOpen}
-        onOpenChange={(o) => {
-          setTopupOpen(o);
-          if (!o) setPendingPaymentUrl(null);
-        }}
-        amount={amount}
-        onAmountChange={setAmount}
-        currentBalance={balance}
-        currency={currency}
-        submitting={submitting}
-        onConfirm={submitTopup}
-        pendingPaymentUrl={pendingPaymentUrl}
-      />
 
       <Footer />
     </div>
