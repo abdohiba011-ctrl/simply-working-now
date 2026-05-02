@@ -198,7 +198,7 @@ export default function RentCity() {
   // Fetch bikes for the city. CRITICAL: fail closed — if we cannot resolve a
   // city_id, return [] instead of dropping the filter (which would leak other
   // cities' bikes, e.g. Casablanca bikes appearing under /rent/marrakech).
-  const { data: bikes = [], isLoading, isError } = useQuery({
+  const { data: bikes = [], isLoading } = useQuery({
     queryKey: ["rent-city-bikes", citySlug],
     queryFn: async () => {
       const variants = slugToCityNameVariants(citySlug);
