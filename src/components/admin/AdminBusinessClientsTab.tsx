@@ -322,6 +322,13 @@ export const AdminBusinessClientsTab = () => {
         });
       }
 
+      await supabase.rpc("log_audit_event", {
+        _action: freeze ? "business_frozen" : "business_unfrozen",
+        _table_name: "profiles",
+        _record_id: profileId,
+        _details: { auth_user_id: target?.user_id ?? null, frozen: freeze },
+      });
+
       toast.success(freeze ? "Account frozen" : "Account unfrozen");
       fetchBusinesses();
       fetchAggregates();
@@ -348,6 +355,12 @@ export const AdminBusinessClientsTab = () => {
         type: "info",
       });
       if (error) throw error;
+      await supabase.rpc("log_audit_event", {
+        _action: "admin_notification_sent",
+        _table_name: "notifications",
+        _record_id: selected.user_id,
+        _details: { title: notificationTitle, recipient_profile_id: selected.id, recipient_kind: "business" },
+      });
       toast.success("Notification sent!");
       setShowNotificationDialog(false);
       setNotificationTitle("");
@@ -404,6 +417,13 @@ export const AdminBusinessClientsTab = () => {
         action_url: "/business-dashboard",
       });
 
+      await supabase.rpc("log_audit_event", {
+        _action: "business_application_approved",
+        _table_name: "contact_messages",
+        _record_id: selectedApplication.id,
+        _details: { user_id: userId, business_type, partner_type: partnerType },
+      });
+
       toast.success("Application approved successfully");
       setShowApproveDialog(false);
       setSelectedApplication(null);
@@ -444,6 +464,13 @@ export const AdminBusinessClientsTab = () => {
         message: `Your business application was not approved. Reason: ${rejectReason}. Please contact us if you have questions.`,
         type: "warning",
         action_url: "/contact",
+      });
+
+      await supabase.rpc("log_audit_event", {
+        _action: "business_application_rejected",
+        _table_name: "contact_messages",
+        _record_id: selectedApplication.id,
+        _details: { user_id: userId, reason: rejectReason.trim() },
       });
 
       toast.success("Application rejected");

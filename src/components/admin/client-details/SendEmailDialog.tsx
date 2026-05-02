@@ -85,27 +85,34 @@ export const SendEmailDialog = ({
     setIsSending(true);
 
     try {
-      // Convert images to base64 for sending
-      const imageAttachments = attachedImages.map(img => ({
-        filename: img.file.name,
-        content: img.preview.split(',')[1], // Remove data:image/... prefix
-        type: img.file.type,
-      }));
+      if (attachedImages.length > 0) {
+        toast.warning("Image attachments are not supported yet — sending text only.");
+      }
 
-      const { error } = await supabase.functions.invoke('send-client-email', {
+      const { error } = await supabase.functions.invoke('send-transactional-email', {
         body: {
-          to: clientEmail,
-          name: clientName,
-          subject,
-          content,
-          images: imageAttachments,
-        }
+          templateName: 'admin-message',
+          recipientEmail: clientEmail,
+          templateData: {
+            recipientName: clientName,
+            subject,
+            body: content,
+          },
+        },
       });
 
       if (error) throw error;
 
+      // Best-effort audit log
+      await supabase.rpc('log_audit_event', {
+        _action: 'admin_email_sent',
+        _table_name: 'email_send_log',
+        _record_id: clientEmail,
+        _details: { subject, recipient: clientEmail, recipient_name: clientName },
+      });
+
       toast.success("Email sent successfully!");
-      
+
       // Reset form
       setSubject("");
       setContent("");
