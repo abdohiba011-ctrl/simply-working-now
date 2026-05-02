@@ -40,6 +40,16 @@ Deno.serve(async (req) => {
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const PRIVATE_KEY = Deno.env.get("YOUCANPAY_PRIVATE_KEY") || "";
+    const PUBLIC_KEY = Deno.env.get("YOUCANPAY_PUBLIC_KEY") || "";
+    // Sandbox keys are prefixed `pub_sandbox_` / `pri_sandbox_`. In sandbox
+    // mode we always skip signature validation: YouCan Pay's sandbox dashboard
+    // does not let you configure a webhook signing secret, so requests arrive
+    // unsigned and any HMAC check fails with 401.
+    const isSandboxMode =
+      PUBLIC_KEY.startsWith("pub_sandbox_") ||
+      PRIVATE_KEY.startsWith("pri_sandbox_");
+    const insecure =
+      Deno.env.get("YOUCANPAY_WEBHOOK_INSECURE") === "1" || isSandboxMode;
     const admin = createClient(SUPABASE_URL, SERVICE_ROLE);
 
     // Read raw body once so we can verify the signature against the exact bytes.
@@ -78,45 +88,59 @@ Deno.serve(async (req) => {
       console.error("youcanpay-webhook body parse failed", e);
     }
 
-    // Diagnostic log — helps confirm whether YouCan is actually reaching us.
-    console.log("youcanpay-webhook hit", JSON.stringify({
-      sourceIp,
-      contentType,
-      hasSigHeader: !!sigHeader,
-      payloadKeys: Object.keys(payload),
-      eventName: payload.event_name || payload.event || null,
-      orderId: payload.order_id || payload.orderId || payload.payload?.transaction?.order_id || null,
-      transactionId: payload.transaction_id || payload.transactionId || payload.payload?.transaction?.id || null,
-      status: payload.status || payload.payload?.transaction?.status || null,
-    }));
+    // Diagnostic log — in sandbox we dump full headers + body so we can see
+    // exactly what YouCan Pay is sending.
+    if (insecure) {
+      const allHeaders: Record<string, string> = {};
+      req.headers.forEach((v, k) => { allHeaders[k] = v; });
+      console.log("youcanpay-webhook [SANDBOX] full request", JSON.stringify({
+        sourceIp,
+        contentType,
+        headers: allHeaders,
+        rawBody,
+        payload,
+      }));
+    } else {
+      console.log("youcanpay-webhook hit", JSON.stringify({
+        sourceIp,
+        contentType,
+        hasSigHeader: !!sigHeader,
+        payloadKeys: Object.keys(payload),
+        eventName: payload.event_name || payload.event || null,
+        orderId: payload.order_id || payload.orderId || payload.payload?.transaction?.order_id || null,
+        transactionId: payload.transaction_id || payload.transactionId || payload.payload?.transaction?.id || null,
+        status: payload.status || payload.payload?.transaction?.status || null,
+      }));
+    }
 
-    // Verify signature when YouCan Pay supplies one. Their documented sandbox
-    // webhook payload includes `sandbox: true` but no signing secret/header in
-    // dashboard setup, so accept unsigned sandbox events after logging them.
-    const insecure = Deno.env.get("YOUCANPAY_WEBHOOK_INSECURE") === "1";
-    const isSandboxWebhook = payload.sandbox === true;
-    let signatureOk = false;
-    if (PRIVATE_KEY && rawBody) {
-      const expected = await hmacSha256Hex(PRIVATE_KEY, rawBody);
-      const candidate = (sigHeader || payload.signature || "").toString().toLowerCase();
-      if (candidate && timingSafeEqual(expected.toLowerCase(), candidate)) {
-        signatureOk = true;
+    // Production-only signature check.
+    //
+    // To enable, set the `YOUCANPAY_PRIVATE_KEY` secret to your *production*
+    // private key (the same one configured as the signing secret in your
+    // YouCan Pay dashboard) and switch the public/private key pair to live
+    // values (the `pub_sandbox_` prefix triggers sandbox mode and skips this
+    // check). YouCan Pay signs the raw request body with HMAC-SHA256 using
+    // your private key and sends the hex digest in either the
+    // `x-youcan-signature` / `x-youcanpay-signature` / `x-ycp-signature`
+    // header or as `signature` in the JSON body.
+    if (!insecure) {
+      let signatureOk = false;
+      if (PRIVATE_KEY && rawBody) {
+        const expected = await hmacSha256Hex(PRIVATE_KEY, rawBody);
+        const candidate = (sigHeader || payload.signature || "").toString().toLowerCase();
+        if (candidate && timingSafeEqual(expected.toLowerCase(), candidate)) {
+          signatureOk = true;
+        }
       }
-    }
-    if (!signatureOk && !isSandboxWebhook && !insecure) {
-      console.warn("youcanpay-webhook signature mismatch", {
-        sourceIp,
-        receivedSig: sigHeader ? sigHeader.slice(0, 12) + "…" : "(none)",
-      });
-      return new Response(JSON.stringify({ error: "invalid signature" }), {
-        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-    if (!signatureOk && isSandboxWebhook) {
-      console.warn("youcanpay-webhook accepted unsigned sandbox event", {
-        sourceIp,
-        eventName: payload.event_name || null,
-      });
+      if (!signatureOk) {
+        console.warn("youcanpay-webhook signature mismatch", {
+          sourceIp,
+          receivedSig: sigHeader ? sigHeader.slice(0, 12) + "…" : "(none)",
+        });
+        return new Response(JSON.stringify({ error: "invalid signature" }), {
+          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
     }
 
     // YouCanPay typically sends order_id, transaction_id, status
