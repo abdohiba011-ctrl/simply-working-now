@@ -76,7 +76,6 @@ const generateNameKey = (name: string) =>
 const emptyNewCity = {
   name: "",
   image_url: "" as string | null,
-  price_from: 80,
   is_available: false,
   is_coming_soon: true,
   show_in_homepage: true,
@@ -162,7 +161,6 @@ export const AdminCitiesTab = () => {
         name: newCity.name.trim(),
         name_key: generateNameKey(newCity.name),
         image_url: newCity.image_url || null,
-        price_from: newCity.price_from,
         is_available: newCity.is_available,
         is_coming_soon: newCity.is_coming_soon,
         show_in_homepage: newCity.show_in_homepage,
@@ -200,7 +198,6 @@ export const AdminCitiesTab = () => {
       const updatePayload = {
         name: editingCity.name,
         image_url: editingCity.image_url,
-        price_from: editingCity.price_from,
         is_available: editingCity.is_available,
         is_coming_soon: editingCity.is_coming_soon,
         show_in_homepage: editingCity.show_in_homepage,
@@ -239,7 +236,9 @@ export const AdminCitiesTab = () => {
     setIsSaving(true);
     try {
       const snapshot = { ...deletingCity };
-      const { error } = await supabase.from("service_cities").delete().eq("id", deletingCity.id);
+      const { error } = await supabase.rpc("delete_city_safe" as never, {
+        p_city_id: deletingCity.id,
+      } as never);
       if (error) throw error;
       await supabase.rpc("log_audit_event", {
         _action: "city_deleted",
@@ -251,8 +250,16 @@ export const AdminCitiesTab = () => {
       setShowDeleteCityDialog(false);
       setDeletingCity(null);
       fetchAll();
-    } catch {
-      toast.error("Failed to delete city");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "";
+      const m = msg.match(/CITY_HAS_BIKES:(\d+)/);
+      if (m) {
+        toast.error(
+          `Cannot delete — ${m[1]} bike${m[1] === "1" ? "" : "s"} are listed in this city. Deactivate instead.`,
+        );
+      } else {
+        toast.error("Failed to delete city");
+      }
     } finally {
       setIsSaving(false);
     }
@@ -347,18 +354,23 @@ export const AdminCitiesTab = () => {
     try {
       const oldName = editingNeighborhood.name;
       const newName = editingNeighborhoodName.trim();
-      const { error } = await supabase
-        .from("service_locations")
-        .update({ name: newName })
-        .eq("id", editingNeighborhood.id);
+      const { data, error } = await supabase.rpc("rename_neighborhood" as never, {
+        p_location_id: editingNeighborhood.id,
+        p_new_name: newName,
+      } as never);
       if (error) throw error;
+      const updated = ((data as { updated_bikes?: number } | null)?.updated_bikes) ?? 0;
       await supabase.rpc("log_audit_event", {
         _action: "neighborhood_updated",
         _table_name: "service_locations",
         _record_id: editingNeighborhood.id,
-        _details: { old_value: { name: oldName }, new_value: { name: newName } } as never,
+        _details: { old_value: { name: oldName }, new_value: { name: newName }, updated_bikes: updated } as never,
       });
-      toast.success("Neighborhood renamed");
+      toast.success(
+        updated > 0
+          ? `Renamed — ${updated} bike${updated === 1 ? "" : "s"} updated`
+          : "Neighborhood renamed",
+      );
       setEditingNeighborhood(null);
       setEditingNeighborhoodName("");
       fetchAll();
@@ -410,11 +422,17 @@ export const AdminCitiesTab = () => {
   };
 
   const handleDeleteNeighborhoodClick = async (loc: ServiceLocation) => {
-    const { count } = await supabase
-      .from("bike_inventory")
-      .select("*", { count: "exact", head: true })
-      .eq("location_id", loc.id);
-    setNeighborhoodInventoryCount(count || 0);
+    // Count bikes that reference this neighborhood by name in the same city
+    let count = 0;
+    if (loc.city_id) {
+      const { count: c } = await supabase
+        .from("bike_types")
+        .select("id", { count: "exact", head: true })
+        .eq("city_id", loc.city_id)
+        .eq("neighborhood", loc.name);
+      count = c || 0;
+    }
+    setNeighborhoodInventoryCount(count);
     setDeletingNeighborhood(loc);
   };
 
@@ -422,10 +440,9 @@ export const AdminCitiesTab = () => {
     if (!deletingNeighborhood) return;
     try {
       const snapshot = { ...deletingNeighborhood };
-      const { error } = await supabase
-        .from("service_locations")
-        .delete()
-        .eq("id", deletingNeighborhood.id);
+      const { error } = await supabase.rpc("delete_neighborhood_safe" as never, {
+        p_location_id: deletingNeighborhood.id,
+      } as never);
       if (error) throw error;
       await supabase.rpc("log_audit_event", {
         _action: "neighborhood_deleted",
@@ -436,8 +453,16 @@ export const AdminCitiesTab = () => {
       toast.success("Neighborhood deleted");
       setDeletingNeighborhood(null);
       fetchAll();
-    } catch {
-      toast.error("Failed to delete neighborhood");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "";
+      const m = msg.match(/NEIGHBORHOOD_HAS_BIKES:(\d+)/);
+      if (m) {
+        toast.error(
+          `Cannot delete — ${m[1]} bike${m[1] === "1" ? "" : "s"} are listed in this neighborhood. Reassign them first.`,
+        );
+      } else {
+        toast.error("Failed to delete neighborhood");
+      }
     }
   };
 
