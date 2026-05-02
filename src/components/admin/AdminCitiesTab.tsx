@@ -238,8 +238,15 @@ export const AdminCitiesTab = () => {
     if (!deletingCity) return;
     setIsSaving(true);
     try {
+      const snapshot = { ...deletingCity };
       const { error } = await supabase.from("service_cities").delete().eq("id", deletingCity.id);
       if (error) throw error;
+      await supabase.rpc("log_audit_event", {
+        _action: "city_deleted",
+        _table_name: "service_cities",
+        _record_id: deletingCity.id,
+        _details: { old_value: snapshot } as never,
+      });
       toast.success("City deleted");
       setShowDeleteCityDialog(false);
       setDeletingCity(null);
@@ -259,6 +266,15 @@ export const AdminCitiesTab = () => {
         .update({ is_available: newIsAvailable, is_coming_soon: !newIsAvailable })
         .eq("id", city.id);
       if (error) throw error;
+      await supabase.rpc("log_audit_event", {
+        _action: "city_toggle_availability",
+        _table_name: "service_cities",
+        _record_id: city.id,
+        _details: {
+          old_value: { is_available: city.is_available, is_coming_soon: city.is_coming_soon },
+          new_value: { is_available: newIsAvailable, is_coming_soon: !newIsAvailable },
+        } as never,
+      });
       toast.success(newIsAvailable ? "City set to available" : "City set to coming soon");
       fetchAll();
     } catch {
@@ -268,11 +284,18 @@ export const AdminCitiesTab = () => {
 
   const handleToggleHomepage = async (id: string, show: boolean) => {
     try {
+      const prev = cities.find((c) => c.id === id)?.show_in_homepage;
       const { error } = await supabase
         .from("service_cities")
         .update({ show_in_homepage: show })
         .eq("id", id);
       if (error) throw error;
+      await supabase.rpc("log_audit_event", {
+        _action: "city_toggle_homepage",
+        _table_name: "service_cities",
+        _record_id: id,
+        _details: { old_value: { show_in_homepage: prev }, new_value: { show_in_homepage: show } } as never,
+      });
       toast.success(show ? "City shown on homepage" : "City hidden from homepage");
       fetchAll();
     } catch {
@@ -289,12 +312,23 @@ export const AdminCitiesTab = () => {
     setIsSaving(true);
     try {
       const cityCount = locations.filter((l) => l.city_id === addNeighborhoodCityId).length;
-      const { error } = await supabase.from("service_locations").insert({
+      const insertPayload = {
         name: newNeighborhoodName.trim(),
         city_id: addNeighborhoodCityId,
         display_order: cityCount + 1,
-      });
+      };
+      const { data, error } = await supabase
+        .from("service_locations")
+        .insert(insertPayload)
+        .select("id")
+        .single();
       if (error) throw error;
+      await supabase.rpc("log_audit_event", {
+        _action: "neighborhood_created",
+        _table_name: "service_locations",
+        _record_id: data?.id ?? null,
+        _details: { new_value: insertPayload } as never,
+      });
       toast.success("Neighborhood added");
       setAddNeighborhoodCityId(null);
       setNewNeighborhoodName("");
@@ -311,11 +345,19 @@ export const AdminCitiesTab = () => {
     if (!editingNeighborhood || !editingNeighborhoodName.trim()) return;
     setIsSaving(true);
     try {
+      const oldName = editingNeighborhood.name;
+      const newName = editingNeighborhoodName.trim();
       const { error } = await supabase
         .from("service_locations")
-        .update({ name: editingNeighborhoodName.trim() })
+        .update({ name: newName })
         .eq("id", editingNeighborhood.id);
       if (error) throw error;
+      await supabase.rpc("log_audit_event", {
+        _action: "neighborhood_updated",
+        _table_name: "service_locations",
+        _record_id: editingNeighborhood.id,
+        _details: { old_value: { name: oldName }, new_value: { name: newName } } as never,
+      });
       toast.success("Neighborhood renamed");
       setEditingNeighborhood(null);
       setEditingNeighborhoodName("");
@@ -329,11 +371,18 @@ export const AdminCitiesTab = () => {
 
   const handleToggleNeighborhoodActive = async (id: string, isActive: boolean) => {
     try {
+      const prev = locations.find((l) => l.id === id)?.is_active;
       const { error } = await supabase
         .from("service_locations")
         .update({ is_active: isActive })
         .eq("id", id);
       if (error) throw error;
+      await supabase.rpc("log_audit_event", {
+        _action: "neighborhood_toggle_active",
+        _table_name: "service_locations",
+        _record_id: id,
+        _details: { old_value: { is_active: prev }, new_value: { is_active: isActive } } as never,
+      });
       fetchAll();
     } catch {
       toast.error("Failed to update neighborhood");
@@ -342,11 +391,18 @@ export const AdminCitiesTab = () => {
 
   const handleToggleNeighborhoodPopular = async (id: string, isPopular: boolean) => {
     try {
+      const prev = locations.find((l) => l.id === id)?.is_popular;
       const { error } = await supabase
         .from("service_locations")
         .update({ is_popular: isPopular })
         .eq("id", id);
       if (error) throw error;
+      await supabase.rpc("log_audit_event", {
+        _action: "neighborhood_toggle_popular",
+        _table_name: "service_locations",
+        _record_id: id,
+        _details: { old_value: { is_popular: prev }, new_value: { is_popular: isPopular } } as never,
+      });
       fetchAll();
     } catch {
       toast.error("Failed to update neighborhood");
@@ -365,11 +421,18 @@ export const AdminCitiesTab = () => {
   const handleDeleteNeighborhood = async () => {
     if (!deletingNeighborhood) return;
     try {
+      const snapshot = { ...deletingNeighborhood };
       const { error } = await supabase
         .from("service_locations")
         .delete()
         .eq("id", deletingNeighborhood.id);
       if (error) throw error;
+      await supabase.rpc("log_audit_event", {
+        _action: "neighborhood_deleted",
+        _table_name: "service_locations",
+        _record_id: deletingNeighborhood.id,
+        _details: { old_value: snapshot } as never,
+      });
       toast.success("Neighborhood deleted");
       setDeletingNeighborhood(null);
       fetchAll();
