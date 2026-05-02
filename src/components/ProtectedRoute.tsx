@@ -2,6 +2,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { ProtectedRouteSkeleton } from "@/components/ui/bike-skeleton";
+import { useAuthModal } from "@/contexts/AuthModalContext";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -12,6 +13,7 @@ export const ProtectedRoute = ({ children, requireRole }: ProtectedRouteProps) =
   const { user, isAuthenticated, isLoading, hasRole, refreshRoles, isRefreshingRoles } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const { openAuthModal } = useAuthModal();
   const [roleRefreshAttempted, setRoleRefreshAttempted] = useState(false);
 
   useEffect(() => {
@@ -23,9 +25,16 @@ export const ProtectedRoute = ({ children, requireRole }: ProtectedRouteProps) =
     if (isLoading || isRefreshingRoles) return;
 
     if (!isAuthenticated) {
-      // Store current URL to return after login
-      const returnUrl = location.pathname + location.search;
-      navigate(`/auth?returnUrl=${encodeURIComponent(returnUrl)}`);
+      const returnTo = location.pathname + location.search;
+      // Admin route → keep dedicated admin login page
+      if (requireRole === "admin") {
+        navigate(`/admin/login?returnTo=${encodeURIComponent(returnTo)}`);
+        return;
+      }
+      // Send the user back to the homepage and pop the modal over it
+      // so they don't lose visual context.
+      navigate("/", { replace: true });
+      openAuthModal("login", { returnTo });
       return;
     }
 
@@ -38,7 +47,7 @@ export const ProtectedRoute = ({ children, requireRole }: ProtectedRouteProps) =
       }
       navigate("/");
     }
-  }, [isLoading, isRefreshingRoles, isAuthenticated, user, requireRole, hasRole, roleRefreshAttempted, refreshRoles, navigate, location]);
+  }, [isLoading, isRefreshingRoles, isAuthenticated, user, requireRole, hasRole, roleRefreshAttempted, refreshRoles, navigate, location, openAuthModal]);
 
   // Show loading while auth is being checked
   if (isLoading || isRefreshingRoles || (requireRole && isAuthenticated && !hasRole(requireRole) && !roleRefreshAttempted)) {
