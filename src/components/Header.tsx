@@ -420,24 +420,7 @@ export const Header = memo(() => {
             
             {isAuthenticated ? (
               <>
-                {isRenter && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-10 gap-1.5 rounded-full px-3 font-semibold"
-                    aria-label={t('header.credits') || 'Credits'}
-                    onClick={() => navigate("/billing")}
-                  >
-                    <Wallet className="h-4 w-4 text-primary" />
-                    {renterWalletLoading ? (
-                      <span className="inline-block h-3 w-10 animate-pulse rounded bg-muted" />
-                    ) : (
-                      <span className="tabular-nums">
-                        {Math.round(renterBalance)} <span className="text-xs font-normal text-muted-foreground">{renterCurrency}</span>
-                      </span>
-                    )}
-                  </Button>
-                )}
+                {/* Renter wallet badge removed — renters pay per booking via YouCan Pay (no wallet). */}
                 <Button
                   variant="outline"
                   size="icon"
