@@ -412,14 +412,10 @@ export default function Billing() {
               </CardHeader>
               <CardContent className="space-y-3 text-sm text-muted-foreground">
                 <p>
-                  Top-ups are processed via <strong>YouCan Pay</strong> using your bank card or{" "}
-                  <strong>Cash Plus</strong>. No card details are stored on Motonita — every payment
-                  is handled securely on YouCan Pay's hosted page, so there are no saved cards to
-                  manage here.
+                  Booking fees are paid one time per booking via <strong>YouCan Pay</strong> using
+                  your bank card or <strong>Cash Plus</strong>. No card details are stored on
+                  Motonita — every payment is handled securely on YouCan Pay's hosted page.
                 </p>
-                <Button onClick={() => setTopupOpen(true)} variant="outline" className="gap-2">
-                  <Plus className="h-4 w-4" /> Top up now
-                </Button>
               </CardContent>
             </Card>
           </TabsContent>
