@@ -436,6 +436,27 @@ const MotorbikeDetail = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      <Dialog open={archiveOpen} onOpenChange={setArchiveOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Archive "{bike.name}"?</DialogTitle>
+            <DialogDescription>
+              This bike will be hidden from renters and search results
+              immediately. Your booking history is preserved. You can ask
+              support to restore it later.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setArchiveOpen(false)} disabled={busy}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={archiveBike} disabled={busy}>
+              {busy ? "Archiving…" : "Archive bike"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AgencyLayout>
   );
 };
