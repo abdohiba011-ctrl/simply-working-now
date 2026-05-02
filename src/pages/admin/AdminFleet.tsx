@@ -190,8 +190,8 @@ const AdminFleet = () => {
         const { data: ownerProfile } = await supabase
           .from('profiles')
           .select('email, name')
-          .eq('id', bike.owner_id)
-          .single();
+          .eq('user_id', bike.owner_id)
+          .maybeSingle();
 
         if (ownerProfile?.email) {
           try {
