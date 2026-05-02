@@ -77,8 +77,8 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
   };
 
   const goRenterSite = () => {
-    if (storeUser && !hasAgency) {
-      // Make sure the store is in renter mode for the public site experience.
+    if (storeUser) {
+      // Renter is a view; this never removes admin/agency permissions.
       try { switchRole("renter"); } catch { /* ignore */ }
     }
     navigate("/");
