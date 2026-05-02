@@ -257,9 +257,10 @@ const BikeDetails = () => {
   }
 
   const bikeType: any = bike.bike_type;
-  const neighborhood = bike.location || "Bouskoura";
-  const cityName = "Casablanca";
-  const agencyName = (bikeType as any)?.agency_name || "Casa Moto Rent";
+  const cityName = resolvedCity || bike.location || "Morocco";
+  const neighborhood = resolvedNeighborhood || bike.location || cityName;
+  const agencyName = resolvedAgency.name || "your local agency";
+  const agencyVerified = resolvedAgency.verified;
 
   const handleBookNow = async () => {
     if (!dateRange?.from || !dateRange?.to) {
