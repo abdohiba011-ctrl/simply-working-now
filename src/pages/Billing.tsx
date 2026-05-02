@@ -11,7 +11,6 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Wallet,
-  Plus,
   ArrowDownLeft,
   ArrowUpRight,
   CreditCard,
@@ -24,19 +23,15 @@ import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { useRenterWallet } from "@/hooks/useRenterWallet";
 import { supabase } from "@/integrations/supabase/client";
-import { buildYouCanPayUrl } from "@/lib/openHostedPayment";
 import { useNavigate } from "react-router-dom";
 import { BalanceChart } from "@/components/billing/BalanceChart";
 import { TransactionFilters } from "@/components/billing/TransactionFilters";
-import { TopupConfirmDialog } from "@/components/billing/TopupConfirmDialog";
 import {
   applyFilters,
   readFiltersFromParams,
   writeFiltersToParams,
   type BillingFilterState,
 } from "@/lib/billingFilters";
-
-const PRESETS = [50, 100, 200, 500];
 
 export default function Billing() {
   const { user, userRoles, isLoading: authLoading } = useAuth();
