@@ -21,7 +21,7 @@ import { cn } from "@/lib/utils";
 import { useAuthModal, consumeAuthResumeState } from "@/contexts/AuthModalContext";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { supabase } from "@/integrations/supabase/client";
-import logo from "@/assets/motonita-mark-light.svg";
+import logo from "@/assets/motonita-logo.svg";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_REGEX = /^(\+212|00212|0)[67]\d{8}$/;
@@ -238,7 +238,7 @@ export function AuthModal() {
         <div className="p-6 md:p-8 pt-12 md:pt-10">
           {/* Logo */}
           <div className="flex justify-center mb-4">
-            <img src={logo} alt="Motonita" className="h-9 w-auto" />
+            <img src={logo} alt="Motonita" className="h-8 w-auto" />
           </div>
 
           {/* Context banner */}

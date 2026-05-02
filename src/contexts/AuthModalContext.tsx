@@ -54,13 +54,15 @@ export function AuthModalProvider({ children }: { children: ReactNode }) {
     setCtx({});
   }, []);
 
-  // Lock body scroll when open
+  // Lock body scroll + hide site header when open
   useEffect(() => {
     if (!isOpen) return;
     const previous = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+    document.body.classList.add("auth-modal-open");
     return () => {
       document.body.style.overflow = previous;
+      document.body.classList.remove("auth-modal-open");
     };
   }, [isOpen]);
 
