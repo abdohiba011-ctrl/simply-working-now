@@ -52,11 +52,7 @@ export default function Billing() {
     !!userRoles && userRoles.length > 0 && !hasRenterRole;
   const isRenter = hasRenterRole || !hasOnlyNonRenterRoles;
 
-  const [topupOpen, setTopupOpen] = useState(false);
-  const [amount, setAmount] = useState<string>("100");
-  const [submitting, setSubmitting] = useState(false);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
-  const [pendingPaymentUrl, setPendingPaymentUrl] = useState<string | null>(null);
 
   // ---- URL-driven tab + filters ----
   const activeTab = params.get("tab") ?? "credits";
