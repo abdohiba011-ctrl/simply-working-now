@@ -9,6 +9,9 @@ import {
   ExternalLink,
   Pencil,
   Eye,
+  Archive,
+  RotateCcw,
+  Trash2,
 } from "lucide-react";
 import { AgencyLayout } from "@/components/agency/AgencyLayout";
 import { Button } from "@/components/ui/button";
@@ -17,6 +20,8 @@ import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { BikeApprovalBadge } from "@/components/agency/BikeApprovalBadge";
 import { useAgencyBikes } from "@/hooks/useAgencyData";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import {
   Table,
   TableBody,
@@ -25,16 +30,28 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 
 type View = "grid" | "table";
+type Tab = "active" | "archived";
 
 const Motorbikes = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const view = (searchParams.get("view") as View) || "grid";
+  const tab = (searchParams.get("tab") as Tab) || "active";
   const [search, setSearch] = useState("");
-  const { bikes, loading } = useAgencyBikes();
+  const { bikes, loading, refresh } = useAgencyBikes({ archived: tab === "archived" });
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<{ id: string; name: string } | null>(null);
 
   const filtered = useMemo(() => {
     if (!search) return bikes;
@@ -48,7 +65,41 @@ const Motorbikes = () => {
     setSearchParams(params, { replace: true });
   };
 
+  const setTab = (t: Tab) => {
+    const params = new URLSearchParams(searchParams);
+    if (t === "active") params.delete("tab");
+    else params.set("tab", t);
+    setSearchParams(params, { replace: true });
+  };
+
   const open = (id: string) => navigate(`/agency/motorbikes/${id}`);
+
+  const handleUnarchive = async (id: string) => {
+    setBusyId(id);
+    const { error } = await supabase.rpc("unarchive_bike_type" as never, { p_bike_type_id: id } as never);
+    setBusyId(null);
+    if (error) {
+      toast.error(error.message || "Could not unarchive");
+      return;
+    }
+    toast.success("Bike restored. Turn availability on to publish it again.");
+    refresh();
+  };
+
+  const handleDelete = async () => {
+    if (!confirmDelete) return;
+    const id = confirmDelete.id;
+    setBusyId(id);
+    const { error } = await supabase.rpc("delete_bike_type_if_safe" as never, { p_bike_type_id: id } as never);
+    setBusyId(null);
+    setConfirmDelete(null);
+    if (error) {
+      toast.error(error.message || "Could not delete bike");
+      return;
+    }
+    toast.success("Bike deleted permanently.");
+    refresh();
+  };
 
   return (
     <AgencyLayout>
