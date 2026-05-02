@@ -79,36 +79,6 @@ const allCities = [
   "Chefchaouen",
 ];
 
-const neighborhoodsByCity: Record<string, string[]> = {
-  Casablanca: [
-    "Anfa",
-    "Maârif",
-    "Derb Sultan",
-    "Sidi Maârouf",
-    "Aïn Diab",
-    "Gauthier",
-    "Bourgogne",
-    "Hay Hassani",
-    "Sidi Bernoussi",
-    "Ain Sebaa",
-  ],
-  Marrakech: ["Guéliz", "Médina", "Hivernage", "Palmeraie", "Daoudiate", "Agdal"],
-  Rabat: ["Agdal", "Hassan", "Souissi", "Médina", "Hay Riad"],
-  Tangier: ["Malabata", "Centre-Ville", "Marshan", "Iberia", "Playa"],
-  Agadir: ["Centre-Ville", "Founty", "Talborjt", "Dakhla"],
-  Fes: ["Médina (Fes el-Bali)", "Ville Nouvelle", "Fes el-Jdid", "Aïn Chkef"],
-  Dakhla: ["Centre", "Lagune"],
-  Essaouira: ["Médina", "Quartier des Dunes"],
-  Meknes: ["Médina", "Hamria", "Ville Nouvelle"],
-  Oujda: ["Centre-Ville", "Médina"],
-  Tetouan: ["Centre-Ville", "Médina"],
-  "El Jadida": ["Centre-Ville", "Médina"],
-  Kenitra: ["Centre-Ville", "Médina"],
-  Nador: ["Centre-Ville", "Médina"],
-  Ifrane: ["Centre-Ville"],
-  Chefchaouen: ["Centre-Ville", "Médina"],
-};
-
 const ALL_NEIGHBORHOODS = "all";
 
 export const HeroSection = memo(() => {
