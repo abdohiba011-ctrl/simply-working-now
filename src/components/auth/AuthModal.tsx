@@ -44,6 +44,7 @@ export function AuthModal() {
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [showPwd, setShowPwd] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
 
   // Signup state
   const [name, setName] = useState("");
@@ -113,7 +114,7 @@ export function AuthModal() {
     }
     setSubmitting(true);
     try {
-      const u = await login(identifier.trim(), password, false, "renter");
+      const u = await login(identifier.trim(), password, rememberMe, "renter");
       handleAfterAuth(u.name);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Incorrect email or password";
@@ -339,7 +340,15 @@ export function AuthModal() {
                   </button>
                 </div>
               </div>
-              <div className="flex justify-end">
+              <div className="flex items-center justify-between">
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <Checkbox
+                    id="am-remember"
+                    checked={rememberMe}
+                    onCheckedChange={(v) => setRememberMe(v === true)}
+                  />
+                  <span className="text-sm text-[#163300]/80">Remember me</span>
+                </label>
                 <button
                   type="button"
                   onClick={() => {
