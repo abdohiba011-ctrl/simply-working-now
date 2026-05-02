@@ -356,3 +356,10 @@ All colors MUST be HSL.
 [data-sonner-toast] [data-close-button] svg {
   color: hsl(216 19% 16%) !important;
 }
+
+/* Hide site header & announcement banner when auth modal is open */
+body.auth-modal-open header,
+body.auth-modal-open [data-site-header],
+body.auth-modal-open [data-announcement-banner] {
+  display: none !important;
+}
