@@ -416,35 +416,40 @@ export const MotorbikeImageManager = ({
                   <div className="absolute right-2 top-2 hidden cursor-grab rounded-md bg-background/80 p-1 group-hover:block">
                     <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
                   </div>
-                  <div className="absolute inset-x-0 bottom-0 flex translate-y-full items-center justify-center gap-1 bg-background/95 p-2 transition-transform group-hover:translate-y-0">
-                    {!img.isPrimary && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-7 px-2 text-[11px]"
-                        onClick={() => setPrimary(i)}
-                      >
-                        <Star className="mr-1 h-3 w-3" /> Primary
-                      </Button>
-                    )}
+                  <div className="absolute inset-x-0 bottom-0 flex translate-y-full flex-wrap items-center justify-center gap-1.5 bg-background/95 p-1.5 transition-transform group-hover:translate-y-0">
                     <Button
-                      size="sm"
+                      size="icon"
+                      variant={img.isPrimary ? "default" : "outline"}
+                      className="h-8 w-8"
+                      onClick={() => !img.isPrimary && setPrimary(i)}
+                      disabled={img.isPrimary}
+                      title={img.isPrimary ? "Already primary" : "Set as primary"}
+                      aria-label={img.isPrimary ? "Already primary" : "Set as primary"}
+                    >
+                      <Star className={cn("h-3.5 w-3.5", img.isPrimary && "fill-current")} />
+                    </Button>
+                    <Button
+                      size="icon"
                       variant="outline"
-                      className="h-7 px-2 text-[11px]"
+                      className="h-8 w-8"
                       onClick={() => {
                         replacingIdxRef.current = i;
                         replaceFileInputRef.current?.click();
                       }}
+                      title="Replace image"
+                      aria-label="Replace image"
                     >
-                      <Replace className="mr-1 h-3 w-3" /> Replace
+                      <Replace className="h-3.5 w-3.5" />
                     </Button>
                     <Button
-                      size="sm"
+                      size="icon"
                       variant="destructive"
-                      className="h-7 px-2 text-[11px]"
+                      className="h-8 w-8"
                       onClick={() => deleteImage(i)}
+                      title="Delete image"
+                      aria-label="Delete image"
                     >
-                      <Trash2 className="h-3 w-3" />
+                      <Trash2 className="h-3.5 w-3.5" />
                     </Button>
                   </div>
                 </>
