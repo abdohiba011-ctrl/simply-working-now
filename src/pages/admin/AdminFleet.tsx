@@ -538,6 +538,14 @@ const AdminFleet = () => {
           </TabsContent>
         </Tabs>
       </div>
+      <DangerConfirmDialog
+        open={!!deleteId}
+        onOpenChange={(o) => !o && setDeleteId(null)}
+        title="Delete this bike type?"
+        description="This will permanently remove the bike type. This cannot be undone."
+        confirmLabel="Delete"
+        onConfirm={async () => { if (deleteId) await performDelete(deleteId); }}
+      />
     </AdminLayout>
   );
 };
