@@ -34,7 +34,7 @@ export function AuthModal() {
   const login = useAuthStore((s) => s.login);
   const signup = useAuthStore((s) => s.signup);
 
-  const [view, setView] = useState<View>(tab);
+  const [view, setView] = useState<View>((ctx.initialView as View) ?? tab);
   const [shake, setShake] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -56,13 +56,13 @@ export function AuthModal() {
   // Forgot password state
   const [forgotEmail, setForgotEmail] = useState("");
 
-  // Sync external tab changes (when openAuthModal is called)
+  // Sync external tab/view changes (when openAuthModal is called)
   useEffect(() => {
     if (isOpen) {
-      setView(tab);
+      setView((ctx.initialView as View) ?? tab);
       setError(null);
     }
-  }, [isOpen, tab]);
+  }, [isOpen, tab, ctx.initialView]);
 
   // Reset on close
   useEffect(() => {

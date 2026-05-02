@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 
 export type AuthModalTab = "login" | "signup";
+export type AuthModalView = "login" | "signup" | "forgot" | "forgot-sent";
 
 export interface AuthModalContext {
   /** Bike or page name shown in a small banner at the top of the modal. */
@@ -11,6 +12,8 @@ export interface AuthModalContext {
   returnTo?: string;
   /** Arbitrary state to persist in sessionStorage and restore after auth. */
   preserveState?: Record<string, unknown>;
+  /** Optional initial inner view (e.g. "forgot") — overrides the tab default. */
+  initialView?: AuthModalView;
 }
 
 interface OpenOptions extends AuthModalContext {}
