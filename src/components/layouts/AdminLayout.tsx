@@ -2,6 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
+import { useAuthStore } from "@/stores/useAuthStore";
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect } from "react";
 import { LogoutConfirmDialog } from "@/components/LogoutConfirmDialog";
@@ -13,7 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LogOut, User, Home } from "lucide-react";
+import { LogOut, User, Home, Briefcase, Shield, Repeat } from "lucide-react";
 import logo from "@/assets/motonita-logo.svg";
 
 interface AdminLayoutProps {
@@ -21,11 +22,19 @@ interface AdminLayoutProps {
 }
 
 export const AdminLayout = ({ children }: AdminLayoutProps) => {
-  const { user, logout } = useAuth();
+  const { user, logout, hasRole } = useAuth();
+  const storeUser = useAuthStore((s) => s.user);
+  const switchRole = useAuthStore((s) => s.switchRole);
   const navigate = useNavigate();
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [userName, setUserName] = useState<string>("");
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
+
+  const hasAdmin = hasRole("admin");
+  const hasAgency = !!storeUser?.roles.agency?.active;
+  // Agency-only accounts cannot use renter mode (product rule). Renter
+  // destination is offered to anyone whose account is not agency-active.
+  const canGoRenter = !hasAgency;
 
   useEffect(() => {
     if (user) {
@@ -66,6 +75,21 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
     navigate("/");
   };
 
+  const goRenterSite = () => {
+    if (storeUser && !hasAgency) {
+      // Make sure the store is in renter mode for the public site experience.
+      try { switchRole("renter"); } catch { /* ignore */ }
+    }
+    navigate("/");
+  };
+
+  const goAgencyDashboard = () => {
+    if (storeUser && hasAgency) {
+      try { switchRole("agency"); } catch { /* ignore */ }
+    }
+    navigate("/agency/agency-center");
+  };
+
   return (
     <div className="min-h-screen bg-muted/30 flex flex-col">
       {/* Admin Header - Compact, neutral colors */}
@@ -80,18 +104,44 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
             </Link>
 
             <div className="flex items-center gap-2">
-              {/* Back to Site Button - Always visible */}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigate("/")}
-                className="flex items-center gap-2"
-              >
-                <Home className="h-4 w-4" />
-                <span className="hidden sm:inline">Back to Site</span>
-              </Button>
+              {/* Role Switcher */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="flex items-center gap-2">
+                    <Repeat className="h-4 w-4" />
+                    <span className="hidden sm:inline">Switch view</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56 bg-background border-border shadow-lg z-[200]">
+                  <DropdownMenuLabel>Switch interface</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem disabled className="opacity-100">
+                    <Shield className="mr-2 h-4 w-4 text-primary" />
+                    Admin Panel
+                    <span className="ml-auto text-[10px] text-muted-foreground">current</span>
+                  </DropdownMenuItem>
+                  {hasAgency && (
+                    <DropdownMenuItem onClick={goAgencyDashboard}>
+                      <Briefcase className="mr-2 h-4 w-4 text-muted-foreground" />
+                      Agency Dashboard
+                    </DropdownMenuItem>
+                  )}
+                  {canGoRenter && (
+                    <DropdownMenuItem onClick={goRenterSite}>
+                      <Home className="mr-2 h-4 w-4 text-muted-foreground" />
+                      Renter Site
+                    </DropdownMenuItem>
+                  )}
+                  {!canGoRenter && !hasAgency && (
+                    <DropdownMenuItem onClick={() => navigate("/")}>
+                      <Home className="mr-2 h-4 w-4 text-muted-foreground" />
+                      Public Site
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
 
-              {/* Profile Avatar - Click goes to profile */}
+              {/* Profile Avatar */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon" className="rounded-full h-9 w-9 p-0">
@@ -104,12 +154,31 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-52 bg-background border-border shadow-lg z-[200]">
-                  <DropdownMenuLabel className="text-foreground font-medium">Admin Account</DropdownMenuLabel>
+                  <DropdownMenuLabel className="text-foreground font-medium">
+                    {userName || "Admin Account"}
+                    {user?.email && (
+                      <div className="text-[11px] font-normal text-muted-foreground truncate">
+                        {user.email}
+                      </div>
+                    )}
+                  </DropdownMenuLabel>
                   <DropdownMenuSeparator className="bg-border" />
                   <DropdownMenuItem onClick={() => navigate("/profile")} className="text-foreground hover:bg-muted">
                     <User className="mr-2 h-4 w-4 text-muted-foreground" />
                     View Profile
                   </DropdownMenuItem>
+                  {hasAgency && (
+                    <DropdownMenuItem onClick={goAgencyDashboard} className="text-foreground hover:bg-muted">
+                      <Briefcase className="mr-2 h-4 w-4 text-muted-foreground" />
+                      Agency Dashboard
+                    </DropdownMenuItem>
+                  )}
+                  {canGoRenter && (
+                    <DropdownMenuItem onClick={goRenterSite} className="text-foreground hover:bg-muted">
+                      <Home className="mr-2 h-4 w-4 text-muted-foreground" />
+                      Renter Site
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuSeparator className="bg-border" />
                   <DropdownMenuItem onClick={() => setShowLogoutDialog(true)} className="text-foreground hover:bg-muted">
                     <LogOut className="mr-2 h-4 w-4 text-muted-foreground" />
