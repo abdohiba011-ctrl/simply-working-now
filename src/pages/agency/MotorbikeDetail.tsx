@@ -356,12 +356,25 @@ const MotorbikeDetail = () => {
             </p>
           </Card>
           <Card className="p-4">
-            <p className="text-xs text-muted-foreground">Status</p>
-            <p className="mt-1">
-              <Badge variant="outline" className="capitalize">
-                {bike.availability_status || "—"}
-              </Badge>
-            </p>
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-xs text-muted-foreground">Availability</p>
+                <p className="mt-1">
+                  <Badge variant="outline" className="capitalize">
+                    {available ? "available" : "unavailable"}
+                  </Badge>
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Toggle on/off without re-review.
+                </p>
+              </div>
+              <Switch
+                checked={available}
+                onCheckedChange={toggleAvailability}
+                disabled={busy || bike.approval_status !== "approved"}
+                aria-label="Toggle availability"
+              />
+            </div>
           </Card>
         </div>
 
