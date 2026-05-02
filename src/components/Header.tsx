@@ -46,6 +46,7 @@ export const Header = memo(() => {
   const { language, setLanguage, t } = useLanguage();
   const { user, isAuthenticated, isLoading: authLoading, logout, hasRole } = useAuth();
   const navigate = useNavigate();
+  const { openAuthModal } = useAuthModal();
   const storeUser = useAuthStore((s) => s.user);
   const storeIsAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const storeIsLoading = useAuthStore((s) => s.isLoading);
