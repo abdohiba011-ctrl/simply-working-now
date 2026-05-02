@@ -2319,6 +2319,57 @@ export type Database = {
       }
     }
     Views: {
+      agencies_public: {
+        Row: {
+          bio: string | null
+          business_name: string | null
+          city: string | null
+          created_at: string | null
+          id: string | null
+          is_verified: boolean | null
+          logo_url: string | null
+          primary_neighborhood: string | null
+          profile_id: string | null
+        }
+        Insert: {
+          bio?: string | null
+          business_name?: string | null
+          city?: string | null
+          created_at?: string | null
+          id?: string | null
+          is_verified?: boolean | null
+          logo_url?: string | null
+          primary_neighborhood?: string | null
+          profile_id?: string | null
+        }
+        Update: {
+          bio?: string | null
+          business_name?: string | null
+          city?: string | null
+          created_at?: string | null
+          id?: string | null
+          is_verified?: boolean | null
+          logo_url?: string | null
+          primary_neighborhood?: string | null
+          profile_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agencies_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agencies_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bikes_public: {
         Row: {
           agency_id: string | null
