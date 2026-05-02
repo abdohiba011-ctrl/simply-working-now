@@ -8,6 +8,9 @@ export interface BookingMessage {
   sender_role: string;
   body: string | null;
   attachment_url: string | null;
+  attachment_name: string | null;
+  attachment_size: number | null;
+  attachment_mime: string | null;
   message_type: string;
   flagged: boolean;
   flag_reasons: string[] | null;
@@ -18,7 +21,10 @@ export interface BookingMessage {
 export interface SendMessageInput {
   body?: string;
   attachmentUrl?: string;
-  messageType?: "text" | "image";
+  attachmentName?: string;
+  attachmentSize?: number;
+  attachmentMime?: string;
+  messageType?: "text" | "image" | "file";
 }
 
 export function useBookingMessages(bookingId: string | undefined) {
@@ -102,6 +108,13 @@ export function useBookingMessages(bookingId: string | undefined) {
       const {
         data: { user },
       } = await supabase.auth.getUser();
+      const inferredType =
+        payload.messageType ??
+        (attachmentUrl
+          ? payload.attachmentMime?.startsWith("image/")
+            ? "image"
+            : "file"
+          : "text");
       const { data, error } = await supabase
         .from("booking_messages")
         .insert({
@@ -110,7 +123,10 @@ export function useBookingMessages(bookingId: string | undefined) {
           sender_role: senderRole,
           body: body || null,
           attachment_url: attachmentUrl,
-          message_type: payload.messageType ?? (attachmentUrl ? "image" : "text"),
+          attachment_name: payload.attachmentName ?? null,
+          attachment_size: payload.attachmentSize ?? null,
+          attachment_mime: payload.attachmentMime ?? null,
+          message_type: inferredType,
         } as never)
         .select("*")
         .single();

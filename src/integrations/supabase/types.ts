@@ -873,6 +873,9 @@ export type Database = {
       }
       booking_messages: {
         Row: {
+          attachment_mime: string | null
+          attachment_name: string | null
+          attachment_size: number | null
           attachment_url: string | null
           body: string | null
           booking_id: string
@@ -886,6 +889,9 @@ export type Database = {
           sender_role: string
         }
         Insert: {
+          attachment_mime?: string | null
+          attachment_name?: string | null
+          attachment_size?: number | null
           attachment_url?: string | null
           body?: string | null
           booking_id: string
@@ -899,6 +905,9 @@ export type Database = {
           sender_role: string
         }
         Update: {
+          attachment_mime?: string | null
+          attachment_name?: string | null
+          attachment_size?: number | null
           attachment_url?: string | null
           body?: string | null
           booking_id?: string
