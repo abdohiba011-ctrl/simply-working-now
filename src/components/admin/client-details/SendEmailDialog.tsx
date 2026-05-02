@@ -185,52 +185,12 @@ export const SendEmailDialog = ({
             />
           </div>
 
-          {/* Image Attachments */}
+          {/* Attachments — not supported yet */}
           <div className="space-y-2">
-            <Label>Attach Images (optional)</Label>
-            <div className="flex flex-wrap gap-3">
-              {attachedImages.map((img) => (
-                <div 
-                  key={img.id} 
-                  className="relative w-20 h-20 rounded-lg overflow-hidden border group"
-                >
-                  <img
-                    src={img.preview}
-                    alt="Attachment"
-                    className="w-full h-full object-cover"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => removeImage(img.id)}
-                    className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
-                    disabled={isSending}
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </div>
-              ))}
-              
-              {attachedImages.length < 5 && (
-                <label className="w-20 h-20 rounded-lg border-2 border-dashed border-muted-foreground/25 flex items-center justify-center cursor-pointer hover:border-primary hover:bg-primary/5 transition-colors">
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    onChange={handleImageAttach}
-                    className="sr-only"
-                    disabled={isSending}
-                  />
-                  <div className="text-center">
-                    <Image className="h-5 w-5 mx-auto text-muted-foreground" />
-                    <span className="text-xs text-muted-foreground">Add</span>
-                  </div>
-                </label>
-              )}
+            <Label className="text-muted-foreground">Attachments</Label>
+            <div className="rounded-md border border-dashed border-muted-foreground/30 bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+              Attachments are not supported yet.
             </div>
-            <p className="text-xs text-muted-foreground">
-              Max 5 images, 5MB each. Supported: JPG, PNG, GIF, WebP
-            </p>
           </div>
 
           {/* Email Templates (quick actions) */}
