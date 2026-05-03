@@ -505,7 +505,7 @@ const AdminBusinessDetails = () => {
                       label={agency?.verification_status === "pending" ? "Pending review" : agency?.verification_status === "rejected" ? "Rejected" : "Unverified"}
                     />
                   )}
-                  <Badge variant="outline" className="capitalize">{agency?.subscription_plan || "free"} plan</Badge>
+                  <Badge variant="outline" className="capitalize">{(subscription?.plan || agency?.subscription_plan || "free")} plan</Badge>
                   {agency?.is_suspended && <Badge variant="destructive">Suspended</Badge>}
                   {agency?.is_locked && <Badge variant="destructive">Locked</Badge>}
                   {profile.is_frozen && <Badge variant="destructive">Blocked</Badge>}
@@ -580,7 +580,7 @@ const AdminBusinessDetails = () => {
                 <Field label="Delivery fee (MAD)" value={agency?.delivery_fee_mad?.toString()} />
                 <Field label="Delivery radius (km)" value={agency?.delivery_radius_km?.toString()} />
                 <Field label="Bio" value={agency?.bio} className="md:col-span-2" />
-                <Field label="Subscription plan" value={agency?.subscription_plan || "free"} />
+                <Field label="Subscription plan" value={subscription?.plan || agency?.subscription_plan || "free"} />
                 <Field label="Trial ends" value={fmt(agency?.trial_ends_at)} />
                 <Field label="Account created" value={fmt(profile.created_at)} />
                 <Field label="Suspended reason" value={agency?.suspended_reason} className="md:col-span-2" />
