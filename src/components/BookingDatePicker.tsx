@@ -217,6 +217,7 @@ export const BookingDatePicker = ({
   placeholder = "Pick-up → Return",
   align = "start",
   panelOnly = false,
+  disabledRanges,
 }: BookingDatePickerProps) => {
   const isMobile = useIsMobile();
   const [open, setOpen] = useState(false);
