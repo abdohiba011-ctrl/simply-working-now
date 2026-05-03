@@ -34,6 +34,7 @@ import { COMMON_PASSWORDS } from "@/lib/mockAuth";
 import { cn } from "@/lib/utils";
 import { navigateAfterAuth } from "@/lib/routeAfterAuth";
 import { checkAccountMethod } from "@/lib/checkAccountMethod";
+import { useServiceCities } from "@/hooks/useServiceCities";
 
 const PHONE_REGEX = /^(\+212|00212|0)[67]\d{8}$/;
 
@@ -320,7 +321,39 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
   const rules = passwordRules(pwValue ?? "");
   const strength = passwordStrength(pwValue ?? "");
   const cityValue = form.watch("city");
-  const neighborhoodOptions = cityValue ? NEIGHBORHOODS[cityValue] ?? [] : [];
+  const { cities: dbCities, locations: dbLocations } = useServiceCities();
+  // Merge DB cities with the static fallback so the form keeps working even
+  // before service_cities loads. DB names always win.
+  const cityList = useMemo(() => {
+    const names = new Set<string>();
+    const out: string[] = [];
+    for (const c of dbCities) {
+      if (!names.has(c.name)) {
+        names.add(c.name);
+        out.push(c.name);
+      }
+    }
+    for (const c of CITIES) {
+      if (!names.has(c)) {
+        names.add(c);
+        out.push(c);
+      }
+    }
+    return out;
+  }, [dbCities]);
+  const neighborhoodOptions = useMemo(() => {
+    if (!cityValue) return [] as string[];
+    const matchedCity = dbCities.find(
+      (c) => c.name.toLowerCase() === cityValue.toLowerCase(),
+    );
+    if (matchedCity) {
+      const fromDb = dbLocations
+        .filter((l) => l.city_id === matchedCity.id)
+        .map((l) => l.name);
+      if (fromDb.length > 0) return fromDb;
+    }
+    return NEIGHBORHOODS[cityValue] ?? [];
+  }, [cityValue, dbCities, dbLocations]);
 
   const handleNext = async () => {
     const ok = await form.trigger([
@@ -603,7 +636,7 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
                         <SelectValue placeholder="Select..." />
                       </SelectTrigger>
                       <SelectContent>
-                        {CITIES.map((c) => (
+                        {cityList.map((c) => (
                           <SelectItem key={c} value={c}>
                             {c}
                           </SelectItem>

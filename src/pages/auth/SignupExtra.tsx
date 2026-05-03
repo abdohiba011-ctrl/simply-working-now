@@ -18,6 +18,8 @@ import {
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useLanguageStore } from "@/stores/useLanguageStore";
 import { MockProtectedRoute } from "@/components/auth/MockProtectedRoute";
+import { useServiceCities } from "@/hooks/useServiceCities";
+import { useMemo } from "react";
 import enLocale from "@/locales/en.json";
 import frLocale from "@/locales/fr.json";
 import arLocale from "@/locales/ar.json";
@@ -37,6 +39,7 @@ const schema = z.object({
   businessName: z.string().min(2, "Business name is required"),
   businessType: z.string().min(1, "Pick a business type"),
   city: z.string().min(1, "Pick a city"),
+  neighborhood: z.string().optional(),
   numBikes: z.string().min(1, "Select number of motorbikes"),
   phone: z
     .string()
@@ -89,6 +92,7 @@ function SignupExtraInner() {
       businessName: "",
       businessType: "",
       city: "",
+      neighborhood: "",
       numBikes: "",
       phone: user?.phone ?? "",
     },
@@ -101,6 +105,7 @@ function SignupExtraInner() {
         businessName: data.businessName,
         businessType: data.businessType,
         city: data.city,
+        neighborhood: data.neighborhood || undefined,
         numBikes: data.numBikes,
         phone: data.phone || undefined,
       });
@@ -115,7 +120,37 @@ function SignupExtraInner() {
 
   const businessType = watch("businessType");
   const city = watch("city");
+  const neighborhood = watch("neighborhood");
   const numBikes = watch("numBikes");
+
+  const { cities: dbCities, locations: dbLocations } = useServiceCities();
+  const cityList = useMemo(() => {
+    const names = new Set<string>();
+    const out: string[] = [];
+    for (const c of dbCities) {
+      if (!names.has(c.name)) {
+        names.add(c.name);
+        out.push(c.name);
+      }
+    }
+    for (const c of CITIES) {
+      if (!names.has(c)) {
+        names.add(c);
+        out.push(c);
+      }
+    }
+    return out;
+  }, [dbCities]);
+  const neighborhoodOptions = useMemo(() => {
+    if (!city) return [] as string[];
+    const matched = dbCities.find(
+      (c) => c.name.toLowerCase() === city.toLowerCase(),
+    );
+    if (!matched) return [];
+    return dbLocations
+      .filter((l) => l.city_id === matched.id)
+      .map((l) => l.name);
+  }, [city, dbCities, dbLocations]);
 
   const steps = [
     { icon: Building2, label: t("setup_step_1"), active: true },
@@ -189,13 +224,16 @@ function SignupExtraInner() {
               <Label>{t("city")}</Label>
               <Select
                 value={city}
-                onValueChange={(v) => setValue("city", v, { shouldValidate: true })}
+                onValueChange={(v) => {
+                  setValue("city", v, { shouldValidate: true });
+                  setValue("neighborhood", "", { shouldValidate: false });
+                }}
               >
                 <SelectTrigger className="h-10">
                   <SelectValue placeholder={t("select_placeholder")} />
                 </SelectTrigger>
                 <SelectContent>
-                  {CITIES.map((c) => (
+                  {cityList.map((c) => (
                     <SelectItem key={c} value={c}>
                       {c}
                     </SelectItem>
@@ -204,6 +242,36 @@ function SignupExtraInner() {
               </Select>
               {errors.city && (
                 <p className="mt-1 text-xs text-red-600">{errors.city.message}</p>
+              )}
+            </div>
+
+            <div>
+              <Label>Neighborhood</Label>
+              {neighborhoodOptions.length > 0 ? (
+                <Select
+                  value={neighborhood ?? ""}
+                  onValueChange={(v) =>
+                    setValue("neighborhood", v, { shouldValidate: true })
+                  }
+                >
+                  <SelectTrigger className="h-10">
+                    <SelectValue placeholder={t("select_placeholder")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {neighborhoodOptions.map((n) => (
+                      <SelectItem key={n} value={n}>
+                        {n}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <Input
+                  placeholder={city ? "e.g. Centre-Ville" : "Pick a city first"}
+                  disabled={!city}
+                  className="h-10"
+                  {...register("neighborhood")}
+                />
               )}
             </div>
 

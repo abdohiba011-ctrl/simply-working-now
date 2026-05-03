@@ -45,9 +45,10 @@ try {
       },
       // Return empty string for missing keys in production to show fallback
       returnEmptyString: false,
-      // Don't override defaultValue with a [MISSING: ...] marker — let the
-      // calling site's `defaultValue` render. We still log warnings above.
-      parseMissingKeyHandler: (key) => key,
+      // Let i18next's defaultValue mechanism render the human-readable
+      // fallback. Returning the raw key here would override it and surface
+      // ugly strings like "mockAuth.are_you_renter" in the UI.
+      parseMissingKeyHandler: (key, defaultValue) => defaultValue ?? key,
     });
 } catch (error) {
   console.error('[i18n] Failed to initialize:', error);
