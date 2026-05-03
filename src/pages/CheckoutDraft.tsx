@@ -254,8 +254,9 @@ const CheckoutDraft = () => {
   const rentalSubtotal = booking?.total_price ?? days * dailyPrice;
   const dueAtPickup = Math.max(0, rentalSubtotal - CONFIRMATION_FEE_MAD);
 
-  const persistInfoIfNeeded = async () => {
-    if (!showEditor) return true;
+  const [savingInfo, setSavingInfo] = useState(false);
+
+  const handleSaveInfo = async () => {
     const nm = editName.trim();
     const ph = editPhone.trim();
     if (!nm) {
@@ -266,31 +267,36 @@ const CheckoutDraft = () => {
       toast.error("Please enter your phone number.");
       return false;
     }
-    // Update profile (source of truth) and mirror into the booking.
-    if (user?.id) {
-      const { error: pErr } = await supabase
-        .from("profiles")
-        .update({ full_name: nm, phone: ph })
-        .eq("user_id", user.id);
-      if (pErr) {
-        console.error(pErr);
-        toast.error("Could not save your info. Please try again.");
-        return false;
+    setSavingInfo(true);
+    try {
+      if (user?.id) {
+        const { error: pErr } = await supabase
+          .from("profiles")
+          .update({ full_name: nm, phone: ph })
+          .eq("user_id", user.id);
+        if (pErr) {
+          console.error(pErr);
+          toast.error("Could not save your info. Please try again.");
+          return false;
+        }
       }
+      await supabase
+        .from("bookings")
+        .update({
+          customer_name: nm,
+          customer_email: profileEmail,
+          customer_phone: ph,
+        })
+        .eq("id", bookingId!)
+        .eq("booking_status", "draft");
+      setProfileName(nm);
+      setProfilePhone(ph);
+      setEditing(false);
+      toast.success("Details saved");
+      return true;
+    } finally {
+      setSavingInfo(false);
     }
-    await supabase
-      .from("bookings")
-      .update({
-        customer_name: nm,
-        customer_email: profileEmail,
-        customer_phone: ph,
-      })
-      .eq("id", bookingId!)
-      .eq("booking_status", "draft");
-    setProfileName(nm);
-    setProfilePhone(ph);
-    setEditing(false);
-    return true;
   };
 
   const handlePay = async () => {
