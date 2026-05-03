@@ -87,6 +87,50 @@ export const ChatThread = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  // Renter verification banner state
+  const [isVerified, setIsVerified] = useState<boolean | null>(null);
+  const [verifyDismissed, setVerifyDismissed] = useState<boolean>(() => {
+    try {
+      return sessionStorage.getItem(`verifyBannerDismissed:${bookingId}`) === "1";
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    if (viewerRole !== "renter" || !user) {
+      setIsVerified(true);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("is_verified, verification_status")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (cancelled) return;
+      const verified =
+        !!data?.is_verified ||
+        ["verified", "approved"].includes(String(data?.verification_status || ""));
+      setIsVerified(verified);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user, viewerRole]);
+
+  const dismissVerifyBanner = () => {
+    try {
+      sessionStorage.setItem(`verifyBannerDismissed:${bookingId}`, "1");
+    } catch {
+      /* ignore */
+    }
+    setVerifyDismissed(true);
+  };
+  const showVerifyBanner =
+    viewerRole === "renter" && isVerified === false && !verifyDismissed;
+
   // Auto-scroll to bottom on new messages
   useEffect(() => {
     scrollRef.current?.scrollTo({
