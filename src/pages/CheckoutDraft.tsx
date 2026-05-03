@@ -725,6 +725,57 @@ const CheckoutDraft = () => {
                   )}
                 </div>
 
+                {cashplusActive && (
+                  <div className="rounded-lg border-2 border-[#9FE870] bg-[#9FE870]/10 p-4 space-y-3">
+                    <div className="flex items-center gap-2">
+                      <Banknote className="h-5 w-5 text-[#163300]" />
+                      <h4 className="font-semibold text-foreground">Pay with Cash Plus</h4>
+                    </div>
+                    <ol className="list-decimal list-inside text-sm text-foreground/90 space-y-1">
+                      <li>Note the payment code shown above.</li>
+                      <li>Visit any Cash Plus agent in Morocco.</li>
+                      <li>Give them the code + {UPFRONT_TOTAL_MAD} MAD.</li>
+                      <li>Your booking confirms automatically.</li>
+                    </ol>
+                    <a
+                      href="https://www.cashplus.ma/agences"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:underline"
+                    >
+                      <MapPin className="h-3.5 w-3.5" />
+                      Find nearest Cash Plus agent
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Clock className="h-3.5 w-3.5" />
+                      Code valid for 48 hours
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      onClick={handleVerifyCashplus}
+                      disabled={verifying}
+                    >
+                      {verifying ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Verifying…
+                        </>
+                      ) : (
+                        "I've paid — verify now"
+                      )}
+                    </Button>
+                    <p className="text-xs text-muted-foreground border-t border-border pt-2">
+                      Booking ref: <span className="font-mono">#{booking.id.slice(0, 8).toUpperCase()}</span>
+                      <br />
+                      You can close this page. Your booking will confirm automatically after payment.
+                    </p>
+                  </div>
+                )}
+
                 <label className="flex items-start gap-3 cursor-pointer rounded-lg border-2 border-border bg-muted/30 p-3 hover:bg-muted/50 transition-colors has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50 dark:has-[:checked]:bg-blue-950/30">
                   <Checkbox
                     checked={agreed}
