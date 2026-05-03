@@ -659,6 +659,8 @@ export type Database = {
       bike_types: {
         Row: {
           approval_status: string | null
+          approved_at: string | null
+          approved_by: string | null
           archived_at: string | null
           availability_status: string | null
           brand: string | null
@@ -707,6 +709,8 @@ export type Database = {
         }
         Insert: {
           approval_status?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
           archived_at?: string | null
           availability_status?: string | null
           brand?: string | null
@@ -755,6 +759,8 @@ export type Database = {
         }
         Update: {
           approval_status?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
           archived_at?: string | null
           availability_status?: string | null
           brand?: string | null
