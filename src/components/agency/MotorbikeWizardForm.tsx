@@ -200,7 +200,10 @@ export const MotorbikeWizardForm = ({
           }
         }
         // Backfill base from legacy daily_price if no tier yet
-        if (!next[1] && initialBase) next[1] = initialBase;
+        if (!next[1]) {
+          const legacyBase = (bt as any)?.daily_price;
+          if (legacyBase != null && Number(legacyBase) > 0) next[1] = String(legacyBase);
+        }
         setTierPrices(next);
 
         setLoading(false);
