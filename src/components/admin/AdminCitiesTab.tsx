@@ -304,6 +304,21 @@ export const AdminCitiesTab = () => {
         p_city_id: deletingCity.id,
       } as never);
       if (error) throw error;
+
+      // S9: Clean up the city's image folder in storage so we don't leak files.
+      try {
+        const folder = deletingCity.id;
+        const { data: files } = await supabase.storage
+          .from("city-images")
+          .list(folder, { limit: 1000 });
+        if (files && files.length > 0) {
+          const paths = files.map((f) => `${folder}/${f.name}`);
+          await supabase.storage.from("city-images").remove(paths);
+        }
+      } catch (e) {
+        console.warn("City image cleanup failed (non-fatal)", e);
+      }
+
       await supabase.rpc("log_audit_event", {
         _action: "city_deleted",
         _table_name: "service_cities",
