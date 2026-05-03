@@ -173,7 +173,7 @@ export const AdminCitiesTab = () => {
       };
       const { data, error } = await supabase
         .from("service_cities")
-        .insert(insertPayload)
+        .insert([insertPayload])
         .select("id")
         .single();
       if (error) throw error;
