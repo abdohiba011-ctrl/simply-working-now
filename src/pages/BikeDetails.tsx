@@ -259,9 +259,14 @@ const BikeDetails = () => {
   const handleDateRangeSelect = (range: DateRange | undefined) => {
     if (range?.from && range?.to) {
       const diff = differenceInDays(range.to, range.from);
-      if (diff > MAX_RENTAL_DAYS) {
-        toast.error(t('datePicker.maxDaysError').replace('{{maxDays}}', String(MAX_RENTAL_DAYS)));
-        setDateRange({ from: range.from, to: addDays(range.from, MAX_RENTAL_DAYS) });
+      if (diff > maxRentalDays) {
+        toast.error(t('datePicker.maxDaysError').replace('{{maxDays}}', String(maxRentalDays)));
+        setDateRange({ from: range.from, to: addDays(range.from, maxRentalDays) });
+        return;
+      }
+      if (diff > 0 && diff < minRentalDays) {
+        toast.error(`Minimum rental is ${minRentalDays} day${minRentalDays > 1 ? "s" : ""}`);
+        setDateRange({ from: range.from, to: addDays(range.from, minRentalDays) });
         return;
       }
     }
