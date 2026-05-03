@@ -1,54 +1,33 @@
-# Diagnosis: Anonymous users see 0 bikes in every city
+## Three small fixes — date picker only
 
-## Root cause
+### 1. Date picker fills the available width (mobile + desktop)
 
-Two views are defined with `security_invoker=on`:
+**Root cause:** The calendar table uses fixed cell widths (`w-9` / `sm:w-8` = 36px / 32px). On mobile, 7 cells × 36px = 252px sits left-aligned inside the full-width sheet, leaving a big white gap on the right. On desktop, the popover container is 640px but two months × ~252px each = ~504px, so extra space on the right.
 
-- `public.bikes_public` — used by `useBikes`/`useBike` to show bike listings to renters
-- `public.city_bike_counts` — used by `TopCitiesSection` to show "X bikes available" per city
+**Fix in `src/components/ui/calendar.tsx`:**
+- Make the calendar table stretch to its container: change `table` to `w-full border-collapse table-fixed`, change `head_row` and `row` from `flex` to plain table rows, use `head_cell`/`cell` as actual `<td>`-style flex children with `flex-1` widths instead of fixed `w-9`/`w-8`.
+- Concretely: replace `head_cell` width with `flex-1 min-w-0` and `cell` with `flex-1 aspect-square`. The day button inside (`day`) becomes `h-full w-full` so the hit area still grows with the cell.
+- Result: cells naturally expand on mobile (full sheet width) and on desktop (each month fills its half of the panel). Today/selected ring stays a circle because `aspect-square` keeps cells square.
 
-`security_invoker=on` means the view runs with the **caller's** RLS, not the view owner's. Both views internally read from `public.bikes`. The `bikes` table has these SELECT policies:
+**Fix in `src/components/BookingDatePicker.tsx`:**
+- Desktop: drop the fixed 640px popover width — set the panel to `w-auto` and let it size to its content, or keep a max but use `min(560, viewport-16)`. Recompute `left` using the actual measured panel width after mount so it never has trailing whitespace.
+- Mobile sheet: the inner `<div className="flex-1 overflow-y-auto px-2 pb-3">` adds 8px side padding — keep it minimal (`px-2`) but ensure the calendar inside uses `w-full` so it fills the sheet edge-to-edge minus that 8px.
 
-- `Owners can view own bikes` → authenticated only
-- `Admins can view all bikes` → authenticated only
-- `Authenticated can view available bikes` → **role = authenticated**
+### 2. Reverse date selection works (click later date first, then earlier)
 
-There is **no policy granting `anon` SELECT on `bikes`**. Result: when a logged-out renter loads the homepage or a city page, both views return empty/zero — even though `bike_types` itself is readable by anon and has 8 approved Casablanca bikes from a verified agency.
+**Current behavior in `BookingDatePicker.tsx` `handleSelect`:** when focus is `"to"` and the clicked date is before `prev.from`, it discards the original pickup and starts over. User wants it to swap.
 
-This explains:
-- "0 bikes available" on every city card on the homepage (network log confirms `city_bike_counts` returns `bikes_available: 0` for all 8 cities, including Casablanca which actually has 8 approved bikes).
-- Logged-out renters seeing no bikes in `useBikes` / bike detail pages that go through `bikes_public`.
-
-Logged-in users work fine because the `Authenticated can view available bikes` policy lets them through both views.
-
-## Fix
-
-Make both views run with definer privileges (they already filter to safe rows/columns, so this is the standard pattern for public catalog views):
-
-```sql
-ALTER VIEW public.bikes_public        SET (security_invoker = off);
-ALTER VIEW public.city_bike_counts    SET (security_invoker = off);
-GRANT SELECT ON public.bikes_public      TO anon, authenticated;
-GRANT SELECT ON public.city_bike_counts  TO anon, authenticated;
+**Fix:** rewrite the focus-`"to"` branch so that whenever a `prev.from` exists and the user clicks any second date, the range is normalized:
 ```
+const a = prev.from, b = clicked;
+const range = isBefore(b, a) ? { from: b, to: a } : { from: a, to: b };
+setRange(range); // then auto-close after 280ms (existing behavior)
+```
+Also when focus is `"from"` and a `prev.to` exists, apply the same normalization instead of clearing `to`. Net effect: clicking any two dates in any order produces a valid range; focus-jump from Pickup → Return still works for the empty-state flow.
 
-Safety check (already true today and preserved):
-- `bikes_public` excludes sensitive columns (`license_plate`, `notes`) — confirmed in earlier audit.
-- `city_bike_counts` only exposes city id, name, and an aggregate count — no PII.
-- The base `bikes` table still denies direct anon SELECT.
-- Both views internally already filter to: approved + active + verified-agency + non-archived + available.
+### 3. Hide the floating "scroll to top" arrow on bike details pages
 
-No CHECK constraints, no triggers, no schema changes. One migration file.
+In `src/components/ScrollToTopButton.tsx`, the `isLongPage` check includes `location.pathname.startsWith('/bike/')`. Remove that clause so the arrow no longer appears on `/bike/:id`. All other pages (`/`, `/listings`, etc.) keep it.
 
-## Verification after migration
-
-1. As anon (logged out), `GET /rest/v1/city_bike_counts` returns `bikes_available: 8` for Casablanca.
-2. As anon, `GET /rest/v1/bikes_public?available=eq.true` returns rows.
-3. Homepage city cards show real counts; `/rent/casablanca` shows bikes without login.
-4. No new columns leak (license_plate, notes still hidden).
-
-## Files changed
-
-- New migration: `supabase/migrations/<timestamp>_anon_view_access.sql` (the 4 statements above).
-
-No frontend changes needed — `TopCitiesSection`, `useBikes`, `RentCity` already query the right views.
+### Out of scope (untouched)
+Search bar layout, bike cards, sticky mobile booking bar, availability badge, URL-param persistence, all other Phase 1 work.
