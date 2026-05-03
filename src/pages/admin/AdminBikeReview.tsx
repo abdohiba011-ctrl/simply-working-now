@@ -430,7 +430,7 @@ const AdminBikeReview = () => {
               <button
                 key={q}
                 type="button"
-                onClick={() => setReason(q === "Other (write reason)" ? "" : q)}
+                onClick={() => setReason(q.startsWith("Other") ? "" : q)}
                 className="rounded-full border border-border bg-muted px-2.5 py-1 text-xs hover:bg-muted/70"
               >
                 {q}
