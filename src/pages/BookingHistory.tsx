@@ -254,11 +254,12 @@ const BookingHistory = () => {
     const deliveryInfo = getDeliveryStatus(booking.status);
     const DeliveryIcon = deliveryInfo.icon;
     const days = Math.ceil((new Date(booking.return_date).getTime() - new Date(booking.pickup_date).getTime()) / (1000 * 60 * 60 * 24));
+    const isCashplusDraft = booking.booking_status === 'draft' && booking.payment_method === 'cashplus';
 
     return (
       <Card 
-        className={`${isPast ? 'opacity-80 hover:opacity-100' : 'hover:shadow-lg'} transition-all cursor-pointer border-2 hover:border-foreground/20 group`}
-        onClick={() => navigate(`/booking/${booking.id}`)}
+        className={`${isPast ? 'opacity-80 hover:opacity-100' : 'hover:shadow-lg'} transition-all cursor-pointer border-2 hover:border-foreground/20 group ${isCashplusDraft ? 'border-[#9FE870]/60' : ''}`}
+        onClick={() => navigate(isCashplusDraft ? `/checkout/${booking.id}` : `/booking/${booking.id}`)}
       >
         <CardContent className="p-6">
           <div className="flex flex-col sm:flex-row gap-4">
@@ -268,7 +269,13 @@ const BookingHistory = () => {
                 alt={booking.bikes.bike_type.name}
                 className="w-full sm:w-32 h-32 object-cover rounded-lg"
               />
-              <StatusBadge status={booking.status} className="absolute top-2 right-2" />
+              {isCashplusDraft ? (
+                <Badge className="absolute top-2 right-2 bg-[#9FE870] text-[#163300] hover:bg-[#9FE870]">
+                  💵 Awaiting Cash Plus
+                </Badge>
+              ) : (
+                <StatusBadge status={booking.status} className="absolute top-2 right-2" />
+              )}
             </div>
             <div className="flex-1 space-y-3">
               <div>
