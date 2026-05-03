@@ -102,11 +102,15 @@ const BookingConfirmed = () => {
     load();
   }, [bookingId, navigate]);
 
+  const isCashplus = booking?.payment_method === "cashplus";
+
   // Poll for payment_status
   useEffect(() => {
     if (!bookingId || phase !== "waiting") return;
     let cancelled = false;
     let timer: number | undefined;
+    const interval = isCashplus ? POLL_INTERVAL_CASHPLUS_MS : POLL_INTERVAL_MS;
+    const timeout = isCashplus ? POLL_TIMEOUT_CASHPLUS_MS : POLL_TIMEOUT_MS;
 
     const tick = async () => {
       if (cancelled) return;
@@ -126,11 +130,11 @@ const BookingConfirmed = () => {
       }
       const e = Date.now() - startedAt.current;
       setElapsed(e);
-      if (e >= POLL_TIMEOUT_MS) {
+      if (e >= timeout) {
         setPhase("timeout");
         return;
       }
-      timer = window.setTimeout(tick, POLL_INTERVAL_MS);
+      timer = window.setTimeout(tick, interval);
     };
 
     tick();
@@ -138,7 +142,7 @@ const BookingConfirmed = () => {
       cancelled = true;
       if (timer) window.clearTimeout(timer);
     };
-  }, [bookingId, phase]);
+  }, [bookingId, phase, isCashplus]);
 
   const handleVerifyNow = async () => {
     if (!bookingId || verifying) return;
