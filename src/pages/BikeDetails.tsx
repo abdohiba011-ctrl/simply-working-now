@@ -514,34 +514,38 @@ const BikeDetails = () => {
             </div>
             <span className="text-xs font-medium text-foreground">Free</span>
           </button>
-          <button
-            type="button"
-            onClick={() => setDeliveryMethod("delivery")}
-            className={cn(
-              "w-full flex flex-col p-3 rounded-md border-2 text-left transition-all",
-              deliveryMethod === "delivery"
-                ? "border-primary bg-primary/5"
-                : "border-border hover:border-primary/40"
-            )}
-          >
-            <div className="flex items-center justify-between w-full">
-              <div>
-                <p className="text-sm font-semibold text-foreground">Home delivery</p>
-                <p className="text-xs text-muted-foreground">Delivered to your address</p>
+          {resolvedAgency.deliveryOffered && (
+            <button
+              type="button"
+              onClick={() => setDeliveryMethod("delivery")}
+              className={cn(
+                "w-full flex flex-col p-3 rounded-md border-2 text-left transition-all",
+                deliveryMethod === "delivery"
+                  ? "border-primary bg-primary/5"
+                  : "border-border hover:border-primary/40"
+              )}
+            >
+              <div className="flex items-center justify-between w-full">
+                <div>
+                  <p className="text-sm font-semibold text-foreground">Home delivery</p>
+                  <p className="text-xs text-muted-foreground">Delivered to your address</p>
+                </div>
+                <span className="text-xs font-medium text-foreground">
+                  {agencyDeliveryFee > 0 ? `+${agencyDeliveryFee} MAD` : "Free"}
+                </span>
               </div>
-              <span className="text-xs font-medium text-foreground">+25 MAD</span>
-            </div>
-            {deliveryMethod === "delivery" && (
-              <div className="mt-3 w-full" onClick={(e) => e.stopPropagation()}>
-                <Input
-                  placeholder="Enter delivery address"
-                  value={deliveryAddress}
-                  onChange={(e) => setDeliveryAddress(e.target.value)}
-                  className="h-10 text-sm"
-                />
-              </div>
-            )}
-          </button>
+              {deliveryMethod === "delivery" && (
+                <div className="mt-3 w-full" onClick={(e) => e.stopPropagation()}>
+                  <Input
+                    placeholder="Enter delivery address"
+                    value={deliveryAddress}
+                    onChange={(e) => setDeliveryAddress(e.target.value)}
+                    className="h-10 text-sm"
+                  />
+                </div>
+              )}
+            </button>
+          )}
         </div>
 
         {/* Cost breakdown — three-tier */}
