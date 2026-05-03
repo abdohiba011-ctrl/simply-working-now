@@ -225,6 +225,7 @@ export const BookingDatePicker = ({
   align = "start",
   panelOnly = false,
   disabledRanges,
+  closedWeekdays,
 }: BookingDatePickerProps) => {
   const isMobile = useIsMobile();
   const [open, setOpen] = useState(false);
