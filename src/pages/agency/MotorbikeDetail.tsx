@@ -28,6 +28,23 @@ import {
 import { cn } from "@/lib/utils";
 import { BikeApprovalBadge } from "@/components/agency/BikeApprovalBadge";
 import { toast } from "sonner";
+import { MotorbikeWizardDialog } from "@/components/agency/MotorbikeWizardDialog";
+import {
+  BIKE_CATEGORIES, FEATURE_LABELS, FeatureKey,
+  licenseLabel, CANCELLATION_OPTIONS,
+} from "@/lib/bikeFeatures";
+
+const empty = (v: unknown): boolean =>
+  v === null || v === undefined || (typeof v === "string" && v.trim() === "");
+
+const Field = ({ label, value }: { label: string; value: React.ReactNode }) => (
+  <div>
+    <p className="text-xs uppercase tracking-wide text-muted-foreground">{label}</p>
+    <p className={`mt-0.5 text-sm ${empty(value) ? "text-muted-foreground/60" : "font-medium"}`}>
+      {empty(value) ? "—" : value}
+    </p>
+  </div>
+);
 
 interface GalleryImage {
   id?: string;
