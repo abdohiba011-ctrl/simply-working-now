@@ -32,6 +32,7 @@ const Panel = ({
   isMobile,
   onClose,
   disabledRanges,
+  closedWeekdays,
 }: {
   range: DateRange | undefined;
   setRange: (r: DateRange | undefined) => void;
@@ -40,6 +41,7 @@ const Panel = ({
   isMobile: boolean;
   onClose: () => void;
   disabledRanges?: { from: Date; to: Date }[];
+  closedWeekdays?: number[];
 }) => {
   const days = range?.from && range?.to ? differenceInDays(range.to, range.from) : 0;
 
