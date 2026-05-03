@@ -131,6 +131,13 @@ const AdminBikeReview = () => {
     } else {
       setBikeCityName(null);
     }
+    const { data: tierRows } = await supabase
+      .from("bike_pricing_tiers")
+      .select("min_days, daily_price_mad")
+      .eq("bike_type_id", id)
+      .order("min_days", { ascending: true });
+    setTiers((tierRows as any[]) || []);
+
     setLoading(false);
   };
 
