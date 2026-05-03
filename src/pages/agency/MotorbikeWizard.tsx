@@ -217,7 +217,7 @@ const MotorbikeWizard = () => {
       const i = featuresArr.indexOf("helmet"); if (i >= 0) featuresArr.splice(i, 1);
     }
 
-    const payload: Record<string, unknown> = {
+    const payload = {
       name: name.trim() || "Untitled draft",
       brand: brand || null,
       model: model || null,
