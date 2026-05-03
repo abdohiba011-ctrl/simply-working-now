@@ -407,10 +407,7 @@ const BikeDetails = () => {
           </div>
           <span className="text-sm text-muted-foreground pb-1">/day</span>
         </div>
-        <div className="space-y-1">
-          <p className="text-xs text-foreground/70 font-medium">Save 10% on weekly rentals</p>
-          <p className="text-xs text-foreground/70 font-medium">Save 25% on monthly rentals</p>
-        </div>
+        {/* Tiered pricing badges removed in Phase 1 — Phase 2 will add real per-bike tiers */}
 
         <div className="border-t border-border/60" />
 
