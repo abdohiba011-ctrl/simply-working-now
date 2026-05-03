@@ -26,11 +26,11 @@ import {
 } from "@/lib/bikeFeatures";
 
 const QUICK_REASONS = [
-  "Photos unclear or low quality",
-  "Missing required information",
-  "Inaccurate specifications",
-  "Pricing seems wrong",
-  "Other (write reason)",
+  "Photos are unclear or low quality",
+  "Missing required information in listing",
+  "Inaccurate specifications provided",
+  "Pricing information seems incorrect",
+  "Other (please write a detailed reason)",
 ];
 
 interface BikeType {
