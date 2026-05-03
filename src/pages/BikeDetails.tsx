@@ -70,7 +70,7 @@ const BikeDetails = () => {
 
   const { data: bike, isLoading: isLoadingBike } = useBike(id || "");
   const { data: detailImages, isLoading: isLoadingImages } = useBikeTypeImages(bike?.bike_type_id || "");
-  const { data: pricingTiers } = usePricingTiers();
+  
 
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [pickupTime, setPickupTime] = useState<string>("08:00");
