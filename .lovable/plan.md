@@ -1,88 +1,99 @@
+
 ## Goal
 
-Make agency-side motorbike management feel like one continuous flow:
+Today, both **Renter Clients** and **Business Clients** tabs in the admin panel open the same `/admin/clients/:id` page (`AdminClientDetails.tsx`), which is designed for individual renters (trust score, ID verification, renter bookings, etc.). The user wants business users (agencies / individual owners) to have a **completely separate experience** built for businesses, and the **Verifications** screen for businesses to show business verification submissions — not renter ID verifications.
 
-1. **Add Motorbike** opens as a modal/pop-up (not a separate page).
-2. **Motorbike Detail** shows every field the agency entered (currently most are hidden).
-3. **Edit** opens the same modal pre-filled with the bike's data.
-4. **Admin Bike Review** displays the same complete picture so verification is based on real data.
+This plan keeps the renter flow exactly as-is and adds a parallel, dedicated business flow.
 
-No business-logic changes — only UI surface + a couple of small alignments on the admin side.
+## Scope of changes
 
----
+### 1. New dedicated "Business Details" page
 
-## What changes
+**New file:** `src/pages/admin/AdminBusinessDetails.tsx`
+**New route:** `/admin/business/:id` (lazy-loaded in `src/App.tsx`)
 
-### 1. Wizard becomes a modal (`MotorbikeWizardDialog`)
+Layout (different from renter page — business-oriented, not trust/ID-oriented):
 
-- New component: `src/components/agency/MotorbikeWizardDialog.tsx`
-  - Wraps the existing 5-step wizard body in a `Dialog` (`max-w-3xl`, scrollable content, sticky footer with Back / Next / Save).
-  - Props: `open`, `onOpenChange`, `bikeId?` (undefined = create, string = edit), `onSaved(id)`.
-  - Reuses the existing wizard logic by extracting the body of `MotorbikeWizard.tsx` into a shared `MotorbikeWizardForm` (same state, same save flow, same toasts, same re-verification rules — nothing about the bike lifecycle changes).
-- `MotorbikeWizard.tsx` (page route) is kept as a thin fallback that renders the form inside `AgencyLayout`, so deep links like `/agency/motorbikes/:id/edit` and `/agency/motorbikes/new` still work (used by emails/notifications).
+- **Header card**
+  - Business logo (editable) + business name (editable inline)
+  - "Business User" label under name (shows type: Rental Shop / Individual Owner / Unspecified)
+  - Copy buttons for email, phone, business ID
+  - Status chips: Verification status, Subscription plan (Free / Pro / Business), Locked / Suspended
+  - Action buttons:
+    - **Open Agency Dashboard** (opens agency dashboard view of this business in a new tab)
+    - **Send Notification**
+    - **Verify / Request Re-verification**
+    - **Suspend / Unsuspend**
+    - **Block / Unblock**
 
-### 2. Triggers from "Add motorbike" / "Edit"
+- **Tabs** (business-specific, no trust score):
+  1. **Overview** — business profile (RC, ICE, address, city, neighborhood, lat/lng, delivery offered, delivery fee, delivery radius, bio, phone, owner profile link, account age, last active)
+  2. **Verification** — agency verification submission: documents (RC, AE card, ICE cert, owner ID front/back), status, history, approve / reject with reason. Reuses the document fetching logic from `AdminAgencyVerifications.tsx`.
+  3. **Fleet** — list of bikes owned by this business with approval/business status, daily price, link to `/admin/bikes/:id` review page; counts of approved / pending / rejected
+  4. **Bookings** — bookings where `assigned_to_business = user_id`, with status, dates, renter, totals. Link to `/admin/bookings/:id`
+  5. **Wallet & Subscription** — wallet balance, recent `agency_wallet_transactions`, subscription plan, trial / grace period dates, withdrawal requests
+  6. **Notes & Files** — internal admin notes and file attachments (reuses `client_files` and notes patterns already used for renters, scoped to this user_id)
+  7. **Timeline** — `client_timeline_events` for this user_id (reused as-is) plus business-specific events (verification approved/rejected, fleet changes)
 
-Update these to open the dialog instead of navigating:
-- `src/pages/agency/Motorbikes.tsx`
-  - "Add motorbike" button (header + empty-state) → `setOpen(true)` with no `bikeId`.
-  - Table/Grid "Edit" → `setOpen(true)` with that bike's id.
-- `src/pages/agency/MotorbikeDetail.tsx`
-  - Top "Edit" button and "Edit and resubmit for review" button → open the dialog with current id.
-- `src/pages/agency/Dashboard.tsx`
-  - "Add motorbike" quick action → open the dialog (lifted state via a small `useDisclosure` hook or local state).
+- No trust score tab. No ID verification tab (those stay on renter side).
 
-After save, the dialog calls `onSaved(id)` which refreshes the list (`refresh()` from `useAgencyBikes`) or re-fetches the detail page (`useAgencyBike` already realtime).
+### 2. Update routing for business clients
 
-### 3. Motorbike Detail — show everything
+**File:** `src/components/admin/AdminBusinessClientsTab.tsx`
+- Change the row "View" buttons (currently `navigate('/admin/clients/${biz.id}')`) to `navigate('/admin/business/${biz.id}')`.
 
-`src/pages/agency/MotorbikeDetail.tsx` keeps its current header, gallery, status banners, availability switch, archive flow. Below those, add read-only sections that mirror the wizard exactly (same labels, same icons, same `bikeFeatures` lookups used by `AdminBikeReview`):
+Renter rows in `AdminUnifiedClientsTab.tsx` are unchanged — they still go to `/admin/clients/:id`.
 
-- **Basic info** — name, brand, model, year, color, category
-- **Specifications** — engine cc, fuel, transmission, mileage, license required, min age, min experience
-- **What's included** — helmets count, helmet included flag, full feature chips
-- **Pricing & policies** — daily price, deposit, min/max rental days, cancellation policy (full title + description from `CANCELLATION_OPTIONS`)
-- **Description** — full text (already present, kept)
-- **Pickup location** — already present, kept
+### 3. Verifications screen split
 
-Empty values render as a muted "—" (same `Field` helper pattern as the admin review page).
+Today `/admin/verifications` (`AdminVerifications.tsx`) lists only pending **renter** profiles, but the user expects the verifications surface tied to business clients to show **business** verification requests.
 
-### 4. Admin Bike Review — fill the gaps
+- Keep `/admin/verifications` (renter ID verifications) as-is — this is the renter-side surface.
+- Surface **business verifications** through:
+  - A "Pending business verifications" pill/count at the top of the **Business Clients** tab (already partly there) that filters the table to pending ones, AND
+  - The new "Verification" tab inside `AdminBusinessDetails` (full review + approve/reject UI moved/duplicated from `AdminAgencyVerifications.tsx`).
+- `AdminAgencyVerifications.tsx` (the standalone bulk page) stays available at `/admin/agencies/verifications` as a queue view, but each row's "Open" action now navigates to `/admin/business/:id` (Verification tab) instead of opening its inline dialog. This makes business verification reviews live inside the new business detail page, fully separated from renter verifications.
 
-`src/pages/admin/AdminBikeReview.tsx` already mirrors the wizard. Small alignments only so admin sees exactly what the agency entered:
+### 4. Data sources (no schema changes)
 
-- Show **bike-specific pickup** (`bike.city_id` → service_cities name, `bike.neighborhood`) in addition to the agency fallback.
-- Show **weekly_price / monthly_price** if set (currently hidden).
-- Show **helmet_included** flag alongside the helmets count.
+All data comes from existing tables — no migrations needed:
+- `profiles` (user_type='business', business_type)
+- `agencies` (business profile + verification_status + suspended_*)
+- `business_application_documents` (verification docs)
+- `bike_types` (fleet)
+- `bookings` (where assigned_to_business = user_id)
+- `agency_wallets`, `agency_wallet_transactions`, `agency_subscriptions`, `agency_withdrawal_requests`
+- `client_files`, `client_timeline_events` (reused, scoped by user_id)
 
-No new tables, no schema changes.
+Existing RLS already grants admins full read access to all of these.
 
----
+## Out of scope (explicitly NOT changing)
 
-## Files touched
+- Renter `AdminClientDetails` page — untouched
+- `AdminUnifiedClientsTab` (renter list) — untouched
+- Bike re-verification flow, lifecycle triggers, public visibility logic — untouched
+- Renter-side UI, public/renter pages — untouched
+- Agency-side wizard / dashboards — untouched
+- Database schema, RLS, triggers — untouched
 
-- **new** `src/components/agency/MotorbikeWizardDialog.tsx`
-- **new** `src/components/agency/MotorbikeWizardForm.tsx` (extracted body)
-- **edit** `src/pages/agency/MotorbikeWizard.tsx` (now just renders the form inside `AgencyLayout`)
-- **edit** `src/pages/agency/Motorbikes.tsx` (open modal instead of navigating)
-- **edit** `src/pages/agency/MotorbikeDetail.tsx` (modal trigger + full read-only sections)
-- **edit** `src/pages/agency/Dashboard.tsx` (modal trigger from quick action)
-- **edit** `src/pages/admin/AdminBikeReview.tsx` (pickup, weekly/monthly, helmet_included)
+## Files
 
-## Out of scope (not touched)
+**Create**
+- `src/pages/admin/AdminBusinessDetails.tsx`
+- `src/components/admin/business-details/` (BusinessHeaderSection, BusinessOverviewTab, BusinessVerificationTab, BusinessFleetTab, BusinessBookingsTab, BusinessWalletTab, BusinessNotesFilesTab, BusinessTimelineTab, index.ts, types.ts)
+- `src/hooks/useBusinessDetails.ts`
 
-- Bike lifecycle, re-verification triggers, RPCs, RLS, status rules.
-- Public renter UI (`BikeDetails`, `BikeCard`).
-- Mobile layout of the admin review page.
-- Trigger consolidation.
-- Translations beyond reusing existing keys (the new sections use the same labels already shipped via `bikeFeatures.ts`).
-
----
+**Edit**
+- `src/App.tsx` — add `/admin/business/:id` route
+- `src/components/admin/AdminBusinessClientsTab.tsx` — re-route view buttons to `/admin/business/:id`
+- `src/pages/admin/AdminAgencyVerifications.tsx` — row action navigates to `/admin/business/:id` (Verification tab) instead of inline dialog (keep dialog as fallback if you prefer; will confirm during implementation)
 
 ## QA after implementation
 
-- Add motorbike from Motorbikes page → modal opens, 5 steps work, save closes modal, list refreshes.
-- Edit existing approved bike → modal opens pre-filled; price-only edit stays live; spec/photo edits flip to pending (unchanged behavior).
-- Detail page now shows every field that was entered, with "—" for empty ones.
-- Deep link `/agency/motorbikes/:id/edit` still loads the page version of the wizard.
-- Admin review page shows bike-level pickup when set, weekly/monthly price when set, helmet-included flag.
+- Renter row → still opens existing `/admin/clients/:id` (unchanged UI).
+- Business row → opens new `/admin/business/:id` with business-only tabs and no trust score.
+- Verification tab inside business details shows uploaded docs and lets admin approve/reject; renter `/admin/verifications` no longer mixes business cases.
+- "Open Agency Dashboard" opens the agency view for that business.
+- All actions respect existing RLS (no new policies).
+
+Awaiting approval before switching to build mode.
