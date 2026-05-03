@@ -52,25 +52,6 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
-const CITIES = [
-  "Casablanca",
-  "Marrakech",
-  "Rabat",
-  "Tangier",
-  "Agadir",
-  "Fes",
-  "Dakhla",
-  "Essaouira",
-  "Meknes",
-  "Oujda",
-  "Tetouan",
-  "El Jadida",
-  "Kenitra",
-  "Nador",
-  "Ifrane",
-  "Chefchaouen",
-  "Other",
-];
 
 function SignupExtraInner() {
   const t = useT();
@@ -124,23 +105,10 @@ function SignupExtraInner() {
   const numBikes = watch("numBikes");
 
   const { cities: dbCities, locations: dbLocations } = useServiceCities();
-  const cityList = useMemo(() => {
-    const names = new Set<string>();
-    const out: string[] = [];
-    for (const c of dbCities) {
-      if (!names.has(c.name)) {
-        names.add(c.name);
-        out.push(c.name);
-      }
-    }
-    for (const c of CITIES) {
-      if (!names.has(c)) {
-        names.add(c);
-        out.push(c);
-      }
-    }
-    return out;
-  }, [dbCities]);
+  const availableCount = useMemo(
+    () => dbCities.filter((c) => c.is_available && !c.is_coming_soon).length,
+    [dbCities],
+  );
   const neighborhoodOptions = useMemo(() => {
     if (!city) return [] as string[];
     const matched = dbCities.find(
@@ -233,13 +201,26 @@ function SignupExtraInner() {
                   <SelectValue placeholder={t("select_placeholder")} />
                 </SelectTrigger>
                 <SelectContent>
-                  {cityList.map((c) => (
-                    <SelectItem key={c} value={c}>
-                      {c}
-                    </SelectItem>
-                  ))}
+                  {dbCities.map((c) => {
+                    const disabled = !c.is_available || c.is_coming_soon;
+                    return (
+                      <SelectItem key={c.id} value={c.name} disabled={disabled}>
+                        <span className="flex items-center justify-between gap-2 w-full">
+                          <span>{c.name}</span>
+                          {disabled && (
+                            <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                              Coming soon
+                            </span>
+                          )}
+                        </span>
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
+              <p className="mt-1 text-xs text-muted-foreground">
+                We currently operate in {availableCount} cities. More coming soon.
+              </p>
               {errors.city && (
                 <p className="mt-1 text-xs text-red-600">{errors.city.message}</p>
               )}

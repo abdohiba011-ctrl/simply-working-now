@@ -1,33 +1,49 @@
-## Three small fixes — date picker only
+## Goal
 
-### 1. Date picker fills the available width (mobile + desktop)
+Make the agency signup city dropdown reflect exactly what the admin manages in `service_cities`: show available cities as selectable, and coming-soon cities as visible but disabled with a "Coming soon" label. Remove the hardcoded city list so the admin is the single source of truth.
 
-**Root cause:** The calendar table uses fixed cell widths (`w-9` / `sm:w-8` = 36px / 32px). On mobile, 7 cells × 36px = 252px sits left-aligned inside the full-width sheet, leaving a big white gap on the right. On desktop, the popover container is 640px but two months × ~252px each = ~504px, so extra space on the right.
+## Current State
 
-**Fix in `src/components/ui/calendar.tsx`:**
-- Make the calendar table stretch to its container: change `table` to `w-full border-collapse table-fixed`, change `head_row` and `row` from `flex` to plain table rows, use `head_cell`/`cell` as actual `<td>`-style flex children with `flex-1` widths instead of fixed `w-9`/`w-8`.
-- Concretely: replace `head_cell` width with `flex-1 min-w-0` and `cell` with `flex-1 aspect-square`. The day button inside (`day`) becomes `h-full w-full` so the hit area still grows with the cell.
-- Result: cells naturally expand on mobile (full sheet width) and on desktop (each month fills its half of the panel). Today/selected ring stays a circle because `aspect-square` keeps cells square.
+- `SignupExtra.tsx` merges DB cities with a hardcoded `CITIES` array (Casablanca, Marrakech, Rabat, Tangier... Other). This is why the dropdown shows duplicates ("Marrakesh" + "Marrakech") and cities that the admin marked unavailable.
+- `useServiceCities.ts` filters out `is_available === false`, so coming-soon cities never reach the UI.
+- Admin DB currently has 3 available (Casablanca, Marrakesh, Rabat) and 5 coming-soon (Fes, Tangier, Agadir, Essaouira, Chefchaouen).
 
-**Fix in `src/components/BookingDatePicker.tsx`:**
-- Desktop: drop the fixed 640px popover width — set the panel to `w-auto` and let it size to its content, or keep a max but use `min(560, viewport-16)`. Recompute `left` using the actual measured panel width after mount so it never has trailing whitespace.
-- Mobile sheet: the inner `<div className="flex-1 overflow-y-auto px-2 pb-3">` adds 8px side padding — keep it minimal (`px-2`) but ensure the calendar inside uses `w-full` so it fills the sheet edge-to-edge minus that 8px.
+## Changes
 
-### 2. Reverse date selection works (click later date first, then earlier)
+### 1. `src/hooks/useServiceCities.ts`
+- Stop filtering out unavailable cities. Return `is_available` and `is_coming_soon` flags on each city.
+- Keep neighborhood filtering by `is_active`.
 
-**Current behavior in `BookingDatePicker.tsx` `handleSelect`:** when focus is `"to"` and the clicked date is before `prev.from`, it discards the original pickup and starts over. User wants it to swap.
-
-**Fix:** rewrite the focus-`"to"` branch so that whenever a `prev.from` exists and the user clicks any second date, the range is normalized:
+```ts
+export interface ServiceCityOption {
+  id: string;
+  name: string;
+  is_available: boolean;
+  is_coming_soon: boolean;
+}
 ```
-const a = prev.from, b = clicked;
-const range = isBefore(b, a) ? { from: b, to: a } : { from: a, to: b };
-setRange(range); // then auto-close after 280ms (existing behavior)
-```
-Also when focus is `"from"` and a `prev.to` exists, apply the same normalization instead of clearing `to`. Net effect: clicking any two dates in any order produces a valid range; focus-jump from Pickup → Return still works for the empty-state flow.
 
-### 3. Hide the floating "scroll to top" arrow on bike details pages
+### 2. `src/pages/auth/SignupExtra.tsx`
+- Delete the hardcoded `CITIES` array and the merge logic (`cityList`).
+- Render dropdown directly from `dbCities` ordered by `display_order` (already done by hook).
+- For coming-soon cities: render `<SelectItem disabled>` with the label `"<City> — Coming soon"` (translated).
+- Selecting an available city continues to populate neighborhoods from `service_locations`.
+- Show a subtle helper line under the dropdown: "We currently operate in {N} cities. More coming soon."
 
-In `src/components/ScrollToTopButton.tsx`, the `isLongPage` check includes `location.pathname.startsWith('/bike/')`. Remove that clause so the arrow no longer appears on `/bike/:id`. All other pages (`/`, `/listings`, etc.) keep it.
+### 3. `src/pages/auth/Signup.tsx`
+- Same treatment if it has a city dropdown (verify and apply same pattern: DB-driven, coming-soon disabled).
 
-### Out of scope (untouched)
-Search bar layout, bike cards, sticky mobile booking bar, availability badge, URL-param persistence, all other Phase 1 work.
+### 4. i18n strings
+Add to `en.json`, `fr.json`, `ar.json` under `mockAuth`:
+- `coming_soon_suffix`: "Coming soon" / "Bientôt disponible" / "قريبًا"
+- `cities_helper`: "We currently operate in {{count}} cities. More coming soon." (+ FR/AR)
+
+## Admin Linkage
+
+No admin code changes needed — admin already writes to `service_cities` with `is_available` / `is_coming_soon`. Once this hook stops filtering, every change in the admin panel (toggle availability, add a city, mark coming-soon) propagates to the agency signup dropdown immediately on next page load.
+
+## Out of Scope
+
+- No DB schema changes.
+- Renter-side city selectors and `TopCitiesSection` already respect these flags — untouched.
+- No realtime subscription on the signup page (one-shot fetch is enough for a signup form).
