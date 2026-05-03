@@ -187,6 +187,22 @@ export const MotorbikeWizardForm = ({
         const ids = (imgRows || []).map((r: { id: string }) => r.id);
         setInitialPhotoIds(ids);
         setPhotoCount(ids.length);
+
+        // Load existing pricing tiers
+        const { data: tierRows } = await supabase
+          .from("bike_pricing_tiers")
+          .select("min_days, daily_price_mad")
+          .eq("bike_type_id", bikeIdProp);
+        const next: Record<TierMinDays, string> = { 1: "", 3: "", 7: "", 15: "", 30: "" };
+        for (const r of (tierRows as { min_days: number; daily_price_mad: number }[] | null) || []) {
+          if ((TIER_MIN_DAYS as readonly number[]).includes(r.min_days)) {
+            next[r.min_days as TierMinDays] = String(r.daily_price_mad);
+          }
+        }
+        // Backfill base from legacy daily_price if no tier yet
+        if (!next[1] && initialBase) next[1] = initialBase;
+        setTierPrices(next);
+
         setLoading(false);
       } else if (isVerified) {
         const { data: created, error } = await supabase
