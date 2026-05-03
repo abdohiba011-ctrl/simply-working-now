@@ -72,6 +72,19 @@ const MotorbikeDetail = () => {
   const [busy, setBusy] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [refreshTick, setRefreshTick] = useState(0);
+  const [fullBike, setFullBike] = useState<Record<string, any> | null>(null);
+
+  useEffect(() => {
+    if (!id) return;
+    (async () => {
+      const { data } = await supabase
+        .from("bike_types")
+        .select("*")
+        .eq("id", id)
+        .maybeSingle();
+      setFullBike(data as Record<string, any> | null);
+    })();
+  }, [id, refreshTick]);
 
   useEffect(() => {
     setAvailable((bike?.availability_status ?? "available") === "available");
