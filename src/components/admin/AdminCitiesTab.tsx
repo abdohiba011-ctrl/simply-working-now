@@ -868,6 +868,9 @@ export const AdminCitiesTab = () => {
                   cityId={editingCity.id}
                   currentImageUrl={editingCity.image_url}
                   onImageChange={(url) => setEditingCity({ ...editingCity, image_url: url })}
+                  focalX={editingCity.image_focal_x ?? 0.5}
+                  focalY={editingCity.image_focal_y ?? 0.5}
+                  onFocalChange={(x, y) => setEditingCity({ ...editingCity, image_focal_x: x, image_focal_y: y })}
                 />
               </div>
               <div className="space-y-2">
