@@ -687,9 +687,19 @@ const CheckoutDraft = () => {
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between text-muted-foreground">
                     <span>
-                      {dailyPrice} MAD × {days} {days === 1 ? "day" : "days"}
+                      Rental ({Math.round(dailyPrice)} MAD × {days} {days === 1 ? "day" : "days"})
                     </span>
-                    <span>{rentalSubtotal} MAD</span>
+                    <span>{baselineSubtotal} MAD</span>
+                  </div>
+                  {volumeDiscount > 0 && (
+                    <div className="flex justify-between" style={{ color: "#22C55E" }}>
+                      <span>Volume discount</span>
+                      <span>-{volumeDiscount} MAD</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>Delivery</span>
+                    <span>Free</span>
                   </div>
                   <Separator />
                   <div className="flex justify-between font-bold text-base">
