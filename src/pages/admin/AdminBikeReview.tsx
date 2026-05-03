@@ -78,7 +78,7 @@ const AdminBikeReview = () => {
   const [rejectOpen, setRejectOpen] = useState(false);
   const [confirmApprove, setConfirmApprove] = useState(false);
   const [reason, setReason] = useState("");
-  const [lightbox, setLightbox] = useState<string | null>(null);
+  
   const [reReview, setReReview] = useState(false);
 
   const load = async () => {
