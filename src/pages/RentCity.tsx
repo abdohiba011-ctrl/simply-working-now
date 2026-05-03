@@ -46,6 +46,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { BookingDatePicker } from "@/components/BookingDatePicker";
 
 // Neighborhoods are loaded live from `service_locations` per city — no hardcoded list.
 // This means whenever an admin adds/edits/disables a neighborhood, the renter
