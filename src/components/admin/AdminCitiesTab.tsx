@@ -618,6 +618,7 @@ export const AdminCitiesTab = () => {
                           src={city.image_url}
                           alt={city.name}
                           className="w-10 h-10 rounded object-cover flex-shrink-0"
+                          style={{ objectPosition: `${(city.image_focal_x ?? 0.5) * 100}% ${(city.image_focal_y ?? 0.5) * 100}%` }}
                           onError={(e) => {
                             (e.target as HTMLImageElement).src = "/placeholder.svg";
                           }}
