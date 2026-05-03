@@ -440,6 +440,8 @@ const BikeDetails = () => {
         _return_date: end,
         _delivery_method: deliveryMethod,
         _pickup_location: deliveryMethod === "delivery" ? deliveryAddress || null : (bike.location || null),
+        _pickup_time: pickupTime,
+        _return_time: dropoffTime,
       },
     );
 
@@ -447,6 +449,10 @@ const BikeDetails = () => {
       const msg = draftErr?.message || "";
       if (msg.includes("BIKE_ALREADY_BOOKED") || msg.includes("CONFLICT")) {
         toast.error("Sorry, this bike was just booked for those dates. Please pick different dates.");
+      } else if (msg.includes("AGENCY_CLOSED_ON_DATE")) {
+        toast.error("Agency is closed on one of the selected dates. Please pick a different date.");
+      } else if (msg.includes("PICKUP_TIME_OUTSIDE_HOURS")) {
+        toast.error("Pickup or return time is outside the agency's working hours.");
       } else if (msg.includes("INVALID_DATES")) {
         toast.error("Invalid dates selected.");
       } else {
@@ -528,6 +534,7 @@ const BikeDetails = () => {
             triggerClassName="group hover:border-[#9FE870] hover:shadow-sm transition-all"
             placeholder="Pick dates"
             disabledRanges={bookedRanges}
+            closedWeekdays={closedWeekdays}
           />
           {dateRange?.from && dateRange?.to && (
             <p className="text-xs text-muted-foreground">
@@ -576,7 +583,7 @@ const BikeDetails = () => {
               <Select value={pickupTime} onValueChange={setPickupTime}>
                 <SelectTrigger className="h-10 text-sm"><SelectValue placeholder="--:--" /></SelectTrigger>
                 <SelectContent className="max-h-[200px]">
-                  {timeSlots.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                  {pickupTimeSlots.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
