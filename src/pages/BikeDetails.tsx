@@ -224,15 +224,18 @@ const BikeDetails = () => {
   const subtotal = days * dailyPrice;
   const baselineSubtotal = days * baseDailyPrice;
   const tierDiscount = Math.max(0, baselineSubtotal - subtotal);
-  const deliveryFee = deliveryMethod === "delivery" ? 25 : 0;
-  const PLATFORM_FEE = 10;        // non-refundable, always Motonita's
-  const CONFIRMATION_FEE = 50;    // prepaid by renter, credited back to Motonita on confirm
-  const upfrontTotal = PLATFORM_FEE + CONFIRMATION_FEE; // 60 MAD
-  // Renter pays agency at pickup the rental MINUS the prepaid 50 MAD confirmation fee.
+  const agencyDeliveryFee = resolvedAgency.deliveryFee;
+  const deliveryFee = deliveryMethod === "delivery" ? agencyDeliveryFee : 0;
+  const PLATFORM_FEE = 10;
+  const CONFIRMATION_FEE = 50;
+  const upfrontTotal = PLATFORM_FEE + CONFIRMATION_FEE;
   const rentalDueAtPickup = Math.max(0, Math.round(subtotal) - CONFIRMATION_FEE) + deliveryFee;
   const deposit = (bike?.bike_type as any)?.deposit_amount ? Number((bike?.bike_type as any).deposit_amount) : 0;
   const pickupTotal = rentalDueAtPickup + (deposit || 0);
-  const tripTotal = upfrontTotal + rentalDueAtPickup; // excl. refundable deposit
+  const tripTotal = upfrontTotal + rentalDueAtPickup;
+
+  const minRentalDays = Math.max(1, Number((bike?.bike_type as any)?.min_rental_days) || 1);
+  const maxRentalDays = Math.max(minRentalDays, Number((bike?.bike_type as any)?.max_rental_days) || 30);
 
   const isSameDay = dateRange?.from && dateRange?.to &&
     format(dateRange.from, "yyyy-MM-dd") === format(dateRange.to, "yyyy-MM-dd");
