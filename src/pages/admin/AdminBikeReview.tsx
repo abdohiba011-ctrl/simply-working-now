@@ -108,7 +108,7 @@ const AdminBikeReview = () => {
       if (prof?.id) {
         const { data: ag } = await supabase
           .from("agencies")
-          .select("business_name, city, primary_neighborhood, address, is_verified, phone")
+          .select("business_name, city, primary_neighborhood, address, is_verified, phone, working_hours")
           .eq("profile_id", prof.id).maybeSingle();
         setAgency(ag as typeof agency);
       }
