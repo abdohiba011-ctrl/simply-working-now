@@ -390,50 +390,54 @@ const BikeDetails = () => {
 
         <div className="border-t border-border/60" />
 
-        {/* Dates */}
-        {datesLocked && dateRange?.from && dateRange?.to ? (
-          <div className="space-y-2">
-            <Label className="text-[11px] uppercase tracking-wide text-muted-foreground">Rental dates</Label>
-            <div className="rounded-lg border border-border bg-muted/40 p-3">
-              <div className="flex items-center justify-between gap-3">
-                <div className="grid grid-cols-2 gap-4 flex-1">
-                  <div>
-                    <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Pickup</div>
-                    <div className="text-sm font-semibold text-foreground">{format(dateRange.from, "MMM d, yyyy")}</div>
-                  </div>
-                  <div>
-                    <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Return</div>
-                    <div className="text-sm font-semibold text-foreground">{format(dateRange.to, "MMM d, yyyy")}</div>
-                  </div>
-                </div>
-                <div className="flex flex-col items-end gap-0.5 text-[10px] text-muted-foreground">
-                  <Lock className="h-3.5 w-3.5" />
-                  <span>Set from search</span>
+        {/* Editable dates */}
+        <div className="space-y-2">
+          <Label className="text-[11px] uppercase tracking-wide text-muted-foreground">Pickup & Return</Label>
+          <BookingDatePicker
+            value={dateRange}
+            onChange={(r) => {
+              handleDateRangeSelect(r);
+              updateDatesInUrl(r);
+            }}
+            triggerClassName="group hover:border-[#9FE870] hover:shadow-sm transition-all"
+            placeholder="Pick dates"
+          />
+          {dateRange?.from && dateRange?.to && (
+            <p className="text-xs text-muted-foreground">
+              {days} day{days !== 1 ? "s" : ""}
+            </p>
+          )}
+
+          {/* Availability badge */}
+          {availability === "loading" && (
+            <div className="flex items-center gap-2 rounded-md bg-muted px-3 py-2.5 text-xs text-muted-foreground">
+              <Clock className="h-3.5 w-3.5 animate-pulse" />
+              Checking availability...
+            </div>
+          )}
+          {availability === "available" && (
+            <div className="flex items-start gap-2 rounded-md px-3 py-2.5 text-xs" style={{ backgroundColor: "rgba(159,232,112,0.15)", color: "#163300" }}>
+              <CheckCircle2 className="h-4 w-4 mt-0.5 text-[#163300]" />
+              <div>
+                <div className="font-semibold">Available for these dates</div>
+                <div className="opacity-70">Confirm in 60 seconds</div>
+              </div>
+            </div>
+          )}
+          {availability === "unavailable" && (
+            <div className="flex items-start gap-2 rounded-md px-3 py-2.5 text-xs" style={{ backgroundColor: "rgba(255,193,7,0.12)", color: "#7a4a00" }}>
+              <AlertTriangle className="h-4 w-4 mt-0.5" />
+              <div>
+                <div className="font-semibold">Not available for these dates</div>
+                <div className="opacity-90">
+                  <button type="button" onClick={() => updateDatesInUrl(undefined)} className="underline">Try different dates</button>
+                  {" "}or{" "}
+                  <Link to={`/rent/${cityName.toLowerCase()}`} className="underline">browse similar</Link>
                 </div>
               </div>
-              <p className="text-xs text-muted-foreground mt-2">
-                {days} day{days !== 1 ? "s" : ""} · To change dates, go back and re-search.
-              </p>
             </div>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            <Label className="text-[11px] uppercase tracking-wide text-muted-foreground">Rental dates</Label>
-            <div className="rounded-lg border-2 border-dashed border-border p-4 text-center space-y-2">
-              <Lock className="h-4 w-4 mx-auto text-muted-foreground" />
-              <p className="text-sm font-medium text-foreground">No dates selected</p>
-              <p className="text-xs text-muted-foreground">Pick your pickup and return dates to check availability and book.</p>
-              <Button
-                variant="outline"
-                size="sm"
-                className="mt-2"
-                onClick={() => navigate(`/?city=${encodeURIComponent(cityName)}`)}
-              >
-                Select dates to check availability
-              </Button>
-            </div>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* Times */}
         {dateRange?.from && dateRange?.to && (
