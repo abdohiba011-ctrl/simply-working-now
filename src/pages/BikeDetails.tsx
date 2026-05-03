@@ -285,19 +285,53 @@ const BikeDetails = () => {
   const isSameDay = dateRange?.from && dateRange?.to &&
     format(dateRange.from, "yyyy-MM-dd") === format(dateRange.to, "yyyy-MM-dd");
 
+  const workingHours = resolvedAgency.workingHours;
+
+  // Closed weekday indexes (0=Sun..6=Sat) for date picker
+  const closedWeekdays = useMemo(() => {
+    const map: Record<string, number> = {
+      sunday: 0, monday: 1, tuesday: 2, wednesday: 3, thursday: 4, friday: 5, saturday: 6,
+    };
+    return DAY_KEYS.filter((k) => workingHours[k]?.open === false).map((k) => map[k]);
+  }, [workingHours]);
+
+  const pickupDayHours = dateRange?.from
+    ? workingHours[dayKeyFromDate(dateRange.from)]
+    : null;
+  const returnDayHours = dateRange?.to
+    ? workingHours[dayKeyFromDate(dateRange.to)]
+    : null;
+
+  const pickupTimeSlots = pickupDayHours?.open
+    ? slotsBetween(pickupDayHours.from, pickupDayHours.to)
+    : timeSlots;
+  const returnTimeSlotsBase = returnDayHours?.open
+    ? slotsBetween(returnDayHours.from, returnDayHours.to)
+    : timeSlots;
+
   const getValidDropoffTimes = () => {
-    if (!isSameDay || !pickupTime) return timeSlots;
-    const idx = timeSlots.indexOf(pickupTime);
-    if (idx === -1) return timeSlots;
-    return timeSlots.slice(idx + 1);
+    if (!isSameDay || !pickupTime) return returnTimeSlotsBase;
+    const idx = returnTimeSlotsBase.indexOf(pickupTime);
+    if (idx === -1) return returnTimeSlotsBase.filter((t) => t > pickupTime);
+    return returnTimeSlotsBase.slice(idx + 1);
   };
   const validDropoffTimes = getValidDropoffTimes();
 
+  // Auto-correct selected times to fall within working hours
+  useEffect(() => {
+    if (pickupDayHours?.open && (pickupTime < pickupDayHours.from || pickupTime > pickupDayHours.to)) {
+      setPickupTime(pickupDayHours.from);
+    }
+  }, [pickupDayHours?.from, pickupDayHours?.to, pickupDayHours?.open, pickupTime]);
+  useEffect(() => {
+    if (returnDayHours?.open && dropoffTime && (dropoffTime < returnDayHours.from || dropoffTime > returnDayHours.to)) {
+      setDropoffTime(returnDayHours.to);
+    }
+  }, [returnDayHours?.from, returnDayHours?.to, returnDayHours?.open, dropoffTime]);
+
   useEffect(() => {
     if (isSameDay && dropoffTime && pickupTime) {
-      const pi = timeSlots.indexOf(pickupTime);
-      const di = timeSlots.indexOf(dropoffTime);
-      if (di <= pi) setDropoffTime("");
+      if (dropoffTime <= pickupTime) setDropoffTime("");
     }
   }, [pickupTime, isSameDay, dropoffTime]);
 
