@@ -108,6 +108,12 @@ const MockSignup = lazy(() => import("./pages/auth/Signup"));
 const AgencySignup = lazy(() => import("./pages/auth/AgencySignup"));
 const MockVerifyEmail = lazy(() => import("./pages/auth/VerifyEmail"));
 
+// Redirects /admin/fleet/:id → /admin/bikes/:id (legacy edit page removed)
+import { useParams } from "react-router-dom";
+const AdminFleetIdRedirect = () => {
+  const { id } = useParams();
+  return <Navigate to={`/admin/bikes/${id}`} replace />;
+};
 
 const ResetPasswordVerify = lazy(() => import("./pages/auth/ResetPasswordVerify"));
 const ResetPasswordNew = lazy(() => import("./pages/auth/ResetPasswordNew"));
