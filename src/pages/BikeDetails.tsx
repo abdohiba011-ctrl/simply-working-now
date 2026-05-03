@@ -359,31 +359,47 @@ const BikeDetails = () => {
         <div className="border-t border-border/60" />
 
         {/* Dates */}
-        {dateRange?.from && dateRange?.to && !isEditingDates ? (
+        {datesLocked && dateRange?.from && dateRange?.to ? (
           <div className="space-y-2">
             <Label className="text-[11px] uppercase tracking-wide text-muted-foreground">Rental dates</Label>
-            <div className="flex items-center gap-2">
-              <div className="flex-1 h-11 px-3 rounded-md border border-border bg-muted/30 flex items-center gap-2 text-sm font-medium text-foreground">
-                <CalendarIcon className="h-4 w-4 text-foreground/70" />
-                {format(dateRange.from, "MMM d")} – {format(dateRange.to, "MMM d, yyyy")}
+            <div className="rounded-lg border border-border bg-muted/40 p-3">
+              <div className="flex items-center justify-between gap-3">
+                <div className="grid grid-cols-2 gap-4 flex-1">
+                  <div>
+                    <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Pickup</div>
+                    <div className="text-sm font-semibold text-foreground">{format(dateRange.from, "MMM d, yyyy")}</div>
+                  </div>
+                  <div>
+                    <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Return</div>
+                    <div className="text-sm font-semibold text-foreground">{format(dateRange.to, "MMM d, yyyy")}</div>
+                  </div>
+                </div>
+                <div className="flex flex-col items-end gap-0.5 text-[10px] text-muted-foreground">
+                  <Lock className="h-3.5 w-3.5" />
+                  <span>Set from search</span>
+                </div>
               </div>
-              <Button variant="outline" size="icon" className="h-11 w-11" onClick={() => setIsEditingDates(true)}>
-                <Edit2 className="h-4 w-4" />
-              </Button>
+              <p className="text-xs text-muted-foreground mt-2">
+                {days} day{days !== 1 ? "s" : ""} · To change dates, go back and re-search.
+              </p>
             </div>
-            <p className="text-xs text-muted-foreground">{days} day{days !== 1 ? "s" : ""}</p>
           </div>
         ) : (
           <div className="space-y-2">
-            <Label className="text-[11px] uppercase tracking-wide text-muted-foreground">Pickup & Return</Label>
-            <DateRangePicker
-              dateRange={dateRange}
-              onDateChange={handleDateRangeSelect}
-              maxDays={MAX_RENTAL_DAYS}
-              showPriceBreakdown={false}
-              placeholder={t('datePicker.pickDates')}
-              triggerClassName="min-h-[44px]"
-            />
+            <Label className="text-[11px] uppercase tracking-wide text-muted-foreground">Rental dates</Label>
+            <div className="rounded-lg border-2 border-dashed border-border p-4 text-center space-y-2">
+              <Lock className="h-4 w-4 mx-auto text-muted-foreground" />
+              <p className="text-sm font-medium text-foreground">No dates selected</p>
+              <p className="text-xs text-muted-foreground">Pick your pickup and return dates to check availability and book.</p>
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-2"
+                onClick={() => navigate(`/?city=${encodeURIComponent(cityName)}`)}
+              >
+                Select dates to check availability
+              </Button>
+            </div>
           </div>
         )}
 
