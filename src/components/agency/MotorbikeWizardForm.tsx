@@ -277,6 +277,31 @@ export const MotorbikeWizardForm = ({
     };
     const { error } = await supabase.from("bike_types").update(payload).eq("id", bikeId);
     if (error) { toast.error("Could not save draft: " + error.message); return false; }
+
+    // Sync pricing tiers: upsert filled rows, delete cleared rows.
+    const upserts: { bike_type_id: string; min_days: number; daily_price_mad: number }[] = [];
+    const deletes: number[] = [];
+    for (const md of TIER_MIN_DAYS) {
+      const v = Number(tierPrices[md]);
+      if (Number.isFinite(v) && v > 0) {
+        upserts.push({ bike_type_id: bikeId, min_days: md, daily_price_mad: v });
+      } else {
+        deletes.push(md);
+      }
+    }
+    if (upserts.length) {
+      const { error: upErr } = await supabase
+        .from("bike_pricing_tiers")
+        .upsert(upserts, { onConflict: "bike_type_id,min_days" });
+      if (upErr) { toast.error("Could not save pricing tiers: " + upErr.message); return false; }
+    }
+    if (deletes.length) {
+      await supabase
+        .from("bike_pricing_tiers")
+        .delete()
+        .eq("bike_type_id", bikeId)
+        .in("min_days", deletes);
+    }
     return true;
   };
 
