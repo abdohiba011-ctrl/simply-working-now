@@ -205,6 +205,7 @@ const App = () => (
                 <Route path="/pay/youcanpay" element={<ProtectedRoute><PayYouCan /></ProtectedRoute>} />
                 <Route path="/payment-status" element={<ProtectedRoute><PaymentStatus /></ProtectedRoute>} />
                 <Route path="/confirmation" element={<ProtectedRoute><Confirmation /></ProtectedRoute>} />
+                <Route path="/booking/:bookingId/confirmed" element={<ProtectedRoute><BookingConfirmed /></ProtectedRoute>} />
 
                 {/* Legacy business-* routes redirect into /agency/* */}
                 <Route path="/business-dashboard" element={<Navigate to="/agency/dashboard" replace />} />
