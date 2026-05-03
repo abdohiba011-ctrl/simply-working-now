@@ -5,11 +5,14 @@ import {
   Filter as FilterIcon,
   Heart,
   MapPin,
+  Pencil,
+  Calendar as CalendarIcon,
   SlidersHorizontal,
   Star,
   X,
   Search,
 } from "lucide-react";
+import { format, parseISO, isValid as isValidDate } from "date-fns";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
