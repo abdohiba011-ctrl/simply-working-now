@@ -49,7 +49,7 @@ export const useAdminNotifications = () => {
                 description: `A new bike "${newBike.name}" has been submitted for approval.`,
                 action: {
                   label: "Review",
-                  onClick: () => window.location.href = `/admin/fleet/${newBike.id}`,
+                  onClick: () => window.location.href = `/admin/bikes/${newBike.id}`,
                 },
               });
             }
