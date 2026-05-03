@@ -172,7 +172,8 @@ export const MotorbikeWizardForm = ({
             (FEATURE_ORDER as string[]).includes(f)) as FeatureKey[];
           setFeatures(new Set(feats));
           setDescription(b.description || "");
-          setDailyPrice(b.daily_price != null ? String(b.daily_price) : "");
+          // dailyPrice replaced by tier table — load below
+          const initialBase = b.daily_price != null ? String(b.daily_price) : "";
           setDepositAmount(String(b.deposit_amount ?? 1500));
           setMinRentalDays(String(b.min_rental_days ?? 1));
           setMaxRentalDays(String(b.max_rental_days ?? 30));
