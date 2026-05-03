@@ -760,6 +760,34 @@ export default function RentCity() {
 // is_available=false AND is_coming_soon=true. Captures emails into
 // city_waitlist for marketing follow-up when the city goes live.
 // ─────────────────────────────────────────────────────────────────────
+function CityNotFound({ slug }: { slug: string }) {
+  const navigate = useNavigate();
+  const label = slugToDisplayName(slug);
+  useEffect(() => {
+    document.title = `City not found · Motonita`;
+  }, []);
+  return (
+    <div className="min-h-screen flex flex-col bg-background">
+      <Header />
+      <main className="flex-1 container mx-auto px-4 py-20 flex flex-col items-center text-center">
+        <div className="text-6xl mb-4">🛵</div>
+        <h1 className="text-3xl md:text-4xl font-bold mb-3">City not found</h1>
+        <p className="text-muted-foreground max-w-md mb-8">
+          We don&apos;t operate in <span className="font-medium">{label}</span> yet,
+          but we&apos;re expanding fast across Morocco.
+        </p>
+        <div className="flex flex-wrap gap-3 justify-center">
+          <Button onClick={() => navigate("/")}>Back to home</Button>
+          <Button variant="outline" onClick={() => navigate("/#cities")}>
+            See available cities
+          </Button>
+        </div>
+      </main>
+      <Footer />
+    </div>
+  );
+}
+
 function RentCityComingSoon({ city }: { city: CityRow }) {
   const [email, setEmail] = useState("");
   const [submitting, setSubmitting] = useState(false);
