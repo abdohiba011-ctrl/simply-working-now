@@ -19,6 +19,7 @@ import { AgencyShell } from "./components/agency/AgencyShell";
 import { AuthModalProvider } from "./contexts/AuthModalContext";
 import { AuthModal } from "./components/auth/AuthModal";
 import { AuthModalRedirect } from "./components/auth/AuthModalRedirect";
+import { useServiceCitiesRealtime } from "./hooks/useServiceCitiesRealtime";
 
 // Eagerly load critical above-the-fold pages
 import Index from "./pages/Index";
