@@ -75,6 +75,9 @@ interface Booking {
   return_date: string;
   total_price: number;
   status: string;
+  booking_status?: string | null;
+  payment_method?: string | null;
+  created_at?: string;
   bike_id: string;
   customer_name: string;
   customer_phone: string;
