@@ -826,7 +826,7 @@ const BikeDetails = () => {
               ? "Select dates to book"
               : availability === "unavailable"
                 ? "Not available"
-                : `Book Now — Pay ${upfrontTotal} MAD`}
+                : "Go to checkout"}
           </Button>
         </div>
       </div>
