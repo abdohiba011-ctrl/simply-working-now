@@ -2594,6 +2594,7 @@ export type Database = {
       archive_bike_type: { Args: { p_bike_type_id: string }; Returns: Json }
       auto_cancel_stale_pending_bookings: { Args: never; Returns: number }
       cancel_booking_by_renter: { Args: { _booking_id: string }; Returns: Json }
+      cleanup_old_draft_bookings: { Args: never; Returns: number }
       compute_bike_type_slug: {
         Args: { _name: string; _neighborhood: string }
         Returns: string
@@ -2605,6 +2606,19 @@ export type Database = {
           expires_at: string
           hold_id: string
         }[]
+      }
+      create_draft_booking: {
+        Args: {
+          _bike_id: string
+          _customer_email?: string
+          _customer_name?: string
+          _customer_phone?: string
+          _delivery_method?: string
+          _pickup_date: string
+          _pickup_location?: string
+          _return_date: string
+        }
+        Returns: string
       }
       credit_renter_wallet: {
         Args: {
@@ -2689,6 +2703,14 @@ export type Database = {
           source_queue: string
         }
         Returns: number
+      }
+      promote_draft_to_pending: {
+        Args: {
+          _booking_id: string
+          _confirmation_fee_pending?: number
+          _platform_fee_paid?: number
+        }
+        Returns: Json
       }
       promote_hold_to_booking: {
         Args: {
