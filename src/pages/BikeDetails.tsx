@@ -425,6 +425,7 @@ const BikeDetails = () => {
             }}
             triggerClassName="group hover:border-[#9FE870] hover:shadow-sm transition-all"
             placeholder="Pick dates"
+            disabledRanges={bookedRanges}
           />
           {dateRange?.from && dateRange?.to && (
             <p className="text-xs text-muted-foreground">
