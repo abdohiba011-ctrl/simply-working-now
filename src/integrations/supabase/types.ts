@@ -556,6 +556,41 @@ export type Database = {
           },
         ]
       }
+      bike_pricing_tiers: {
+        Row: {
+          bike_type_id: string
+          created_at: string
+          daily_price_mad: number
+          id: string
+          min_days: number
+          updated_at: string
+        }
+        Insert: {
+          bike_type_id: string
+          created_at?: string
+          daily_price_mad: number
+          id?: string
+          min_days: number
+          updated_at?: string
+        }
+        Update: {
+          bike_type_id?: string
+          created_at?: string
+          daily_price_mad?: number
+          id?: string
+          min_days?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bike_pricing_tiers_bike_type_id_fkey"
+            columns: ["bike_type_id"]
+            isOneToOne: false
+            referencedRelation: "bike_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bike_reviews: {
         Row: {
           bike_type_id: string
@@ -2713,6 +2748,10 @@ export type Database = {
         Returns: number
       }
       generate_city_slug: { Args: { input_name: string }; Returns: string }
+      get_bike_price: {
+        Args: { _bike_type_id: string; _days: number }
+        Returns: number
+      }
       get_booked_date_ranges: {
         Args: { _bike_id: string }
         Returns: {

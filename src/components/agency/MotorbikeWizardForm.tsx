@@ -21,6 +21,7 @@ import {
   FEATURE_ORDER, FEATURE_LABELS, FeatureKey,
 } from "@/lib/bikeFeatures";
 import { cn } from "@/lib/utils";
+import { TIER_MIN_DAYS, TIER_LABELS, type BikePricingTier, type TierMinDays, tierSavingsPct } from "@/lib/pricingTiers";
 
 type StepKey = "info" | "specs" | "included" | "photos" | "pricing";
 const STEPS: { key: StepKey; label: string }[] = [
@@ -91,7 +92,10 @@ export const MotorbikeWizardForm = ({
 
   const [description, setDescription] = useState("");
 
-  const [dailyPrice, setDailyPrice] = useState<string>("");
+  // Tiered pricing: tierPrices[min_days] = string ("" = not set). 1+ is required.
+  const [tierPrices, setTierPrices] = useState<Record<TierMinDays, string>>({
+    1: "", 3: "", 7: "", 15: "", 30: "",
+  });
   const [depositAmount, setDepositAmount] = useState<string>("1500");
   const [minRentalDays, setMinRentalDays] = useState<string>("1");
   const [maxRentalDays, setMaxRentalDays] = useState<string>("30");
@@ -168,7 +172,8 @@ export const MotorbikeWizardForm = ({
             (FEATURE_ORDER as string[]).includes(f)) as FeatureKey[];
           setFeatures(new Set(feats));
           setDescription(b.description || "");
-          setDailyPrice(b.daily_price != null ? String(b.daily_price) : "");
+          // dailyPrice replaced by tier table — load below
+          const initialBase = b.daily_price != null ? String(b.daily_price) : "";
           setDepositAmount(String(b.deposit_amount ?? 1500));
           setMinRentalDays(String(b.min_rental_days ?? 1));
           setMaxRentalDays(String(b.max_rental_days ?? 30));
@@ -182,6 +187,25 @@ export const MotorbikeWizardForm = ({
         const ids = (imgRows || []).map((r: { id: string }) => r.id);
         setInitialPhotoIds(ids);
         setPhotoCount(ids.length);
+
+        // Load existing pricing tiers
+        const { data: tierRows } = await supabase
+          .from("bike_pricing_tiers")
+          .select("min_days, daily_price_mad")
+          .eq("bike_type_id", bikeIdProp);
+        const next: Record<TierMinDays, string> = { 1: "", 3: "", 7: "", 15: "", 30: "" };
+        for (const r of (tierRows as { min_days: number; daily_price_mad: number }[] | null) || []) {
+          if ((TIER_MIN_DAYS as readonly number[]).includes(r.min_days)) {
+            next[r.min_days as TierMinDays] = String(r.daily_price_mad);
+          }
+        }
+        // Backfill base from legacy daily_price if no tier yet
+        if (!next[1]) {
+          const legacyBase = (bt as any)?.daily_price;
+          if (legacyBase != null && Number(legacyBase) > 0) next[1] = String(legacyBase);
+        }
+        setTierPrices(next);
+
         setLoading(false);
       } else if (isVerified) {
         const { data: created, error } = await supabase
@@ -217,7 +241,7 @@ export const MotorbikeWizardForm = ({
     const yr = Number(year);
     const cc = Number(engineCc);
     const mk = Number(mileageKm);
-    const dp = Number(dailyPrice);
+    const baseTier = Number(tierPrices[1]);
     const dep = Number(depositAmount);
     const minR = Number(minRentalDays);
     const maxR = Number(maxRentalDays);
@@ -245,7 +269,7 @@ export const MotorbikeWizardForm = ({
       helmets_count: helmetIncluded ? Math.max(1, Number(helmetsCount) || 1) : 0,
       features: featuresArr,
       description: description.trim() || null,
-      daily_price: Number.isFinite(dp) && dp > 0 ? dp : 0,
+      daily_price: Number.isFinite(baseTier) && baseTier > 0 ? baseTier : 0,
       deposit_amount: Number.isFinite(dep) && dep >= 0 ? dep : 0,
       min_rental_days: Number.isFinite(minR) && minR > 0 ? minR : 1,
       max_rental_days: Number.isFinite(maxR) && maxR > 0 ? maxR : 30,
@@ -253,6 +277,31 @@ export const MotorbikeWizardForm = ({
     };
     const { error } = await supabase.from("bike_types").update(payload).eq("id", bikeId);
     if (error) { toast.error("Could not save draft: " + error.message); return false; }
+
+    // Sync pricing tiers: upsert filled rows, delete cleared rows.
+    const upserts: { bike_type_id: string; min_days: number; daily_price_mad: number }[] = [];
+    const deletes: number[] = [];
+    for (const md of TIER_MIN_DAYS) {
+      const v = Number(tierPrices[md]);
+      if (Number.isFinite(v) && v > 0) {
+        upserts.push({ bike_type_id: bikeId, min_days: md, daily_price_mad: v });
+      } else {
+        deletes.push(md);
+      }
+    }
+    if (upserts.length) {
+      const { error: upErr } = await supabase
+        .from("bike_pricing_tiers")
+        .upsert(upserts, { onConflict: "bike_type_id,min_days" });
+      if (upErr) { toast.error("Could not save pricing tiers: " + upErr.message); return false; }
+    }
+    if (deletes.length) {
+      await supabase
+        .from("bike_pricing_tiers")
+        .delete()
+        .eq("bike_type_id", bikeId)
+        .in("min_days", deletes);
+    }
     return true;
   };
 
@@ -279,7 +328,20 @@ export const MotorbikeWizardForm = ({
       if (d.length < 50) errs.push("Description must be at least 50 characters");
       if (d.length > 1000) errs.push("Description must be 1000 characters or fewer");
     } else if (idx === 4) {
-      if (!dailyPrice || Number(dailyPrice) <= 0) errs.push("Daily price is required");
+      const baseT = Number(tierPrices[1]);
+      if (!baseT || baseT <= 0) errs.push("Base daily price (1+ days) is required");
+      // Each higher tier must be < the next-lower set tier (descending price).
+      let lastSet = baseT;
+      for (const md of TIER_MIN_DAYS) {
+        if (md === 1) continue;
+        const v = Number(tierPrices[md]);
+        if (!tierPrices[md]) continue; // skipping a tier is OK
+        if (!v || v <= 0) { errs.push(`${TIER_LABELS[md]} price must be greater than 0`); continue; }
+        if (lastSet && v > lastSet) {
+          errs.push(`${TIER_LABELS[md]} price must be ≤ shorter-duration price`);
+        }
+        lastSet = v;
+      }
       if (depositAmount === "" || Number(depositAmount) < 0) errs.push("Deposit amount is required");
       const minR = Number(minRentalDays), maxR = Number(maxRentalDays);
       if (!minR || minR < 1) errs.push("Min rental days must be at least 1");
@@ -680,17 +742,71 @@ export const MotorbikeWizardForm = ({
 
           {stepIdx === 4 && (
             <Card className="space-y-5 p-6">
-              <h3 className="text-lg font-semibold">Pricing & policies</h3>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label>Daily price (MAD) *</Label>
-                  <Input type="number" min={0} value={dailyPrice} onChange={(e) => setDailyPrice(e.target.value)} placeholder="e.g. 300" />
+              <div>
+                <h3 className="text-lg font-semibold">Pricing</h3>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Set a base daily rate, then add discounts for longer rentals. Renters automatically get the best price for their duration.
+                </p>
+              </div>
+
+              {/* Base rate */}
+              <div className="grid gap-2">
+                <Label>Base daily rate (1+ days) *</Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number" min={0}
+                    value={tierPrices[1]}
+                    onChange={(e) => setTierPrices((p) => ({ ...p, 1: e.target.value }))}
+                    placeholder="e.g. 150"
+                    className="max-w-[160px]"
+                  />
+                  <span className="text-xs text-muted-foreground">MAD/day</span>
                 </div>
+              </div>
+
+              {/* Volume discount tiers */}
+              <div className="rounded-lg border border-border p-4 space-y-3">
+                <p className="text-sm font-medium">Volume discounts (optional)</p>
+                {([3, 7, 15, 30] as const).map((md) => {
+                  const base = Number(tierPrices[1]) || 0;
+                  const v = Number(tierPrices[md]) || 0;
+                  const filled = !!tierPrices[md];
+                  const pct = filled && base > 0 ? tierSavingsPct(base, v) : 0;
+                  const invalid = filled && base > 0 && v > base;
+                  return (
+                    <div key={md} className="flex items-center gap-3 flex-wrap">
+                      <span className="text-sm font-medium w-20">{md}+ days:</span>
+                      <Input
+                        type="number" min={0}
+                        value={tierPrices[md]}
+                        onChange={(e) => setTierPrices((p) => ({ ...p, [md]: e.target.value }))}
+                        placeholder="—"
+                        className="max-w-[120px]"
+                      />
+                      <span className="text-xs text-muted-foreground">MAD/day</span>
+                      {filled && base > 0 && (
+                        invalid
+                          ? <span className="text-xs font-medium text-destructive">⚠ More than base — not allowed</span>
+                          : pct > 0
+                            ? <span className="text-xs font-medium text-[#163300]">Save {pct}% <span className="text-muted-foreground">(vs base {base})</span></span>
+                            : <span className="text-xs text-muted-foreground">Save 0% (same as base)</span>
+                      )}
+                    </div>
+                  );
+                })}
+                <p className="text-[11px] text-muted-foreground pt-2">
+                  💡 Tip: Most agencies offer 10–30% off weekly + monthly. Leave blank to skip a tier.
+                </p>
+              </div>
+
+              {/* Other settings */}
+              <div className="grid grid-cols-2 gap-4 pt-2 border-t border-border">
                 <div className="grid gap-2">
                   <Label>Deposit (MAD) *</Label>
                   <Input type="number" min={0} value={depositAmount} onChange={(e) => setDepositAmount(e.target.value)} />
                   <p className="text-[11px] text-muted-foreground">Refundable deposit collected at pickup</p>
                 </div>
+                <div />
                 <div className="grid gap-2">
                   <Label>Min rental days</Label>
                   <Input type="number" min={1} value={minRentalDays} onChange={(e) => setMinRentalDays(e.target.value)} />
