@@ -123,7 +123,7 @@ export const TopCitiesSection = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-slide-up max-w-7xl mx-auto">
           {cities.map((city, index) => {
-            const cityName = t(`cityNames.${city.name_key}`) || city.name;
+            const cityName = t(`cityNames.${city.name_key}`, { defaultValue: city.name });
             const cityImage = city.image_url || fallbackImages[city.name_key] || casablancaImg;
             const isAvailable = city.is_available && !city.is_coming_soon;
             

@@ -7,7 +7,7 @@ export type Language = 'en' | 'fr' | 'ar';
 interface LanguageContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
-  t: (key: string) => string;
+  t: (key: string, options?: { defaultValue?: string; [key: string]: unknown }) => string;
   isRTL: boolean;
 }
 
@@ -55,8 +55,8 @@ export const LanguageProvider = ({ children }: LanguageProviderProps) => {
     i18n.changeLanguage(lang);
   };
 
-  const t = (key: string): string => {
-    return i18nT(key);
+  const t = (key: string, options?: { defaultValue?: string; [key: string]: unknown }): string => {
+    return i18nT(key, options as never) as unknown as string;
   };
 
   return (

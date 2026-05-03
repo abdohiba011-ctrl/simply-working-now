@@ -70,8 +70,13 @@ interface ServiceLocation {
   created_at: string;
 }
 
-const generateNameKey = (name: string) =>
-  name.toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "");
+const generateNameKey = (name: string) => {
+  const slug = name.toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "");
+  if (slug && slug.length >= 2) return slug;
+  // Fallback for Arabic / accented-only names so keys never collide on empty string
+  const rand = Math.random().toString(16).slice(2, 10);
+  return `city_${rand}`;
+};
 
 const emptyNewCity = {
   name: "",
