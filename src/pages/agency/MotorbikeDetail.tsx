@@ -70,6 +70,8 @@ const MotorbikeDetail = () => {
   const [available, setAvailable] = useState<boolean>(true);
   const [archiveOpen, setArchiveOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [refreshTick, setRefreshTick] = useState(0);
 
   useEffect(() => {
     setAvailable((bike?.availability_status ?? "available") === "available");
