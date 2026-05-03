@@ -274,7 +274,7 @@ const Listings = () => {
               variant="ghost"
               size="sm"
               onClick={() => navigate("/")}
-              className="gap-2 bg-muted text-foreground hover:bg-muted/80"
+              className="gap-2 bg-muted text-foreground hover:bg-primary hover:text-primary-foreground"
             >
               <ArrowLeft className={cn("h-4 w-4", isRTL && "rotate-180")} />
               <span className="hidden sm:inline">{t("listings.backToHomepage")}</span>
