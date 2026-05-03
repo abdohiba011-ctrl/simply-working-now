@@ -954,6 +954,25 @@ const BikeDetails = () => {
                   )}
                 </div>
               </section>
+
+              {/* Agency hours */}
+              <section>
+                <h2 className="text-xl font-bold text-foreground mb-3 flex items-center gap-2">
+                  <Clock className="h-5 w-5" /> Agency Hours
+                </h2>
+                <div className="rounded-lg border border-border/60 bg-card p-4">
+                  <ul className="space-y-1.5 text-sm">
+                    {formatWorkingHoursSummary(workingHours).map((row) => (
+                      <li key={row.label} className="flex justify-between gap-4">
+                        <span className="font-medium text-foreground">{row.label}:</span>
+                        <span className={row.value === "Closed" ? "text-muted-foreground" : "text-foreground/80"}>
+                          {row.value}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </section>
             </div>
 
             {/* RIGHT — sticky booking card (desktop only) */}
