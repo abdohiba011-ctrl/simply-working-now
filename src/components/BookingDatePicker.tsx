@@ -59,7 +59,15 @@ const Panel = ({
     if (!clicked) return;
 
     if (focus === "from") {
-      // Start a new selection from this date
+      if (prev?.to) {
+        // We have an existing return — normalize against it
+        const range = isBefore(clicked, prev.to)
+          ? { from: clicked, to: prev.to }
+          : { from: prev.to, to: clicked };
+        setRange(range);
+        window.setTimeout(() => onClose(), 280);
+        return;
+      }
       setRange({ from: clicked, to: undefined });
       setFocus("to");
       return;
@@ -71,14 +79,10 @@ const Panel = ({
       setFocus("to");
       return;
     }
-    if (isBefore(clicked, prev.from)) {
-      // Clicked earlier than pickup → make it the new pickup
-      setRange({ from: clicked, to: undefined });
-      setFocus("to");
-      return;
-    }
-    setRange({ from: prev.from, to: clicked });
-    // Auto-close after a short delay
+    const range = isBefore(clicked, prev.from)
+      ? { from: clicked, to: prev.from }
+      : { from: prev.from, to: clicked };
+    setRange(range);
     window.setTimeout(() => onClose(), 280);
   };
 
