@@ -170,6 +170,8 @@ export const AdminCitiesTab = () => {
         name: newCity.name.trim(),
         name_key: generateNameKey(newCity.name),
         image_url: newCity.image_url || null,
+        image_focal_x: newCity.image_focal_x,
+        image_focal_y: newCity.image_focal_y,
         is_available: newCity.is_available,
         is_coming_soon: newCity.is_coming_soon,
         show_in_homepage: newCity.show_in_homepage,
