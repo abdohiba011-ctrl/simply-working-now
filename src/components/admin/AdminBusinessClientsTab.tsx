@@ -180,10 +180,16 @@ export const AdminBusinessClientsTab = () => {
         )
         .eq("user_type", "business");
 
-      if (typeFilter === "shop") {
-        query = query.in("business_type", SHOP_TYPES);
+      if (typeFilter === "agency") {
+        query = query.in("business_type", AGENCY_TYPES);
+      } else if (typeFilter === "company") {
+        query = query.in("business_type", COMPANY_TYPES);
       } else if (typeFilter === "individual") {
         query = query.in("business_type", INDIVIDUAL_TYPES);
+      } else if (typeFilter === "unspecified") {
+        query = query.or(
+          `business_type.is.null,business_type.not.in.(${KNOWN_TYPES.join(",")})`,
+        );
       }
 
       if (searchQuery) {
