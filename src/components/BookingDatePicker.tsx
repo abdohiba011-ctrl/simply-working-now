@@ -90,21 +90,21 @@ const Panel = ({
   return (
     <div className="bg-white text-[#163300] rounded-2xl shadow-xl overflow-hidden">
       {/* Pickup / Return header boxes */}
-      <div className="grid grid-cols-2 gap-2 p-3 border-b border-[#163300]/10">
+      <div className="grid grid-cols-2 gap-2 p-2 border-b border-[#163300]/10">
         <button
           type="button"
           onClick={() => setFocus("from")}
           className={cn(
-            "rounded-xl border-2 px-3 py-2 text-left transition-colors",
+            "rounded-lg border-2 px-2.5 py-1.5 text-left transition-colors",
             focus === "from"
               ? "border-[#9FE870] bg-[#9FE870]/10"
               : "border-[#163300]/15 bg-white hover:border-[#163300]/40",
           )}
         >
-          <div className="text-[10px] font-semibold tracking-wider uppercase text-[#163300]/60">
+          <div className="text-[10px] font-semibold tracking-wider uppercase text-[#163300]/60 leading-tight">
             Pickup
           </div>
-          <div className="text-sm font-semibold">
+          <div className="text-[13px] font-semibold leading-tight mt-0.5">
             {range?.from ? format(range.from, "MMM d, yyyy") : "Select"}
           </div>
         </button>
@@ -112,22 +112,22 @@ const Panel = ({
           type="button"
           onClick={() => setFocus("to")}
           className={cn(
-            "rounded-xl border-2 px-3 py-2 text-left transition-colors",
+            "rounded-lg border-2 px-2.5 py-1.5 text-left transition-colors",
             focus === "to"
               ? "border-[#9FE870] bg-[#9FE870]/10"
               : "border-[#163300]/15 bg-white hover:border-[#163300]/40",
           )}
         >
-          <div className="text-[10px] font-semibold tracking-wider uppercase text-[#163300]/60">
+          <div className="text-[10px] font-semibold tracking-wider uppercase text-[#163300]/60 leading-tight">
             Return
           </div>
-          <div className="text-sm font-semibold">
+          <div className="text-[13px] font-semibold leading-tight mt-0.5">
             {range?.to ? format(range.to, "MMM d, yyyy") : "Select"}
           </div>
         </button>
       </div>
 
-      <div className="p-2">
+      <div className="p-1.5">
         <Calendar
           mode="range"
           selected={range}
@@ -135,35 +135,44 @@ const Panel = ({
           numberOfMonths={isMobile ? 1 : 2}
           weekStartsOn={0}
           disabled={(d) => d < today0()}
-          className="pointer-events-auto"
+          className="pointer-events-auto p-2"
         />
       </div>
 
       {/* Long-rental warning */}
       {days > 30 && (
-        <div className="px-4 pb-2 text-xs text-amber-700">
+        <div className="px-3 pb-1.5 text-[11px] text-amber-700">
           Long rental — confirm dates with the agency after booking.
         </div>
       )}
 
-      {/* Footer: legend + reset */}
-      <div className="flex items-center justify-between gap-3 px-4 py-3 border-t border-[#163300]/10 text-xs">
+      {/* Footer: legend + reset (compact 32px) */}
+      <div className="flex items-center justify-between gap-3 px-3 h-8 border-t border-[#163300]/10 text-[11px]">
         <button
           type="button"
           onClick={handleReset}
-          className="inline-flex items-center gap-1.5 text-[#163300]/70 hover:text-[#163300] font-medium"
+          className="inline-flex items-center gap-1 text-[#163300]/70 hover:text-[#163300] font-medium"
         >
-          <RotateCcw className="h-3.5 w-3.5" /> Reset
+          <RotateCcw className="h-3 w-3" /> Reset
         </button>
         <div className="flex items-center gap-3 text-[#163300]/70">
-          <span className="inline-flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-full ring-2 ring-[#333] ring-inset" />
+          <span className="inline-flex items-center gap-1">
+            <span className="h-2 w-2 rounded-full ring-2 ring-[#333] ring-inset" />
             Today
           </span>
-          <span className="inline-flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-full bg-[#9FE870]" />
+          <span className="inline-flex items-center gap-1">
+            <span className="h-2 w-2 rounded-full bg-[#9FE870]" />
             Selected
           </span>
+          {isMobile && (
+            <button
+              type="button"
+              onClick={onClose}
+              className="ml-2 rounded-md bg-[#163300] text-white px-3 py-1 text-[11px] font-semibold"
+            >
+              Done
+            </button>
+          )}
         </div>
       </div>
     </div>
