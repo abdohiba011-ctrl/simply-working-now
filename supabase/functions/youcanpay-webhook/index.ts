@@ -350,7 +350,20 @@ Deno.serve(async (req) => {
         { onConflict: "user_id" },
       );
     } else if (payment.purpose === "booking_payment" && payment.related_booking_id) {
-      const result = await applyBookingPayment(admin, payment.related_booking_id, payment, transactionId);
+      const rawMethod = (
+        transaction?.payment_method ||
+        transaction?.gateway ||
+        payload?.payment_method ||
+        payload?.gateway ||
+        "card"
+      ).toString().toLowerCase();
+      const method = rawMethod.includes("cash") ? "cashplus" : "card";
+      // Reflect actual method on the booking row for downstream UX.
+      await admin
+        .from("bookings")
+        .update({ payment_method: method })
+        .eq("id", payment.related_booking_id);
+      const result = await applyBookingPayment(admin, payment.related_booking_id, payment, transactionId, method);
       console.log("youcanpay-webhook booking effect", result);
     }
 
