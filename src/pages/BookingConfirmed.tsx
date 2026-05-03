@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Card, CardContent } from "@/components/ui/card";
@@ -11,7 +11,9 @@ import {
   Bike as BikeIcon,
   MessageCircle,
   Clock,
-  AlertCircle,
+  Loader2,
+  AlertTriangle,
+  LifeBuoy,
 } from "lucide-react";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
@@ -35,12 +37,22 @@ interface BookingRow {
   bike_image?: string | null;
 }
 
+const POLL_INTERVAL_MS = 2000;
+const POLL_TIMEOUT_MS = 60_000;
+
+type Phase = "waiting" | "confirmed" | "timeout";
+
 const BookingConfirmed = () => {
   const { bookingId } = useParams<{ bookingId: string }>();
   const navigate = useNavigate();
   const [booking, setBooking] = useState<BookingRow | null>(null);
   const [loading, setLoading] = useState(true);
+  const [phase, setPhase] = useState<Phase>("waiting");
+  const [elapsed, setElapsed] = useState(0);
+  const [verifying, setVerifying] = useState(false);
+  const startedAt = useRef<number>(Date.now());
 
+  // Initial load
   useEffect(() => {
     const load = async () => {
       if (!bookingId) {
@@ -79,11 +91,94 @@ const BookingConfirmed = () => {
           bikeImage = bt?.main_image_url ?? null;
         }
       }
-      setBooking({ ...(data as any), bike_name: bikeName, bike_image: bikeImage });
+      const row = { ...(data as any), bike_name: bikeName, bike_image: bikeImage };
+      setBooking(row);
+      setPhase(row.payment_status === "paid" ? "confirmed" : "waiting");
       setLoading(false);
     };
     load();
   }, [bookingId, navigate]);
+
+  // Poll for payment_status
+  useEffect(() => {
+    if (!bookingId || phase !== "waiting") return;
+    let cancelled = false;
+    let timer: number | undefined;
+
+    const tick = async () => {
+      if (cancelled) return;
+      const { data } = await supabase
+        .from("bookings")
+        .select("payment_status, booking_status")
+        .eq("id", bookingId)
+        .maybeSingle();
+      if (cancelled) return;
+      if (data?.payment_status === "paid") {
+        setBooking((prev) =>
+          prev ? { ...prev, payment_status: "paid", booking_status: data.booking_status ?? prev.booking_status } : prev,
+        );
+        setPhase("confirmed");
+        toast.success("Payment confirmed!");
+        return;
+      }
+      const e = Date.now() - startedAt.current;
+      setElapsed(e);
+      if (e >= POLL_TIMEOUT_MS) {
+        setPhase("timeout");
+        return;
+      }
+      timer = window.setTimeout(tick, POLL_INTERVAL_MS);
+    };
+
+    tick();
+    return () => {
+      cancelled = true;
+      if (timer) window.clearTimeout(timer);
+    };
+  }, [bookingId, phase]);
+
+  const handleVerifyNow = async () => {
+    if (!bookingId || verifying) return;
+    setVerifying(true);
+    try {
+      // Find the latest payment for this booking
+      const { data: pay } = await supabase
+        .from("youcanpay_payments")
+        .select("id, transaction_id")
+        .eq("related_booking_id", bookingId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (!pay?.id) {
+        toast.error("No payment found for this booking yet.");
+        return;
+      }
+      const { data, error } = await supabase.functions.invoke(
+        "youcanpay-verify-payment",
+        {
+          body: {
+            payment_id: pay.id,
+            transaction_id: pay.transaction_id || undefined,
+          },
+        },
+      );
+      if (error) throw error;
+      if ((data as any)?.status === "paid") {
+        setBooking((prev) => (prev ? { ...prev, payment_status: "paid" } : prev));
+        setPhase("confirmed");
+        toast.success("Payment confirmed!");
+      } else {
+        toast.info("Still pending. Try again in a moment.");
+        startedAt.current = Date.now();
+        setElapsed(0);
+        setPhase("waiting");
+      }
+    } catch (e: any) {
+      toast.error(e?.message || "Could not verify payment.");
+    } finally {
+      setVerifying(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -99,27 +194,80 @@ const BookingConfirmed = () => {
 
   if (!booking) return null;
 
-  const isPaid = booking.payment_status === "paid";
-  const isPending = booking.booking_status === "pending";
-  const isConfirmed = booking.booking_status === "confirmed";
-
   return (
     <div className="min-h-screen bg-background">
       <Header />
       <div className="container mx-auto px-4 py-10 max-w-2xl">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center h-16 w-16 rounded-full bg-primary/10 mb-4">
-            <CheckCircle2 className="h-9 w-9 text-primary" />
-          </div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">
-            {isPaid ? "Booking confirmed!" : "Almost there"}
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            {isPaid
-              ? "Your booking fee was received. The agency will reach out shortly."
-              : "We're waiting for payment confirmation. This usually takes a moment."}
-          </p>
-          <p className="text-xs text-muted-foreground mt-2 font-mono">
+        {/* Header / Status */}
+        <div className="text-center mb-8 transition-all duration-500">
+          {phase === "confirmed" ? (
+            <>
+              <div className="inline-flex items-center justify-center h-16 w-16 rounded-full bg-primary/15 mb-4 animate-in fade-in zoom-in duration-500">
+                <CheckCircle2 className="h-9 w-9 text-primary" />
+              </div>
+              <h1 className="text-3xl font-bold tracking-tight text-foreground">
+                Booking confirmed!
+              </h1>
+              <p className="text-muted-foreground mt-2">
+                You paid 60 MAD. Your bike is reserved.
+              </p>
+            </>
+          ) : phase === "waiting" ? (
+            <>
+              <div className="inline-flex items-center justify-center h-16 w-16 rounded-full bg-primary/10 mb-4">
+                <Loader2 className="h-9 w-9 text-primary animate-spin" />
+              </div>
+              <h1 className="text-3xl font-bold tracking-tight text-foreground">
+                Confirming your payment…
+              </h1>
+              <p className="text-muted-foreground mt-2">
+                This usually takes a few seconds.
+              </p>
+              <p className="text-xs text-muted-foreground mt-2">
+                {Math.max(0, Math.ceil((POLL_TIMEOUT_MS - elapsed) / 1000))}s remaining
+              </p>
+            </>
+          ) : (
+            <>
+              <div className="inline-flex items-center justify-center h-16 w-16 rounded-full bg-amber-500/15 mb-4">
+                <AlertTriangle className="h-9 w-9 text-amber-600" />
+              </div>
+              <h1 className="text-3xl font-bold tracking-tight text-foreground">
+                Payment is taking longer than expected
+              </h1>
+              <p className="text-muted-foreground mt-2">
+                If your card was charged, verify directly with the payment
+                provider.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-2 justify-center mt-4">
+                <Button
+                  variant="hero"
+                  onClick={handleVerifyNow}
+                  disabled={verifying}
+                >
+                  {verifying ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Verifying…
+                    </>
+                  ) : (
+                    "Verify payment now"
+                  )}
+                </Button>
+                <Button variant="outline" asChild>
+                  <a
+                    href={`mailto:support@motonita.ma?subject=${encodeURIComponent(
+                      `Payment stuck — booking ${booking.id}`,
+                    )}`}
+                  >
+                    <LifeBuoy className="h-4 w-4 mr-2" />
+                    Contact support
+                  </a>
+                </Button>
+              </div>
+            </>
+          )}
+          <p className="text-xs text-muted-foreground mt-3 font-mono">
             Ref: {booking.id.slice(0, 8).toUpperCase()}
           </p>
         </div>
@@ -186,26 +334,18 @@ const BookingConfirmed = () => {
               </div>
             </div>
 
-            <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-2 text-sm">
-              <p className="font-semibold text-foreground inline-flex items-center gap-2">
-                <Clock className="h-4 w-4" />
-                What happens next
-              </p>
-              <ol className="list-decimal list-inside text-muted-foreground space-y-1">
-                <li>The agency receives your booking and has 24h to confirm.</li>
-                <li>You'll be notified by email and in-app message.</li>
-                <li>Coordinate pickup details directly with the agency.</li>
-                <li>Pay the rental balance to the agency at pickup.</li>
-              </ol>
-            </div>
-
-            {!isPaid && (
-              <div className="rounded-lg border border-amber-500/40 bg-amber-50 dark:bg-amber-900/20 p-3 text-sm flex items-start gap-2">
-                <AlertCircle className="h-4 w-4 mt-0.5 text-amber-700 dark:text-amber-400" />
-                <span className="text-amber-900 dark:text-amber-100">
-                  Payment status: {booking.payment_status ?? "unpaid"}. Refresh
-                  in a moment if you just paid.
-                </span>
+            {phase === "confirmed" && (
+              <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-2 text-sm">
+                <p className="font-semibold text-foreground inline-flex items-center gap-2">
+                  <Clock className="h-4 w-4" />
+                  What happens next
+                </p>
+                <ol className="list-decimal list-inside text-muted-foreground space-y-1">
+                  <li>The agency receives your booking and has 24h to confirm.</li>
+                  <li>You'll be notified by email and in-app message.</li>
+                  <li>Coordinate pickup details directly with the agency.</li>
+                  <li>Pay the rental balance to the agency at pickup.</li>
+                </ol>
               </div>
             )}
 
@@ -214,7 +354,7 @@ const BookingConfirmed = () => {
                 <Link to="/account/bookings">View my bookings</Link>
               </Button>
               <Button asChild variant="outline" size="lg" className="flex-1">
-                <Link to={`/messages/${booking.id}`}>
+                <Link to="/inbox">
                   <MessageCircle className="h-4 w-4 mr-2" />
                   Message agency
                 </Link>
