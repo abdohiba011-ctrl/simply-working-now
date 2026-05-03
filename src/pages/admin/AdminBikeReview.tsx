@@ -61,17 +61,6 @@ interface BikeType {
   created_at: string;
 }
 
-const empty = (v: unknown): boolean =>
-  v === null || v === undefined || (typeof v === "string" && v.trim() === "");
-
-const Field = ({ label, value }: { label: string; value: React.ReactNode }) => (
-  <div>
-    <p className="text-xs uppercase tracking-wide text-muted-foreground">{label}</p>
-    <p className={`mt-0.5 text-sm ${empty(value) ? "text-muted-foreground/60" : "font-medium"}`}>
-      {empty(value) ? "—" : value}
-    </p>
-  </div>
-);
 
 const AdminBikeReview = () => {
   const { id } = useParams<{ id: string }>();
