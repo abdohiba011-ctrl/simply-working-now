@@ -52,6 +52,8 @@ interface ServiceCity {
   name: string;
   name_key: string;
   image_url: string | null;
+  image_focal_x: number;
+  image_focal_y: number;
   bikes_count: number;
   price_from: number;
   is_available: boolean;
@@ -81,6 +83,8 @@ const generateNameKey = (name: string) => {
 const emptyNewCity = {
   name: "",
   image_url: "" as string | null,
+  image_focal_x: 0.5,
+  image_focal_y: 0.5,
   is_available: false,
   is_coming_soon: true,
   show_in_homepage: true,
@@ -166,6 +170,8 @@ export const AdminCitiesTab = () => {
         name: newCity.name.trim(),
         name_key: generateNameKey(newCity.name),
         image_url: newCity.image_url || null,
+        image_focal_x: newCity.image_focal_x,
+        image_focal_y: newCity.image_focal_y,
         is_available: newCity.is_available,
         is_coming_soon: newCity.is_coming_soon,
         show_in_homepage: newCity.show_in_homepage,
@@ -204,6 +210,8 @@ export const AdminCitiesTab = () => {
       const updatePayload = {
         name: editingCity.name,
         image_url: editingCity.image_url,
+        image_focal_x: editingCity.image_focal_x,
+        image_focal_y: editingCity.image_focal_y,
         is_available: editingCity.is_available,
         is_coming_soon: editingCity.is_coming_soon,
         show_in_homepage: editingCity.show_in_homepage,
@@ -610,6 +618,7 @@ export const AdminCitiesTab = () => {
                           src={city.image_url}
                           alt={city.name}
                           className="w-10 h-10 rounded object-cover flex-shrink-0"
+                          style={{ objectPosition: `${(city.image_focal_x ?? 0.5) * 100}% ${(city.image_focal_y ?? 0.5) * 100}%` }}
                           onError={(e) => {
                             (e.target as HTMLImageElement).src = "/placeholder.svg";
                           }}
@@ -800,6 +809,9 @@ export const AdminCitiesTab = () => {
               <CityImageUpload
                 currentImageUrl={newCity.image_url}
                 onImageChange={(url) => setNewCity({ ...newCity, image_url: url })}
+                focalX={newCity.image_focal_x}
+                focalY={newCity.image_focal_y}
+                onFocalChange={(x, y) => setNewCity({ ...newCity, image_focal_x: x, image_focal_y: y })}
               />
             </div>
             <p className="text-xs text-muted-foreground -mt-2">
@@ -857,6 +869,9 @@ export const AdminCitiesTab = () => {
                   cityId={editingCity.id}
                   currentImageUrl={editingCity.image_url}
                   onImageChange={(url) => setEditingCity({ ...editingCity, image_url: url })}
+                  focalX={editingCity.image_focal_x ?? 0.5}
+                  focalY={editingCity.image_focal_y ?? 0.5}
+                  onFocalChange={(x, y) => setEditingCity({ ...editingCity, image_focal_x: x, image_focal_y: y })}
                 />
               </div>
               <div className="space-y-2">

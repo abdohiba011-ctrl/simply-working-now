@@ -120,6 +120,8 @@ type CityRow = {
   is_available: boolean | null;
   is_coming_soon: boolean | null;
   image_url: string | null;
+  image_focal_x: number | null;
+  image_focal_y: number | null;
   description: string | null;
 };
 
@@ -142,11 +144,11 @@ export default function RentCity() {
       // add are immediately reachable without code changes.
       const { data, error } = await supabase
         .from("service_cities")
-        .select("id, name, is_available, is_coming_soon, image_url, description, slug")
+        .select("id, name, is_available, is_coming_soon, image_url, image_focal_x, image_focal_y, description, slug")
         .eq("slug", citySlug)
         .maybeSingle();
       if (error) throw error;
-      return (data as CityRow | null) ?? null;
+      return (data as unknown as CityRow | null) ?? null;
     },
   });
 
@@ -830,6 +832,7 @@ function RentCityComingSoon({ city }: { city: CityRow }) {
                 src={city.image_url}
                 alt={city.name}
                 className="w-full h-full object-cover"
+                style={{ objectPosition: `${(city.image_focal_x ?? 0.5) * 100}% ${(city.image_focal_y ?? 0.5) * 100}%` }}
               />
             </div>
           )}

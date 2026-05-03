@@ -2074,6 +2074,8 @@ export type Database = {
           description: string | null
           display_order: number | null
           id: string
+          image_focal_x: number
+          image_focal_y: number
           image_url: string | null
           is_available: boolean | null
           is_coming_soon: boolean | null
@@ -2092,6 +2094,8 @@ export type Database = {
           description?: string | null
           display_order?: number | null
           id?: string
+          image_focal_x?: number
+          image_focal_y?: number
           image_url?: string | null
           is_available?: boolean | null
           is_coming_soon?: boolean | null
@@ -2110,6 +2114,8 @@ export type Database = {
           description?: string | null
           display_order?: number | null
           id?: string
+          image_focal_x?: number
+          image_focal_y?: number
           image_url?: string | null
           is_available?: boolean | null
           is_coming_soon?: boolean | null
