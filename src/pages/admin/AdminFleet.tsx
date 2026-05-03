@@ -271,20 +271,16 @@ const AdminFleet = () => {
           <div>
             <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
               <Bike className="h-6 w-6" />
-              Fleet Management
+              All Bikes
             </h1>
             <p className="text-muted-foreground text-sm mt-1">
-              Manage your motorbike inventory and business submissions
+              Read-only overview of all listings across agencies
             </p>
           </div>
           <div className="flex gap-2">
             <Button variant="outline" onClick={fetchData} disabled={isLoading}>
               <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
               Refresh
-            </Button>
-            <Button onClick={() => navigate('/admin/fleet/new')}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Bike Type
             </Button>
           </div>
         </div>
@@ -408,17 +404,10 @@ const AdminFleet = () => {
                               variant="outline" 
                               size="sm" 
                               className="flex-1"
-                              onClick={() => navigate(`/admin/fleet/${bike.id}`)}
+                              onClick={() => navigate(`/admin/bikes/${bike.id}`)}
                             >
-                              <Edit className="h-4 w-4 mr-1" />
-                              Edit
-                            </Button>
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => handleDelete(bike.id)}
-                            >
-                              <Trash2 className="h-4 w-4 text-destructive" />
+                              <Eye className="h-4 w-4 mr-1" />
+                              Review
                             </Button>
                           </div>
                         </CardContent>
@@ -481,7 +470,7 @@ const AdminFleet = () => {
                                 <Button 
                                   size="sm" 
                                   variant="outline"
-                                  onClick={() => navigate(`/admin/fleet/${bike.id}`)}
+                                  onClick={() => navigate(`/admin/bikes/${bike.id}`)}
                                 >
                                   <Eye className="h-4 w-4" />
                                 </Button>
