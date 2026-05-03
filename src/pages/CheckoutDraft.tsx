@@ -671,7 +671,7 @@ const CheckoutDraft = () => {
                   size="lg"
                   className="w-full"
                   onClick={handlePay}
-                  disabled={ycStatus !== "ready" || !agreed}
+                  disabled={ycStatus !== "ready" || !agreed || mustEdit || editing}
                 >
                   {ycStatus === "paying" ? (
                     <>
