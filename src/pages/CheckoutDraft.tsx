@@ -305,21 +305,20 @@ const CheckoutDraft = () => {
       toast.error("Please accept the Terms & Cancellation policy.");
       return;
     }
-    const ok = await persistInfoIfNeeded();
-    if (!ok) return;
-
-    // Make sure booking has the latest renter info even if not editing.
-    if (!showEditor) {
-      await supabase
-        .from("bookings")
-        .update({
-          customer_name: profileName,
-          customer_email: profileEmail,
-          customer_phone: profilePhone,
-        })
-        .eq("id", bookingId!)
-        .eq("booking_status", "draft");
+    if (!profileName.trim() || !profilePhone.trim()) {
+      toast.error("Please save your name and phone before paying.");
+      return;
     }
+    // Make sure booking has the latest renter info.
+    await supabase
+      .from("bookings")
+      .update({
+        customer_name: profileName,
+        customer_email: profileEmail,
+        customer_phone: profilePhone,
+      })
+      .eq("id", bookingId!)
+      .eq("booking_status", "draft");
 
     setYcStatus("paying");
     const { token, pid } = tokenRef.current;
