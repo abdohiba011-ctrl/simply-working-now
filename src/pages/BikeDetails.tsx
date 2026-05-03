@@ -219,11 +219,10 @@ const BikeDetails = () => {
     : 0;
 
   const baseDailyPrice = bike?.bike_type ? Number(bike.bike_type.daily_price) : 0;
-  const tieredDailyPrice = getDailyPriceForDuration(pricingTiers, days || 1);
-  const dailyPrice = days > 0 ? tieredDailyPrice : baseDailyPrice;
+  const dailyPrice = baseDailyPrice;
   const subtotal = days * dailyPrice;
-  const baselineSubtotal = days * baseDailyPrice;
-  const tierDiscount = Math.max(0, baselineSubtotal - subtotal);
+  const baselineSubtotal = subtotal;
+  const tierDiscount = 0;
   const agencyDeliveryFee = resolvedAgency.deliveryFee;
   const deliveryFee = deliveryMethod === "delivery" ? agencyDeliveryFee : 0;
   const PLATFORM_FEE = 10;
