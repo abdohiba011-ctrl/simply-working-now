@@ -331,9 +331,33 @@ const CheckoutDraft = () => {
     }
   };
 
+  // Fetch pricing tiers for this bike type
+  const [tiers, setTiers] = useState<BikePricingTier[]>([]);
+  useEffect(() => {
+    const btId = booking?.bike?.bike_type_id;
+    if (!btId) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("bike_pricing_tiers")
+        .select("min_days, daily_price_mad")
+        .eq("bike_type_id", btId)
+        .order("min_days", { ascending: true });
+      if (!cancelled && data) setTiers(data as BikePricingTier[]);
+    })();
+    return () => { cancelled = true; };
+  }, [booking?.bike?.bike_type_id]);
+
   const days = booking?.total_days ?? 1;
-  const dailyPrice = booking?.bike?.daily_price ?? 0;
-  const rentalSubtotal = booking?.total_price ?? days * dailyPrice;
+  const fallbackBase = booking?.bike?.daily_price ?? 0;
+  const baseDailyPrice = getBaseDailyPrice(tiers) || fallbackBase;
+  const { dailyPrice: resolvedDaily } = resolveTierPrice(tiers, days);
+  const dailyPrice = tiers.length > 0 ? resolvedDaily : fallbackBase;
+  // Prefer the booking.total_price (already tier-aware via create_draft_booking RPC).
+  const computedSubtotal = Math.round(dailyPrice * days);
+  const rentalSubtotal = booking?.total_price ?? computedSubtotal;
+  const baselineSubtotal = Math.round(baseDailyPrice * days);
+  const volumeDiscount = Math.max(0, baselineSubtotal - rentalSubtotal);
   const dueAtPickup = Math.max(0, rentalSubtotal - CONFIRMATION_FEE_MAD);
 
   const [savingInfo, setSavingInfo] = useState(false);
