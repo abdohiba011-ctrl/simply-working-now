@@ -252,13 +252,8 @@ export default function RentCity() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [city, neighborhoodRows]);
 
-  // Load favorites from localStorage
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem("favorite_bikes");
-      if (stored) setFavorites(new Set(JSON.parse(stored)));
-    } catch {}
-  }, []);
+  // DB-backed favorites
+  const { data: favoriteIds = new Set<string>() } = useFavoriteIds();
 
   // ─── Fetch bikes for the resolved city ──────────────────────────────
   // Only runs once we have a city.id. Skipped for unknown / not-found
