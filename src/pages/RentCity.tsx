@@ -205,7 +205,7 @@ export default function RentCity() {
   const [sortBy, setSortBy] = useState<string>(
     searchParams.get("sort") || "price_asc"
   );
-  const [favorites, setFavorites] = useState<Set<string>>(new Set());
+  // favorites are loaded from DB via useFavoriteIds (see below)
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   // Read selected dates from URL (from/to). Backwards-compat with start/end & pickup.
