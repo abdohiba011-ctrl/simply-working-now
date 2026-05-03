@@ -46,6 +46,24 @@ import { toast } from "sonner";
 import { CityImageUpload } from "./CityImageUpload";
 import { useServiceCitiesRealtime } from "@/hooks/useBikeTypesRealtime";
 import { AdminTableSkeleton } from "@/components/ui/admin-skeleton";
+import { GripVertical } from "lucide-react";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  arrayMove,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 interface ServiceCity {
   id: string;
