@@ -188,42 +188,56 @@ export const BookingDatePicker = ({
 
   useEffect(() => setTempRange(value), [value]);
 
-  // Close on outside click (desktop popover only)
+  // Close on outside click (desktop popover only). Use closest() against a
+  // data-attribute on the portal wrapper so re-renders inside the calendar
+  // don't accidentally trigger close.
   useEffect(() => {
     if (!open || isMobile) return;
-    const onClick = (e: MouseEvent) => {
-      const t = e.target as Node;
-      if (
-        popoverRef.current?.contains(t) ||
-        triggerRef.current?.contains(t)
-      ) {
-        return;
-      }
+    const onPointer = (e: MouseEvent) => {
+      const t = e.target as Element | null;
+      if (!t) return;
+      if (t.closest?.('[data-booking-datepicker="panel"]')) return;
+      if (triggerRef.current?.contains(t as Node)) return;
       commitAndClose();
     };
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") commitAndClose();
     };
-    document.addEventListener("mousedown", onClick);
+    document.addEventListener("mousedown", onPointer);
     document.addEventListener("keydown", onKey);
     return () => {
-      document.removeEventListener("mousedown", onClick);
+      document.removeEventListener("mousedown", onPointer);
       document.removeEventListener("keydown", onKey);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, isMobile, tempRange]);
+  }, [open, isMobile]);
 
-  // Position the desktop popover
+  // Position the desktop popover (position: fixed → viewport coords, no scroll offset)
   useEffect(() => {
     if (!open || isMobile || !triggerRef.current) return;
-    const rect = triggerRef.current.getBoundingClientRect();
-    const width = 640;
-    let left = rect.left + window.scrollX;
-    if (align === "center") left = rect.left + rect.width / 2 - width / 2 + window.scrollX;
-    if (align === "end") left = rect.right - width + window.scrollX;
-    // clamp
-    left = Math.max(8, Math.min(left, window.innerWidth - width - 8));
-    setPopoverPos({ top: rect.bottom + 8 + window.scrollY, left });
+    const compute = () => {
+      const rect = triggerRef.current!.getBoundingClientRect();
+      const width = Math.min(640, window.innerWidth - 16);
+      let left = rect.left;
+      if (align === "center") left = rect.left + rect.width / 2 - width / 2;
+      if (align === "end") left = rect.right - width;
+      left = Math.max(8, Math.min(left, window.innerWidth - width - 8));
+
+      const estPanelHeight = 520;
+      const spaceBelow = window.innerHeight - rect.bottom - 8;
+      const spaceAbove = rect.top - 8;
+      const top = spaceBelow >= estPanelHeight || spaceBelow >= spaceAbove
+        ? rect.bottom + 8
+        : Math.max(8, rect.top - estPanelHeight - 8);
+      setPopoverPos({ top, left });
+    };
+    compute();
+    window.addEventListener("resize", compute);
+    window.addEventListener("scroll", compute, true);
+    return () => {
+      window.removeEventListener("resize", compute);
+      window.removeEventListener("scroll", compute, true);
+    };
   }, [open, isMobile, align]);
 
   const commitAndClose = () => {
