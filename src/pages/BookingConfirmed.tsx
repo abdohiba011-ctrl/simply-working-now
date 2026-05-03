@@ -33,12 +33,15 @@ interface BookingRow {
   customer_phone: string | null;
   booking_status: string | null;
   payment_status: string | null;
+  payment_method: string | null;
   bike_name?: string | null;
   bike_image?: string | null;
 }
 
 const POLL_INTERVAL_MS = 2000;
+const POLL_INTERVAL_CASHPLUS_MS = 10_000;
 const POLL_TIMEOUT_MS = 60_000;
+const POLL_TIMEOUT_CASHPLUS_MS = 72 * 60 * 60 * 1000; // effectively no client timeout
 
 type Phase = "waiting" | "confirmed" | "timeout";
 
@@ -64,7 +67,7 @@ const BookingConfirmed = () => {
         .select(
           `id, bike_id, pickup_date, return_date, total_days, total_price,
            delivery_method, pickup_location, customer_name, customer_email,
-           customer_phone, booking_status, payment_status`,
+           customer_phone, booking_status, payment_status, payment_method`,
         )
         .eq("id", bookingId)
         .maybeSingle();
@@ -99,11 +102,15 @@ const BookingConfirmed = () => {
     load();
   }, [bookingId, navigate]);
 
+  const isCashplus = booking?.payment_method === "cashplus";
+
   // Poll for payment_status
   useEffect(() => {
     if (!bookingId || phase !== "waiting") return;
     let cancelled = false;
     let timer: number | undefined;
+    const interval = isCashplus ? POLL_INTERVAL_CASHPLUS_MS : POLL_INTERVAL_MS;
+    const timeout = isCashplus ? POLL_TIMEOUT_CASHPLUS_MS : POLL_TIMEOUT_MS;
 
     const tick = async () => {
       if (cancelled) return;
@@ -123,11 +130,11 @@ const BookingConfirmed = () => {
       }
       const e = Date.now() - startedAt.current;
       setElapsed(e);
-      if (e >= POLL_TIMEOUT_MS) {
+      if (e >= timeout) {
         setPhase("timeout");
         return;
       }
-      timer = window.setTimeout(tick, POLL_INTERVAL_MS);
+      timer = window.setTimeout(tick, interval);
     };
 
     tick();
@@ -135,7 +142,7 @@ const BookingConfirmed = () => {
       cancelled = true;
       if (timer) window.clearTimeout(timer);
     };
-  }, [bookingId, phase]);
+  }, [bookingId, phase, isCashplus]);
 
   const handleVerifyNow = async () => {
     if (!bookingId || verifying) return;
@@ -218,14 +225,32 @@ const BookingConfirmed = () => {
                 <Loader2 className="h-9 w-9 text-primary animate-spin" />
               </div>
               <h1 className="text-3xl font-bold tracking-tight text-foreground">
-                Confirming your payment…
+                {isCashplus ? "Waiting for Cash Plus payment" : "Confirming your payment…"}
               </h1>
               <p className="text-muted-foreground mt-2">
-                This usually takes a few seconds.
+                {isCashplus
+                  ? "Pay at any Cash Plus agent in Morocco. We'll confirm your booking automatically."
+                  : "This usually takes a few seconds."}
               </p>
-              <p className="text-xs text-muted-foreground mt-2">
-                {Math.max(0, Math.ceil((POLL_TIMEOUT_MS - elapsed) / 1000))}s remaining
-              </p>
+              {!isCashplus && (
+                <p className="text-xs text-muted-foreground mt-2">
+                  {Math.max(0, Math.ceil((POLL_TIMEOUT_MS - elapsed) / 1000))}s remaining
+                </p>
+              )}
+              {isCashplus && (
+                <div className="flex flex-col sm:flex-row gap-2 justify-center mt-4">
+                  <Button variant="hero" onClick={handleVerifyNow} disabled={verifying}>
+                    {verifying ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Verifying…
+                      </>
+                    ) : (
+                      "I've paid — verify now"
+                    )}
+                  </Button>
+                </div>
+              )}
             </>
           ) : (
             <>

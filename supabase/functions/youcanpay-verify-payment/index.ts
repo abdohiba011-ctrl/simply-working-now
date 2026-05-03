@@ -21,6 +21,7 @@ async function applyBookingPaymentVerify(
   bookingId: string,
   payment: any,
   transactionId: string | null,
+  paymentMethod: string = "card",
 ): Promise<void> {
   const { data: booking } = await admin
     .from("bookings")
@@ -65,7 +66,7 @@ async function applyBookingPaymentVerify(
         amount: row.amount,
         currency: payment.currency || "MAD",
         provider: "youcanpay",
-        method: "card",
+        method: paymentMethod || "card",
         payment_type: row.payment_type,
         status: "completed",
         paid_at: new Date().toISOString(),
@@ -341,7 +342,28 @@ Deno.serve(async (req) => {
         { onConflict: "user_id" },
       );
     } else if (payment.purpose === "booking_payment" && payment.related_booking_id) {
-      await applyBookingPaymentVerify(admin, payment.related_booking_id, payment, providerTxn);
+      const rawMethod = (
+        providerRaw?.transaction?.payment_method ||
+        providerRaw?.payment?.payment_method ||
+        providerRaw?.payment_method ||
+        providerRaw?.gateway ||
+        ""
+      ).toString().toLowerCase();
+      // Fall back to current row value if provider didn't tell us
+      let method = rawMethod.includes("cash") ? "cashplus" : (rawMethod ? "card" : "");
+      if (!method) {
+        const { data: cur } = await admin
+          .from("bookings")
+          .select("payment_method")
+          .eq("id", payment.related_booking_id)
+          .maybeSingle();
+        method = cur?.payment_method || "card";
+      }
+      await admin
+        .from("bookings")
+        .update({ payment_method: method })
+        .eq("id", payment.related_booking_id);
+      await applyBookingPaymentVerify(admin, payment.related_booking_id, payment, providerTxn, method);
     }
 
     const { data: updated } = await admin

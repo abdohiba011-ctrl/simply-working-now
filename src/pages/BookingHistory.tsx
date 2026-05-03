@@ -75,6 +75,9 @@ interface Booking {
   return_date: string;
   total_price: number;
   status: string;
+  booking_status?: string | null;
+  payment_method?: string | null;
+  created_at?: string;
   bike_id: string;
   customer_name: string;
   customer_phone: string;
@@ -183,6 +186,9 @@ const BookingHistory = () => {
           return_date,
           total_price,
           status,
+          booking_status,
+          payment_method,
+          created_at,
           bike_id,
           customer_name,
           customer_phone,
@@ -203,8 +209,18 @@ const BookingHistory = () => {
       clearTimeout(timeoutId);
 
       if (error) throw error;
-      
-      setBookings(data || []);
+
+      // Hide stale drafts: only keep card drafts younger than 24h, cashplus drafts younger than 72h
+      const now = Date.now();
+      const filtered = (data || []).filter((b: any) => {
+        if (b.booking_status !== 'draft') return true;
+        const ageMs = b.created_at ? now - new Date(b.created_at).getTime() : 0;
+        if (b.payment_method === 'cashplus') return ageMs < 72 * 3600 * 1000;
+        // Hide non-cashplus drafts entirely from history (they're abandoned checkouts)
+        return false;
+      });
+
+      setBookings(filtered);
     } catch (error) {
       console.error('Error fetching data:', error);
       setLoadError(true);
@@ -238,11 +254,12 @@ const BookingHistory = () => {
     const deliveryInfo = getDeliveryStatus(booking.status);
     const DeliveryIcon = deliveryInfo.icon;
     const days = Math.ceil((new Date(booking.return_date).getTime() - new Date(booking.pickup_date).getTime()) / (1000 * 60 * 60 * 24));
+    const isCashplusDraft = booking.booking_status === 'draft' && booking.payment_method === 'cashplus';
 
     return (
       <Card 
-        className={`${isPast ? 'opacity-80 hover:opacity-100' : 'hover:shadow-lg'} transition-all cursor-pointer border-2 hover:border-foreground/20 group`}
-        onClick={() => navigate(`/booking/${booking.id}`)}
+        className={`${isPast ? 'opacity-80 hover:opacity-100' : 'hover:shadow-lg'} transition-all cursor-pointer border-2 hover:border-foreground/20 group ${isCashplusDraft ? 'border-[#9FE870]/60' : ''}`}
+        onClick={() => navigate(isCashplusDraft ? `/checkout/${booking.id}` : `/booking/${booking.id}`)}
       >
         <CardContent className="p-6">
           <div className="flex flex-col sm:flex-row gap-4">
@@ -252,7 +269,13 @@ const BookingHistory = () => {
                 alt={booking.bikes.bike_type.name}
                 className="w-full sm:w-32 h-32 object-cover rounded-lg"
               />
-              <StatusBadge status={booking.status} className="absolute top-2 right-2" />
+              {isCashplusDraft ? (
+                <Badge className="absolute top-2 right-2 bg-[#9FE870] text-[#163300] hover:bg-[#9FE870]">
+                  💵 Awaiting Cash Plus
+                </Badge>
+              ) : (
+                <StatusBadge status={booking.status} className="absolute top-2 right-2" />
+              )}
             </div>
             <div className="flex-1 space-y-3">
               <div>
@@ -318,18 +341,33 @@ const BookingHistory = () => {
                     ({booking.bikes.bike_type.daily_price} DH/day)
                   </span>
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    navigate(`/booking/${booking.id}`);
-                  }}
-                  className="gap-2"
-                >
-                  View Details
-                  <ChevronLeft className="h-4 w-4 rotate-180" />
-                </Button>
+                {isCashplusDraft ? (
+                  <Button
+                    variant="hero"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/checkout/${booking.id}`);
+                    }}
+                    className="gap-2"
+                  >
+                    Verify payment
+                    <ChevronLeft className="h-4 w-4 rotate-180" />
+                  </Button>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/booking/${booking.id}`);
+                    }}
+                    className="gap-2"
+                  >
+                    View Details
+                    <ChevronLeft className="h-4 w-4 rotate-180" />
+                  </Button>
+                )}
               </div>
             </div>
           </div>

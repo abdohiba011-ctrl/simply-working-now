@@ -17,6 +17,9 @@ import {
   Lock,
   Loader2,
   CheckCircle2,
+  Banknote,
+  ExternalLink,
+  Clock,
 } from "lucide-react";
 import { format } from "date-fns";
 import { useAuth } from "@/hooks/useAuth";
@@ -99,6 +102,8 @@ const CheckoutDraft = () => {
   const [agreed, setAgreed] = useState(false);
   const [ycStatus, setYcStatus] = useState<"idle" | "loading" | "ready" | "paying" | "error">("idle");
   const [ycError, setYcError] = useState<string | null>(null);
+  const [cashplusActive, setCashplusActive] = useState(false);
+  const [verifying, setVerifying] = useState(false);
   const ycRef = useRef<any>(null);
   const tokenRef = useRef<{ token: string; pid: string } | null>(null);
 
@@ -249,6 +254,79 @@ const CheckoutDraft = () => {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [booking?.id]);
+
+  // ---------- Detect Cash Plus selection by observing the YouCan Pay form DOM ----------
+  useEffect(() => {
+    if (ycStatus !== "ready" && ycStatus !== "paying") return;
+    const target = document.getElementById("ycpay-form");
+    if (!target) return;
+
+    const detect = () => {
+      const text = (target.innerText || "").toLowerCase();
+      // YouCan Pay shows "cashplus" / "cash plus" / "agence" / French instructions
+      if (
+        text.includes("cashplus") ||
+        text.includes("cash plus") ||
+        text.includes("agence cashplus") ||
+        text.includes("nearest cashplus")
+      ) {
+        if (!cashplusActive) {
+          setCashplusActive(true);
+          // Persist to draft so cleanup respects 72h TTL
+          if (booking?.id) {
+            supabase
+              .from("bookings")
+              .update({ payment_method: "cashplus" })
+              .eq("id", booking.id)
+              .eq("booking_status", "draft")
+              .then(({ error }) => {
+                if (error) console.warn("mark cashplus failed", error);
+              });
+          }
+        }
+      }
+    };
+
+    detect();
+    const obs = new MutationObserver(detect);
+    obs.observe(target, { childList: true, subtree: true, characterData: true });
+    return () => obs.disconnect();
+  }, [ycStatus, booking?.id, cashplusActive]);
+
+  const handleVerifyCashplus = async () => {
+    if (!booking?.id || verifying) return;
+    setVerifying(true);
+    try {
+      const { data: pay } = await supabase
+        .from("youcanpay_payments")
+        .select("id, transaction_id")
+        .eq("related_booking_id", booking.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (!pay?.id) {
+        toast.error("No payment record found yet. Please try again in a moment.");
+        return;
+      }
+      const { data, error } = await supabase.functions.invoke(
+        "youcanpay-verify-payment",
+        {
+          body: { payment_id: pay.id, transaction_id: pay.transaction_id || undefined },
+        },
+      );
+      if (error) throw error;
+      if ((data as any)?.status === "paid") {
+        toast.success("Payment received!");
+        navigate(`/booking/${booking.id}/confirmed`);
+      } else {
+        toast.info("Payment not received yet. Please try again after paying at Cash Plus.");
+      }
+    } catch (e: any) {
+      toast.error(e?.message || "Could not verify payment.");
+    } finally {
+      setVerifying(false);
+    }
+  };
 
   const days = booking?.total_days ?? 1;
   const dailyPrice = booking?.bike?.daily_price ?? 0;
@@ -646,6 +724,57 @@ const CheckoutDraft = () => {
                     </div>
                   )}
                 </div>
+
+                {cashplusActive && (
+                  <div className="rounded-lg border-2 border-[#9FE870] bg-[#9FE870]/10 p-4 space-y-3">
+                    <div className="flex items-center gap-2">
+                      <Banknote className="h-5 w-5 text-[#163300]" />
+                      <h4 className="font-semibold text-foreground">Pay with Cash Plus</h4>
+                    </div>
+                    <ol className="list-decimal list-inside text-sm text-foreground/90 space-y-1">
+                      <li>Note the payment code shown above.</li>
+                      <li>Visit any Cash Plus agent in Morocco.</li>
+                      <li>Give them the code + {UPFRONT_TOTAL_MAD} MAD.</li>
+                      <li>Your booking confirms automatically.</li>
+                    </ol>
+                    <a
+                      href="https://www.cashplus.ma/agences"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:underline"
+                    >
+                      <MapPin className="h-3.5 w-3.5" />
+                      Find nearest Cash Plus agent
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Clock className="h-3.5 w-3.5" />
+                      Code valid for 48 hours
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      onClick={handleVerifyCashplus}
+                      disabled={verifying}
+                    >
+                      {verifying ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Verifying…
+                        </>
+                      ) : (
+                        "I've paid — verify now"
+                      )}
+                    </Button>
+                    <p className="text-xs text-muted-foreground border-t border-border pt-2">
+                      Booking ref: <span className="font-mono">#{booking.id.slice(0, 8).toUpperCase()}</span>
+                      <br />
+                      You can close this page. Your booking will confirm automatically after payment.
+                    </p>
+                  </div>
+                )}
 
                 <label className="flex items-start gap-3 cursor-pointer rounded-lg border-2 border-border bg-muted/30 p-3 hover:bg-muted/50 transition-colors has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50 dark:has-[:checked]:bg-blue-950/30">
                   <Checkbox
