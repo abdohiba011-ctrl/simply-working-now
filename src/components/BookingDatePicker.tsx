@@ -18,6 +18,8 @@ interface BookingDatePickerProps {
   panelOnly?: boolean;
   /** Already-booked date ranges to disable in the calendar. */
   disabledRanges?: { from: Date; to: Date }[];
+  /** Day-of-week indexes (0=Sun..6=Sat) when the agency is closed. */
+  closedWeekdays?: number[];
 }
 
 const today0 = () => startOfDay(new Date());
