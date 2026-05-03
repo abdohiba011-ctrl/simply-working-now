@@ -112,7 +112,7 @@ type BikeRow = {
   city_id: string | null;
 };
 
-import { slugToDisplayName, cityToSlug } from "@/lib/citySlug";
+import { slugToDisplayName, cityToSlug, slugToCityNameVariants } from "@/lib/citySlug";
 
 type CityRow = {
   id: string;
