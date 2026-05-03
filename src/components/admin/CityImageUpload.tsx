@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { getErrMsg } from "@/lib/errorMessages";
-import { Upload, X, Loader2, ImageIcon } from "lucide-react";
+import { Upload, X, Loader2, ImageIcon, Crosshair } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -10,6 +10,9 @@ interface CityImageUploadProps {
   currentImageUrl: string | null;
   onImageChange: (url: string | null) => void;
   disabled?: boolean;
+  focalX?: number;
+  focalY?: number;
+  onFocalChange?: (x: number, y: number) => void;
 }
 
 const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
