@@ -236,315 +236,226 @@ const MotorbikeDetail = () => {
 
   return (
     <AgencyLayout>
-      <div className="mx-auto max-w-5xl space-y-6">
-        <button
-          onClick={() => navigate("/agency/motorbikes")}
-          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-        >
-          <ChevronLeft className="h-4 w-4" /> Back
-        </button>
-
-        {bike.approval_status === "rejected" && (
-          <Card className="border-destructive/40 bg-destructive/10 p-4">
-            <div className="flex items-start gap-3">
-              <XCircle className="mt-0.5 h-5 w-5 shrink-0 text-destructive" />
-              <div className="flex-1">
-                <h3 className="font-semibold text-destructive">Your bike was rejected</h3>
-                <p className="mt-1 text-sm">
-                  {bike.rejection_reason || "No reason provided."}
-                </p>
-                {bike.rejected_at && (
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Rejected on {new Date(bike.rejected_at).toLocaleString()}
-                  </p>
-                )}
-                <Button
-                  size="sm"
-                  className="mt-3"
-                  onClick={() => setEditOpen(true)}
-                >
-                  Edit and resubmit for review
-                </Button>
-              </div>
-            </div>
-          </Card>
-        )}
-
-        {bike.approval_status === "pending" && (
-          <Card className="border-warning/30 bg-warning/10 p-4">
-            <div className="flex items-start gap-3">
-              <Clock className="mt-0.5 h-5 w-5 shrink-0 text-warning" />
-              <div>
-                <h3 className="font-semibold">Awaiting review</h3>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Our team will review this bike within 24-48 hours. You'll be notified.
-                </p>
-              </div>
-            </div>
-          </Card>
-        )}
-
-        {bike.approval_status === "approved" && bike.business_status !== "active" && (
-          <Card className="border-amber-500/30 bg-amber-500/10 p-4">
-            <div className="flex items-start gap-3">
-              <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-700 dark:text-amber-400" />
-              <div>
-                <h3 className="font-semibold">Suspended</h3>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  This bike is currently suspended by Motonita admins and is not visible to renters.
-                </p>
-              </div>
-            </div>
-          </Card>
-        )}
-
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
+      <div className="mx-auto max-w-6xl space-y-3">
+        {/* Sticky header */}
+        <div className="sticky top-0 z-20 -mx-4 flex items-center gap-3 border-b border-border bg-background/95 px-4 py-2 backdrop-blur sm:mx-0 sm:rounded-md sm:border sm:px-3">
+          <button
+            onClick={() => navigate("/agency/motorbikes")}
+            className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+          >
+            <ChevronLeft className="h-4 w-4" /> Back
+          </button>
+          <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
-              <h1 className="text-3xl font-bold tracking-tight">{bike.name}</h1>
+              <h1 className="truncate text-base font-bold sm:text-lg">{bike.name}</h1>
               <BikeApprovalBadge bike={bike} />
             </div>
-            <p className="text-sm text-muted-foreground">
-              {bike.engine_cc ? `${bike.engine_cc}cc` : ""} {bike.transmission || ""}{" "}
-              {bike.fuel_type || ""}
-            </p>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <Button
-              variant="outline"
-              className="gap-1"
-              onClick={() => window.open(`/bikes/${bike.id}`, "_blank")}
-            >
-              <ExternalLink className="h-4 w-4" /> Public view
-            </Button>
-            <Button onClick={() => setEditOpen(true)}>
-              Edit
-            </Button>
-            <Button
-              variant="outline"
-              className="gap-1 border-destructive/40 text-destructive hover:bg-destructive/10"
-              onClick={() => setArchiveOpen(true)}
-              disabled={busy}
-            >
-              <Archive className="h-4 w-4" /> Archive
-            </Button>
-          </div>
+          <Button variant="outline" size="sm" className="gap-1" onClick={() => window.open(`/bikes/${bike.id}`, "_blank")}>
+            <ExternalLink className="h-4 w-4" /> View
+          </Button>
+          <Button size="sm" onClick={() => setEditOpen(true)}>Edit bike</Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1 border-destructive/40 text-destructive hover:bg-destructive/10"
+            onClick={() => setArchiveOpen(true)}
+            disabled={busy}
+          >
+            <Archive className="h-4 w-4" />
+          </Button>
         </div>
 
-        {/* Gallery */}
-        <Card className="overflow-hidden">
-          <div className="aspect-video w-full bg-muted">
-            {active ? (
-              <button
-                type="button"
-                onClick={() => setLightboxOpen(true)}
-                className="block h-full w-full"
-                aria-label="Open full image"
-              >
-                <img
-                  src={active.image_url}
-                  alt={bike.name}
-                  className="h-full w-full object-cover"
-                />
-              </button>
-            ) : (
-              <div className="flex h-full items-center justify-center text-muted-foreground">
-                <BikeIcon className="h-12 w-12" />
-                <span className="ml-2 text-sm">No images yet</span>
+        {/* Status banners (compact) */}
+        {bike.approval_status === "rejected" && (
+          <Card className="border-destructive/40 bg-destructive/10 p-3">
+            <div className="flex items-start gap-2">
+              <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+              <div className="flex-1 text-sm">
+                <span className="font-semibold text-destructive">Rejected: </span>
+                {bike.rejection_reason || "No reason provided."}
               </div>
-            )}
-          </div>
-          {gallery.length > 1 && (
-            <div className="flex gap-2 overflow-x-auto border-t border-border bg-background p-3">
-              {gallery.map((g, i) => (
-                <button
-                  key={g.id ?? g.image_url}
-                  onClick={() => setActiveIndex(i)}
-                  className={cn(
-                    "h-16 w-16 shrink-0 overflow-hidden rounded-md border-2 transition-all",
-                    activeIndex === i
-                      ? "border-primary"
-                      : "border-transparent opacity-70 hover:opacity-100"
-                  )}
-                >
-                  <img
-                    src={g.image_url}
-                    alt=""
-                    className="h-full w-full object-cover"
-                  />
-                </button>
-              ))}
-            </div>
-          )}
-        </Card>
-
-        {/* Stats — no rating/reviews per request */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Card className="p-4">
-            <p className="text-xs text-muted-foreground">Daily price</p>
-            <p className="mt-1 text-2xl font-bold">
-              {Number(bike.daily_price || 0)}{" "}
-              <span className="text-sm font-normal">MAD</span>
-            </p>
-          </Card>
-          <Card className="p-4">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-xs text-muted-foreground">Availability</p>
-                <p className="mt-1">
-                  <Badge variant="outline" className="capitalize">
-                    {available ? "available" : "unavailable"}
-                  </Badge>
-                </p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Toggle on/off without re-review.
-                </p>
-              </div>
-              <Switch
-                checked={available}
-                onCheckedChange={toggleAvailability}
-                disabled={busy || bike.approval_status !== "approved"}
-                aria-label="Toggle availability"
-              />
             </div>
           </Card>
-        </div>
-
-        {/* Pickup location */}
-        <Card className="p-5">
-          <div className="flex items-start gap-3">
-            <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/15">
-              <MapPin className="h-4 w-4 text-foreground" />
+        )}
+        {bike.approval_status === "pending" && (
+          <Card className="border-warning/30 bg-warning/10 p-3 text-sm">
+            <div className="flex items-center gap-2">
+              <Clock className="h-4 w-4 shrink-0 text-warning" />
+              <span><strong>Awaiting review</strong> — within 24-48h.</span>
             </div>
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2">
-                <h3 className="font-semibold">Pickup location</h3>
-                {pickup?.usingAgencyFallback && (
-                  <Badge variant="outline" className="text-[10px]">
-                    Using agency location
-                  </Badge>
-                )}
-              </div>
-              {pickup && (pickup.city || pickup.neighborhood || pickup.address) ? (
-                <div className="mt-2 space-y-0.5 text-sm">
-                  {pickup.neighborhood && (
-                    <p className="text-foreground">{pickup.neighborhood}</p>
-                  )}
-                  {pickup.city && (
-                    <p className="text-muted-foreground">{pickup.city}</p>
-                  )}
-                  {pickup.address && (
-                    <p className="text-muted-foreground">{pickup.address}</p>
-                  )}
-                </div>
-              ) : (
-                <p className="mt-2 text-sm text-muted-foreground">
-                  No pickup location set. Add one in Edit, or update your agency
-                  location in Agency Center.
-                </p>
-              )}
+          </Card>
+        )}
+        {bike.approval_status === "approved" && bike.business_status !== "active" && (
+          <Card className="border-amber-500/30 bg-amber-500/10 p-3 text-sm">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4 shrink-0 text-amber-700 dark:text-amber-400" />
+              <span><strong>Suspended</strong> by Motonita admins.</span>
             </div>
-          </div>
-        </Card>
-
-        {bike.description && (
-          <Card className="p-5">
-            <h3 className="font-semibold">Description</h3>
-            <p className="mt-2 whitespace-pre-wrap text-sm text-muted-foreground">
-              {bike.description}
-            </p>
           </Card>
         )}
 
-        {fullBike && (
-          <>
-            <Card className="p-5 space-y-4">
-              <h3 className="font-semibold">Basic info</h3>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                <Field label="Name" value={fullBike.name} />
-                <Field label="Brand" value={fullBike.brand} />
-                <Field label="Model" value={fullBike.model} />
-                <Field label="Year" value={fullBike.year} />
-                <Field label="Color" value={fullBike.color} />
-                <Field
-                  label="Category"
-                  value={(() => {
-                    const c = BIKE_CATEGORIES.find((x) => x.key === fullBike.category);
-                    return c ? `${c.icon} ${c.label}` : fullBike.category;
-                  })()}
-                />
-              </div>
+        <div className="grid gap-3 lg:grid-cols-[3fr_2fr]">
+          {/* LEFT */}
+          <div className="space-y-3">
+            {/* Photo grid */}
+            <Card className="p-3">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Photos ({gallery.length})
+              </p>
+              {gallery.length === 0 ? (
+                <div className="flex h-24 items-center justify-center text-muted-foreground gap-2 text-sm">
+                  <BikeIcon className="h-4 w-4" /> No images
+                </div>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {gallery.map((g, i) => (
+                    <button
+                      key={g.id ?? g.image_url}
+                      onClick={() => { setActiveIndex(i); setLightboxOpen(true); }}
+                      className="overflow-hidden rounded-md border border-border bg-muted hover:opacity-90"
+                      style={{ width: 120, height: 120 }}
+                    >
+                      <img src={g.image_url} alt="" className="h-full w-full object-cover" />
+                    </button>
+                  ))}
+                </div>
+              )}
             </Card>
 
-            <Card className="p-5 space-y-4">
-              <h3 className="font-semibold">Specifications</h3>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                <Field label="Engine" value={fullBike.engine_cc ? `${fullBike.engine_cc}cc` : null} />
-                <Field label="Fuel type" value={fullBike.fuel_type} />
-                <Field label="Transmission" value={fullBike.transmission} />
-                <Field label="Mileage" value={fullBike.mileage_km != null ? `${Number(fullBike.mileage_km).toLocaleString()} km` : null} />
-                <Field label="License required" value={licenseLabel(fullBike.license_required)} />
-                <Field label="Min age" value={fullBike.min_age} />
-                <Field label="Min experience" value={fullBike.min_experience_years != null ? `${fullBike.min_experience_years} years` : null} />
-              </div>
-            </Card>
+            {/* Description */}
+            {bike.description && (
+              <Card className="p-3">
+                <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Description</p>
+                <p className="text-sm whitespace-pre-wrap">{bike.description}</p>
+              </Card>
+            )}
 
-            <Card className="p-5 space-y-4">
-              <h3 className="font-semibold">What's included</h3>
-              <Field
-                label="Helmets"
-                value={fullBike.helmets_count != null ? `${fullBike.helmets_count} included` : null}
-              />
-              <div>
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">Features</p>
-                {(() => {
-                  const keys = ((fullBike.features as string[] | null) || []).filter(
-                    (f): f is FeatureKey => f in FEATURE_LABELS,
-                  );
-                  if (keys.length === 0) {
-                    return <p className="mt-1 text-sm text-muted-foreground/60">—</p>;
-                  }
-                  return (
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {keys.map((k) => (
-                        <span
-                          key={k}
-                          className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted px-2.5 py-1 text-xs"
-                        >
+            {fullBike && (
+              <>
+                {/* Details grid */}
+                <Card className="p-3">
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Details</p>
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                    <Field label="Brand" value={fullBike.brand} />
+                    <Field label="Engine" value={fullBike.engine_cc ? `${fullBike.engine_cc}cc` : null} />
+                    <Field label="Model" value={fullBike.model} />
+                    <Field label="Fuel" value={fullBike.fuel_type} />
+                    <Field label="Year" value={fullBike.year} />
+                    <Field label="Transmission" value={fullBike.transmission} />
+                    <Field label="Color" value={fullBike.color} />
+                    <Field label="Mileage" value={fullBike.mileage_km != null ? `${Number(fullBike.mileage_km).toLocaleString()} km` : null} />
+                    <Field
+                      label="Category"
+                      value={(() => {
+                        const c = BIKE_CATEGORIES.find((x) => x.key === fullBike.category);
+                        return c ? `${c.icon} ${c.label}` : fullBike.category;
+                      })()}
+                    />
+                    <Field label="License" value={licenseLabel(fullBike.license_required)} />
+                    <Field label="Min age" value={fullBike.min_age} />
+                    <Field label="Min experience" value={fullBike.min_experience_years != null ? `${fullBike.min_experience_years}y` : null} />
+                  </div>
+                </Card>
+
+                {/* What's included */}
+                <Card className="p-3">
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">What's Included</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {fullBike.helmets_count != null && fullBike.helmets_count > 0 && (
+                      <span className="inline-flex items-center gap-1 rounded-full border border-border bg-muted px-2 py-0.5 text-xs">
+                        🪖 {fullBike.helmets_count} helmet{fullBike.helmets_count > 1 ? "s" : ""}
+                      </span>
+                    )}
+                    {(() => {
+                      const keys = ((fullBike.features as string[] | null) || []).filter(
+                        (f): f is FeatureKey => f in FEATURE_LABELS,
+                      );
+                      if (keys.length === 0 && !(fullBike.helmets_count > 0))
+                        return <span className="text-xs text-muted-foreground">— None specified</span>;
+                      return keys.map((k) => (
+                        <span key={k} className="inline-flex items-center gap-1 rounded-full border border-border bg-muted px-2 py-0.5 text-xs">
                           <span>{FEATURE_LABELS[k].icon}</span>
                           {FEATURE_LABELS[k].label}
                         </span>
-                      ))}
+                      ));
+                    })()}
+                  </div>
+                </Card>
+
+                {/* Policies */}
+                <Card className="p-3">
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Policies</p>
+                  <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
+                    <div>
+                      <p className="text-xs text-muted-foreground">Deposit</p>
+                      <p className="font-medium">{fullBike.deposit_amount != null ? `${fullBike.deposit_amount} MAD` : "—"}</p>
                     </div>
-                  );
-                })()}
+                    <div>
+                      <p className="text-xs text-muted-foreground">Min days</p>
+                      <p className="font-medium">{fullBike.min_rental_days ?? "—"}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Max days</p>
+                      <p className="font-medium">{fullBike.max_rental_days ?? "—"}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Cancel</p>
+                      <p className="font-medium">
+                        {(() => {
+                          const m = CANCELLATION_OPTIONS.find((c) => c.key === (fullBike.cancellation_policy || "moderate"));
+                          return m ? `${m.icon} ${m.title}` : "—";
+                        })()}
+                      </p>
+                    </div>
+                  </div>
+                </Card>
+              </>
+            )}
+          </div>
+
+          {/* RIGHT */}
+          <div className="space-y-3">
+            {/* Price + availability */}
+            <Card className="p-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-muted-foreground">Daily price</p>
+                  <p className="text-xl font-bold">{Number(bike.daily_price || 0)} <span className="text-xs font-normal">MAD</span></p>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs text-muted-foreground mb-1">Available</p>
+                  <Switch
+                    checked={available}
+                    onCheckedChange={toggleAvailability}
+                    disabled={busy || bike.approval_status !== "approved"}
+                    aria-label="Toggle availability"
+                  />
+                </div>
               </div>
             </Card>
 
-            <Card className="p-5 space-y-4">
-              <h3 className="font-semibold">Pricing & policies</h3>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                <Field label="Daily price" value={fullBike.daily_price != null ? `${fullBike.daily_price} MAD` : null} />
-                <Field label="Weekly price" value={fullBike.weekly_price != null ? `${fullBike.weekly_price} MAD` : null} />
-                <Field label="Monthly price" value={fullBike.monthly_price != null ? `${fullBike.monthly_price} MAD` : null} />
-                <Field label="Deposit" value={fullBike.deposit_amount != null ? `${fullBike.deposit_amount} MAD` : null} />
-                <Field label="Min rental days" value={fullBike.min_rental_days} />
-                <Field label="Max rental days" value={fullBike.max_rental_days} />
+            {/* Pickup */}
+            <Card className="p-3">
+              <div className="mb-2 flex items-center gap-2">
+                <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Pickup</p>
+                {pickup?.usingAgencyFallback && (
+                  <Badge variant="outline" className="text-[10px]">Agency loc</Badge>
+                )}
               </div>
-              {(() => {
-                const meta = CANCELLATION_OPTIONS.find(
-                  (c) => c.key === (fullBike.cancellation_policy || "moderate"),
-                );
-                return (
-                  <Field
-                    label="Cancellation policy"
-                    value={meta ? `${meta.icon} ${meta.title} — ${meta.text}` : fullBike.cancellation_policy}
-                  />
-                );
-              })()}
+              {pickup && (pickup.city || pickup.neighborhood || pickup.address) ? (
+                <div className="space-y-0.5 text-sm">
+                  {pickup.neighborhood && <p>{pickup.neighborhood}</p>}
+                  {pickup.city && <p className="text-muted-foreground text-xs">{pickup.city}</p>}
+                  {pickup.address && <p className="text-muted-foreground text-xs">{pickup.address}</p>}
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground">No pickup location set.</p>
+              )}
             </Card>
-          </>
-        )}
+          </div>
+        </div>
       </div>
 
       <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
