@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import {
   Briefcase,
+  Heart,
   LogOut,
   Settings as SettingsIcon,
   Shield,
