@@ -295,7 +295,8 @@ export const BookingDatePicker = ({
         createPortal(
           <div
             ref={popoverRef}
-            style={{ top: popoverPos.top, left: popoverPos.left, width: 640 }}
+            data-booking-datepicker="panel"
+            style={{ top: popoverPos.top, left: popoverPos.left, width: Math.min(640, window.innerWidth - 16) }}
             className="fixed z-[200]"
           >
             <Panel
