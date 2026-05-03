@@ -89,6 +89,29 @@ const BikeDetails = () => {
     }
   }, [pickupParam, endParam]);
 
+  // Booked date ranges for the calendar (from confirmed/pending bookings).
+  const [bookedRanges, setBookedRanges] = useState<{ from: Date; to: Date }[]>([]);
+  const realBikeIdForDates = bike?.id;
+  useEffect(() => {
+    if (!realBikeIdForDates) return;
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase.rpc("get_booked_date_ranges", {
+        _bike_id: realBikeIdForDates,
+      });
+      if (cancelled || error || !data) return;
+      setBookedRanges(
+        (data as any[]).map((r) => ({
+          from: new Date(r.pickup_date),
+          to: new Date(r.return_date),
+        })),
+      );
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [realBikeIdForDates]);
+
   // Availability check (stub for now)
   const [availability, setAvailability] = useState<Availability>("idle");
   useEffect(() => {
@@ -317,40 +340,39 @@ const BikeDetails = () => {
     const realBikeId = bike?.id;
     const { data: authData } = await supabase.auth.getUser();
 
-    // If not authenticated, send to login first. Hold is created after they return.
+    // If not authenticated, send to login first. Draft is created after they return.
     if (!authData?.user) {
-      const reviewUrl = `/booking-review?bikeId=${realBikeId}&bikeName=${encodeURIComponent(bikeType.name)}&pickup=${pickup}&end=${end}&pickupTime=${pickupTime}&dropoffTime=${dropoffTime}&deliveryMethod=${deliveryMethod}&location=${encodeURIComponent(bike.location || '')}&dailyPrice=${dailyPrice}`;
-      navigate(`/auth?mode=login&returnUrl=${encodeURIComponent(reviewUrl)}`);
+      const returnUrl = `/bike/${id}?from=${pickup}&to=${end}&autobook=1`;
+      navigate(`/auth?mode=login&returnUrl=${encodeURIComponent(returnUrl)}`);
       return;
     }
 
-    let holdParams = "";
-    if (authData?.user && realBikeId) {
-      const { data: holdData, error: holdError } = await supabase.rpc("create_bike_hold", {
+    if (!realBikeId) return;
+
+    const { data: bookingId, error: draftErr } = await supabase.rpc(
+      "create_draft_booking",
+      {
         _bike_id: realBikeId,
-        _pickup: pickup,
-        _return: end,
-      });
-      if (holdError) {
-        const msg = holdError.message || "";
-        if (msg.includes("BIKE_ALREADY_BOOKED")) {
-          toast.error("Sorry, this bike was just booked for those dates. Please pick different dates.");
-        } else if (msg.includes("BIKE_HELD_BY_OTHER")) {
-          toast.error("Someone else is checking out this bike right now. Try again in a few minutes.");
-        } else if (msg.includes("INVALID_DATES")) {
-          toast.error("Invalid dates selected.");
-        } else {
-          toast.error("Could not reserve this bike. Please try again.");
-        }
-        return;
+        _pickup_date: pickup,
+        _return_date: end,
+        _delivery_method: deliveryMethod,
+        _pickup_location: deliveryMethod === "delivery" ? deliveryAddress || null : (bike.location || null),
+      },
+    );
+
+    if (draftErr || !bookingId) {
+      const msg = draftErr?.message || "";
+      if (msg.includes("BIKE_ALREADY_BOOKED") || msg.includes("CONFLICT")) {
+        toast.error("Sorry, this bike was just booked for those dates. Please pick different dates.");
+      } else if (msg.includes("INVALID_DATES")) {
+        toast.error("Invalid dates selected.");
+      } else {
+        toast.error("Could not start checkout. Please try again.");
       }
-      const hold = Array.isArray(holdData) ? holdData[0] : holdData;
-      if (hold?.hold_id) {
-        holdParams = `&holdId=${hold.hold_id}&holdExpiresAt=${encodeURIComponent(hold.expires_at)}`;
-      }
+      return;
     }
 
-    navigate(`/booking-review?bikeId=${realBikeId}&bikeName=${encodeURIComponent(bikeType.name)}&pickup=${pickup}&end=${end}&pickupTime=${pickupTime}&dropoffTime=${dropoffTime}&deliveryMethod=${deliveryMethod}&location=${encodeURIComponent(bike.location)}&dailyPrice=${dailyPrice}${holdParams}`);
+    navigate(`/checkout/${bookingId}`);
   };
 
   const specs = [
@@ -403,6 +425,7 @@ const BikeDetails = () => {
             }}
             triggerClassName="group hover:border-[#9FE870] hover:shadow-sm transition-all"
             placeholder="Pick dates"
+            disabledRanges={bookedRanges}
           />
           {dateRange?.from && dateRange?.to && (
             <p className="text-xs text-muted-foreground">

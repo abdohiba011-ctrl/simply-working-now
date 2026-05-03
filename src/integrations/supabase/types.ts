@@ -2595,6 +2595,7 @@ export type Database = {
       auto_cancel_stale_pending_bookings: { Args: never; Returns: number }
       cancel_booking_by_renter: { Args: { _booking_id: string }; Returns: Json }
       cleanup_old_draft_bookings: { Args: never; Returns: number }
+      cleanup_stale_draft_bookings: { Args: never; Returns: number }
       compute_bike_type_slug: {
         Args: { _name: string; _neighborhood: string }
         Returns: string
@@ -2661,6 +2662,13 @@ export type Database = {
         Returns: number
       }
       generate_city_slug: { Args: { input_name: string }; Returns: string }
+      get_booked_date_ranges: {
+        Args: { _bike_id: string }
+        Returns: {
+          pickup_date: string
+          return_date: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

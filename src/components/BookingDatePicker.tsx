@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { DateRange } from "react-day-picker";
-import { format, differenceInDays, isBefore, startOfDay } from "date-fns";
+import { format, differenceInDays, isBefore, startOfDay, eachDayOfInterval } from "date-fns";
 import { Calendar as CalendarIcon, RotateCcw, X } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
@@ -16,6 +16,8 @@ interface BookingDatePickerProps {
   align?: "start" | "center" | "end";
   /** When true, render only the inline panel (no trigger). Used when host opens it. */
   panelOnly?: boolean;
+  /** Already-booked date ranges to disable in the calendar. */
+  disabledRanges?: { from: Date; to: Date }[];
 }
 
 const today0 = () => startOfDay(new Date());
@@ -27,6 +29,7 @@ const Panel = ({
   setFocus,
   isMobile,
   onClose,
+  disabledRanges,
 }: {
   range: DateRange | undefined;
   setRange: (r: DateRange | undefined) => void;
@@ -34,6 +37,7 @@ const Panel = ({
   setFocus: (f: "from" | "to") => void;
   isMobile: boolean;
   onClose: () => void;
+  disabledRanges?: { from: Date; to: Date }[];
 }) => {
   const days = range?.from && range?.to ? differenceInDays(range.to, range.from) : 0;
 
@@ -137,7 +141,28 @@ const Panel = ({
           onSelect={handleSelect}
           numberOfMonths={isMobile ? 1 : 2}
           weekStartsOn={0}
-          disabled={(d) => d < today0()}
+          disabled={(d) => {
+            if (d < today0()) return true;
+            if (disabledRanges?.length) {
+              const t = startOfDay(d).getTime();
+              for (const r of disabledRanges) {
+                if (t >= startOfDay(r.from).getTime() && t <= startOfDay(r.to).getTime()) return true;
+              }
+            }
+            return false;
+          }}
+          modifiers={{
+            booked: (d) => {
+              if (!disabledRanges?.length) return false;
+              const t = startOfDay(d).getTime();
+              return disabledRanges.some(
+                (r) => t >= startOfDay(r.from).getTime() && t <= startOfDay(r.to).getTime(),
+              );
+            },
+          }}
+          modifiersClassNames={{
+            booked: "line-through text-red-500/70 opacity-60",
+          }}
           className="pointer-events-auto p-2 w-full"
         />
       </div>
@@ -192,6 +217,7 @@ export const BookingDatePicker = ({
   placeholder = "Pick-up → Return",
   align = "start",
   panelOnly = false,
+  disabledRanges,
 }: BookingDatePickerProps) => {
   const isMobile = useIsMobile();
   const [open, setOpen] = useState(false);
@@ -339,6 +365,7 @@ export const BookingDatePicker = ({
                   setFocus={setFocus}
                   isMobile={false}
                   onClose={() => setOpen(false)}
+                  disabledRanges={disabledRanges}
                 />
               </div>
             </div>
@@ -365,6 +392,7 @@ export const BookingDatePicker = ({
                   setFocus={setFocus}
                   isMobile
                   onClose={commitAndClose}
+                  disabledRanges={disabledRanges}
                 />
               </div>
             </div>
