@@ -647,19 +647,19 @@ const CheckoutDraft = () => {
                   )}
                 </div>
 
-                <label className="flex items-start gap-2 text-sm text-foreground cursor-pointer">
+                <label className="flex items-start gap-3 cursor-pointer rounded-lg border-2 border-border bg-muted/30 p-3 hover:bg-muted/50 transition-colors has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50 dark:has-[:checked]:bg-blue-950/30">
                   <Checkbox
                     checked={agreed}
                     onCheckedChange={(v) => setAgreed(!!v)}
-                    className="mt-0.5"
+                    className="mt-0.5 h-5 w-5 border-2 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
                   />
-                  <span>
+                  <span className="text-sm font-medium text-foreground leading-snug">
                     I agree to the{" "}
-                    <Link to="/terms" className="text-primary hover:underline">
+                    <Link to="/terms" className="text-blue-600 hover:text-blue-700 underline font-semibold">
                       Terms
                     </Link>{" "}
                     &{" "}
-                    <Link to="/terms#cancellation" className="text-primary hover:underline">
+                    <Link to="/terms#cancellation" className="text-blue-600 hover:text-blue-700 underline font-semibold">
                       Cancellation policy
                     </Link>
                     .
