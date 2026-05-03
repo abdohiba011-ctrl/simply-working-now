@@ -108,6 +108,38 @@ const emptyNewCity = {
   show_in_homepage: true,
 };
 
+interface SortableCityWrapperProps {
+  id: string;
+  children: (handleProps: {
+    listeners: any;
+    attributes: any;
+    setActivatorNodeRef: (el: HTMLElement | null) => void;
+  }) => React.ReactNode;
+}
+
+const SortableCityWrapper = ({ id, children }: SortableCityWrapperProps) => {
+  const {
+    setNodeRef,
+    setActivatorNodeRef,
+    transform,
+    transition,
+    listeners,
+    attributes,
+    isDragging,
+  } = useSortable({ id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.6 : 1,
+    zIndex: isDragging ? 10 : ("auto" as any),
+  };
+  return (
+    <div ref={setNodeRef} style={style} className="border rounded-lg overflow-hidden bg-card">
+      {children({ listeners, attributes, setActivatorNodeRef })}
+    </div>
+  );
+};
+
 export const AdminCitiesTab = () => {
   const [cities, setCities] = useState<ServiceCity[]>([]);
   const [locations, setLocations] = useState<ServiceLocation[]>([]);
