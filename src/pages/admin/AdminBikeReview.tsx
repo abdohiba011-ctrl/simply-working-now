@@ -120,6 +120,13 @@ const AdminBikeReview = () => {
         setAgency(ag as typeof agency);
       }
     }
+    if (bt?.city_id) {
+      const { data: c } = await supabase
+        .from("service_cities").select("name").eq("id", bt.city_id).maybeSingle();
+      setBikeCityName(c?.name ?? null);
+    } else {
+      setBikeCityName(null);
+    }
     setLoading(false);
   };
 
