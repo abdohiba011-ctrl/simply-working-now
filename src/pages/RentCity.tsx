@@ -205,6 +205,14 @@ export default function RentCity() {
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [drawerOpen, setDrawerOpen] = useState(false);
 
+  // Read selected dates from URL (from/to). Backwards-compat with start/end & pickup.
+  const fromParam = searchParams.get("from") || searchParams.get("start") || searchParams.get("pickup");
+  const toParam = searchParams.get("to") || searchParams.get("end");
+  const fromDate = fromParam ? parseISO(fromParam) : null;
+  const toDate = toParam ? parseISO(toParam) : null;
+  const hasDates = !!(fromDate && isValidDate(fromDate) && toDate && isValidDate(toDate));
+  const datesQS = hasDates ? `?from=${fromParam}&to=${toParam}` : "";
+
   // Sync filters → URL (debounced)
   useEffect(() => {
     const t = setTimeout(() => {
