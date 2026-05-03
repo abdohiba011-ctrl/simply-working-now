@@ -90,6 +90,7 @@ const AdminBikeReview = () => {
   const [bike, setBike] = useState<BikeType | null>(null);
   const [photos, setPhotos] = useState<{ id: string; image_url: string }[]>([]);
   const [agency, setAgency] = useState<{ business_name: string | null; city: string | null; primary_neighborhood: string | null; address: string | null; is_verified: boolean | null; phone: string | null } | null>(null);
+  const [bikeCityName, setBikeCityName] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [acting, setActing] = useState(false);
   const [rejectOpen, setRejectOpen] = useState(false);
@@ -118,6 +119,13 @@ const AdminBikeReview = () => {
           .eq("profile_id", prof.id).maybeSingle();
         setAgency(ag as typeof agency);
       }
+    }
+    if (bt?.city_id) {
+      const { data: c } = await supabase
+        .from("service_cities").select("name").eq("id", bt.city_id).maybeSingle();
+      setBikeCityName(c?.name ?? null);
+    } else {
+      setBikeCityName(null);
     }
     setLoading(false);
   };
@@ -238,8 +246,16 @@ const AdminBikeReview = () => {
                     ) : "—"
                   } />
                   <Field label="Contact" value={agency?.phone} />
-                  <Field label="City" value={agency?.city} />
-                  <Field label="Address" value={agency?.address} />
+                  <Field label="Agency city" value={agency?.city} />
+                  <Field label="Agency address" value={agency?.address} />
+                  <Field
+                    label="Bike pickup"
+                    value={
+                      bikeCityName || bike.neighborhood
+                        ? [bike.neighborhood, bikeCityName].filter(Boolean).join(" · ")
+                        : null
+                    }
+                  />
                 </div>
                 {bike.approval_status === "rejected" && bike.rejection_reason && (
                   <div className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm">
@@ -292,7 +308,10 @@ const AdminBikeReview = () => {
                 <AccordionItem value="s3" className="rounded-lg border border-border bg-card">
                   <AccordionTrigger className="px-4">🎁 Step 3 — What's Included</AccordionTrigger>
                   <AccordionContent className="px-4 pb-4 space-y-3">
-                    <Field label="Helmets" value={bike.helmets_count != null ? `${bike.helmets_count} included` : null} />
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                      <Field label="Helmets" value={bike.helmets_count != null ? `${bike.helmets_count} included` : null} />
+                      <Field label="Helmet included" value={(bike.helmets_count ?? 0) > 0 ? "Yes" : "No"} />
+                    </div>
                     <div>
                       <p className="text-xs uppercase tracking-wide text-muted-foreground">Features</p>
                       {featureKeys.length === 0 ? (
@@ -348,6 +367,8 @@ const AdminBikeReview = () => {
                   <AccordionContent className="px-4 pb-4">
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                       <Field label="Daily price" value={bike.daily_price != null ? `${bike.daily_price} MAD` : null} />
+                      <Field label="Weekly price" value={bike.weekly_price != null ? `${bike.weekly_price} MAD` : null} />
+                      <Field label="Monthly price" value={bike.monthly_price != null ? `${bike.monthly_price} MAD` : null} />
                       <Field label="Deposit" value={bike.deposit_amount != null ? `${bike.deposit_amount} MAD` : null} />
                       <Field label="Min rental days" value={bike.min_rental_days} />
                       <Field label="Max rental days" value={bike.max_rental_days} />

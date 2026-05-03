@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { format, isToday, parseISO, startOfMonth } from "date-fns";
 import {
@@ -14,12 +14,14 @@ import {
   useAgencyWallet, useAgencyBookingsWithBikes, useAgencySubscription,
 } from "@/hooks/useAgencyData";
 import { cn } from "@/lib/utils";
+import { MotorbikeWizardDialog } from "@/components/agency/MotorbikeWizardDialog";
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const { wallet } = useAgencyWallet();
   const { subscription } = useAgencySubscription();
   const { bookings, loading } = useAgencyBookingsWithBikes();
+  const [addOpen, setAddOpen] = useState(false);
 
   const monthStart = startOfMonth(new Date());
   const todays = useMemo(
@@ -153,13 +155,18 @@ const Dashboard = () => {
           </Card>
 
           <div className="grid grid-cols-2 gap-4 lg:col-span-2">
-            <QuickAction icon={Plus} label="Add motorbike" tone="primary" onClick={() => navigate("/agency/motorbikes/new")} />
+            <QuickAction icon={Plus} label="Add motorbike" tone="primary" onClick={() => setAddOpen(true)} />
             <QuickAction icon={CalendarPlus} label="View bookings" tone="info" onClick={() => navigate("/agency/bookings")} />
             <QuickAction icon={WalletIcon} label="Top up wallet" tone="success" onClick={() => navigate("/agency/finance#wallet")} />
             <QuickAction icon={UserPlus} label="Manage profile" tone="warning" onClick={() => navigate("/agency/agency-center#profile")} />
           </div>
         </section>
       </div>
+      <MotorbikeWizardDialog
+        open={addOpen}
+        onOpenChange={setAddOpen}
+        onSaved={() => navigate("/agency/motorbikes")}
+      />
     </AgencyLayout>
   );
 };

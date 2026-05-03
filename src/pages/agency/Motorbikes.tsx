@@ -39,6 +39,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { MotorbikeWizardDialog } from "@/components/agency/MotorbikeWizardDialog";
 
 type View = "grid" | "table";
 type Tab = "active" | "archived";
@@ -52,6 +53,13 @@ const Motorbikes = () => {
   const { bikes, loading, refresh } = useAgencyBikes({ archived: tab === "archived" });
   const [busyId, setBusyId] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<{ id: string; name: string } | null>(null);
+  const [wizardOpen, setWizardOpen] = useState(false);
+  const [wizardBikeId, setWizardBikeId] = useState<string | undefined>(undefined);
+
+  const openWizard = (id?: string) => {
+    setWizardBikeId(id);
+    setWizardOpen(true);
+  };
 
   const filtered = useMemo(() => {
     if (!search) return bikes;
@@ -143,7 +151,7 @@ const Motorbikes = () => {
                 <Rows3 className="h-3.5 w-3.5" /> Table
               </button>
             </div>
-            <Button onClick={() => navigate("/agency/motorbikes/new")}>
+            <Button onClick={() => openWizard()}>
               <Plus className="mr-2 h-4 w-4" /> Add motorbike
             </Button>
           </div>
@@ -191,7 +199,7 @@ const Motorbikes = () => {
               }
               action={
                 bikes.length === 0 && tab === "active"
-                  ? { label: "Add motorbike", onClick: () => navigate("/agency/motorbikes/new") }
+                  ? { label: "Add motorbike", onClick: () => openWizard() }
                   : undefined
               }
             />
@@ -366,7 +374,7 @@ const Motorbikes = () => {
                             <Button
                               size="sm"
                               variant="ghost"
-                              onClick={() => navigate(`/agency/motorbikes/${bike.id}/edit`)}
+                              onClick={() => openWizard(bike.id)}
                               aria-label="Edit"
                             >
                               <Pencil className="h-4 w-4" />
@@ -411,6 +419,13 @@ const Motorbikes = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <MotorbikeWizardDialog
+        open={wizardOpen}
+        onOpenChange={setWizardOpen}
+        bikeId={wizardBikeId}
+        onSaved={() => refresh()}
+      />
     </AgencyLayout>
   );
 };

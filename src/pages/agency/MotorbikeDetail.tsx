@@ -28,6 +28,23 @@ import {
 import { cn } from "@/lib/utils";
 import { BikeApprovalBadge } from "@/components/agency/BikeApprovalBadge";
 import { toast } from "sonner";
+import { MotorbikeWizardDialog } from "@/components/agency/MotorbikeWizardDialog";
+import {
+  BIKE_CATEGORIES, FEATURE_LABELS, FeatureKey,
+  licenseLabel, CANCELLATION_OPTIONS,
+} from "@/lib/bikeFeatures";
+
+const empty = (v: unknown): boolean =>
+  v === null || v === undefined || (typeof v === "string" && v.trim() === "");
+
+const Field = ({ label, value }: { label: string; value: React.ReactNode }) => (
+  <div>
+    <p className="text-xs uppercase tracking-wide text-muted-foreground">{label}</p>
+    <p className={`mt-0.5 text-sm ${empty(value) ? "text-muted-foreground/60" : "font-medium"}`}>
+      {empty(value) ? "—" : value}
+    </p>
+  </div>
+);
 
 interface GalleryImage {
   id?: string;
@@ -53,6 +70,21 @@ const MotorbikeDetail = () => {
   const [available, setAvailable] = useState<boolean>(true);
   const [archiveOpen, setArchiveOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [refreshTick, setRefreshTick] = useState(0);
+  const [fullBike, setFullBike] = useState<Record<string, any> | null>(null);
+
+  useEffect(() => {
+    if (!id) return;
+    (async () => {
+      const { data } = await supabase
+        .from("bike_types")
+        .select("*")
+        .eq("id", id)
+        .maybeSingle();
+      setFullBike(data as Record<string, any> | null);
+    })();
+  }, [id, refreshTick]);
 
   useEffect(() => {
     setAvailable((bike?.availability_status ?? "available") === "available");
@@ -229,7 +261,7 @@ const MotorbikeDetail = () => {
                 <Button
                   size="sm"
                   className="mt-3"
-                  onClick={() => navigate(`/agency/motorbikes/${bike.id}/edit`)}
+                  onClick={() => setEditOpen(true)}
                 >
                   Edit and resubmit for review
                 </Button>
@@ -285,7 +317,7 @@ const MotorbikeDetail = () => {
             >
               <ExternalLink className="h-4 w-4" /> Public view
             </Button>
-            <Button onClick={() => navigate(`/agency/motorbikes/${bike.id}/edit`)}>
+            <Button onClick={() => setEditOpen(true)}>
               Edit
             </Button>
             <Button
@@ -423,6 +455,96 @@ const MotorbikeDetail = () => {
             </p>
           </Card>
         )}
+
+        {fullBike && (
+          <>
+            <Card className="p-5 space-y-4">
+              <h3 className="font-semibold">Basic info</h3>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <Field label="Name" value={fullBike.name} />
+                <Field label="Brand" value={fullBike.brand} />
+                <Field label="Model" value={fullBike.model} />
+                <Field label="Year" value={fullBike.year} />
+                <Field label="Color" value={fullBike.color} />
+                <Field
+                  label="Category"
+                  value={(() => {
+                    const c = BIKE_CATEGORIES.find((x) => x.key === fullBike.category);
+                    return c ? `${c.icon} ${c.label}` : fullBike.category;
+                  })()}
+                />
+              </div>
+            </Card>
+
+            <Card className="p-5 space-y-4">
+              <h3 className="font-semibold">Specifications</h3>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <Field label="Engine" value={fullBike.engine_cc ? `${fullBike.engine_cc}cc` : null} />
+                <Field label="Fuel type" value={fullBike.fuel_type} />
+                <Field label="Transmission" value={fullBike.transmission} />
+                <Field label="Mileage" value={fullBike.mileage_km != null ? `${Number(fullBike.mileage_km).toLocaleString()} km` : null} />
+                <Field label="License required" value={licenseLabel(fullBike.license_required)} />
+                <Field label="Min age" value={fullBike.min_age} />
+                <Field label="Min experience" value={fullBike.min_experience_years != null ? `${fullBike.min_experience_years} years` : null} />
+              </div>
+            </Card>
+
+            <Card className="p-5 space-y-4">
+              <h3 className="font-semibold">What's included</h3>
+              <Field
+                label="Helmets"
+                value={fullBike.helmets_count != null ? `${fullBike.helmets_count} included` : null}
+              />
+              <div>
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">Features</p>
+                {(() => {
+                  const keys = ((fullBike.features as string[] | null) || []).filter(
+                    (f): f is FeatureKey => f in FEATURE_LABELS,
+                  );
+                  if (keys.length === 0) {
+                    return <p className="mt-1 text-sm text-muted-foreground/60">—</p>;
+                  }
+                  return (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {keys.map((k) => (
+                        <span
+                          key={k}
+                          className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted px-2.5 py-1 text-xs"
+                        >
+                          <span>{FEATURE_LABELS[k].icon}</span>
+                          {FEATURE_LABELS[k].label}
+                        </span>
+                      ))}
+                    </div>
+                  );
+                })()}
+              </div>
+            </Card>
+
+            <Card className="p-5 space-y-4">
+              <h3 className="font-semibold">Pricing & policies</h3>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <Field label="Daily price" value={fullBike.daily_price != null ? `${fullBike.daily_price} MAD` : null} />
+                <Field label="Weekly price" value={fullBike.weekly_price != null ? `${fullBike.weekly_price} MAD` : null} />
+                <Field label="Monthly price" value={fullBike.monthly_price != null ? `${fullBike.monthly_price} MAD` : null} />
+                <Field label="Deposit" value={fullBike.deposit_amount != null ? `${fullBike.deposit_amount} MAD` : null} />
+                <Field label="Min rental days" value={fullBike.min_rental_days} />
+                <Field label="Max rental days" value={fullBike.max_rental_days} />
+              </div>
+              {(() => {
+                const meta = CANCELLATION_OPTIONS.find(
+                  (c) => c.key === (fullBike.cancellation_policy || "moderate"),
+                );
+                return (
+                  <Field
+                    label="Cancellation policy"
+                    value={meta ? `${meta.icon} ${meta.title} — ${meta.text}` : fullBike.cancellation_policy}
+                  />
+                );
+              })()}
+            </Card>
+          </>
+        )}
       </div>
 
       <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
@@ -457,6 +579,13 @@ const MotorbikeDetail = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <MotorbikeWizardDialog
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        bikeId={bike.id}
+        onSaved={() => setRefreshTick((t) => t + 1)}
+      />
     </AgencyLayout>
   );
 };
