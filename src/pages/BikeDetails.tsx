@@ -75,8 +75,9 @@ const BikeDetails = () => {
   const [isEditingDates, setIsEditingDates] = useState(false);
   const [deliveryAddress, setDeliveryAddress] = useState("");
 
-  const pickupParam = searchParams.get("pickup");
-  const endParam = searchParams.get("end");
+  const pickupParam = searchParams.get("from") || searchParams.get("pickup") || searchParams.get("start");
+  const endParam = searchParams.get("to") || searchParams.get("end");
+  const datesLocked = !!(pickupParam && endParam);
 
   useEffect(() => {
     if (pickupParam && endParam) {
