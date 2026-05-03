@@ -505,7 +505,7 @@ const AdminBusinessDetails = () => {
                       label={agency?.verification_status === "pending" ? "Pending review" : agency?.verification_status === "rejected" ? "Rejected" : "Unverified"}
                     />
                   )}
-                  <Badge variant="outline" className="capitalize">{agency?.subscription_plan || "free"} plan</Badge>
+                  <Badge variant="outline" className="capitalize">{(subscription?.plan || agency?.subscription_plan || "free")} plan</Badge>
                   {agency?.is_suspended && <Badge variant="destructive">Suspended</Badge>}
                   {agency?.is_locked && <Badge variant="destructive">Locked</Badge>}
                   {profile.is_frozen && <Badge variant="destructive">Blocked</Badge>}
