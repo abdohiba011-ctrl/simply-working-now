@@ -51,6 +51,9 @@ export type Database = {
           business_name: string
           city: string | null
           created_at: string
+          delivery_fee_mad: number | null
+          delivery_offered: boolean | null
+          delivery_radius_km: number | null
           ice: string | null
           id: string
           is_locked: boolean | null
@@ -58,6 +61,8 @@ export type Database = {
           is_verified: boolean | null
           last_minute_cancel_count: number
           last_minute_cancel_reset_at: string | null
+          lat: number | null
+          lng: number | null
           logo_url: string | null
           phone: string | null
           primary_neighborhood: string | null
@@ -80,6 +85,9 @@ export type Database = {
           business_name: string
           city?: string | null
           created_at?: string
+          delivery_fee_mad?: number | null
+          delivery_offered?: boolean | null
+          delivery_radius_km?: number | null
           ice?: string | null
           id?: string
           is_locked?: boolean | null
@@ -87,6 +95,8 @@ export type Database = {
           is_verified?: boolean | null
           last_minute_cancel_count?: number
           last_minute_cancel_reset_at?: string | null
+          lat?: number | null
+          lng?: number | null
           logo_url?: string | null
           phone?: string | null
           primary_neighborhood?: string | null
@@ -109,6 +119,9 @@ export type Database = {
           business_name?: string
           city?: string | null
           created_at?: string
+          delivery_fee_mad?: number | null
+          delivery_offered?: boolean | null
+          delivery_radius_km?: number | null
           ice?: string | null
           id?: string
           is_locked?: boolean | null
@@ -116,6 +129,8 @@ export type Database = {
           is_verified?: boolean | null
           last_minute_cancel_count?: number
           last_minute_cancel_reset_at?: string | null
+          lat?: number | null
+          lng?: number | null
           logo_url?: string | null
           phone?: string | null
           primary_neighborhood?: string | null
@@ -608,7 +623,9 @@ export type Database = {
           approval_status: string | null
           archived_at: string | null
           availability_status: string | null
+          brand: string | null
           business_status: string | null
+          cancellation_policy: string | null
           category: string | null
           city_id: string | null
           color: string | null
@@ -620,14 +637,18 @@ export type Database = {
           features: string[] | null
           fuel_capacity: string | null
           fuel_type: string | null
+          helmets_count: number | null
           id: string
           is_approved: boolean | null
           is_original: boolean | null
           license_required: string | null
           main_image_url: string | null
+          max_rental_days: number | null
           mileage_km: number | null
           min_age: number | null
           min_experience_years: number | null
+          min_rental_days: number | null
+          model: string | null
           monthly_price: number | null
           name: string
           neighborhood: string | null
@@ -650,7 +671,9 @@ export type Database = {
           approval_status?: string | null
           archived_at?: string | null
           availability_status?: string | null
+          brand?: string | null
           business_status?: string | null
+          cancellation_policy?: string | null
           category?: string | null
           city_id?: string | null
           color?: string | null
@@ -662,14 +685,18 @@ export type Database = {
           features?: string[] | null
           fuel_capacity?: string | null
           fuel_type?: string | null
+          helmets_count?: number | null
           id?: string
           is_approved?: boolean | null
           is_original?: boolean | null
           license_required?: string | null
           main_image_url?: string | null
+          max_rental_days?: number | null
           mileage_km?: number | null
           min_age?: number | null
           min_experience_years?: number | null
+          min_rental_days?: number | null
+          model?: string | null
           monthly_price?: number | null
           name: string
           neighborhood?: string | null
@@ -692,7 +719,9 @@ export type Database = {
           approval_status?: string | null
           archived_at?: string | null
           availability_status?: string | null
+          brand?: string | null
           business_status?: string | null
+          cancellation_policy?: string | null
           category?: string | null
           city_id?: string | null
           color?: string | null
@@ -704,14 +733,18 @@ export type Database = {
           features?: string[] | null
           fuel_capacity?: string | null
           fuel_type?: string | null
+          helmets_count?: number | null
           id?: string
           is_approved?: boolean | null
           is_original?: boolean | null
           license_required?: string | null
           main_image_url?: string | null
+          max_rental_days?: number | null
           mileage_km?: number | null
           min_age?: number | null
           min_experience_years?: number | null
+          min_rental_days?: number | null
+          model?: string | null
           monthly_price?: number | null
           name?: string
           neighborhood?: string | null
