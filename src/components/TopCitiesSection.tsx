@@ -135,7 +135,7 @@ export const TopCitiesSection = () => {
                 }`}
                 onClick={() =>
                   isAvailable &&
-                  navigate(`/rent/${cityToSlug(city.name)}`)
+                  navigate(`/rent/${(city as any).slug || cityToSlug(city.name)}`)
                 }
                 style={{ animationDelay: `${index * 0.1}s` }}
               >
