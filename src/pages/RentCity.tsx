@@ -213,7 +213,8 @@ export default function RentCity() {
   const hasDates = !!(fromDate && isValidDate(fromDate) && toDate && isValidDate(toDate));
   const datesQS = hasDates ? `?from=${fromParam}&to=${toParam}` : "";
 
-  // Sync filters → URL (debounced)
+  // Sync filters → URL (debounced). Preserves from/to date params so the
+  // selected booking dates persist across navigation.
   useEffect(() => {
     const t = setTimeout(() => {
       const params = new URLSearchParams();
@@ -226,11 +227,13 @@ export default function RentCity() {
       if (licenses.length) params.set("licenses", licenses.join(","));
       if (features.length) params.set("features", features.join(","));
       if (sortBy !== "price_asc") params.set("sort", sortBy);
+      if (fromParam) params.set("from", fromParam);
+      if (toParam) params.set("to", toParam);
       setSearchParams(params, { replace: true });
     }, 300);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [neighborhood, duration, priceRange, selectedTypes, fuel, licenses, features, sortBy]);
+  }, [neighborhood, duration, priceRange, selectedTypes, fuel, licenses, features, sortBy, fromParam, toParam]);
 
   // Reset neighborhood when city changes OR when the live neighborhood list
   // finishes loading and doesn't include the current selection (avoids
