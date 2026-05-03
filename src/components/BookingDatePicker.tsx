@@ -29,6 +29,7 @@ const Panel = ({
   setFocus,
   isMobile,
   onClose,
+  disabledRanges,
 }: {
   range: DateRange | undefined;
   setRange: (r: DateRange | undefined) => void;
@@ -36,6 +37,7 @@ const Panel = ({
   setFocus: (f: "from" | "to") => void;
   isMobile: boolean;
   onClose: () => void;
+  disabledRanges?: { from: Date; to: Date }[];
 }) => {
   const days = range?.from && range?.to ? differenceInDays(range.to, range.from) : 0;
 
