@@ -42,7 +42,7 @@ import { getBikeImageUrl } from "@/lib/bikeImages";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { usePricingTiers, getDailyPriceForDuration } from "@/hooks/usePricingTiers";
+// Phase 2: per-bike tiered pricing — currently using flat daily_price
 import { DateRangePicker } from "@/components/DateRangePicker";
 import { BookingDatePicker } from "@/components/BookingDatePicker";
 import { checkBikeAvailability, type Availability } from "@/lib/availability";
