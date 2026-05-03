@@ -753,48 +753,68 @@ const BikeDetails = () => {
               <div className="lg:hidden">{BookingCard}</div>
 
               {/* Description */}
-              <section>
-                <h2 className="text-xl font-bold text-foreground mb-3">About this bike</h2>
-                <div className="space-y-3 text-base leading-relaxed text-foreground/80">
-                  {description.split("\n\n").map((para, i) => (
-                    <p key={i}>{para}</p>
-                  ))}
-                </div>
-              </section>
+              {description && (
+                <section>
+                  <h2 className="text-xl font-bold text-foreground mb-3">About this bike</h2>
+                  <div className="space-y-3 text-base leading-relaxed text-foreground/80">
+                    {description.split("\n\n").map((para, i) => (
+                      <p key={i}>{para}</p>
+                    ))}
+                  </div>
+                </section>
+              )}
 
-              {/* Features */}
-              <section>
-                <h2 className="text-xl font-bold text-foreground mb-3">What's included</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {features.map((f) => (
-                    <div key={f.label} className="flex items-start gap-3 p-3 rounded-lg border border-border/60 bg-card">
-                      <f.icon className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                      <div>
-                        <p className="text-base font-medium text-foreground">{f.label}</p>
-                        {f.detail && <p className="text-sm text-muted-foreground">{f.detail}</p>}
+              {/* What's included — only if agency entered any */}
+              {hasIncludedSection && (
+                <section>
+                  <h2 className="text-xl font-bold text-foreground mb-3">What's included</h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {helmetsCount > 0 && (
+                      <div className="flex items-start gap-3 p-3 rounded-lg border border-border/60 bg-card">
+                        <span className="text-xl leading-none">🪖</span>
+                        <p className="text-base font-medium text-foreground">
+                          {helmetsCount} helmet{helmetsCount > 1 ? "s" : ""} included
+                        </p>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              </section>
+                    )}
+                    {featureKeys.filter((k) => k !== "helmet").map((k) => {
+                      const meta = FEATURE_LABELS[k];
+                      return (
+                        <div key={k} className="flex items-start gap-3 p-3 rounded-lg border border-border/60 bg-card">
+                          <span className="text-xl leading-none">{meta.icon}</span>
+                          <p className="text-base font-medium text-foreground">{meta.label}</p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </section>
+              )}
 
-              {/* Requirements */}
-              <section>
-                <h2 className="text-xl font-bold text-foreground mb-3">Before you book</h2>
-                <div className="text-base leading-relaxed text-foreground/80 space-y-3">
-                  <p>To rent this bike, you must have:</p>
-                  <ul className="space-y-1.5 pl-1">
-                    <li>— A valid driver's license ({bikeType.license_required || "Permis A1"} or higher)</li>
-                    <li>— Your national ID or passport at pickup</li>
-                    <li>— Minimum age {bikeType.min_age || 18}</li>
-                    <li>— At least {bikeType.min_experience_years || 1} year of riding experience</li>
-                  </ul>
-                  <p>
-                    At pickup, the agency collects a refundable {deposit || 1200} MAD deposit
-                    (card hold or cash). The deposit is fully refunded when the bike is returned undamaged.
-                  </p>
-                </div>
-              </section>
+              {/* Requirements — only show fields the agency entered */}
+              {(bikeType.license_required || bikeType.min_age || bikeType.min_experience_years || deposit > 0) && (
+                <section>
+                  <h2 className="text-xl font-bold text-foreground mb-3">Before you book</h2>
+                  <div className="text-base leading-relaxed text-foreground/80 space-y-3">
+                    <p>To rent this bike, you must have:</p>
+                    <ul className="space-y-1.5 pl-1">
+                      {bikeType.license_required && (
+                        <li>— A valid driver's license ({licenseLabel(bikeType.license_required)})</li>
+                      )}
+                      <li>— Your national ID or passport at pickup</li>
+                      {bikeType.min_age && <li>— Minimum age {bikeType.min_age}</li>}
+                      {bikeType.min_experience_years > 0 && (
+                        <li>— At least {bikeType.min_experience_years} year{bikeType.min_experience_years > 1 ? "s" : ""} of riding experience</li>
+                      )}
+                    </ul>
+                    {deposit > 0 && (
+                      <p>
+                        At pickup, the agency collects a refundable {deposit} MAD deposit
+                        (card hold or cash). The deposit is fully refunded when the bike is returned undamaged.
+                      </p>
+                    )}
+                  </div>
+                </section>
+              )}
 
               {/* Pickup location */}
               <section>
