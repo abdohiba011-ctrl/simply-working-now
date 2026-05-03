@@ -79,6 +79,7 @@ interface DraftBooking {
     daily_price?: number | null;
     image_url?: string | null;
     city?: string | null;
+    bike_type_id?: string | null;
   };
 }
 
