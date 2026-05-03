@@ -33,12 +33,15 @@ interface BookingRow {
   customer_phone: string | null;
   booking_status: string | null;
   payment_status: string | null;
+  payment_method: string | null;
   bike_name?: string | null;
   bike_image?: string | null;
 }
 
 const POLL_INTERVAL_MS = 2000;
+const POLL_INTERVAL_CASHPLUS_MS = 10_000;
 const POLL_TIMEOUT_MS = 60_000;
+const POLL_TIMEOUT_CASHPLUS_MS = 72 * 60 * 60 * 1000; // effectively no client timeout
 
 type Phase = "waiting" | "confirmed" | "timeout";
 
