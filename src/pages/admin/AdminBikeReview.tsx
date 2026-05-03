@@ -218,7 +218,7 @@ const AdminBikeReview = () => {
     (f): f is FeatureKey => f in FEATURE_LABELS,
   );
   const decided = bike.approval_status === "approved" || bike.approval_status === "rejected";
-  const actionsDisabled = decided && !reReview;
+  
 
   const tierMap = new Map<number, number>(
     tiers.map((t) => [Number(t.min_days), Number(t.daily_price_mad)]),

@@ -25,7 +25,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { cn } from "@/lib/utils";
+
 import { BikeApprovalBadge } from "@/components/agency/BikeApprovalBadge";
 import { toast } from "sonner";
 import { MotorbikeWizardDialog } from "@/components/agency/MotorbikeWizardDialog";
