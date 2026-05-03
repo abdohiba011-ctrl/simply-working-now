@@ -7,7 +7,7 @@ export type Language = 'en' | 'fr' | 'ar';
 interface LanguageContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
-  t: (key: string) => string;
+  t: (key: string, options?: { defaultValue?: string; [key: string]: unknown }) => string;
   isRTL: boolean;
 }
 
