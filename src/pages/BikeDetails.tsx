@@ -169,7 +169,8 @@ const BikeDetails = () => {
     verified: boolean;
     deliveryOffered: boolean;
     deliveryFee: number;
-  }>({ name: null, verified: false, deliveryOffered: false, deliveryFee: 0 });
+    workingHours: WorkingHours;
+  }>({ name: null, verified: false, deliveryOffered: false, deliveryFee: 0, workingHours: DEFAULT_WORKING_HOURS });
 
   useEffect(() => {
     const bt: any = bike?.bike_type;
@@ -188,13 +189,14 @@ const BikeDetails = () => {
       let agencyNeighborhood: string | null = null;
       let deliveryOffered = false;
       let deliveryFee = 0;
+      let workingHours: WorkingHours = DEFAULT_WORKING_HOURS;
       if (bt.owner_id) {
         const { data: prof } = await supabase
           .from("profiles").select("id").eq("user_id", bt.owner_id).maybeSingle();
         if (prof?.id) {
           const { data: ag } = await (supabase as any)
             .from("agencies_public")
-            .select("business_name, is_verified, city, primary_neighborhood, delivery_offered, delivery_fee_mad")
+            .select("business_name, is_verified, city, primary_neighborhood, delivery_offered, delivery_fee_mad, working_hours")
             .eq("profile_id", prof.id).maybeSingle();
           agencyName = (ag as any)?.business_name ?? null;
           agencyVerified = !!(ag as any)?.is_verified;
@@ -202,12 +204,13 @@ const BikeDetails = () => {
           agencyNeighborhood = (ag as any)?.primary_neighborhood ?? null;
           deliveryOffered = !!(ag as any)?.delivery_offered;
           deliveryFee = Number((ag as any)?.delivery_fee_mad) || 0;
+          workingHours = normalizeWorkingHours((ag as any)?.working_hours);
         }
       }
       if (cancelled) return;
       setResolvedCity(cityName || agencyCity);
       setResolvedNeighborhood(bt.neighborhood || agencyNeighborhood || bike?.location || null);
-      setResolvedAgency({ name: agencyName, verified: agencyVerified, deliveryOffered, deliveryFee });
+      setResolvedAgency({ name: agencyName, verified: agencyVerified, deliveryOffered, deliveryFee, workingHours });
     })();
     return () => { cancelled = true; };
   }, [bike?.bike_type, bike?.location]);
