@@ -61,10 +61,10 @@ const Panel = ({
     if (focus === "from") {
       if (prev?.to) {
         // We have an existing return — normalize against it
-        const range = isBefore(clicked, prev.to)
+        const next = isBefore(clicked, prev.to)
           ? { from: clicked, to: prev.to }
           : { from: prev.to, to: clicked };
-        setRange(range);
+        setRange(next);
         window.setTimeout(() => onClose(), 280);
         return;
       }
@@ -79,10 +79,10 @@ const Panel = ({
       setFocus("to");
       return;
     }
-    const range = isBefore(clicked, prev.from)
+    const next = isBefore(clicked, prev.from)
       ? { from: clicked, to: prev.from }
       : { from: prev.from, to: clicked };
-    setRange(range);
+    setRange(next);
     window.setTimeout(() => onClose(), 280);
   };
 
