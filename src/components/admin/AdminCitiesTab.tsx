@@ -675,29 +675,41 @@ export const AdminCitiesTab = () => {
           ) : filteredCities.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">No cities found</div>
           ) : (
-            <div className="space-y-3">
-              {filteredCities.map((city) => {
-                const isOpen = expanded.has(city.id);
-                const hoods = locationsByCityId.get(city.id) || [];
-                const liveBikes = liveCounts.get(city.id) ?? 0;
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+              <SortableContext items={filteredCities.map((c) => c.id)} strategy={verticalListSortingStrategy}>
+                <div className="space-y-3">
+                  {filteredCities.map((city) => {
+                    const isOpen = expanded.has(city.id);
+                    const hoods = locationsByCityId.get(city.id) || [];
+                    const liveBikes = liveCounts.get(city.id) ?? 0;
 
-                return (
-                  <div
-                    key={city.id}
-                    className="border rounded-lg overflow-hidden bg-card"
-                  >
-                    {/* City row */}
-                    <div className="flex items-center gap-3 p-3 hover:bg-muted/40 transition-colors">
-                      <button
-                        type="button"
-                        onClick={() => toggleExpand(city.id)}
-                        className="p-1 rounded hover:bg-muted"
-                        aria-label={isOpen ? "Collapse" : "Expand"}
-                      >
-                        {isOpen ? (
-                          <ChevronDown className="h-4 w-4" />
-                        ) : (
-                          <ChevronRight className="h-4 w-4" />
+                    return (
+                      <SortableCityWrapper key={city.id} id={city.id}>
+                        {({ listeners, attributes, setActivatorNodeRef }) => (
+                          <>
+                            {/* City row */}
+                            <div className="flex items-center gap-3 p-3 hover:bg-muted/40 transition-colors">
+                              <button
+                                ref={setActivatorNodeRef}
+                                type="button"
+                                {...listeners}
+                                {...attributes}
+                                className="p-1 rounded hover:bg-muted cursor-grab active:cursor-grabbing touch-none"
+                                aria-label="Drag to reorder"
+                                title="Drag to reorder"
+                              >
+                                <GripVertical className="h-4 w-4 text-muted-foreground" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => toggleExpand(city.id)}
+                                className="p-1 rounded hover:bg-muted"
+                                aria-label={isOpen ? "Collapse" : "Expand"}
+                              >
+                                {isOpen ? (
+                                  <ChevronDown className="h-4 w-4" />
+                                ) : (
+                                  <ChevronRight className="h-4 w-4" />
                         )}
                       </button>
 
