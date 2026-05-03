@@ -47,6 +47,7 @@ const BookingReview = lazy(() => import("./pages/BookingReview"));
 
 const Checkout = lazy(() => import("./pages/Checkout"));
 const CheckoutDraft = lazy(() => import("./pages/CheckoutDraft"));
+const BookingConfirmed = lazy(() => import("./pages/BookingConfirmed"));
 const PayYouCan = lazy(() => import("./pages/PayYouCan"));
 const PaymentStatus = lazy(() => import("./pages/PaymentStatus"));
 const Confirmation = lazy(() => import("./pages/Confirmation"));
