@@ -95,17 +95,22 @@ const formatDate = (dateString: string | null, formatStr: string = "MMM d, yyyy"
   }
 };
 
-type TypeFilter = "all" | "shop" | "individual";
-type SortField = "created_at" | "name" | "email";
-type SortDir = "asc" | "desc";
+type TypeFilter = "all" | "agency" | "company" | "individual" | "unspecified";
 
-// Exact mapping to stored business_type values in profiles
-const SHOP_TYPES = ["rental_shop"];
+// Mapping to actual stored business_type values in profiles.
+const AGENCY_TYPES = ["agency", "rental_shop"];
+const COMPANY_TYPES = ["company"];
 const INDIVIDUAL_TYPES = ["individual_owner", "individual"];
+const KNOWN_TYPES = [...AGENCY_TYPES, ...COMPANY_TYPES, ...INDIVIDUAL_TYPES];
+// Back-compat alias (still used by approval flow which writes "rental_shop").
+const SHOP_TYPES = AGENCY_TYPES;
 
 const businessTypeBadge = (bt: string | null) => {
-  if (bt && SHOP_TYPES.includes(bt)) {
-    return { label: "Rental Shop", icon: Store, variant: "default" as const };
+  if (bt && AGENCY_TYPES.includes(bt)) {
+    return { label: "Rental Shop / Agency", icon: Store, variant: "default" as const };
+  }
+  if (bt && COMPANY_TYPES.includes(bt)) {
+    return { label: "Company", icon: Building2, variant: "default" as const };
   }
   if (bt && INDIVIDUAL_TYPES.includes(bt)) {
     return { label: "Individual Owner", icon: User, variant: "secondary" as const };
