@@ -1,23 +1,20 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  CreditCard,
-  Banknote,
   MapPin,
   Calendar,
   Bike as BikeIcon,
   ChevronLeft,
   ShieldCheck,
   Lock,
-  Info,
   Loader2,
 } from "lucide-react";
 import { format } from "date-fns";
@@ -29,8 +26,35 @@ import { useLanguage } from "@/contexts/LanguageContext";
 const PLATFORM_FEE_MAD = 10;
 const CONFIRMATION_FEE_MAD = 50;
 const UPFRONT_TOTAL_MAD = PLATFORM_FEE_MAD + CONFIRMATION_FEE_MAD;
+const SCRIPT_SRC = "https://youcanpay.com/js/ycpay.js";
 
-type PaymentMethod = "card" | "cash";
+declare global {
+  interface Window {
+    YCPay?: any;
+  }
+}
+
+function loadYcPayScript(): Promise<void> {
+  if (window.YCPay) return Promise.resolve();
+  return new Promise((resolve, reject) => {
+    const existing = document.querySelector<HTMLScriptElement>(
+      `script[src="${SCRIPT_SRC}"]`,
+    );
+    if (existing) {
+      existing.addEventListener("load", () => resolve());
+      existing.addEventListener("error", () =>
+        reject(new Error("Failed to load YouCan Pay script")),
+      );
+      return;
+    }
+    const s = document.createElement("script");
+    s.src = SCRIPT_SRC;
+    s.async = true;
+    s.onload = () => resolve();
+    s.onerror = () => reject(new Error("Failed to load YouCan Pay script"));
+    document.head.appendChild(s);
+  });
+}
 
 interface DraftBooking {
   id: string;
@@ -60,14 +84,24 @@ const CheckoutDraft = () => {
   const { isRTL } = useLanguage();
 
   const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
   const [booking, setBooking] = useState<DraftBooking | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("card");
 
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
+  // Profile-derived info
+  const [profileName, setProfileName] = useState("");
+  const [profileEmail, setProfileEmail] = useState("");
+  const [profilePhone, setProfilePhone] = useState("");
+  const [editName, setEditName] = useState("");
+  const [editPhone, setEditPhone] = useState("");
+  const [editing, setEditing] = useState(false);
 
+  // Payment state
+  const [agreed, setAgreed] = useState(false);
+  const [ycStatus, setYcStatus] = useState<"idle" | "loading" | "ready" | "paying" | "error">("idle");
+  const [ycError, setYcError] = useState<string | null>(null);
+  const ycRef = useRef<any>(null);
+  const tokenRef = useRef<{ token: string; pid: string } | null>(null);
+
+  // ---------- Load booking + profile ----------
   useEffect(() => {
     const load = async () => {
       if (!bookingId) {
@@ -96,7 +130,6 @@ const CheckoutDraft = () => {
           return;
         }
 
-        // Fetch bike type info via bike → bike_type.
         let bikeInfo: DraftBooking["bike"] = undefined;
         if (data.bike_id) {
           const { data: bikeRow } = await supabase
@@ -120,9 +153,28 @@ const CheckoutDraft = () => {
         }
 
         setBooking({ ...(data as any), bike: bikeInfo });
-        setName(data.customer_name || "");
-        setEmail(data.customer_email || user?.email || "");
-        setPhone(data.customer_phone || "");
+
+        // Load profile (read-only confirmation source of truth).
+        let pName = data.customer_name || "";
+        let pEmail = data.customer_email || user?.email || "";
+        let pPhone = data.customer_phone || "";
+        if (user?.id) {
+          const { data: prof } = await supabase
+            .from("profiles")
+            .select("full_name, email, phone")
+            .eq("user_id", user.id)
+            .maybeSingle();
+          if (prof) {
+            pName = prof.full_name || pName;
+            pEmail = prof.email || pEmail;
+            pPhone = prof.phone || pPhone;
+          }
+        }
+        setProfileName(pName);
+        setProfileEmail(pEmail);
+        setProfilePhone(pPhone);
+        setEditName(pName);
+        setEditPhone(pPhone);
       } catch (e) {
         console.error(e);
         toast.error("Could not load checkout. Please try again.");
@@ -133,87 +185,166 @@ const CheckoutDraft = () => {
     load();
   }, [bookingId, navigate, user]);
 
+  // Determine if we need editable fallback because profile is missing data.
+  const needsName = !profileName.trim();
+  const needsPhone = !profilePhone.trim();
+  const mustEdit = needsName || needsPhone;
+  const showEditor = editing || mustEdit;
+
+  // ---------- Init YouCan Pay form once booking is loaded ----------
+  useEffect(() => {
+    if (!booking) return;
+    let cancelled = false;
+    (async () => {
+      setYcStatus("loading");
+      setYcError(null);
+      try {
+        const { data: tokenResp, error: tokenErr } =
+          await supabase.functions.invoke("youcanpay-create-token", {
+            body: {
+              purpose: "booking_payment",
+              amount: UPFRONT_TOTAL_MAD,
+              currency: "MAD",
+              related_booking_id: booking.id,
+              customer_email: profileEmail,
+              customer_name: profileName,
+            },
+          });
+        if (cancelled) return;
+        if (tokenErr || !tokenResp?.token_id || !tokenResp?.public_key) {
+          const detail =
+            (tokenResp && (tokenResp.error || tokenResp.details?.message)) ||
+            tokenErr?.message ||
+            "Payment service is unavailable.";
+          throw new Error(detail);
+        }
+        tokenRef.current = { token: tokenResp.token_id, pid: tokenResp.payment_id };
+
+        await loadYcPayScript();
+        if (cancelled) return;
+
+        const yc = new window.YCPay(tokenResp.public_key, {
+          formContainer: "#ycpay-form",
+          errorContainer: "#ycpay-error",
+          locale: "en",
+          isSandbox: !!tokenResp.is_sandbox,
+          token: tokenResp.token_id,
+        });
+        try {
+          yc.renderAvailableGateways([], "default");
+        } catch {
+          yc.renderCreditCardForm("default");
+        }
+        ycRef.current = yc;
+        setYcStatus("ready");
+      } catch (e: any) {
+        console.error("YouCan Pay init failed", e);
+        setYcStatus("error");
+        setYcError(e?.message || "Could not load the payment form.");
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [booking?.id]);
+
   const days = booking?.total_days ?? 1;
   const dailyPrice = booking?.bike?.daily_price ?? 0;
   const rentalSubtotal = booking?.total_price ?? days * dailyPrice;
   const dueAtPickup = Math.max(0, rentalSubtotal - CONFIRMATION_FEE_MAD);
 
-  const validateForm = () => {
-    if (!name.trim()) {
+  const persistInfoIfNeeded = async () => {
+    if (!showEditor) return true;
+    const nm = editName.trim();
+    const ph = editPhone.trim();
+    if (!nm) {
       toast.error("Please enter your full name.");
       return false;
     }
-    if (!email.trim() || !/.+@.+\..+/.test(email)) {
-      toast.error("Please enter a valid email.");
-      return false;
-    }
-    if (!phone.trim()) {
+    if (!ph) {
       toast.error("Please enter your phone number.");
       return false;
     }
-    return true;
-  };
-
-  const persistRenterInfo = async () => {
-    const { error } = await supabase
+    // Update profile (source of truth) and mirror into the booking.
+    if (user?.id) {
+      const { error: pErr } = await supabase
+        .from("profiles")
+        .update({ full_name: nm, phone: ph })
+        .eq("user_id", user.id);
+      if (pErr) {
+        console.error(pErr);
+        toast.error("Could not save your info. Please try again.");
+        return false;
+      }
+    }
+    await supabase
       .from("bookings")
       .update({
-        customer_name: name.trim(),
-        customer_email: email.trim(),
-        customer_phone: phone.trim(),
+        customer_name: nm,
+        customer_email: profileEmail,
+        customer_phone: ph,
       })
       .eq("id", bookingId!)
       .eq("booking_status", "draft");
-    if (error) throw error;
+    setProfileName(nm);
+    setProfilePhone(ph);
+    setEditing(false);
+    return true;
   };
 
-  const handleCardPay = async () => {
-    if (!booking || !validateForm()) return;
-    setSubmitting(true);
-    try {
-      await persistRenterInfo();
-
-      const { data: tokenResp, error: tokenErr } =
-        await supabase.functions.invoke("youcanpay-create-token", {
-          body: {
-            purpose: "booking_payment",
-            amount: UPFRONT_TOTAL_MAD,
-            currency: "MAD",
-            related_booking_id: booking.id,
-            customer_email: email.trim(),
-            customer_name: name.trim(),
-          },
-        });
-
-      if (tokenErr || !tokenResp?.token_id || !tokenResp?.public_key) {
-        const detail =
-          (tokenResp && (tokenResp.error || tokenResp.details?.message)) ||
-          tokenErr?.message ||
-          "Payment service is unavailable.";
-        toast.error(`Payment could not start: ${detail}`);
-        setSubmitting(false);
-        return;
-      }
-
-      const successPath = `/booking/${booking.id}/confirmed`;
-      const errorPath = `/checkout/${booking.id}?yc=error`;
-      const qs = new URLSearchParams({
-        token: tokenResp.token_id,
-        pubKey: tokenResp.public_key,
-        pid: tokenResp.payment_id,
-        amount: String(UPFRONT_TOTAL_MAD),
-        currency: "MAD",
-        sandbox: tokenResp.is_sandbox ? "1" : "0",
-        success: successPath,
-        error: errorPath,
-        title: "Pay booking fee",
-      });
-      navigate(`/pay/youcanpay?${qs.toString()}`);
-    } catch (e: any) {
-      console.error(e);
-      toast.error("Could not start payment. Please try again.");
-      setSubmitting(false);
+  const handlePay = async () => {
+    if (!booking || !ycRef.current || !tokenRef.current) return;
+    if (!agreed) {
+      toast.error("Please accept the Terms & Cancellation policy.");
+      return;
     }
+    const ok = await persistInfoIfNeeded();
+    if (!ok) return;
+
+    // Make sure booking has the latest renter info even if not editing.
+    if (!showEditor) {
+      await supabase
+        .from("bookings")
+        .update({
+          customer_name: profileName,
+          customer_email: profileEmail,
+          customer_phone: profilePhone,
+        })
+        .eq("id", bookingId!)
+        .eq("booking_status", "draft");
+    }
+
+    setYcStatus("paying");
+    const { token, pid } = tokenRef.current;
+    ycRef.current
+      .pay(token)
+      .then((response: any) => {
+        toast.success("Payment submitted");
+        const transactionId =
+          response?.transaction_id ||
+          response?.transactionId ||
+          response?.transaction?.id ||
+          response?.id;
+        const qs = new URLSearchParams({
+          pid,
+          next: `/booking/${booking.id}/confirmed`,
+          retry: `/checkout/${booking.id}`,
+          outcome: "success",
+          title: "Pay booking fee",
+        });
+        if (transactionId) qs.set("transaction_id", String(transactionId));
+        navigate(`/payment-status?${qs.toString()}`, { replace: true });
+      })
+      .catch((err: any) => {
+        console.error("YouCan Pay error", err);
+        const message =
+          typeof err === "string"
+            ? err
+            : err?.message || "Payment failed. Please try again.";
+        toast.error(message);
+        setYcStatus("ready");
+      });
   };
 
   if (loading) {
@@ -338,44 +469,80 @@ const CheckoutDraft = () => {
               </CardContent>
             </Card>
 
+            {/* Your info — read-only confirmation, with editable fallback when missing */}
             <Card>
               <CardContent className="p-5 space-y-4">
                 <div>
                   <h3 className="font-semibold text-foreground">Your info</h3>
                   <p className="text-sm text-muted-foreground">
-                    The agency will use this to contact you about pickup.
+                    {showEditor
+                      ? "Please complete your details before paying."
+                      : "Please confirm your details."}
                   </p>
                 </div>
-                <div className="grid sm:grid-cols-2 gap-3">
-                  <div className="space-y-1.5 sm:col-span-2">
-                    <Label htmlFor="name">Full name</Label>
-                    <Input
-                      id="name"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      placeholder="As shown on your ID"
-                    />
+
+                {showEditor ? (
+                  <div className="space-y-3">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="name">Full name</Label>
+                      <Input
+                        id="name"
+                        value={editName}
+                        onChange={(e) => setEditName(e.target.value)}
+                        placeholder="As shown on your ID"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label>Email</Label>
+                      <p className="text-sm text-foreground">{profileEmail}</p>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="phone">Phone</Label>
+                      <Input
+                        id="phone"
+                        type="tel"
+                        value={editPhone}
+                        onChange={(e) => setEditPhone(e.target.value)}
+                        placeholder="+212 …"
+                      />
+                    </div>
+                    {!mustEdit && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditing(false);
+                          setEditName(profileName);
+                          setEditPhone(profilePhone);
+                        }}
+                        className="text-xs text-muted-foreground hover:text-foreground underline"
+                      >
+                        Cancel
+                      </button>
+                    )}
                   </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                    />
+                ) : (
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between gap-4">
+                      <span className="text-muted-foreground">Full name</span>
+                      <span className="font-medium text-foreground text-right">{profileName}</span>
+                    </div>
+                    <div className="flex justify-between gap-4">
+                      <span className="text-muted-foreground">Email</span>
+                      <span className="font-medium text-foreground text-right break-all">{profileEmail}</span>
+                    </div>
+                    <div className="flex justify-between gap-4">
+                      <span className="text-muted-foreground">Phone</span>
+                      <span className="font-medium text-foreground text-right">{profilePhone}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setEditing(true)}
+                      className="text-xs text-primary hover:underline"
+                    >
+                      Edit details
+                    </button>
                   </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="phone">Phone</Label>
-                    <Input
-                      id="phone"
-                      type="tel"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      placeholder="+212 …"
-                    />
-                  </div>
-                </div>
+                )}
               </CardContent>
             </Card>
 
@@ -396,10 +563,7 @@ const CheckoutDraft = () => {
                   </div>
                   <div className="rounded-md bg-muted/40 p-3 mt-2 space-y-1.5">
                     <div className="flex justify-between text-sm">
-                      <span className="font-medium text-foreground inline-flex items-center gap-1.5">
-                        Pay now (booking fee)
-                        <Info className="h-3.5 w-3.5 text-muted-foreground" />
-                      </span>
+                      <span className="font-medium text-foreground">Pay now (booking fee)</span>
                       <span className="font-semibold text-foreground">
                         {UPFRONT_TOTAL_MAD} MAD
                       </span>
@@ -419,92 +583,73 @@ const CheckoutDraft = () => {
               <CardContent className="p-5 space-y-5">
                 <div>
                   <h2 className="text-lg font-semibold text-foreground">
-                    Payment method
-                  </h2>
-                  <p className="text-sm text-muted-foreground">
                     Booking fee:{" "}
-                    <span className="font-semibold text-foreground">
-                      {UPFRONT_TOTAL_MAD} MAD
-                    </span>
-                  </p>
+                    <span className="text-foreground">{UPFRONT_TOTAL_MAD} MAD</span>
+                  </h2>
+                  <div className="mt-2 space-y-1 text-sm">
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>Platform fee</span>
+                      <span>{PLATFORM_FEE_MAD} MAD</span>
+                    </div>
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>Confirmation fee</span>
+                      <span>{CONFIRMATION_FEE_MAD} MAD</span>
+                    </div>
+                  </div>
                 </div>
 
-                <RadioGroup
-                  value={paymentMethod}
-                  onValueChange={(v) => setPaymentMethod(v as PaymentMethod)}
-                  className="space-y-3"
-                >
-                  <label
-                    htmlFor="pm-card"
-                    className={`flex items-start gap-3 rounded-lg border p-4 cursor-pointer transition-colors ${
-                      paymentMethod === "card"
-                        ? "border-primary bg-primary/5"
-                        : "border-border hover:border-muted-foreground/30"
-                    }`}
-                  >
-                    <RadioGroupItem id="pm-card" value="card" className="mt-0.5" />
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <CreditCard className="h-4 w-4 text-foreground" />
-                        <span className="font-medium text-foreground">Card</span>
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Visa, Mastercard, CMI. Secured by YouCan Pay.
-                      </p>
+                <div>
+                  <div id="ycpay-error" className="text-sm text-destructive mb-2" />
+                  <div
+                    id="ycpay-form"
+                    className="min-h-[180px] rounded-lg border border-border p-3 bg-muted/30"
+                  />
+                  {ycStatus === "loading" && (
+                    <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground mt-2">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Loading payment form…
                     </div>
-                  </label>
-
-                  <label
-                    htmlFor="pm-cash"
-                    className={`flex items-start gap-3 rounded-lg border p-4 cursor-pointer transition-colors ${
-                      paymentMethod === "cash"
-                        ? "border-primary bg-primary/5"
-                        : "border-border hover:border-muted-foreground/30"
-                    }`}
-                  >
-                    <RadioGroupItem id="pm-cash" value="cash" className="mt-0.5" />
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <Banknote className="h-4 w-4 text-foreground" />
-                        <span className="font-medium text-foreground">Cash Plus</span>
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Pay at any Cash Plus agent in Morocco.
-                      </p>
+                  )}
+                  {ycStatus === "error" && (
+                    <div className="mt-2 rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">
+                      {ycError}
                     </div>
-                  </label>
-                </RadioGroup>
+                  )}
+                </div>
 
-                {paymentMethod === "cash" && (
-                  <div className="rounded-lg border border-border p-4 text-sm space-y-3">
-                    <p className="font-medium text-foreground">
-                      How to pay with Cash Plus
-                    </p>
-                    <ol className="space-y-2 text-muted-foreground list-decimal list-inside">
-                      <li>Press <span className="font-semibold text-foreground">Continue</span> below to start your payment.</li>
-                      <li>You'll receive a Cash Plus reference code on the next screen.</li>
-                      <li>Visit any Cash Plus agent and pay <span className="font-semibold text-foreground">{UPFRONT_TOTAL_MAD} MAD</span> using the reference.</li>
-                      <li>Your booking confirms automatically once Cash Plus reports the payment (usually within minutes).</li>
-                    </ol>
-                  </div>
-                )}
+                <label className="flex items-start gap-2 text-sm text-foreground cursor-pointer">
+                  <Checkbox
+                    checked={agreed}
+                    onCheckedChange={(v) => setAgreed(!!v)}
+                    className="mt-0.5"
+                  />
+                  <span>
+                    I agree to the{" "}
+                    <Link to="/terms" className="text-primary hover:underline">
+                      Terms
+                    </Link>{" "}
+                    &{" "}
+                    <Link to="/terms#cancellation" className="text-primary hover:underline">
+                      Cancellation policy
+                    </Link>
+                    .
+                  </span>
+                </label>
 
                 <Button
                   variant="hero"
                   size="lg"
                   className="w-full"
-                  onClick={handleCardPay}
-                  disabled={submitting}
+                  onClick={handlePay}
+                  disabled={ycStatus !== "ready" || !agreed}
                 >
-                  {submitting ? (
+                  {ycStatus === "paying" ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      Starting payment…
+                      Processing…
                     </>
                   ) : (
-                    <>
-                      {paymentMethod === "cash" ? "Continue to Cash Plus" : "Pay"} {UPFRONT_TOTAL_MAD} MAD
-                    </>
+                    <>Pay {UPFRONT_TOTAL_MAD} MAD</>
                   )}
                 </Button>
 
