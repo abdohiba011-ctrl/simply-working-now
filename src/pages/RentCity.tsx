@@ -138,13 +138,12 @@ export default function RentCity() {
   const { data: cityRow, isLoading: cityLoading } = useQuery({
     queryKey: ["rent-city-row", citySlug],
     queryFn: async () => {
-      const variants = slugToCityNameVariants(citySlug);
-      if (variants.length === 0) return null;
+      // DB-driven: look up the city by its canonical slug. New cities admins
+      // add are immediately reachable without code changes.
       const { data, error } = await supabase
         .from("service_cities")
-        .select("id, name, is_available, is_coming_soon, image_url, description")
-        .in("name", variants)
-        .limit(1)
+        .select("id, name, is_available, is_coming_soon, image_url, description, slug")
+        .eq("slug", citySlug)
         .maybeSingle();
       if (error) throw error;
       return (data as CityRow | null) ?? null;
