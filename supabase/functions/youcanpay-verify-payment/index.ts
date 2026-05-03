@@ -21,6 +21,7 @@ async function applyBookingPaymentVerify(
   bookingId: string,
   payment: any,
   transactionId: string | null,
+  paymentMethod: string = "card",
 ): Promise<void> {
   const { data: booking } = await admin
     .from("bookings")
