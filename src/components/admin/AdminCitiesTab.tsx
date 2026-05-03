@@ -880,10 +880,14 @@ export const AdminCitiesTab = () => {
                         </Button>
                       </div>
                     )}
-                  </div>
-                );
-              })}
-            </div>
+                          </>
+                        )}
+                      </SortableCityWrapper>
+                    );
+                  })}
+                </div>
+              </SortableContext>
+            </DndContext>
           )}
         </CardContent>
       </Card>
