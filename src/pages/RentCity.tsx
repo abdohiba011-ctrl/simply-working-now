@@ -144,11 +144,11 @@ export default function RentCity() {
       // add are immediately reachable without code changes.
       const { data, error } = await supabase
         .from("service_cities")
-        .select("id, name, is_available, is_coming_soon, image_url, description, slug")
+        .select("id, name, is_available, is_coming_soon, image_url, image_focal_x, image_focal_y, description, slug")
         .eq("slug", citySlug)
         .maybeSingle();
       if (error) throw error;
-      return (data as CityRow | null) ?? null;
+      return (data as unknown as CityRow | null) ?? null;
     },
   });
 
