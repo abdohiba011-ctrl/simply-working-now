@@ -248,7 +248,7 @@ const MotorbikeDetail = () => {
                 <Button
                   size="sm"
                   className="mt-3"
-                  onClick={() => navigate(`/agency/motorbikes/${bike.id}/edit`)}
+                  onClick={() => setEditOpen(true)}
                 >
                   Edit and resubmit for review
                 </Button>
@@ -304,7 +304,7 @@ const MotorbikeDetail = () => {
             >
               <ExternalLink className="h-4 w-4" /> Public view
             </Button>
-            <Button onClick={() => navigate(`/agency/motorbikes/${bike.id}/edit`)}>
+            <Button onClick={() => setEditOpen(true)}>
               Edit
             </Button>
             <Button
