@@ -586,28 +586,41 @@ const BikeDetails = () => {
         )}
 
         {/* CTA */}
+        {days > 0 && availability !== "unavailable" && (
+          <p className="text-[11px] text-center text-foreground/70">⚡ Confirm in 60 seconds</p>
+        )}
         <Button
           variant="hero"
           size="lg"
           className="w-full h-12 font-bold"
           onClick={handleBookNow}
-          disabled={!dateRange?.from || !dateRange?.to || !pickupTime || !dropoffTime}
+          disabled={
+            !dateRange?.from || !dateRange?.to || !pickupTime || !dropoffTime ||
+            availability === "loading" || availability === "unavailable"
+          }
         >
-          Book Now — Pay {upfrontTotal} MAD
+          {!dateRange?.from || !dateRange?.to
+            ? "Select dates to book"
+            : availability === "loading"
+              ? "Checking..."
+              : availability === "unavailable"
+                ? "Not available for these dates"
+                : `Book Now — Pay ${upfrontTotal} MAD`}
         </Button>
-        <p className="text-xs text-muted-foreground text-center leading-relaxed">
-          You'll pay {upfrontTotal} MAD now via YouCan Pay ({PLATFORM_FEE} MAD platform fee + {CONFIRMATION_FEE} MAD confirmation fee).
-          Pay {pickupTotal.toLocaleString()} MAD to the agency at pickup.
-        </p>
 
-        {/* Trust badges */}
-        <div className="flex items-center justify-center gap-3 pt-2 border-t border-border/60 text-[11px] text-muted-foreground">
+        {/* Trust badges (right under CTA) */}
+        <div className="flex items-center justify-center gap-3 pt-1 text-[11px] text-muted-foreground">
           <span className="inline-flex items-center gap-1"><Shield className="h-3 w-3" /> Verified agency</span>
           <span>·</span>
           <span className="inline-flex items-center gap-1"><Lock className="h-3 w-3" /> Secure payment</span>
           <span>·</span>
           <span className="inline-flex items-center gap-1"><MessageCircle className="h-3 w-3" /> Chat after booking</span>
         </div>
+
+        <p className="text-[11px] text-muted-foreground text-center leading-relaxed pt-2 border-t border-border/60">
+          You'll pay {upfrontTotal} MAD now via YouCan Pay ({PLATFORM_FEE} MAD platform fee + {CONFIRMATION_FEE} MAD confirmation fee).
+          Pay {pickupTotal.toLocaleString()} MAD to the agency at pickup.
+        </p>
       </CardContent>
     </Card>
   );
