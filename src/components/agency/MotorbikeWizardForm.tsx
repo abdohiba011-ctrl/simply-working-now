@@ -17,9 +17,10 @@ import { toast } from "sonner";
 import { MotorbikeImageManager } from "@/components/agency/MotorbikeImageManager";
 import { AgencyVerificationBanner } from "@/components/agency/AgencyVerificationBanner";
 import {
-  BIKE_BRANDS, BIKE_CATEGORIES, LICENSE_OPTIONS, CANCELLATION_OPTIONS,
+  BIKE_CATEGORIES, LICENSE_OPTIONS, CANCELLATION_OPTIONS,
   FEATURE_ORDER, FEATURE_LABELS, FeatureKey,
 } from "@/lib/bikeFeatures";
+import { BIKE_BRANDS_V2, modelsForBrand } from "@/lib/bikeBrands";
 import { cn } from "@/lib/utils";
 import { TIER_MIN_DAYS, TIER_LABELS, type BikePricingTier, type TierMinDays, tierSavingsPct } from "@/lib/pricingTiers";
 
@@ -576,16 +577,40 @@ export const MotorbikeWizardForm = ({
               <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">
                   <Label>Brand *</Label>
-                  <Select value={brand} onValueChange={setBrand}>
+                  <Select
+                    value={brand}
+                    onValueChange={(v) => {
+                      setBrand(v);
+                      // Reset model when brand changes (unless still valid)
+                      const next = modelsForBrand(v);
+                      if (!next.includes(model)) setModel("");
+                    }}
+                  >
                     <SelectTrigger><SelectValue placeholder="Select brand" /></SelectTrigger>
                     <SelectContent>
-                      {BIKE_BRANDS.map((b) => <SelectItem key={b} value={b}>{b}</SelectItem>)}
+                      {BIKE_BRANDS_V2.map((b) => <SelectItem key={b} value={b}>{b}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="grid gap-2">
                   <Label>Model *</Label>
-                  <Input value={model} onChange={(e) => setModel(e.target.value)} placeholder="e.g. PCX 160" />
+                  {brand === "Other" || !brand ? (
+                    <Input
+                      value={model}
+                      onChange={(e) => setModel(e.target.value)}
+                      placeholder={brand ? "Enter model" : "Select brand first"}
+                      disabled={!brand}
+                    />
+                  ) : (
+                    <Select value={model} onValueChange={setModel}>
+                      <SelectTrigger><SelectValue placeholder="Select model" /></SelectTrigger>
+                      <SelectContent>
+                        {modelsForBrand(brand).map((m) => (
+                          <SelectItem key={m} value={m}>{m}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
                 </div>
                 <div className="grid gap-2">
                   <Label>Year *</Label>
