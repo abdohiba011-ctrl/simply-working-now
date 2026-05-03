@@ -530,7 +530,45 @@ export const AdminCitiesTab = () => {
     }
   };
 
-  // ---------- Derived ----------
+  // ---------- Drag-to-reorder ----------
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    if (searchQuery.trim()) {
+      toast.info("Clear the search to reorder cities");
+      return;
+    }
+    const oldIndex = cities.findIndex((c) => c.id === active.id);
+    const newIndex = cities.findIndex((c) => c.id === over.id);
+    if (oldIndex < 0 || newIndex < 0) return;
+    const reordered = arrayMove(cities, oldIndex, newIndex).map((c, idx) => ({
+      ...c,
+      display_order: idx + 1,
+    }));
+    setCities(reordered); // optimistic
+    try {
+      // Persist new orders one by one (no upsert on full row to avoid clobbering)
+      const updates = reordered.map((c) =>
+        supabase
+          .from("service_cities")
+          .update({ display_order: c.display_order })
+          .eq("id", c.id),
+      );
+      const results = await Promise.all(updates);
+      const firstErr = results.find((r) => r.error)?.error;
+      if (firstErr) throw firstErr;
+      toast.success("City order updated");
+    } catch {
+      toast.error("Failed to save new order");
+      fetchAll();
+    }
+  };
+
   const locationsByCityId = useMemo(() => {
     const map = new Map<string, ServiceLocation[]>();
     locations.forEach((loc) => {
