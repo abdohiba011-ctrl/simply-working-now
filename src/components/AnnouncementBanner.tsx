@@ -153,6 +153,8 @@ export const AnnouncementBanner = () => {
     return () => mql.removeEventListener?.("change", apply);
   }, []);
 
+  if (hidden) return null;
+
   const segments = buildSegments(language as "en" | "fr" | "ar");
 
   // Single content block (we duplicate it for the seamless marquee loop)
