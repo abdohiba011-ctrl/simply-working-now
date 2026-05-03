@@ -137,6 +137,13 @@ export function UserMenu({ align = "end" }: Props) {
             {t("settings_link")}
           </DropdownMenuItem>
 
+          {currentRole !== "agency" && (
+            <DropdownMenuItem onClick={() => navigate("/favorites")}>
+              <Heart className="mr-2 h-4 w-4" />
+              Favorites
+            </DropdownMenuItem>
+          )}
+
           {showAdmin && (
             <>
               <DropdownMenuSeparator />
