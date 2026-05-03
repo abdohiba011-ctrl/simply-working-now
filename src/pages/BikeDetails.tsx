@@ -441,7 +441,33 @@ const BikeDetails = () => {
           </div>
           <span className="text-sm text-muted-foreground pb-1">/day</span>
         </div>
-        {/* Tiered pricing badges removed in Phase 1 — Phase 2 will add real per-bike tiers */}
+        {/* Volume-discount savings badges (only when agency configured higher tiers) */}
+        {hasDiscountTiers && (
+          <div className="space-y-1.5">
+            {discountTiers.map((t) => {
+              const pct = tierSavingsPct(baseDailyPrice, Number(t.daily_price_mad));
+              if (pct <= 0) return null;
+              const isApplied = appliedTier === t.min_days && days > 0;
+              return (
+                <div
+                  key={t.min_days}
+                  className={cn(
+                    "flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs transition-colors",
+                    isApplied
+                      ? "bg-primary/15 text-foreground font-semibold ring-1 ring-primary/40"
+                      : "bg-muted/60 text-foreground/80",
+                  )}
+                >
+                  <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
+                  <span>
+                    Save <span className="font-semibold">{pct}%</span> on{" "}
+                    {TIER_SHORT_LABELS[t.min_days as TierMinDays].toLowerCase()} ({t.min_days}+ days)
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        )}
 
         <div className="border-t border-border/60" />
 
