@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { BikeTypeSkeleton } from "@/components/ui/bike-skeleton";
-import { DateRangePicker } from "@/components/DateRangePicker";
+import { BookingDatePicker } from "@/components/BookingDatePicker";
 import {
   Select,
   SelectContent,
@@ -66,8 +66,8 @@ const Listings = () => {
   const { data: bikes, isLoading: isLoadingBikes } = useBikes();
 
   const location = searchParams.get("location") || "";
-  const pickupDate = searchParams.get("pickup") || "";
-  const endDate = searchParams.get("end") || "";
+  const pickupDate = searchParams.get("from") || searchParams.get("pickup") || "";
+  const endDate = searchParams.get("to") || searchParams.get("end") || "";
   const cityName = searchParams.get("city") || "";
   const cityId = searchParams.get("cityId") || "";
 
@@ -227,7 +227,7 @@ const Listings = () => {
   const handleBikeSelect = (bikeId: string) => {
     const dates =
       dateRange?.from && dateRange?.to
-        ? `?pickup=${format(dateRange.from, "yyyy-MM-dd")}&end=${format(dateRange.to, "yyyy-MM-dd")}`
+        ? `?from=${format(dateRange.from, "yyyy-MM-dd")}&to=${format(dateRange.to, "yyyy-MM-dd")}`
         : "";
     navigate(`/bike/${bikeId}${dates}`);
   };
@@ -246,9 +246,13 @@ const Listings = () => {
     setDateRange(range);
     const params = new URLSearchParams(searchParams);
     if (range?.from && range?.to) {
-      params.set("pickup", format(range.from, "yyyy-MM-dd"));
-      params.set("end", format(range.to, "yyyy-MM-dd"));
+      params.set("from", format(range.from, "yyyy-MM-dd"));
+      params.set("to", format(range.to, "yyyy-MM-dd"));
+      params.delete("pickup");
+      params.delete("end");
     } else if (!range) {
+      params.delete("from");
+      params.delete("to");
       params.delete("pickup");
       params.delete("end");
     }
@@ -303,11 +307,9 @@ const Listings = () => {
           {/* Date + sort row */}
           <div className="flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between">
             <div className="flex-1 sm:max-w-md">
-              <DateRangePicker
-                dateRange={dateRange}
-                onDateChange={handleDateChange}
-                maxDays={30}
-                showPriceBreakdown={false}
+              <BookingDatePicker
+                value={dateRange}
+                onChange={handleDateChange}
               />
             </div>
             <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>

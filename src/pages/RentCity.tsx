@@ -5,11 +5,14 @@ import {
   Filter as FilterIcon,
   Heart,
   MapPin,
+  Pencil,
+  Calendar as CalendarIcon,
   SlidersHorizontal,
   Star,
   X,
   Search,
 } from "lucide-react";
+import { format, parseISO, isValid as isValidDate } from "date-fns";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
@@ -201,6 +204,14 @@ export default function RentCity() {
   );
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [drawerOpen, setDrawerOpen] = useState(false);
+
+  // Read selected dates from URL (from/to). Backwards-compat with start/end & pickup.
+  const fromParam = searchParams.get("from") || searchParams.get("start") || searchParams.get("pickup");
+  const toParam = searchParams.get("to") || searchParams.get("end");
+  const fromDate = fromParam ? parseISO(fromParam) : null;
+  const toDate = toParam ? parseISO(toParam) : null;
+  const hasDates = !!(fromDate && isValidDate(fromDate) && toDate && isValidDate(toDate));
+  const datesQS = hasDates ? `?from=${fromParam}&to=${toParam}` : "";
 
   // Sync filters → URL (debounced)
   useEffect(() => {
@@ -598,6 +609,25 @@ export default function RentCity() {
           <span className="text-foreground font-medium">{cityName}</span>
         </nav>
 
+        {/* Date pill (read-only) — tap to go back and re-pick on Hero */}
+        {hasDates && (
+          <button
+            type="button"
+            onClick={() => navigate("/")}
+            className="inline-flex items-center gap-2 mb-4 rounded-full border border-[#163300]/15 bg-card px-3 py-1.5 text-sm text-foreground hover:border-[#9FE870] transition-colors w-full sm:w-auto"
+            aria-label="Edit dates — back to search"
+          >
+            <MapPin className="w-3.5 h-3.5 text-foreground/70" />
+            <span className="font-medium">{cityName}{neighborhood !== allCityLabel ? `, ${neighborhood}` : ""}</span>
+            <span className="text-foreground/40">·</span>
+            <CalendarIcon className="w-3.5 h-3.5 text-foreground/70" />
+            <span className="font-medium">
+              {format(fromDate!, "MMM d")} → {format(toDate!, "MMM d")}
+            </span>
+            <Pencil className="w-3.5 h-3.5 text-foreground/50 ml-1" />
+          </button>
+        )}
+
         {/* Header row */}
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-6">
           <div>
@@ -714,7 +744,7 @@ export default function RentCity() {
                     bike={b}
                     favorite={favorites.has(b.id)}
                     onToggleFavorite={() => toggleFavorite(b.id, b.name)}
-                    onOpen={() => navigate(`/bike/${b.slug || b.id}`)}
+                    onOpen={() => navigate(`/bike/${b.slug || b.id}${datesQS}`)}
                     totalDays={totalDays}
                   />
                 ))}
