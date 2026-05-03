@@ -47,18 +47,19 @@ import { DateRangePicker } from "@/components/DateRangePicker";
 import { BookingDatePicker } from "@/components/BookingDatePicker";
 import { checkBikeAvailability, type Availability } from "@/lib/availability";
 import { useDocumentHead } from "@/hooks/useDocumentHead";
+import { FEATURE_LABELS, FeatureKey, licenseLabel, cancellationText } from "@/lib/bikeFeatures";
 
 const isUuid = (s: string) =>
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
 const SITE_URL = "https://motonita.ma";
+
+const cap = (s?: string | null) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : "");
 
 const timeSlots = [
   "08:00", "08:30", "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
   "12:00", "12:30", "13:00", "13:30", "14:00", "14:30", "15:00", "15:30",
   "16:00", "16:30", "17:00", "17:30", "18:00", "18:30", "19:00", "19:30", "20:00"
 ];
-
-const MAX_RENTAL_DAYS = 30;
 
 const BikeDetails = () => {
   const { id } = useParams();
@@ -148,54 +149,49 @@ const BikeDetails = () => {
   const [resolvedAgency, setResolvedAgency] = useState<{
     name: string | null;
     verified: boolean;
-  }>({ name: null, verified: false });
+    deliveryOffered: boolean;
+    deliveryFee: number;
+  }>({ name: null, verified: false, deliveryOffered: false, deliveryFee: 0 });
 
   useEffect(() => {
     const bt: any = bike?.bike_type;
     if (!bt) return;
     let cancelled = false;
     (async () => {
-      // City
       let cityName: string | null = null;
       if (bt.city_id) {
         const { data: city } = await supabase
-          .from("service_cities")
-          .select("name")
-          .eq("id", bt.city_id)
-          .maybeSingle();
+          .from("service_cities").select("name").eq("id", bt.city_id).maybeSingle();
         cityName = city?.name ?? null;
       }
-      // Agency from owner_id → profiles → agencies
       let agencyName: string | null = null;
       let agencyVerified = false;
       let agencyCity: string | null = null;
       let agencyNeighborhood: string | null = null;
+      let deliveryOffered = false;
+      let deliveryFee = 0;
       if (bt.owner_id) {
         const { data: prof } = await supabase
-          .from("profiles")
-          .select("id")
-          .eq("user_id", bt.owner_id)
-          .maybeSingle();
+          .from("profiles").select("id").eq("user_id", bt.owner_id).maybeSingle();
         if (prof?.id) {
           const { data: ag } = await (supabase as any)
             .from("agencies_public")
-            .select("business_name, is_verified, city, primary_neighborhood")
-            .eq("profile_id", prof.id)
-            .maybeSingle();
+            .select("business_name, is_verified, city, primary_neighborhood, delivery_offered, delivery_fee_mad")
+            .eq("profile_id", prof.id).maybeSingle();
           agencyName = (ag as any)?.business_name ?? null;
           agencyVerified = !!(ag as any)?.is_verified;
           agencyCity = (ag as any)?.city ?? null;
           agencyNeighborhood = (ag as any)?.primary_neighborhood ?? null;
+          deliveryOffered = !!(ag as any)?.delivery_offered;
+          deliveryFee = Number((ag as any)?.delivery_fee_mad) || 0;
         }
       }
       if (cancelled) return;
       setResolvedCity(cityName || agencyCity);
       setResolvedNeighborhood(bt.neighborhood || agencyNeighborhood || bike?.location || null);
-      setResolvedAgency({ name: agencyName, verified: agencyVerified });
+      setResolvedAgency({ name: agencyName, verified: agencyVerified, deliveryOffered, deliveryFee });
     })();
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [bike?.bike_type, bike?.location]);
 
   // If URL is a UUID but the bike has a slug, redirect to the slug URL.
@@ -228,15 +224,18 @@ const BikeDetails = () => {
   const subtotal = days * dailyPrice;
   const baselineSubtotal = days * baseDailyPrice;
   const tierDiscount = Math.max(0, baselineSubtotal - subtotal);
-  const deliveryFee = deliveryMethod === "delivery" ? 25 : 0;
-  const PLATFORM_FEE = 10;        // non-refundable, always Motonita's
-  const CONFIRMATION_FEE = 50;    // prepaid by renter, credited back to Motonita on confirm
-  const upfrontTotal = PLATFORM_FEE + CONFIRMATION_FEE; // 60 MAD
-  // Renter pays agency at pickup the rental MINUS the prepaid 50 MAD confirmation fee.
+  const agencyDeliveryFee = resolvedAgency.deliveryFee;
+  const deliveryFee = deliveryMethod === "delivery" ? agencyDeliveryFee : 0;
+  const PLATFORM_FEE = 10;
+  const CONFIRMATION_FEE = 50;
+  const upfrontTotal = PLATFORM_FEE + CONFIRMATION_FEE;
   const rentalDueAtPickup = Math.max(0, Math.round(subtotal) - CONFIRMATION_FEE) + deliveryFee;
   const deposit = (bike?.bike_type as any)?.deposit_amount ? Number((bike?.bike_type as any).deposit_amount) : 0;
   const pickupTotal = rentalDueAtPickup + (deposit || 0);
-  const tripTotal = upfrontTotal + rentalDueAtPickup; // excl. refundable deposit
+  const tripTotal = upfrontTotal + rentalDueAtPickup;
+
+  const minRentalDays = Math.max(1, Number((bike?.bike_type as any)?.min_rental_days) || 1);
+  const maxRentalDays = Math.max(minRentalDays, Number((bike?.bike_type as any)?.max_rental_days) || 30);
 
   const isSameDay = dateRange?.from && dateRange?.to &&
     format(dateRange.from, "yyyy-MM-dd") === format(dateRange.to, "yyyy-MM-dd");
@@ -260,9 +259,14 @@ const BikeDetails = () => {
   const handleDateRangeSelect = (range: DateRange | undefined) => {
     if (range?.from && range?.to) {
       const diff = differenceInDays(range.to, range.from);
-      if (diff > MAX_RENTAL_DAYS) {
-        toast.error(t('datePicker.maxDaysError').replace('{{maxDays}}', String(MAX_RENTAL_DAYS)));
-        setDateRange({ from: range.from, to: addDays(range.from, MAX_RENTAL_DAYS) });
+      if (diff > maxRentalDays) {
+        toast.error(t('datePicker.maxDaysError').replace('{{maxDays}}', String(maxRentalDays)));
+        setDateRange({ from: range.from, to: addDays(range.from, maxRentalDays) });
+        return;
+      }
+      if (diff > 0 && diff < minRentalDays) {
+        toast.error(`Minimum rental is ${minRentalDays} day${minRentalDays > 1 ? "s" : ""}`);
+        setDateRange({ from: range.from, to: addDays(range.from, minRentalDays) });
         return;
       }
     }
@@ -376,25 +380,21 @@ const BikeDetails = () => {
   };
 
   const specs = [
-    { icon: Cog, label: "Engine", value: bikeType.engine_cc ? `${bikeType.engine_cc}cc` : "—" },
-    { icon: Fuel, label: "Fuel", value: bikeType.fuel_type || "Gasoline" },
-    { icon: Zap, label: "Transmission", value: bikeType.transmission || "Manual" },
-    { icon: CalendarIcon, label: "Year", value: bikeType.year ? String(bikeType.year) : "—" },
-    { icon: Gauge, label: "Mileage", value: bikeType.mileage_km ? `${Number(bikeType.mileage_km).toLocaleString()} km` : "—" },
-    { icon: IdCard, label: "License", value: bikeType.license_required || "Permis A1" },
-    { icon: User, label: "Min age", value: `${bikeType.min_age || 18} years` },
-    { icon: Wallet, label: "Deposit", value: `${deposit || 1200} MAD` },
-  ];
+    bikeType.engine_cc ? { icon: Cog, label: "Engine", value: `${bikeType.engine_cc}cc` } : null,
+    bikeType.fuel_type ? { icon: Fuel, label: "Fuel", value: cap(bikeType.fuel_type) } : null,
+    bikeType.transmission ? { icon: Zap, label: "Transmission", value: cap(bikeType.transmission) } : null,
+    bikeType.year ? { icon: CalendarIcon, label: "Year", value: String(bikeType.year) } : null,
+    bikeType.mileage_km != null ? { icon: Gauge, label: "Mileage", value: `${Number(bikeType.mileage_km).toLocaleString()} km` } : null,
+    bikeType.license_required ? { icon: IdCard, label: "License", value: licenseLabel(bikeType.license_required) || bikeType.license_required } : null,
+    bikeType.min_age ? { icon: User, label: "Min age", value: `${bikeType.min_age} years` } : null,
+    deposit > 0 ? { icon: Wallet, label: "Deposit", value: `${deposit} MAD` } : null,
+  ].filter(Boolean) as { icon: any; label: string; value: string }[];
 
-  const features = [
-    { icon: Shield, label: "Helmet included", detail: "Full-face helmet provided at pickup" },
-    { icon: BadgeCheck, label: "Basic insurance", detail: "Third-party coverage included" },
-    { icon: MessageCircle, label: "24/7 roadside support", detail: "Reach the agency anytime during your rental" },
-    { icon: Truck, label: `Free delivery in ${neighborhood}`, detail: `Outside ${neighborhood}: +25 MAD` },
-  ];
+  const featureKeys = ((bikeType.features || []) as string[]).filter((k) => k in FEATURE_LABELS) as FeatureKey[];
+  const helmetsCount = Number(bikeType.helmets_count) || 0;
+  const hasIncludedSection = helmetsCount > 0 || featureKeys.length > 0;
 
-  const description = bikeType.description ||
-    `Reliable ${bikeType.name} maintained by ${agencyName}. Comfortable ride, easy handling, perfect for exploring ${cityName} and surrounding areas.`;
+  const description = (bikeType.description || "").trim();
 
   const BookingCard = (
     <Card className="border border-border/60 shadow-lg rounded-xl overflow-hidden">
@@ -407,10 +407,7 @@ const BikeDetails = () => {
           </div>
           <span className="text-sm text-muted-foreground pb-1">/day</span>
         </div>
-        <div className="space-y-1">
-          <p className="text-xs text-foreground/70 font-medium">Save 10% on weekly rentals</p>
-          <p className="text-xs text-foreground/70 font-medium">Save 25% on monthly rentals</p>
-        </div>
+        {/* Tiered pricing badges removed in Phase 1 — Phase 2 will add real per-bike tiers */}
 
         <div className="border-t border-border/60" />
 
@@ -517,34 +514,38 @@ const BikeDetails = () => {
             </div>
             <span className="text-xs font-medium text-foreground">Free</span>
           </button>
-          <button
-            type="button"
-            onClick={() => setDeliveryMethod("delivery")}
-            className={cn(
-              "w-full flex flex-col p-3 rounded-md border-2 text-left transition-all",
-              deliveryMethod === "delivery"
-                ? "border-primary bg-primary/5"
-                : "border-border hover:border-primary/40"
-            )}
-          >
-            <div className="flex items-center justify-between w-full">
-              <div>
-                <p className="text-sm font-semibold text-foreground">Home delivery</p>
-                <p className="text-xs text-muted-foreground">Delivered to your address</p>
+          {resolvedAgency.deliveryOffered && (
+            <button
+              type="button"
+              onClick={() => setDeliveryMethod("delivery")}
+              className={cn(
+                "w-full flex flex-col p-3 rounded-md border-2 text-left transition-all",
+                deliveryMethod === "delivery"
+                  ? "border-primary bg-primary/5"
+                  : "border-border hover:border-primary/40"
+              )}
+            >
+              <div className="flex items-center justify-between w-full">
+                <div>
+                  <p className="text-sm font-semibold text-foreground">Home delivery</p>
+                  <p className="text-xs text-muted-foreground">Delivered to your address</p>
+                </div>
+                <span className="text-xs font-medium text-foreground">
+                  {agencyDeliveryFee > 0 ? `+${agencyDeliveryFee} MAD` : "Free"}
+                </span>
               </div>
-              <span className="text-xs font-medium text-foreground">+25 MAD</span>
-            </div>
-            {deliveryMethod === "delivery" && (
-              <div className="mt-3 w-full" onClick={(e) => e.stopPropagation()}>
-                <Input
-                  placeholder="Enter delivery address"
-                  value={deliveryAddress}
-                  onChange={(e) => setDeliveryAddress(e.target.value)}
-                  className="h-10 text-sm"
-                />
-              </div>
-            )}
-          </button>
+              {deliveryMethod === "delivery" && (
+                <div className="mt-3 w-full" onClick={(e) => e.stopPropagation()}>
+                  <Input
+                    placeholder="Enter delivery address"
+                    value={deliveryAddress}
+                    onChange={(e) => setDeliveryAddress(e.target.value)}
+                    className="h-10 text-sm"
+                  />
+                </div>
+              )}
+            </button>
+          )}
         </div>
 
         {/* Cost breakdown — three-tier */}
@@ -624,11 +625,13 @@ const BikeDetails = () => {
           <p className="text-[11px] text-center text-foreground/70">⚡ Confirm in 60 seconds</p>
         )}
 
-        {/* Trust signals — three only */}
+        {/* Trust signals */}
         <div className="flex flex-col gap-1.5 pt-2 text-xs text-foreground/80">
           <span className="inline-flex items-center gap-2"><CheckCircle2 className="h-3.5 w-3.5 text-primary" /> Verified agency</span>
           <span className="inline-flex items-center gap-2"><CheckCircle2 className="h-3.5 w-3.5 text-primary" /> Secure payment</span>
-          <span className="inline-flex items-center gap-2"><CheckCircle2 className="h-3.5 w-3.5 text-primary" /> Free cancellation up to 2 days</span>
+          {cancellationText(bikeType.cancellation_policy) && (
+            <span className="inline-flex items-center gap-2"><CheckCircle2 className="h-3.5 w-3.5 text-primary" /> {cancellationText(bikeType.cancellation_policy)}</span>
+          )}
         </div>
       </CardContent>
     </Card>
@@ -750,48 +753,68 @@ const BikeDetails = () => {
               <div className="lg:hidden">{BookingCard}</div>
 
               {/* Description */}
-              <section>
-                <h2 className="text-xl font-bold text-foreground mb-3">About this bike</h2>
-                <div className="space-y-3 text-base leading-relaxed text-foreground/80">
-                  {description.split("\n\n").map((para, i) => (
-                    <p key={i}>{para}</p>
-                  ))}
-                </div>
-              </section>
+              {description && (
+                <section>
+                  <h2 className="text-xl font-bold text-foreground mb-3">About this bike</h2>
+                  <div className="space-y-3 text-base leading-relaxed text-foreground/80">
+                    {description.split("\n\n").map((para, i) => (
+                      <p key={i}>{para}</p>
+                    ))}
+                  </div>
+                </section>
+              )}
 
-              {/* Features */}
-              <section>
-                <h2 className="text-xl font-bold text-foreground mb-3">What's included</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {features.map((f) => (
-                    <div key={f.label} className="flex items-start gap-3 p-3 rounded-lg border border-border/60 bg-card">
-                      <f.icon className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                      <div>
-                        <p className="text-base font-medium text-foreground">{f.label}</p>
-                        {f.detail && <p className="text-sm text-muted-foreground">{f.detail}</p>}
+              {/* What's included — only if agency entered any */}
+              {hasIncludedSection && (
+                <section>
+                  <h2 className="text-xl font-bold text-foreground mb-3">What's included</h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {helmetsCount > 0 && (
+                      <div className="flex items-start gap-3 p-3 rounded-lg border border-border/60 bg-card">
+                        <span className="text-xl leading-none">🪖</span>
+                        <p className="text-base font-medium text-foreground">
+                          {helmetsCount} helmet{helmetsCount > 1 ? "s" : ""} included
+                        </p>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              </section>
+                    )}
+                    {featureKeys.filter((k) => k !== "helmet").map((k) => {
+                      const meta = FEATURE_LABELS[k];
+                      return (
+                        <div key={k} className="flex items-start gap-3 p-3 rounded-lg border border-border/60 bg-card">
+                          <span className="text-xl leading-none">{meta.icon}</span>
+                          <p className="text-base font-medium text-foreground">{meta.label}</p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </section>
+              )}
 
-              {/* Requirements */}
-              <section>
-                <h2 className="text-xl font-bold text-foreground mb-3">Before you book</h2>
-                <div className="text-base leading-relaxed text-foreground/80 space-y-3">
-                  <p>To rent this bike, you must have:</p>
-                  <ul className="space-y-1.5 pl-1">
-                    <li>— A valid driver's license ({bikeType.license_required || "Permis A1"} or higher)</li>
-                    <li>— Your national ID or passport at pickup</li>
-                    <li>— Minimum age {bikeType.min_age || 18}</li>
-                    <li>— At least {bikeType.min_experience_years || 1} year of riding experience</li>
-                  </ul>
-                  <p>
-                    At pickup, the agency collects a refundable {deposit || 1200} MAD deposit
-                    (card hold or cash). The deposit is fully refunded when the bike is returned undamaged.
-                  </p>
-                </div>
-              </section>
+              {/* Requirements — only show fields the agency entered */}
+              {(bikeType.license_required || bikeType.min_age || bikeType.min_experience_years || deposit > 0) && (
+                <section>
+                  <h2 className="text-xl font-bold text-foreground mb-3">Before you book</h2>
+                  <div className="text-base leading-relaxed text-foreground/80 space-y-3">
+                    <p>To rent this bike, you must have:</p>
+                    <ul className="space-y-1.5 pl-1">
+                      {bikeType.license_required && (
+                        <li>— A valid driver's license ({licenseLabel(bikeType.license_required)})</li>
+                      )}
+                      <li>— Your national ID or passport at pickup</li>
+                      {bikeType.min_age && <li>— Minimum age {bikeType.min_age}</li>}
+                      {bikeType.min_experience_years > 0 && (
+                        <li>— At least {bikeType.min_experience_years} year{bikeType.min_experience_years > 1 ? "s" : ""} of riding experience</li>
+                      )}
+                    </ul>
+                    {deposit > 0 && (
+                      <p>
+                        At pickup, the agency collects a refundable {deposit} MAD deposit
+                        (card hold or cash). The deposit is fully refunded when the bike is returned undamaged.
+                      </p>
+                    )}
+                  </div>
+                </section>
+              )}
 
               {/* Pickup location */}
               <section>
@@ -805,7 +828,11 @@ const BikeDetails = () => {
                 <div className="mt-3 space-y-1 text-sm text-foreground/80">
                   <p><span className="font-medium text-foreground">Area:</span> {neighborhood}, {cityName}</p>
                   <p className="text-muted-foreground">Exact address shared after booking confirmation.</p>
-                  <p className="text-muted-foreground">Free delivery within {neighborhood} · Other zones: +25 MAD</p>
+                  {resolvedAgency.deliveryOffered && (
+                    <p className="text-muted-foreground">
+                      Home delivery available {agencyDeliveryFee > 0 ? `(+${agencyDeliveryFee} MAD)` : "(free)"}
+                    </p>
+                  )}
                 </div>
               </section>
             </div>

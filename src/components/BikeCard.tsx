@@ -60,7 +60,6 @@ export function BikeCard({
       : totalDays >= 7 && weekly > 0
         ? weekly
         : price;
-  const deposit = Math.round(price * 10);
 
   const features = bike.features || [];
   const visibleFeatures = features.slice(0, 3);
@@ -225,9 +224,6 @@ export function BikeCard({
           <div className="leading-none">
             <span className="text-[20px] font-bold text-foreground">{effective}</span>
             <span className="text-[12px] text-muted-foreground ml-1">MAD /day</span>
-          </div>
-          <div className="text-[11px] text-muted-foreground mt-1">
-            Deposit: {deposit} MAD
           </div>
         </div>
         <Button
