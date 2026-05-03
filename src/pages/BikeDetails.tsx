@@ -34,6 +34,8 @@ import { DateRange } from "react-day-picker";
 import { format, differenceInDays, addDays } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Info } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useBike, useBikeTypeImages } from "@/hooks/useBikes";
 import { getBikeImageUrl } from "@/lib/bikeImages";
@@ -522,73 +524,60 @@ const BikeDetails = () => {
           </button>
         </div>
 
-        {/* Cost breakdown */}
+        {/* Cost breakdown — three-tier */}
         {days > 0 && (
-          <div className="space-y-2 pt-3 border-t border-border/60">
-            <div className="flex justify-between text-sm text-muted-foreground">
-              <span>{Math.round(dailyPrice)} MAD × {days} day{days !== 1 ? "s" : ""}</span>
-              <span>{Math.round(subtotal)} MAD</span>
-            </div>
-            {tierDiscount > 0 && (
-              <div className="flex justify-between text-sm text-primary">
-                <span>Duration discount</span>
-                <span>−{Math.round(tierDiscount)} MAD</span>
-              </div>
-            )}
-            {deliveryFee > 0 && (
+          <div className="space-y-3 pt-3 border-t border-border/60">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Price summary</p>
+            <div className="space-y-1.5">
               <div className="flex justify-between text-sm text-muted-foreground">
-                <span>Delivery fee</span>
-                <span>+{deliveryFee} MAD</span>
+                <span>Rental ({Math.round(dailyPrice)} × {days} day{days !== 1 ? "s" : ""})</span>
+                <span>{Math.round(baselineSubtotal).toLocaleString()} MAD</span>
               </div>
-            )}
-            <div className="flex justify-between text-sm text-muted-foreground">
-              <span>Refundable deposit</span>
-              <span>{(deposit || 0).toLocaleString()} MAD</span>
-            </div>
-
-            <div className="border-t border-border/60 pt-3 mt-2 space-y-1">
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Pay now via YouCan Pay</p>
+              {tierDiscount > 0 && (
+                <div className="flex justify-between text-sm text-primary">
+                  <span>Duration discount</span>
+                  <span>−{Math.round(tierDiscount).toLocaleString()} MAD</span>
+                </div>
+              )}
               <div className="flex justify-between text-sm text-muted-foreground">
-                <span>Platform fee</span>
-                <span>{PLATFORM_FEE} MAD</span>
-              </div>
-              <div className="flex justify-between text-sm text-muted-foreground">
-                <span>Confirmation fee</span>
-                <span>{CONFIRMATION_FEE} MAD</span>
-              </div>
-              <div className="flex justify-between text-base font-bold text-foreground pt-1">
-                <span>Total now</span>
-                <span>{upfrontTotal} MAD</span>
+                <span>Delivery</span>
+                <span>{deliveryFee > 0 ? `+${deliveryFee} MAD` : "Free"}</span>
               </div>
             </div>
 
-            <div className="border-t border-border/60 pt-3 mt-2 space-y-1">
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Pay agency at pickup</p>
-              <div className="flex justify-between text-sm text-muted-foreground">
-                <span>Rental ({Math.round(subtotal).toLocaleString()} − {CONFIRMATION_FEE} prepaid)</span>
-                <span>{rentalDueAtPickup.toLocaleString()} MAD</span>
-              </div>
-              <div className="flex justify-between text-sm text-muted-foreground">
-                <span>Refundable deposit</span>
-                <span>{(deposit || 0).toLocaleString()} MAD</span>
-              </div>
-              <div className="flex justify-between text-base font-bold text-foreground pt-1">
-                <span>Total at pickup</span>
-                <span>{pickupTotal.toLocaleString()} MAD</span>
-              </div>
+            <div className="border-t border-border/60 pt-3 flex justify-between text-base font-bold text-foreground">
+              <span>Total trip cost</span>
+              <span>{tripTotal.toLocaleString()} MAD</span>
             </div>
 
-            <p className="text-xs text-muted-foreground pt-2">
-              Total trip cost: <strong className="text-foreground">{tripTotal.toLocaleString()} MAD</strong>{" "}
-              (deposit refunded when bike is returned undamaged)
-            </p>
+            <div className="space-y-1.5 pt-2">
+              <div className="flex justify-between items-center text-sm">
+                <span className="inline-flex items-center gap-1 text-foreground font-medium">
+                  Pay now (booking fee)
+                  <TooltipProvider delayDuration={150}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button type="button" aria-label="Booking fee info" className="inline-flex">
+                          <Info className="h-3.5 w-3.5 text-muted-foreground" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="max-w-[260px] text-xs leading-relaxed">
+                        The {upfrontTotal} MAD booking fee covers platform service and confirms your reservation with the agency. Non-refundable. The rental amount can be cancelled up to 2 days before pickup.
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </span>
+                <span className="font-semibold text-foreground">{upfrontTotal} MAD</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Pay at shop</span>
+                <span className="text-muted-foreground">{rentalDueAtPickup.toLocaleString()} MAD</span>
+              </div>
+            </div>
           </div>
         )}
 
         {/* CTA */}
-        {days > 0 && availability !== "unavailable" && (
-          <p className="text-[11px] text-center text-foreground/70">⚡ Confirm in 60 seconds</p>
-        )}
         <Button
           variant="hero"
           size="lg"
@@ -605,22 +594,19 @@ const BikeDetails = () => {
               ? "Checking..."
               : availability === "unavailable"
                 ? "Not available for these dates"
-                : `Book Now — Pay ${upfrontTotal} MAD`}
+                : "Go to checkout"}
         </Button>
 
-        {/* Trust badges (right under CTA) */}
-        <div className="flex items-center justify-center gap-3 pt-1 text-[11px] text-muted-foreground">
-          <span className="inline-flex items-center gap-1"><Shield className="h-3 w-3" /> Verified agency</span>
-          <span>·</span>
-          <span className="inline-flex items-center gap-1"><ShieldCheck className="h-3 w-3" /> Secure payment</span>
-          <span>·</span>
-          <span className="inline-flex items-center gap-1"><MessageCircle className="h-3 w-3" /> Chat after booking</span>
-        </div>
+        {days > 0 && availability !== "unavailable" && (
+          <p className="text-[11px] text-center text-foreground/70">⚡ Confirm in 60 seconds</p>
+        )}
 
-        <p className="text-[11px] text-muted-foreground text-center leading-relaxed pt-2 border-t border-border/60">
-          You'll pay {upfrontTotal} MAD now via YouCan Pay ({PLATFORM_FEE} MAD platform fee + {CONFIRMATION_FEE} MAD confirmation fee).
-          Pay {pickupTotal.toLocaleString()} MAD to the agency at pickup.
-        </p>
+        {/* Trust signals — three only */}
+        <div className="flex flex-col gap-1.5 pt-2 text-xs text-foreground/80">
+          <span className="inline-flex items-center gap-2"><CheckCircle2 className="h-3.5 w-3.5 text-primary" /> Verified agency</span>
+          <span className="inline-flex items-center gap-2"><CheckCircle2 className="h-3.5 w-3.5 text-primary" /> Secure payment</span>
+          <span className="inline-flex items-center gap-2"><CheckCircle2 className="h-3.5 w-3.5 text-primary" /> Free cancellation up to 2 days</span>
+        </div>
       </CardContent>
     </Card>
   );
@@ -822,7 +808,7 @@ const BikeDetails = () => {
             </p>
             {days > 0 && (
               <p className="text-[11px] text-muted-foreground">
-                {format(dateRange!.from!, "MMM d")} → {format(dateRange!.to!, "MMM d")} · {Math.round(subtotal)} MAD
+                {format(dateRange!.from!, "MMM d")} → {format(dateRange!.to!, "MMM d")} · {tripTotal.toLocaleString()} MAD total
               </p>
             )}
           </div>
@@ -840,7 +826,7 @@ const BikeDetails = () => {
               ? "Select dates to book"
               : availability === "unavailable"
                 ? "Not available"
-                : `Book Now — Pay ${upfrontTotal} MAD`}
+                : "Go to checkout"}
           </Button>
         </div>
       </div>
