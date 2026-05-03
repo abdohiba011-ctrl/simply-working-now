@@ -808,21 +808,39 @@ const BikeDetails = () => {
           </div>
         </main>
 
-        {/* Mobile sticky bottom bar */}
-        <div className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-background border-t border-border shadow-lg p-3 flex items-center justify-between gap-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
-          <div className="min-w-0">
-            <p className="text-lg font-bold text-foreground leading-tight">
-              {Math.round(baseDailyPrice)} MAD<span className="text-xs font-normal text-muted-foreground">/day</span>
+        {/* Mobile sticky bottom bar (mobile only; tablet+ stacks BookingCard below) */}
+        <div className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-background border-t border-border shadow-lg px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
+          <div className="flex items-baseline justify-between gap-2 mb-1">
+            <p className="text-sm font-bold text-foreground leading-tight">
+              {Math.round(baseDailyPrice)} MAD<span className="text-[11px] font-normal text-muted-foreground">/day</span>
+              {availability === "available" && (
+                <span className="ml-2 text-[11px] font-medium text-[#163300]">· ✓ Available</span>
+              )}
+              {availability === "unavailable" && (
+                <span className="ml-2 text-[11px] font-medium text-amber-700">· ⚠ Unavailable</span>
+              )}
             </p>
+            {days > 0 && (
+              <p className="text-[11px] text-muted-foreground">
+                {format(dateRange!.from!, "MMM d")} → {format(dateRange!.to!, "MMM d")} · {Math.round(subtotal)} MAD
+              </p>
+            )}
           </div>
           <Button
             variant="hero"
             size="lg"
-            className="flex-1 max-w-[220px] font-bold"
+            className="w-full font-bold"
             onClick={handleBookNow}
-            disabled={!dateRange?.from || !dateRange?.to || !pickupTime || !dropoffTime}
+            disabled={
+              !dateRange?.from || !dateRange?.to || !pickupTime || !dropoffTime ||
+              availability === "loading" || availability === "unavailable"
+            }
           >
-            Book Now
+            {!dateRange?.from || !dateRange?.to
+              ? "Select dates to book"
+              : availability === "unavailable"
+                ? "Not available"
+                : `Book Now — Pay ${upfrontTotal} MAD`}
           </Button>
         </div>
       </div>
