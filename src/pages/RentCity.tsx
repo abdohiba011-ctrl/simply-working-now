@@ -562,18 +562,18 @@ export default function RentCity() {
     </div>
   );
 
-  // ─── FIX 4: Coming Soon / unknown city gating ───
-  // - city resolved + is_coming_soon → show waitlist page
-  // - city resolved + not available + not coming soon → 404 (homepage)
-  // - city not found in DB at all → 404 (homepage)
+  // ─── City gating ───
+  // - city resolved + is_coming_soon → waitlist page
+  // - city resolved + not available + not coming soon → 404 (hidden)
+  // - city not found in DB at all → 404
   if (!cityLoading && !cityRow) {
-    return <Navigate to="/" replace />;
+    return <CityNotFound slug={citySlug} />;
   }
   if (!cityLoading && cityRow && cityRow.is_available === false) {
     if (cityRow.is_coming_soon) {
       return <RentCityComingSoon city={cityRow} />;
     }
-    return <Navigate to="/" replace />;
+    return <CityNotFound slug={citySlug} />;
   }
 
   return (
