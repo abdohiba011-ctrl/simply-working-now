@@ -580,7 +580,7 @@ const AdminBusinessDetails = () => {
                 <Field label="Delivery fee (MAD)" value={agency?.delivery_fee_mad?.toString()} />
                 <Field label="Delivery radius (km)" value={agency?.delivery_radius_km?.toString()} />
                 <Field label="Bio" value={agency?.bio} className="md:col-span-2" />
-                <Field label="Subscription plan" value={agency?.subscription_plan || "free"} />
+                <Field label="Subscription plan" value={subscription?.plan || agency?.subscription_plan || "free"} />
                 <Field label="Trial ends" value={fmt(agency?.trial_ends_at)} />
                 <Field label="Account created" value={fmt(profile.created_at)} />
                 <Field label="Suspended reason" value={agency?.suspended_reason} className="md:col-span-2" />
