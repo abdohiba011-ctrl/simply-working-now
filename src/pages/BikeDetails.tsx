@@ -25,7 +25,7 @@ import {
   User,
   Wallet,
   CheckCircle2,
-  Lock,
+  ShieldCheck,
   MessageCircle,
   BadgeCheck,
   ChevronDown,
@@ -612,7 +612,7 @@ const BikeDetails = () => {
         <div className="flex items-center justify-center gap-3 pt-1 text-[11px] text-muted-foreground">
           <span className="inline-flex items-center gap-1"><Shield className="h-3 w-3" /> Verified agency</span>
           <span>·</span>
-          <span className="inline-flex items-center gap-1"><Lock className="h-3 w-3" /> Secure payment</span>
+          <span className="inline-flex items-center gap-1"><ShieldCheck className="h-3 w-3" /> Secure payment</span>
           <span>·</span>
           <span className="inline-flex items-center gap-1"><MessageCircle className="h-3 w-3" /> Chat after booking</span>
         </div>
