@@ -742,17 +742,71 @@ export const MotorbikeWizardForm = ({
 
           {stepIdx === 4 && (
             <Card className="space-y-5 p-6">
-              <h3 className="text-lg font-semibold">Pricing & policies</h3>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label>Daily price (MAD) *</Label>
-                  <Input type="number" min={0} value={dailyPrice} onChange={(e) => setDailyPrice(e.target.value)} placeholder="e.g. 300" />
+              <div>
+                <h3 className="text-lg font-semibold">Pricing</h3>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Set a base daily rate, then add discounts for longer rentals. Renters automatically get the best price for their duration.
+                </p>
+              </div>
+
+              {/* Base rate */}
+              <div className="grid gap-2">
+                <Label>Base daily rate (1+ days) *</Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number" min={0}
+                    value={tierPrices[1]}
+                    onChange={(e) => setTierPrices((p) => ({ ...p, 1: e.target.value }))}
+                    placeholder="e.g. 150"
+                    className="max-w-[160px]"
+                  />
+                  <span className="text-xs text-muted-foreground">MAD/day</span>
                 </div>
+              </div>
+
+              {/* Volume discount tiers */}
+              <div className="rounded-lg border border-border p-4 space-y-3">
+                <p className="text-sm font-medium">Volume discounts (optional)</p>
+                {([3, 7, 15, 30] as const).map((md) => {
+                  const base = Number(tierPrices[1]) || 0;
+                  const v = Number(tierPrices[md]) || 0;
+                  const filled = !!tierPrices[md];
+                  const pct = filled && base > 0 ? tierSavingsPct(base, v) : 0;
+                  const invalid = filled && base > 0 && v > base;
+                  return (
+                    <div key={md} className="flex items-center gap-3 flex-wrap">
+                      <span className="text-sm font-medium w-20">{md}+ days:</span>
+                      <Input
+                        type="number" min={0}
+                        value={tierPrices[md]}
+                        onChange={(e) => setTierPrices((p) => ({ ...p, [md]: e.target.value }))}
+                        placeholder="—"
+                        className="max-w-[120px]"
+                      />
+                      <span className="text-xs text-muted-foreground">MAD/day</span>
+                      {filled && base > 0 && (
+                        invalid
+                          ? <span className="text-xs font-medium text-destructive">⚠ More than base — not allowed</span>
+                          : pct > 0
+                            ? <span className="text-xs font-medium text-[#163300]">Save {pct}% <span className="text-muted-foreground">(vs base {base})</span></span>
+                            : <span className="text-xs text-muted-foreground">Save 0% (same as base)</span>
+                      )}
+                    </div>
+                  );
+                })}
+                <p className="text-[11px] text-muted-foreground pt-2">
+                  💡 Tip: Most agencies offer 10–30% off weekly + monthly. Leave blank to skip a tier.
+                </p>
+              </div>
+
+              {/* Other settings */}
+              <div className="grid grid-cols-2 gap-4 pt-2 border-t border-border">
                 <div className="grid gap-2">
                   <Label>Deposit (MAD) *</Label>
                   <Input type="number" min={0} value={depositAmount} onChange={(e) => setDepositAmount(e.target.value)} />
                   <p className="text-[11px] text-muted-foreground">Refundable deposit collected at pickup</p>
                 </div>
+                <div />
                 <div className="grid gap-2">
                   <Label>Min rental days</Label>
                   <Input type="number" min={1} value={minRentalDays} onChange={(e) => setMinRentalDays(e.target.value)} />
