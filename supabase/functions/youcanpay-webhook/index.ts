@@ -105,7 +105,7 @@ export async function applyBookingPayment(
         amount: row.amount,
         currency: payment.currency || "MAD",
         provider: "youcanpay",
-        method: "card",
+        method: paymentMethod || "card",
         payment_type: row.payment_type,
         status: "completed",
         paid_at: new Date().toISOString(),
