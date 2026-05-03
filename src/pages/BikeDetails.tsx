@@ -149,54 +149,49 @@ const BikeDetails = () => {
   const [resolvedAgency, setResolvedAgency] = useState<{
     name: string | null;
     verified: boolean;
-  }>({ name: null, verified: false });
+    deliveryOffered: boolean;
+    deliveryFee: number;
+  }>({ name: null, verified: false, deliveryOffered: false, deliveryFee: 0 });
 
   useEffect(() => {
     const bt: any = bike?.bike_type;
     if (!bt) return;
     let cancelled = false;
     (async () => {
-      // City
       let cityName: string | null = null;
       if (bt.city_id) {
         const { data: city } = await supabase
-          .from("service_cities")
-          .select("name")
-          .eq("id", bt.city_id)
-          .maybeSingle();
+          .from("service_cities").select("name").eq("id", bt.city_id).maybeSingle();
         cityName = city?.name ?? null;
       }
-      // Agency from owner_id → profiles → agencies
       let agencyName: string | null = null;
       let agencyVerified = false;
       let agencyCity: string | null = null;
       let agencyNeighborhood: string | null = null;
+      let deliveryOffered = false;
+      let deliveryFee = 0;
       if (bt.owner_id) {
         const { data: prof } = await supabase
-          .from("profiles")
-          .select("id")
-          .eq("user_id", bt.owner_id)
-          .maybeSingle();
+          .from("profiles").select("id").eq("user_id", bt.owner_id).maybeSingle();
         if (prof?.id) {
           const { data: ag } = await (supabase as any)
             .from("agencies_public")
-            .select("business_name, is_verified, city, primary_neighborhood")
-            .eq("profile_id", prof.id)
-            .maybeSingle();
+            .select("business_name, is_verified, city, primary_neighborhood, delivery_offered, delivery_fee_mad")
+            .eq("profile_id", prof.id).maybeSingle();
           agencyName = (ag as any)?.business_name ?? null;
           agencyVerified = !!(ag as any)?.is_verified;
           agencyCity = (ag as any)?.city ?? null;
           agencyNeighborhood = (ag as any)?.primary_neighborhood ?? null;
+          deliveryOffered = !!(ag as any)?.delivery_offered;
+          deliveryFee = Number((ag as any)?.delivery_fee_mad) || 0;
         }
       }
       if (cancelled) return;
       setResolvedCity(cityName || agencyCity);
       setResolvedNeighborhood(bt.neighborhood || agencyNeighborhood || bike?.location || null);
-      setResolvedAgency({ name: agencyName, verified: agencyVerified });
+      setResolvedAgency({ name: agencyName, verified: agencyVerified, deliveryOffered, deliveryFee });
     })();
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [bike?.bike_type, bike?.location]);
 
   // If URL is a UUID but the bike has a slug, redirect to the slug URL.
