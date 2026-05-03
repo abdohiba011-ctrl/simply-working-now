@@ -392,6 +392,7 @@ export const BookingDatePicker = ({
                   setFocus={setFocus}
                   isMobile
                   onClose={commitAndClose}
+                  disabledRanges={disabledRanges}
                 />
               </div>
             </div>
