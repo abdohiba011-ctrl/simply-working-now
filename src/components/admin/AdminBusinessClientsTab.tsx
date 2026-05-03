@@ -96,6 +96,8 @@ const formatDate = (dateString: string | null, formatStr: string = "MMM d, yyyy"
 };
 
 type TypeFilter = "all" | "agency" | "company" | "individual" | "unspecified";
+type SortField = "created_at" | "name" | "email";
+type SortDir = "asc" | "desc";
 
 // Mapping to actual stored business_type values in profiles.
 const AGENCY_TYPES = ["agency", "rental_shop"];
