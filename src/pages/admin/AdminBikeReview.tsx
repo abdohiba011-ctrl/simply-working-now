@@ -154,25 +154,21 @@ const AdminBikeReview = () => {
 
   if (!isAuthenticated || !isAdmin) {
     return (
-      <div className="min-h-screen flex flex-col">
-        <Header />
+      <AdminLayout>
         <main className="flex-1 container mx-auto px-4 py-16 text-center">
           <h1 className="text-2xl font-bold">Access denied</h1>
         </main>
-        <Footer />
-      </div>
+      </AdminLayout>
     );
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col">
-        <Header />
-        <main className="flex-1 flex items-center justify-center">
+      <AdminLayout>
+        <main className="flex-1 flex items-center justify-center py-20">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </main>
-        <Footer />
-      </div>
+      </AdminLayout>
     );
   }
 
