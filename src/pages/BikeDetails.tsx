@@ -48,6 +48,15 @@ import { BookingDatePicker } from "@/components/BookingDatePicker";
 import { checkBikeAvailability, type Availability } from "@/lib/availability";
 import { useDocumentHead } from "@/hooks/useDocumentHead";
 import { FEATURE_LABELS, FeatureKey, licenseLabel, cancellationText } from "@/lib/bikeFeatures";
+import {
+  TIER_MIN_DAYS,
+  TIER_SHORT_LABELS,
+  type BikePricingTier,
+  type TierMinDays,
+  resolveTierPrice,
+  getBaseDailyPrice,
+  tierSavingsPct,
+} from "@/lib/pricingTiers";
 
 const isUuid = (s: string) =>
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
