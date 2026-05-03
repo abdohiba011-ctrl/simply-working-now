@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { BikeTypeSkeleton } from "@/components/ui/bike-skeleton";
-import { DateRangePicker } from "@/components/DateRangePicker";
+import { BookingDatePicker } from "@/components/BookingDatePicker";
 import {
   Select,
   SelectContent,
