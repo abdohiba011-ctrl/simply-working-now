@@ -126,9 +126,17 @@ const queryClient = new QueryClient({
   },
 });
 
+const GlobalRealtime = () => {
+  // Single global subscription so any consumer of city queries gets
+  // live updates without having to wire its own channel.
+  useServiceCitiesRealtime();
+  return null;
+};
+
 const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
+      <GlobalRealtime />
       <TooltipProvider>
         <LanguageProvider>
           <Toaster />
