@@ -140,7 +140,7 @@ export const AdminVerificationsSkeleton = () => (
   </div>
 );
 
-export const AdminBikeTypeDetailsSkeleton = () => (
+const _RemovedAdminBikeTypeDetailsSkeleton = () => (
   <div className="container mx-auto px-4 py-6 space-y-6">
     {/* Header */}
     <div className="flex items-center justify-between">

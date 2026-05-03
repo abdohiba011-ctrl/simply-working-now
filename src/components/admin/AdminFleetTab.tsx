@@ -410,10 +410,6 @@ export const AdminFleetTab = () => {
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
           </Button>
-          <Button onClick={() => navigate("/admin/fleet/new")}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add bike type
-          </Button>
         </div>
       </div>
 
@@ -534,7 +530,7 @@ export const AdminFleetTab = () => {
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => navigate(`/admin/fleet/${bike.id}`)}
+                              onClick={() => navigate(`/admin/bikes/${bike.id}`)}
                             >
                               <Eye className="h-4 w-4" />
                             </Button>

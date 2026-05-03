@@ -4,7 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useParams } from "react-router-dom";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { MockProtectedRoute } from "@/components/auth/MockProtectedRoute";
@@ -67,7 +67,7 @@ const AdminBookings = lazy(() => import("./pages/admin/AdminBookings"));
 const AdminCredits = lazy(() => import("./pages/admin/AdminCredits"));
 const AdminBookingDetails = lazy(() => import("./pages/admin/AdminBookingDetails"));
 const AdminFleet = lazy(() => import("./pages/admin/AdminFleet"));
-const AdminBikeTypeDetails = lazy(() => import("./pages/admin/AdminBikeTypeDetails"));
+
 const AdminAnalytics = lazy(() => import("./pages/admin/AdminAnalytics"));
 const UserVerificationDetails = lazy(() => import("./pages/UserVerificationDetails"));
 const UserDetails = lazy(() => import("./pages/admin/UserDetails"));
@@ -107,6 +107,11 @@ const AdminLogin = lazy(() => import("./pages/auth/AdminLogin"));
 const MockSignup = lazy(() => import("./pages/auth/Signup"));
 const AgencySignup = lazy(() => import("./pages/auth/AgencySignup"));
 const MockVerifyEmail = lazy(() => import("./pages/auth/VerifyEmail"));
+
+const AdminFleetIdRedirect = () => {
+  const { id } = useParams();
+  return <Navigate to={`/admin/bikes/${id}`} replace />;
+};
 
 
 const ResetPasswordVerify = lazy(() => import("./pages/auth/ResetPasswordVerify"));
@@ -233,7 +238,8 @@ const App = () => (
                 <Route path="/admin/credits" element={<ProtectedRoute requireRole="admin"><AdminCredits /></ProtectedRoute>} />
                 <Route path="/admin/bookings/:id" element={<ProtectedRoute requireRole="admin"><AdminBookingDetails /></ProtectedRoute>} />
                 <Route path="/admin/fleet" element={<ProtectedRoute requireRole="admin"><AdminFleet /></ProtectedRoute>} />
-                <Route path="/admin/fleet/:id" element={<ProtectedRoute requireRole="admin"><AdminBikeTypeDetails /></ProtectedRoute>} />
+                <Route path="/admin/fleet/new" element={<Navigate to="/admin/bikes/approvals" replace />} />
+                <Route path="/admin/fleet/:id" element={<AdminFleetIdRedirect />} />
                 <Route path="/admin/analytics" element={<ProtectedRoute requireRole="admin"><AdminAnalytics /></ProtectedRoute>} />
                 <Route path="/admin/users/:id" element={<ProtectedRoute requireRole="admin"><UserDetails /></ProtectedRoute>} />
                 <Route path="/admin/clients/:id" element={<ProtectedRoute requireRole="admin"><AdminClientDetails /></ProtectedRoute>} />
