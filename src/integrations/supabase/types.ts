@@ -78,6 +78,7 @@ export type Database = {
           trial_started_at: string | null
           updated_at: string
           verification_status: string | null
+          working_hours: Json | null
         }
         Insert: {
           address?: string | null
@@ -112,6 +113,7 @@ export type Database = {
           trial_started_at?: string | null
           updated_at?: string
           verification_status?: string | null
+          working_hours?: Json | null
         }
         Update: {
           address?: string | null
@@ -146,6 +148,7 @@ export type Database = {
           trial_started_at?: string | null
           updated_at?: string
           verification_status?: string | null
+          working_hours?: Json | null
         }
         Relationships: [
           {
@@ -2481,6 +2484,7 @@ export type Database = {
           logo_url: string | null
           primary_neighborhood: string | null
           profile_id: string | null
+          working_hours: Json | null
         }
         Insert: {
           bio?: string | null
@@ -2495,6 +2499,7 @@ export type Database = {
           logo_url?: string | null
           primary_neighborhood?: string | null
           profile_id?: string | null
+          working_hours?: Json | null
         }
         Update: {
           bio?: string | null
@@ -2509,6 +2514,7 @@ export type Database = {
           logo_url?: string | null
           primary_neighborhood?: string | null
           profile_id?: string | null
+          working_hours?: Json | null
         }
         Relationships: [
           {
@@ -2694,19 +2700,35 @@ export type Database = {
           hold_id: string
         }[]
       }
-      create_draft_booking: {
-        Args: {
-          _bike_id: string
-          _customer_email?: string
-          _customer_name?: string
-          _customer_phone?: string
-          _delivery_method?: string
-          _pickup_date: string
-          _pickup_location?: string
-          _return_date: string
-        }
-        Returns: string
-      }
+      create_draft_booking:
+        | {
+            Args: {
+              _bike_id: string
+              _customer_email?: string
+              _customer_name?: string
+              _customer_phone?: string
+              _delivery_method?: string
+              _pickup_date: string
+              _pickup_location?: string
+              _return_date: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              _bike_id: string
+              _customer_email?: string
+              _customer_name?: string
+              _customer_phone?: string
+              _delivery_method?: string
+              _pickup_date: string
+              _pickup_location?: string
+              _pickup_time?: string
+              _return_date: string
+              _return_time?: string
+            }
+            Returns: string
+          }
       credit_renter_wallet: {
         Args: {
           _amount: number

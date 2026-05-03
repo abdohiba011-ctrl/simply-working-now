@@ -31,6 +31,7 @@ import {
   Copy,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { allDaysClosed, formatWorkingHoursSummary, normalizeWorkingHours } from "@/lib/workingHours";
 
 interface PendingAgency {
   id: string;
@@ -457,6 +458,7 @@ const AdminAgencyVerifications = () => {
                             {a.bio && (
                               <p className="text-sm mt-2 line-clamp-2">{a.bio}</p>
                             )}
+                            <AgencyHoursReadout workingHours={(a as any).working_hours} />
                           </div>
                         </div>
                         <div className="flex gap-2 shrink-0">
@@ -678,3 +680,30 @@ const AdminAgencyVerifications = () => {
 };
 
 export default AdminAgencyVerifications;
+
+const AgencyHoursReadout = ({ workingHours }: { workingHours: any }) => {
+  const wh = normalizeWorkingHours(workingHours);
+  const summary = formatWorkingHoursSummary(wh);
+  const allClosed = allDaysClosed(wh);
+  return (
+    <div className="mt-3 rounded-md border border-border/60 bg-muted/40 p-3">
+      <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">
+        Working hours
+      </div>
+      {allClosed ? (
+        <div className="flex items-center gap-1.5 text-sm text-amber-700">
+          <AlertTriangle className="h-4 w-4" /> All days marked closed — agency cannot accept bookings.
+        </div>
+      ) : (
+        <ul className="space-y-0.5 text-sm">
+          {summary.map((row) => (
+            <li key={row.label} className="flex justify-between gap-4">
+              <span className="font-medium">{row.label}:</span>
+              <span className="text-muted-foreground">{row.value}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+};

@@ -18,6 +18,8 @@ interface BookingDatePickerProps {
   panelOnly?: boolean;
   /** Already-booked date ranges to disable in the calendar. */
   disabledRanges?: { from: Date; to: Date }[];
+  /** Day-of-week indexes (0=Sun..6=Sat) when the agency is closed. */
+  closedWeekdays?: number[];
 }
 
 const today0 = () => startOfDay(new Date());
@@ -30,6 +32,7 @@ const Panel = ({
   isMobile,
   onClose,
   disabledRanges,
+  closedWeekdays,
 }: {
   range: DateRange | undefined;
   setRange: (r: DateRange | undefined) => void;
@@ -38,6 +41,7 @@ const Panel = ({
   isMobile: boolean;
   onClose: () => void;
   disabledRanges?: { from: Date; to: Date }[];
+  closedWeekdays?: number[];
 }) => {
   const days = range?.from && range?.to ? differenceInDays(range.to, range.from) : 0;
 
@@ -143,6 +147,7 @@ const Panel = ({
           weekStartsOn={0}
           disabled={(d) => {
             if (d < today0()) return true;
+            if (closedWeekdays?.includes(d.getDay())) return true;
             if (disabledRanges?.length) {
               const t = startOfDay(d).getTime();
               for (const r of disabledRanges) {
@@ -159,9 +164,11 @@ const Panel = ({
                 (r) => t >= startOfDay(r.from).getTime() && t <= startOfDay(r.to).getTime(),
               );
             },
+            closed: (d) => !!closedWeekdays?.includes(d.getDay()),
           }}
           modifiersClassNames={{
             booked: "line-through text-red-500/70 opacity-60",
+            closed: "line-through text-muted-foreground opacity-50",
           }}
           className="pointer-events-auto p-2 w-full"
         />
@@ -218,6 +225,7 @@ export const BookingDatePicker = ({
   align = "start",
   panelOnly = false,
   disabledRanges,
+  closedWeekdays,
 }: BookingDatePickerProps) => {
   const isMobile = useIsMobile();
   const [open, setOpen] = useState(false);

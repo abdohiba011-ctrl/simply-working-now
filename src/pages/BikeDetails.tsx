@@ -56,6 +56,15 @@ import {
   getBaseDailyPrice,
   tierSavingsPct,
 } from "@/lib/pricingTiers";
+import {
+  DEFAULT_WORKING_HOURS,
+  normalizeWorkingHours,
+  formatWorkingHoursSummary,
+  dayKeyFromDate,
+  slotsBetween,
+  DAY_KEYS,
+  type WorkingHours,
+} from "@/lib/workingHours";
 
 const isUuid = (s: string) =>
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
@@ -160,7 +169,8 @@ const BikeDetails = () => {
     verified: boolean;
     deliveryOffered: boolean;
     deliveryFee: number;
-  }>({ name: null, verified: false, deliveryOffered: false, deliveryFee: 0 });
+    workingHours: WorkingHours;
+  }>({ name: null, verified: false, deliveryOffered: false, deliveryFee: 0, workingHours: DEFAULT_WORKING_HOURS });
 
   useEffect(() => {
     const bt: any = bike?.bike_type;
@@ -179,13 +189,14 @@ const BikeDetails = () => {
       let agencyNeighborhood: string | null = null;
       let deliveryOffered = false;
       let deliveryFee = 0;
+      let workingHours: WorkingHours = DEFAULT_WORKING_HOURS;
       if (bt.owner_id) {
         const { data: prof } = await supabase
           .from("profiles").select("id").eq("user_id", bt.owner_id).maybeSingle();
         if (prof?.id) {
           const { data: ag } = await (supabase as any)
             .from("agencies_public")
-            .select("business_name, is_verified, city, primary_neighborhood, delivery_offered, delivery_fee_mad")
+            .select("business_name, is_verified, city, primary_neighborhood, delivery_offered, delivery_fee_mad, working_hours")
             .eq("profile_id", prof.id).maybeSingle();
           agencyName = (ag as any)?.business_name ?? null;
           agencyVerified = !!(ag as any)?.is_verified;
@@ -193,12 +204,13 @@ const BikeDetails = () => {
           agencyNeighborhood = (ag as any)?.primary_neighborhood ?? null;
           deliveryOffered = !!(ag as any)?.delivery_offered;
           deliveryFee = Number((ag as any)?.delivery_fee_mad) || 0;
+          workingHours = normalizeWorkingHours((ag as any)?.working_hours);
         }
       }
       if (cancelled) return;
       setResolvedCity(cityName || agencyCity);
       setResolvedNeighborhood(bt.neighborhood || agencyNeighborhood || bike?.location || null);
-      setResolvedAgency({ name: agencyName, verified: agencyVerified, deliveryOffered, deliveryFee });
+      setResolvedAgency({ name: agencyName, verified: agencyVerified, deliveryOffered, deliveryFee, workingHours });
     })();
     return () => { cancelled = true; };
   }, [bike?.bike_type, bike?.location]);
@@ -273,19 +285,53 @@ const BikeDetails = () => {
   const isSameDay = dateRange?.from && dateRange?.to &&
     format(dateRange.from, "yyyy-MM-dd") === format(dateRange.to, "yyyy-MM-dd");
 
+  const workingHours = resolvedAgency.workingHours;
+
+  // Closed weekday indexes (0=Sun..6=Sat) for date picker
+  const closedWeekdays = useMemo(() => {
+    const map: Record<string, number> = {
+      sunday: 0, monday: 1, tuesday: 2, wednesday: 3, thursday: 4, friday: 5, saturday: 6,
+    };
+    return DAY_KEYS.filter((k) => workingHours[k]?.open === false).map((k) => map[k]);
+  }, [workingHours]);
+
+  const pickupDayHours = dateRange?.from
+    ? workingHours[dayKeyFromDate(dateRange.from)]
+    : null;
+  const returnDayHours = dateRange?.to
+    ? workingHours[dayKeyFromDate(dateRange.to)]
+    : null;
+
+  const pickupTimeSlots = pickupDayHours?.open
+    ? slotsBetween(pickupDayHours.from, pickupDayHours.to)
+    : timeSlots;
+  const returnTimeSlotsBase = returnDayHours?.open
+    ? slotsBetween(returnDayHours.from, returnDayHours.to)
+    : timeSlots;
+
   const getValidDropoffTimes = () => {
-    if (!isSameDay || !pickupTime) return timeSlots;
-    const idx = timeSlots.indexOf(pickupTime);
-    if (idx === -1) return timeSlots;
-    return timeSlots.slice(idx + 1);
+    if (!isSameDay || !pickupTime) return returnTimeSlotsBase;
+    const idx = returnTimeSlotsBase.indexOf(pickupTime);
+    if (idx === -1) return returnTimeSlotsBase.filter((t) => t > pickupTime);
+    return returnTimeSlotsBase.slice(idx + 1);
   };
   const validDropoffTimes = getValidDropoffTimes();
 
+  // Auto-correct selected times to fall within working hours
+  useEffect(() => {
+    if (pickupDayHours?.open && (pickupTime < pickupDayHours.from || pickupTime > pickupDayHours.to)) {
+      setPickupTime(pickupDayHours.from);
+    }
+  }, [pickupDayHours?.from, pickupDayHours?.to, pickupDayHours?.open, pickupTime]);
+  useEffect(() => {
+    if (returnDayHours?.open && dropoffTime && (dropoffTime < returnDayHours.from || dropoffTime > returnDayHours.to)) {
+      setDropoffTime(returnDayHours.to);
+    }
+  }, [returnDayHours?.from, returnDayHours?.to, returnDayHours?.open, dropoffTime]);
+
   useEffect(() => {
     if (isSameDay && dropoffTime && pickupTime) {
-      const pi = timeSlots.indexOf(pickupTime);
-      const di = timeSlots.indexOf(dropoffTime);
-      if (di <= pi) setDropoffTime("");
+      if (dropoffTime <= pickupTime) setDropoffTime("");
     }
   }, [pickupTime, isSameDay, dropoffTime]);
 
@@ -394,6 +440,8 @@ const BikeDetails = () => {
         _return_date: end,
         _delivery_method: deliveryMethod,
         _pickup_location: deliveryMethod === "delivery" ? deliveryAddress || null : (bike.location || null),
+        _pickup_time: pickupTime,
+        _return_time: dropoffTime,
       },
     );
 
@@ -401,6 +449,10 @@ const BikeDetails = () => {
       const msg = draftErr?.message || "";
       if (msg.includes("BIKE_ALREADY_BOOKED") || msg.includes("CONFLICT")) {
         toast.error("Sorry, this bike was just booked for those dates. Please pick different dates.");
+      } else if (msg.includes("AGENCY_CLOSED_ON_DATE")) {
+        toast.error("Agency is closed on one of the selected dates. Please pick a different date.");
+      } else if (msg.includes("PICKUP_TIME_OUTSIDE_HOURS")) {
+        toast.error("Pickup or return time is outside the agency's working hours.");
       } else if (msg.includes("INVALID_DATES")) {
         toast.error("Invalid dates selected.");
       } else {
@@ -482,6 +534,7 @@ const BikeDetails = () => {
             triggerClassName="group hover:border-[#9FE870] hover:shadow-sm transition-all"
             placeholder="Pick dates"
             disabledRanges={bookedRanges}
+            closedWeekdays={closedWeekdays}
           />
           {dateRange?.from && dateRange?.to && (
             <p className="text-xs text-muted-foreground">
@@ -530,7 +583,7 @@ const BikeDetails = () => {
               <Select value={pickupTime} onValueChange={setPickupTime}>
                 <SelectTrigger className="h-10 text-sm"><SelectValue placeholder="--:--" /></SelectTrigger>
                 <SelectContent className="max-h-[200px]">
-                  {timeSlots.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                  {pickupTimeSlots.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -899,6 +952,25 @@ const BikeDetails = () => {
                       Home delivery available {agencyDeliveryFee > 0 ? `(+${agencyDeliveryFee} MAD)` : "(free)"}
                     </p>
                   )}
+                </div>
+              </section>
+
+              {/* Agency hours */}
+              <section>
+                <h2 className="text-xl font-bold text-foreground mb-3 flex items-center gap-2">
+                  <Clock className="h-5 w-5" /> Agency Hours
+                </h2>
+                <div className="rounded-lg border border-border/60 bg-card p-4">
+                  <ul className="space-y-1.5 text-sm">
+                    {formatWorkingHoursSummary(workingHours).map((row) => (
+                      <li key={row.label} className="flex justify-between gap-4">
+                        <span className="font-medium text-foreground">{row.label}:</span>
+                        <span className={row.value === "Closed" ? "text-muted-foreground" : "text-foreground/80"}>
+                          {row.value}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               </section>
             </div>
