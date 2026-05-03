@@ -167,11 +167,14 @@ const MotorbikeWizard = () => {
           setMaxRentalDays(String(b.max_rental_days ?? 30));
           setCancellationPolicy(b.cancellation_policy || "moderate");
           setMainImageUrl(b.main_image_url || null);
+          setInitialMainImageUrl(b.main_image_url || null);
           setCurrentStatus(b.approval_status || "draft");
         }
-        const { count } = await supabase
-          .from("bike_type_images").select("id", { count: "exact", head: true }).eq("bike_type_id", id);
-        setPhotoCount(count || 0);
+        const { data: imgRows } = await supabase
+          .from("bike_type_images").select("id").eq("bike_type_id", id);
+        const ids = (imgRows || []).map((r: { id: string }) => r.id);
+        setInitialPhotoIds(ids);
+        setPhotoCount(ids.length);
         setLoading(false);
       } else if (isVerified) {
         const { data: created, error } = await supabase
