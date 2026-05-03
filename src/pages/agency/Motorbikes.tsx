@@ -151,7 +151,7 @@ const Motorbikes = () => {
                 <Rows3 className="h-3.5 w-3.5" /> Table
               </button>
             </div>
-            <Button onClick={() => navigate("/agency/motorbikes/new")}>
+            <Button onClick={() => openWizard()}>
               <Plus className="mr-2 h-4 w-4" /> Add motorbike
             </Button>
           </div>
@@ -199,7 +199,7 @@ const Motorbikes = () => {
               }
               action={
                 bikes.length === 0 && tab === "active"
-                  ? { label: "Add motorbike", onClick: () => navigate("/agency/motorbikes/new") }
+                  ? { label: "Add motorbike", onClick: () => openWizard() }
                   : undefined
               }
             />
@@ -374,7 +374,7 @@ const Motorbikes = () => {
                             <Button
                               size="sm"
                               variant="ghost"
-                              onClick={() => navigate(`/agency/motorbikes/${bike.id}/edit`)}
+                              onClick={() => openWizard(bike.id)}
                               aria-label="Edit"
                             >
                               <Pencil className="h-4 w-4" />
