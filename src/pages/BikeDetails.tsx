@@ -380,25 +380,21 @@ const BikeDetails = () => {
   };
 
   const specs = [
-    { icon: Cog, label: "Engine", value: bikeType.engine_cc ? `${bikeType.engine_cc}cc` : "—" },
-    { icon: Fuel, label: "Fuel", value: bikeType.fuel_type || "Gasoline" },
-    { icon: Zap, label: "Transmission", value: bikeType.transmission || "Manual" },
-    { icon: CalendarIcon, label: "Year", value: bikeType.year ? String(bikeType.year) : "—" },
-    { icon: Gauge, label: "Mileage", value: bikeType.mileage_km ? `${Number(bikeType.mileage_km).toLocaleString()} km` : "—" },
-    { icon: IdCard, label: "License", value: bikeType.license_required || "Permis A1" },
-    { icon: User, label: "Min age", value: `${bikeType.min_age || 18} years` },
-    { icon: Wallet, label: "Deposit", value: `${deposit || 1200} MAD` },
-  ];
+    bikeType.engine_cc ? { icon: Cog, label: "Engine", value: `${bikeType.engine_cc}cc` } : null,
+    bikeType.fuel_type ? { icon: Fuel, label: "Fuel", value: cap(bikeType.fuel_type) } : null,
+    bikeType.transmission ? { icon: Zap, label: "Transmission", value: cap(bikeType.transmission) } : null,
+    bikeType.year ? { icon: CalendarIcon, label: "Year", value: String(bikeType.year) } : null,
+    bikeType.mileage_km != null ? { icon: Gauge, label: "Mileage", value: `${Number(bikeType.mileage_km).toLocaleString()} km` } : null,
+    bikeType.license_required ? { icon: IdCard, label: "License", value: licenseLabel(bikeType.license_required) || bikeType.license_required } : null,
+    bikeType.min_age ? { icon: User, label: "Min age", value: `${bikeType.min_age} years` } : null,
+    deposit > 0 ? { icon: Wallet, label: "Deposit", value: `${deposit} MAD` } : null,
+  ].filter(Boolean) as { icon: any; label: string; value: string }[];
 
-  const features = [
-    { icon: Shield, label: "Helmet included", detail: "Full-face helmet provided at pickup" },
-    { icon: BadgeCheck, label: "Basic insurance", detail: "Third-party coverage included" },
-    { icon: MessageCircle, label: "24/7 roadside support", detail: "Reach the agency anytime during your rental" },
-    { icon: Truck, label: `Free delivery in ${neighborhood}`, detail: `Outside ${neighborhood}: +25 MAD` },
-  ];
+  const featureKeys = ((bikeType.features || []) as string[]).filter((k) => k in FEATURE_LABELS) as FeatureKey[];
+  const helmetsCount = Number(bikeType.helmets_count) || 0;
+  const hasIncludedSection = helmetsCount > 0 || featureKeys.length > 0;
 
-  const description = bikeType.description ||
-    `Reliable ${bikeType.name} maintained by ${agencyName}. Comfortable ride, easy handling, perfect for exploring ${cityName} and surrounding areas.`;
+  const description = (bikeType.description || "").trim();
 
   const BookingCard = (
     <Card className="border border-border/60 shadow-lg rounded-xl overflow-hidden">
