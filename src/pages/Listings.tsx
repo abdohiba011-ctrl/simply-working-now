@@ -307,11 +307,9 @@ const Listings = () => {
           {/* Date + sort row */}
           <div className="flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between">
             <div className="flex-1 sm:max-w-md">
-              <DateRangePicker
-                dateRange={dateRange}
-                onDateChange={handleDateChange}
-                maxDays={30}
-                showPriceBreakdown={false}
+              <BookingDatePicker
+                value={dateRange}
+                onChange={handleDateChange}
               />
             </div>
             <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
