@@ -18,6 +18,8 @@ import {
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useLanguageStore } from "@/stores/useLanguageStore";
 import { MockProtectedRoute } from "@/components/auth/MockProtectedRoute";
+import { useServiceCities } from "@/hooks/useServiceCities";
+import { useMemo } from "react";
 import enLocale from "@/locales/en.json";
 import frLocale from "@/locales/fr.json";
 import arLocale from "@/locales/ar.json";
