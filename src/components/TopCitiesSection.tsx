@@ -147,6 +147,9 @@ export const TopCitiesSection = () => {
                     height={400}
                     sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 25vw"
                     fallback={casablancaImg}
+                    style={{
+                      objectPosition: `${((city as any).image_focal_x ?? 0.5) * 100}% ${((city as any).image_focal_y ?? 0.5) * 100}%`,
+                    }}
                     className={`w-full h-full transition-transform duration-300 ${
                       isAvailable ? 'group-hover:scale-110' : ''
                     }`}
