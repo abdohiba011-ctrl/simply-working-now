@@ -14,8 +14,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { cityToSlug } from "@/lib/citySlug";
 import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
+import { useServiceCitiesRealtime } from "@/hooks/useServiceCitiesRealtime";
 
 import casablancaImg from "@/assets/city-casablanca.avif";
 import marrakechImg from "@/assets/city-marrakesh.avif";
