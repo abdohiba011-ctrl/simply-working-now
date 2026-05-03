@@ -49,7 +49,6 @@ import { checkBikeAvailability, type Availability } from "@/lib/availability";
 import { useDocumentHead } from "@/hooks/useDocumentHead";
 import { FEATURE_LABELS, FeatureKey, licenseLabel, cancellationText } from "@/lib/bikeFeatures";
 import {
-  TIER_MIN_DAYS,
   TIER_SHORT_LABELS,
   type BikePricingTier,
   type TierMinDays,
