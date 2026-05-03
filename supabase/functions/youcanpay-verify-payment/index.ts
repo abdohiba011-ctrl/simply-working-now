@@ -262,49 +262,7 @@ Deno.serve(async (req) => {
         { onConflict: "user_id" },
       );
     } else if (payment.purpose === "booking_payment" && payment.related_booking_id) {
-      const { data: booking } = await admin
-        .from("bookings")
-        .select("user_id, assigned_to_business, customer_name, bike_id")
-        .eq("id", payment.related_booking_id)
-        .maybeSingle();
-
-      await admin
-        .from("bookings")
-        .update({ payment_status: "paid" })
-        .eq("id", payment.related_booking_id);
-
-      const { data: existingLedger } = await admin
-        .from("booking_payments")
-        .select("id")
-        .eq("booking_id", payment.related_booking_id)
-        .eq("provider", "youcanpay")
-        .eq("payment_type", "platform_fee")
-        .maybeSingle();
-
-      if (!existingLedger) {
-        await admin.from("booking_payments").insert({
-          booking_id: payment.related_booking_id,
-          amount: payment.amount,
-          currency: payment.currency,
-          provider: "youcanpay",
-          method: "card",
-          payment_type: "platform_fee",
-          status: "completed",
-          paid_at: new Date().toISOString(),
-          external_reference: providerTxn,
-        });
-      }
-
-      if (booking?.assigned_to_business) {
-        await admin.from("notifications").insert({
-          user_id: booking.assigned_to_business,
-          title: "New booking request",
-          message: `${booking.customer_name || "A customer"} just paid the booking fee. Please contact them within 24 hours to confirm.`,
-          type: "booking",
-          link: `/agency/bookings/${payment.related_booking_id}`,
-          action_url: `/agency/bookings/${payment.related_booking_id}`,
-        });
-      }
+      await applyBookingPaymentVerify(admin, payment.related_booking_id, payment, providerTxn);
     }
 
     const { data: updated } = await admin
