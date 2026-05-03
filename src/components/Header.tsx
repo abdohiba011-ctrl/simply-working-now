@@ -1,7 +1,7 @@
 import { useState, useEffect, memo, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Globe, User, LogOut, Settings, Lock, Building2, Calendar as CalendarIcon, MoreHorizontal, Users, Phone, Shield, MapPin, Bell, ShieldCheck, LayoutDashboard, BadgeCheck, Tag, ShoppingBag, Bike, Receipt, Wrench, MessageCircle, Wallet } from "lucide-react";
+import { Menu, X, Globe, User, LogOut, Settings, Lock, Building2, Calendar as CalendarIcon, MoreHorizontal, Users, Phone, Shield, MapPin, Bell, ShieldCheck, LayoutDashboard, BadgeCheck, Tag, ShoppingBag, Bike, Receipt, Wrench, MessageCircle, Wallet, Heart } from "lucide-react";
 
 import logoLight from "@/assets/motonita-logo.svg";
 import logoDark from "@/assets/motonita-logo-dark.svg";
@@ -14,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { LogoutConfirmDialog } from "@/components/LogoutConfirmDialog";
 import { AnnouncementBanner } from "@/components/AnnouncementBanner";
 import { useAuthModal } from "@/contexts/AuthModalContext";
+import { useFavoriteIds } from "@/lib/favorites";
 
 import { cn } from "@/lib/utils";
 import {
@@ -52,6 +53,8 @@ export const Header = memo(() => {
   const storeIsLoading = useAuthStore((s) => s.isLoading);
   const checkAuthStore = useAuthStore((s) => s.checkAuth);
   const switchRoleStore = useAuthStore((s) => s.switchRole);
+  const { data: favoriteIds } = useFavoriteIds();
+  const favoritesCount = favoriteIds?.size ?? 0;
 
   // Roles are "ready" once both stores have either resolved or hydrated a
   // user. Until then, we render neutral placeholders for role-specific
@@ -469,6 +472,15 @@ export const Header = memo(() => {
                   <DropdownMenuItem onClick={() => navigate("/booking-history")}>
                     <CalendarIcon className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
                     {t('header.bookingHistory')}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate("/favorites")}>
+                    <Heart className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
+                    <span>{t('header.favorites')}</span>
+                    {favoritesCount > 0 && (
+                      <span className="ltr:ml-auto rtl:mr-auto rounded-full bg-primary px-2 py-0.5 text-xs font-semibold text-primary-foreground">
+                        {favoritesCount}
+                      </span>
+                    )}
                   </DropdownMenuItem>
                   {isRenter && (
                     <DropdownMenuItem onClick={() => navigate("/billing")}>
