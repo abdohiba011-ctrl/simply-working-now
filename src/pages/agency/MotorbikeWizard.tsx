@@ -332,11 +332,15 @@ const MotorbikeWizard = () => {
       // Detect if "trigger" fields changed vs DB (for messaging only;
       // server-side trigger enforces correctness).
       let triggerChanged = false;
+      let photosChanged = false;
       if (editing && (currentStatus === "approved" || currentStatus === "rejected")) {
-        const { data: prev } = await supabase
-          .from("bike_types")
-          .select("description,brand,model,year,category,engine_cc,fuel_type,transmission,license_required,main_image_url")
-          .eq("id", bikeId).maybeSingle();
+        const [{ data: prev }, { data: imgRows }] = await Promise.all([
+          supabase
+            .from("bike_types")
+            .select("description,brand,model,year,category,engine_cc,fuel_type,transmission,license_required,main_image_url")
+            .eq("id", bikeId).maybeSingle(),
+          supabase.from("bike_type_images").select("id").eq("bike_type_id", bikeId),
+        ]);
         if (prev) {
           const yr = Number(year);
           const cc = Number(engineCc);
@@ -351,6 +355,13 @@ const MotorbikeWizard = () => {
             (prev.transmission || "") !== (transmission || "") ||
             (prev.license_required || "") !== (licenseRequired || "");
         }
+        const currentIds = ((imgRows as { id: string }[] | null) || []).map((r) => r.id).sort();
+        const baselineIds = [...initialPhotoIds].sort();
+        const idsDiffer =
+          currentIds.length !== baselineIds.length ||
+          currentIds.some((v, i) => v !== baselineIds[i]);
+        const mainChanged = (prev?.main_image_url || "") !== (initialMainImageUrl || "");
+        photosChanged = idsDiffer || mainChanged;
       }
 
       if (isDraftFirstSubmit) {
@@ -381,6 +392,10 @@ const MotorbikeWizard = () => {
 
       if (!editing) {
         toast.success("Submitted for review. We'll notify you within 24-48 hours.");
+      } else if (photosChanged && !triggerChanged) {
+        toast.message("Bike submitted for review", {
+          description: "Photo changes require admin approval, so this bike is currently hidden from search.",
+        });
       } else if (triggerChanged) {
         toast.message("Bike submitted for review", {
           description: "Changes to photos/specs require admin approval. Currently hidden from search.",
