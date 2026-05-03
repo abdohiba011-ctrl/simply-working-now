@@ -715,7 +715,7 @@ export const AdminBusinessClientsTab = () => {
                                   <Button
                                     size="sm"
                                     variant="outline"
-                                    onClick={() => navigate(`/admin/clients/${biz.id}`)}
+                                    onClick={() => navigate(`/admin/business/${biz.id}`)}
                                   >
                                     <Eye className="h-4 w-4" />
                                   </Button>
