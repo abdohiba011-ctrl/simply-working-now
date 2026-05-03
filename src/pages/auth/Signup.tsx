@@ -34,6 +34,7 @@ import { COMMON_PASSWORDS } from "@/lib/mockAuth";
 import { cn } from "@/lib/utils";
 import { navigateAfterAuth } from "@/lib/routeAfterAuth";
 import { checkAccountMethod } from "@/lib/checkAccountMethod";
+import { useServiceCities } from "@/hooks/useServiceCities";
 
 const PHONE_REGEX = /^(\+212|00212|0)[67]\d{8}$/;
 
