@@ -371,7 +371,7 @@ body.auth-modal-open [data-announcement-banner] {
    ============================================================ */
 .lucide,
 svg.lucide {
-  stroke-width: 2.5;
+  stroke-width: 1.75;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
