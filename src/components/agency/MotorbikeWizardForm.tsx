@@ -328,7 +328,20 @@ export const MotorbikeWizardForm = ({
       if (d.length < 50) errs.push("Description must be at least 50 characters");
       if (d.length > 1000) errs.push("Description must be 1000 characters or fewer");
     } else if (idx === 4) {
-      if (!dailyPrice || Number(dailyPrice) <= 0) errs.push("Daily price is required");
+      const baseT = Number(tierPrices[1]);
+      if (!baseT || baseT <= 0) errs.push("Base daily price (1+ days) is required");
+      // Each higher tier must be < the next-lower set tier (descending price).
+      let lastSet = baseT;
+      for (const md of TIER_MIN_DAYS) {
+        if (md === 1) continue;
+        const v = Number(tierPrices[md]);
+        if (!tierPrices[md]) continue; // skipping a tier is OK
+        if (!v || v <= 0) { errs.push(`${TIER_LABELS[md]} price must be greater than 0`); continue; }
+        if (lastSet && v > lastSet) {
+          errs.push(`${TIER_LABELS[md]} price must be ≤ shorter-duration price`);
+        }
+        lastSet = v;
+      }
       if (depositAmount === "" || Number(depositAmount) < 0) errs.push("Deposit amount is required");
       const minR = Number(minRentalDays), maxR = Number(maxRentalDays);
       if (!minR || minR < 1) errs.push("Min rental days must be at least 1");
