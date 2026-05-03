@@ -225,14 +225,32 @@ const BookingConfirmed = () => {
                 <Loader2 className="h-9 w-9 text-primary animate-spin" />
               </div>
               <h1 className="text-3xl font-bold tracking-tight text-foreground">
-                Confirming your payment…
+                {isCashplus ? "Waiting for Cash Plus payment" : "Confirming your payment…"}
               </h1>
               <p className="text-muted-foreground mt-2">
-                This usually takes a few seconds.
+                {isCashplus
+                  ? "Pay at any Cash Plus agent in Morocco. We'll confirm your booking automatically."
+                  : "This usually takes a few seconds."}
               </p>
-              <p className="text-xs text-muted-foreground mt-2">
-                {Math.max(0, Math.ceil((POLL_TIMEOUT_MS - elapsed) / 1000))}s remaining
-              </p>
+              {!isCashplus && (
+                <p className="text-xs text-muted-foreground mt-2">
+                  {Math.max(0, Math.ceil((POLL_TIMEOUT_MS - elapsed) / 1000))}s remaining
+                </p>
+              )}
+              {isCashplus && (
+                <div className="flex flex-col sm:flex-row gap-2 justify-center mt-4">
+                  <Button variant="hero" onClick={handleVerifyNow} disabled={verifying}>
+                    {verifying ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Verifying…
+                      </>
+                    ) : (
+                      "I've paid — verify now"
+                    )}
+                  </Button>
+                </div>
+              )}
             </>
           ) : (
             <>
