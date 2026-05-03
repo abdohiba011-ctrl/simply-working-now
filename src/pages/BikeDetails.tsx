@@ -42,6 +42,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { usePricingTiers, getDailyPriceForDuration } from "@/hooks/usePricingTiers";
 import { DateRangePicker } from "@/components/DateRangePicker";
+import { BookingDatePicker } from "@/components/BookingDatePicker";
+import { checkBikeAvailability, type Availability } from "@/lib/availability";
 import { useDocumentHead } from "@/hooks/useDocumentHead";
 
 const isUuid = (s: string) =>
