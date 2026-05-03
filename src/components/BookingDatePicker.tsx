@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { DateRange } from "react-day-picker";
-import { format, differenceInDays, isBefore, startOfDay } from "date-fns";
+import { format, differenceInDays, isBefore, startOfDay, eachDayOfInterval } from "date-fns";
 import { Calendar as CalendarIcon, RotateCcw, X } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
