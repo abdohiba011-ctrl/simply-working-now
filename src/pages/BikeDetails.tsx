@@ -89,6 +89,29 @@ const BikeDetails = () => {
     }
   }, [pickupParam, endParam]);
 
+  // Booked date ranges for the calendar (from confirmed/pending bookings).
+  const [bookedRanges, setBookedRanges] = useState<{ from: Date; to: Date }[]>([]);
+  const realBikeIdForDates = bike?.id;
+  useEffect(() => {
+    if (!realBikeIdForDates) return;
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase.rpc("get_booked_date_ranges", {
+        _bike_id: realBikeIdForDates,
+      });
+      if (cancelled || error || !data) return;
+      setBookedRanges(
+        (data as any[]).map((r) => ({
+          from: new Date(r.pickup_date),
+          to: new Date(r.return_date),
+        })),
+      );
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [realBikeIdForDates]);
+
   // Availability check (stub for now)
   const [availability, setAvailability] = useState<Availability>("idle");
   useEffect(() => {
