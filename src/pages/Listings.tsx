@@ -227,7 +227,7 @@ const Listings = () => {
   const handleBikeSelect = (bikeId: string) => {
     const dates =
       dateRange?.from && dateRange?.to
-        ? `?pickup=${format(dateRange.from, "yyyy-MM-dd")}&end=${format(dateRange.to, "yyyy-MM-dd")}`
+        ? `?from=${format(dateRange.from, "yyyy-MM-dd")}&to=${format(dateRange.to, "yyyy-MM-dd")}`
         : "";
     navigate(`/bike/${bikeId}${dates}`);
   };
@@ -246,9 +246,13 @@ const Listings = () => {
     setDateRange(range);
     const params = new URLSearchParams(searchParams);
     if (range?.from && range?.to) {
-      params.set("pickup", format(range.from, "yyyy-MM-dd"));
-      params.set("end", format(range.to, "yyyy-MM-dd"));
+      params.set("from", format(range.from, "yyyy-MM-dd"));
+      params.set("to", format(range.to, "yyyy-MM-dd"));
+      params.delete("pickup");
+      params.delete("end");
     } else if (!range) {
+      params.delete("from");
+      params.delete("to");
       params.delete("pickup");
       params.delete("end");
     }
