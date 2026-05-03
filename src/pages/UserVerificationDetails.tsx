@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Header } from "@/components/Header";
-import { Footer } from "@/components/Footer";
+import { AdminLayout } from "@/components/layouts/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -279,62 +278,52 @@ const UserVerificationDetails = () => {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-background flex flex-col">
-        <Header />
+      <AdminLayout>
         <main className="flex-1 py-16 container mx-auto px-4 text-center">
           <h1 className="text-2xl font-bold">Please log in to access this page</h1>
           <Button className="mt-4" onClick={() => navigate('/auth')}>Log In</Button>
         </main>
-        <Footer />
-      </div>
+      </AdminLayout>
     );
   }
 
   if (!isAdmin) {
     return (
-      <div className="min-h-screen bg-background flex flex-col">
-        <Header />
+      <AdminLayout>
         <main className="flex-1 py-16 container mx-auto px-4 text-center">
           <AlertTriangle className="h-16 w-16 text-destructive mx-auto mb-4" />
           <h1 className="text-2xl font-bold">Access Denied</h1>
           <p className="text-muted-foreground mt-2">You don't have permission to access this page.</p>
         </main>
-        <Footer />
-      </div>
+      </AdminLayout>
     );
   }
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex flex-col">
-        <Header />
+      <AdminLayout>
         <main className="flex-1 py-8">
           <div className="container mx-auto px-4 max-w-4xl">
             <VerificationSkeleton />
           </div>
         </main>
-        <Footer />
-      </div>
+      </AdminLayout>
     );
   }
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-background flex flex-col">
-        <Header />
+      <AdminLayout>
         <main className="flex-1 py-16 container mx-auto px-4 text-center">
           <h1 className="text-2xl font-bold">User not found</h1>
           <Button className="mt-4" onClick={() => navigate('/admin/panel')}>Back to Admin Panel</Button>
         </main>
-        <Footer />
-      </div>
+      </AdminLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <Header />
-      
+    <AdminLayout>
       <main className="flex-1 py-8">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto">
@@ -649,9 +638,7 @@ const UserVerificationDetails = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      
-      <Footer />
-    </div>
+    </AdminLayout>
   );
 };
 
