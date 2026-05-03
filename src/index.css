@@ -363,3 +363,15 @@ body.auth-modal-open [data-site-header],
 body.auth-modal-open [data-announcement-banner] {
   display: none !important;
 }
+
+/* ============================================================
+   Global icon style — Font Awesome Solid look-alike
+   Targets lucide-react icons (rendered as inline SVG).
+   Thicker strokes + rounded joins = chunky, filled feel.
+   ============================================================ */
+.lucide,
+svg.lucide {
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
