@@ -760,10 +760,10 @@ export default function RentCity() {
                   <BikeCard
                     key={b.id}
                     bike={b}
-                    favorite={favorites.has(b.id)}
-                    onToggleFavorite={() => toggleFavorite(b.id, b.name)}
-                    onOpen={() => navigate(`/bike/${b.slug || b.id}${datesQS}`)}
+                    isFavorited={favoriteIds.has(b.id)}
                     totalDays={totalDays}
+                    datesQS={datesQS}
+                    cityName={cityName}
                   />
                 ))}
               </div>
