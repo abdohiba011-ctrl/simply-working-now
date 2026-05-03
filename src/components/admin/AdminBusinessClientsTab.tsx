@@ -611,6 +611,24 @@ export const AdminBusinessClientsTab = () => {
                   </div>
                 </div>
               </div>
+              <div className="flex flex-wrap gap-2 mt-3">
+                {([
+                  { key: "all", label: "All" },
+                  { key: "agency", label: "Agencies / Rental Shops" },
+                  { key: "company", label: "Companies" },
+                  { key: "individual", label: "Individual Owners" },
+                  { key: "unspecified", label: "Unspecified" },
+                ] as { key: TypeFilter; label: string }[]).map((c) => (
+                  <Button
+                    key={c.key}
+                    size="sm"
+                    variant={typeFilter === c.key ? "default" : "outline"}
+                    onClick={() => setTypeFilter(c.key)}
+                  >
+                    {c.label}
+                  </Button>
+                ))}
+              </div>
             </CardHeader>
             <CardContent>
               {isLoading ? (
