@@ -87,6 +87,36 @@ const BikeDetails = () => {
     }
   }, [pickupParam, endParam]);
 
+  // Availability check (stub for now)
+  const [availability, setAvailability] = useState<Availability>("idle");
+  useEffect(() => {
+    if (!dateRange?.from || !dateRange?.to) {
+      setAvailability("idle");
+      return;
+    }
+    let cancelled = false;
+    setAvailability("loading");
+    checkBikeAvailability(id || "", dateRange.from, dateRange.to).then((ok) => {
+      if (!cancelled) setAvailability(ok ? "available" : "unavailable");
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [id, dateRange?.from, dateRange?.to]);
+
+  // Push date changes to URL so they persist when sharing the link.
+  const updateDatesInUrl = (r: DateRange | undefined) => {
+    const params = new URLSearchParams(window.location.search);
+    if (r?.from && r?.to) {
+      params.set("from", format(r.from, "yyyy-MM-dd"));
+      params.set("to", format(r.to, "yyyy-MM-dd"));
+    } else {
+      params.delete("from");
+      params.delete("to");
+    }
+    navigate({ search: params.toString() }, { replace: true });
+  };
+
   // Resolve real city + agency from DB (no hardcoded Casablanca / Casa Moto Rent).
   const [resolvedCity, setResolvedCity] = useState<string | null>(null);
   const [resolvedNeighborhood, setResolvedNeighborhood] = useState<string | null>(null);
