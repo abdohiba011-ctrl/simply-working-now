@@ -21,6 +21,7 @@ import {
   FEATURE_ORDER, FEATURE_LABELS, FeatureKey,
 } from "@/lib/bikeFeatures";
 import { cn } from "@/lib/utils";
+import { TIER_MIN_DAYS, TIER_LABELS, type BikePricingTier, type TierMinDays, tierSavingsPct } from "@/lib/pricingTiers";
 
 type StepKey = "info" | "specs" | "included" | "photos" | "pricing";
 const STEPS: { key: StepKey; label: string }[] = [
