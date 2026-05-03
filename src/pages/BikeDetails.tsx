@@ -56,6 +56,15 @@ import {
   getBaseDailyPrice,
   tierSavingsPct,
 } from "@/lib/pricingTiers";
+import {
+  DEFAULT_WORKING_HOURS,
+  normalizeWorkingHours,
+  formatWorkingHoursSummary,
+  dayKeyFromDate,
+  slotsBetween,
+  DAY_KEYS,
+  type WorkingHours,
+} from "@/lib/workingHours";
 
 const isUuid = (s: string) =>
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
