@@ -56,6 +56,8 @@ const MotorbikeDetail = () => {
   const [editOpen, setEditOpen] = useState(false);
   const [refreshTick, setRefreshTick] = useState(0);
   const [fullBike, setFullBike] = useState<Record<string, any> | null>(null);
+  const [tiers, setTiers] = useState<{ min_days: number; daily_price_mad: number }[]>([]);
+  const [agencyInfo, setAgencyInfo] = useState<BikeDetailAgency | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -66,6 +68,26 @@ const MotorbikeDetail = () => {
         .eq("id", id)
         .maybeSingle();
       setFullBike(data as Record<string, any> | null);
+
+      const { data: tierRows } = await supabase
+        .from("bike_pricing_tiers")
+        .select("min_days, daily_price_mad")
+        .eq("bike_type_id", id)
+        .order("min_days", { ascending: true });
+      setTiers((tierRows as any[]) || []);
+
+      const ownerId = (data as any)?.owner_id;
+      if (ownerId) {
+        const { data: prof } = await supabase
+          .from("profiles").select("id").eq("user_id", ownerId).maybeSingle();
+        if (prof?.id) {
+          const { data: ag } = await supabase
+            .from("agencies")
+            .select("business_name, city, address, is_verified, phone, working_hours")
+            .eq("profile_id", prof.id).maybeSingle();
+          setAgencyInfo(ag as BikeDetailAgency | null);
+        }
+      }
     })();
   }, [id, refreshTick]);
 
