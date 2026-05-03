@@ -34,6 +34,8 @@ import { DateRange } from "react-day-picker";
 import { format, differenceInDays, addDays } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Info } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useBike, useBikeTypeImages } from "@/hooks/useBikes";
 import { getBikeImageUrl } from "@/lib/bikeImages";
