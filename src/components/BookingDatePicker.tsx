@@ -138,7 +138,7 @@ const Panel = ({
           numberOfMonths={isMobile ? 1 : 2}
           weekStartsOn={0}
           disabled={(d) => d < today0()}
-          className="pointer-events-auto p-2"
+          className="pointer-events-auto p-2 w-full"
         />
       </div>
 
