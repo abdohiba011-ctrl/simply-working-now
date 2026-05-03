@@ -48,6 +48,14 @@ import { BookingDatePicker } from "@/components/BookingDatePicker";
 import { checkBikeAvailability, type Availability } from "@/lib/availability";
 import { useDocumentHead } from "@/hooks/useDocumentHead";
 import { FEATURE_LABELS, FeatureKey, licenseLabel, cancellationText } from "@/lib/bikeFeatures";
+import {
+  TIER_SHORT_LABELS,
+  type BikePricingTier,
+  type TierMinDays,
+  resolveTierPrice,
+  getBaseDailyPrice,
+  tierSavingsPct,
+} from "@/lib/pricingTiers";
 
 const isUuid = (s: string) =>
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
@@ -215,15 +223,34 @@ const BikeDetails = () => {
     return main ? [main, ...extras] : extras;
   }, [bike, detailImages]);
 
+  // Fetch per-bike pricing tiers
+  const [tiers, setTiers] = useState<BikePricingTier[]>([]);
+  const bikeTypeIdForTiers = (bike?.bike_type as any)?.id;
+  useEffect(() => {
+    if (!bikeTypeIdForTiers) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("bike_pricing_tiers")
+        .select("min_days, daily_price_mad")
+        .eq("bike_type_id", bikeTypeIdForTiers)
+        .order("min_days", { ascending: true });
+      if (!cancelled && data) setTiers(data as BikePricingTier[]);
+    })();
+    return () => { cancelled = true; };
+  }, [bikeTypeIdForTiers]);
+
   const days = dateRange?.from && dateRange?.to
     ? differenceInDays(dateRange.to, dateRange.from)
     : 0;
 
-  const baseDailyPrice = bike?.bike_type ? Number(bike.bike_type.daily_price) : 0;
-  const dailyPrice = baseDailyPrice;
+  const fallbackBase = bike?.bike_type ? Number(bike.bike_type.daily_price) : 0;
+  const baseDailyPrice = getBaseDailyPrice(tiers) || fallbackBase;
+  const { dailyPrice: resolvedDaily, tierMinDays: appliedTier } = resolveTierPrice(tiers, days || 1);
+  const dailyPrice = tiers.length > 0 ? resolvedDaily : fallbackBase;
   const subtotal = days * dailyPrice;
-  const baselineSubtotal = subtotal;
-  const tierDiscount = 0;
+  const baselineSubtotal = days * baseDailyPrice;
+  const tierDiscount = Math.max(0, baselineSubtotal - subtotal);
   const agencyDeliveryFee = resolvedAgency.deliveryFee;
   const deliveryFee = deliveryMethod === "delivery" ? agencyDeliveryFee : 0;
   const PLATFORM_FEE = 10;
@@ -233,6 +260,12 @@ const BikeDetails = () => {
   const deposit = (bike?.bike_type as any)?.deposit_amount ? Number((bike?.bike_type as any).deposit_amount) : 0;
   const pickupTotal = rentalDueAtPickup + (deposit || 0);
   const tripTotal = upfrontTotal + rentalDueAtPickup;
+
+  // Tiers below the base rate (i.e. actual volume discount tiers configured)
+  const discountTiers = tiers
+    .filter((t) => t.min_days > 1 && Number(t.daily_price_mad) < baseDailyPrice)
+    .sort((a, b) => a.min_days - b.min_days);
+  const hasDiscountTiers = discountTiers.length > 0;
 
   const minRentalDays = Math.max(1, Number((bike?.bike_type as any)?.min_rental_days) || 1);
   const maxRentalDays = Math.max(minRentalDays, Number((bike?.bike_type as any)?.max_rental_days) || 30);
@@ -407,7 +440,33 @@ const BikeDetails = () => {
           </div>
           <span className="text-sm text-muted-foreground pb-1">/day</span>
         </div>
-        {/* Tiered pricing badges removed in Phase 1 — Phase 2 will add real per-bike tiers */}
+        {/* Volume-discount savings badges (only when agency configured higher tiers) */}
+        {hasDiscountTiers && (
+          <div className="space-y-1.5">
+            {discountTiers.map((t) => {
+              const pct = tierSavingsPct(baseDailyPrice, Number(t.daily_price_mad));
+              if (pct <= 0) return null;
+              const isApplied = appliedTier === t.min_days && days > 0;
+              return (
+                <div
+                  key={t.min_days}
+                  className={cn(
+                    "flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs transition-colors",
+                    isApplied
+                      ? "bg-primary/15 text-foreground font-semibold ring-1 ring-primary/40"
+                      : "bg-muted/60 text-foreground/80",
+                  )}
+                >
+                  <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
+                  <span>
+                    Save <span className="font-semibold">{pct}%</span> on{" "}
+                    {TIER_SHORT_LABELS[t.min_days as TierMinDays].toLowerCase()} ({t.min_days}+ days)
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        )}
 
         <div className="border-t border-border/60" />
 
@@ -551,16 +610,23 @@ const BikeDetails = () => {
         {/* Cost breakdown — three-tier */}
         {days > 0 && (
           <div className="space-y-3 pt-3 border-t border-border/60">
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Price summary</p>
+            <div className="flex items-center justify-between">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Price summary</p>
+              {appliedTier && hasDiscountTiers && (
+                <span className="text-[11px] text-muted-foreground">
+                  Tier: {appliedTier}+ days
+                </span>
+              )}
+            </div>
             <div className="space-y-1.5">
               <div className="flex justify-between text-sm text-muted-foreground">
                 <span>Rental ({Math.round(dailyPrice)} × {days} day{days !== 1 ? "s" : ""})</span>
-                <span>{Math.round(baselineSubtotal).toLocaleString()} MAD</span>
+                <span>{Math.round(subtotal).toLocaleString()} MAD</span>
               </div>
-              {tierDiscount > 0 && (
-                <div className="flex justify-between text-sm text-primary">
-                  <span>Duration discount</span>
-                  <span>−{Math.round(tierDiscount).toLocaleString()} MAD</span>
+              {tierDiscount > 0 && hasDiscountTiers && (
+                <div className="flex justify-between text-sm" style={{ color: "#22C55E" }}>
+                  <span>Volume discount</span>
+                  <span>-{Math.round(tierDiscount).toLocaleString()} MAD</span>
                 </div>
               )}
               <div className="flex justify-between text-sm text-muted-foreground">
