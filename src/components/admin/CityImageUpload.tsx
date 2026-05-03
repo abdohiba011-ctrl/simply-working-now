@@ -139,25 +139,51 @@ export const CityImageUpload = ({
   return (
     <div className="space-y-2">
       {currentImageUrl ? (
-        <div className="relative">
-          <img
-            src={currentImageUrl}
-            alt="City preview"
-            className="w-full h-32 object-cover rounded-lg border"
-            onError={(e) => {
-              (e.target as HTMLImageElement).src = '/placeholder.svg';
+        <div className="space-y-2">
+          <div
+            className={`relative ${onFocalChange ? "cursor-crosshair" : ""}`}
+            onClick={(e) => {
+              if (!onFocalChange) return;
+              const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
+              const x = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
+              const y = Math.min(1, Math.max(0, (e.clientY - rect.top) / rect.height));
+              onFocalChange(Number(x.toFixed(3)), Number(y.toFixed(3)));
             }}
-          />
-          <Button
-            type="button"
-            variant="destructive"
-            size="icon"
-            className="absolute top-2 right-2 h-7 w-7"
-            onClick={handleRemove}
-            disabled={disabled || uploading}
+            title={onFocalChange ? "Click to set focal point — this part stays visible when cropped" : undefined}
           >
-            <X className="h-4 w-4" />
-          </Button>
+            <img
+              src={currentImageUrl}
+              alt="City preview"
+              className="w-full h-32 object-cover rounded-lg border"
+              style={{ objectPosition: `${focalX * 100}% ${focalY * 100}%` }}
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = '/placeholder.svg';
+              }}
+            />
+            {onFocalChange && (
+              <div
+                className="absolute pointer-events-none w-6 h-6 -ml-3 -mt-3 rounded-full border-2 border-white shadow-[0_0_0_2px_hsl(var(--primary))] bg-primary/30 flex items-center justify-center"
+                style={{ left: `${focalX * 100}%`, top: `${focalY * 100}%` }}
+              >
+                <Crosshair className="h-3 w-3 text-white" />
+              </div>
+            )}
+            <Button
+              type="button"
+              variant="destructive"
+              size="icon"
+              className="absolute top-2 right-2 h-7 w-7"
+              onClick={(e) => { e.stopPropagation(); handleRemove(); }}
+              disabled={disabled || uploading}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+          {onFocalChange && (
+            <p className="text-xs text-muted-foreground">
+              Click the image to set the focal point ({Math.round(focalX * 100)}%, {Math.round(focalY * 100)}%) — this part stays visible when the image is cropped on cards.
+            </p>
+          )}
         </div>
       ) : (
         <div
