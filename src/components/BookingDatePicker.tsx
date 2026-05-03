@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { DateRange } from "react-day-picker";
 import { format, differenceInDays, isBefore, startOfDay } from "date-fns";
-import { Calendar as CalendarIcon, X, RotateCcw } from "lucide-react";
+import { Calendar as CalendarIcon, RotateCcw } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -164,17 +164,20 @@ const Panel = ({
             <span className="h-2 w-2 rounded-full bg-[#9FE870]" />
             Selected
           </span>
-          {isMobile && (
-            <button
-              type="button"
-              onClick={onClose}
-              className="ml-2 rounded-md bg-[#163300] text-white px-3 py-1 text-[11px] font-semibold"
-            >
-              Done
-            </button>
-          )}
         </div>
       </div>
+
+      {isMobile && (
+        <div className="px-3 pt-2 pb-3">
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-full h-12 rounded-lg bg-[#9FE870] text-[#163300] font-semibold text-base hover:bg-[#8DD85F] active:bg-[#7BC850] transition-colors"
+          >
+            Done
+          </button>
+        </div>
+      )}
     </div>
   );
 };
@@ -325,31 +328,23 @@ export const BookingDatePicker = ({
         <Sheet open={open} onOpenChange={(o) => (o ? setOpen(true) : commitAndClose())}>
           <SheetContent
             side="bottom"
-            className="p-0 h-[70vh] rounded-t-2xl border-t-0 bg-transparent"
+            className="p-0 inset-x-0 bottom-0 w-full max-w-full max-h-[85vh] rounded-t-2xl rounded-b-none border-t border-x-0 border-b-0 bg-white text-[#163300] [&>button]:hidden overflow-hidden"
           >
-            <div className="flex flex-col h-full">
-              <div className="flex justify-center pt-2 pb-1">
-                <span className="h-1.5 w-12 rounded-full bg-white/60" />
+            <div className="flex flex-col max-h-[85vh]">
+              <div className="flex justify-center pt-3 pb-2 shrink-0">
+                <span className="h-1 w-10 rounded-full bg-gray-300" />
               </div>
-              <div className="flex-1 overflow-y-auto px-3 pb-3">
+              <div className="flex-1 overflow-y-auto px-2 pb-3">
                 <Panel
                   range={tempRange}
                   setRange={handleChange}
                   focus={focus}
                   setFocus={setFocus}
                   isMobile
-                  onClose={() => setOpen(false)}
+                  onClose={commitAndClose}
                 />
               </div>
             </div>
-            <button
-              type="button"
-              aria-label="Close"
-              onClick={commitAndClose}
-              className="absolute right-3 top-3 h-8 w-8 rounded-full bg-white/90 flex items-center justify-center"
-            >
-              <X className="h-4 w-4 text-[#163300]" />
-            </button>
           </SheetContent>
         </Sheet>
       )}
