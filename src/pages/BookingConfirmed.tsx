@@ -67,7 +67,7 @@ const BookingConfirmed = () => {
         .select(
           `id, bike_id, pickup_date, return_date, total_days, total_price,
            delivery_method, pickup_location, customer_name, customer_email,
-           customer_phone, booking_status, payment_status`,
+           customer_phone, booking_status, payment_status, payment_method`,
         )
         .eq("id", bookingId)
         .maybeSingle();
