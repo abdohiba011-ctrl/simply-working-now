@@ -425,7 +425,7 @@ export const MotorbikeWizardForm = ({
   return (
     <div className="flex h-full flex-col">
       <div className="flex-1 overflow-y-auto px-1">
-        <div className="mx-auto max-w-3xl space-y-4 pb-6">
+        <div className="mx-auto max-w-3xl space-y-4 pb-6 py-[12px] px-[16px]">
           {showHeader && (
             <div className="flex items-center justify-between">
               <Button variant="ghost" size="sm" onClick={onExit}>
