@@ -153,6 +153,7 @@ export const MotorbikeWizardForm = ({
         const { data: bt } = await supabase.from("bike_types").select("*").eq("id", bikeIdProp).maybeSingle();
         if (bt) {
           const b: any = bt;
+          var initialBase = b.daily_price != null ? String(b.daily_price) : "";
           setName(b.name === "Untitled draft" ? "" : (b.name || ""));
           setBrand(b.brand || "");
           setModel(b.model || "");
