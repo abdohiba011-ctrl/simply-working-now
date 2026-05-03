@@ -17,6 +17,9 @@ import {
   Lock,
   Loader2,
   CheckCircle2,
+  Banknote,
+  ExternalLink,
+  Clock,
 } from "lucide-react";
 import { format } from "date-fns";
 import { useAuth } from "@/hooks/useAuth";
