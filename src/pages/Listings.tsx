@@ -66,8 +66,8 @@ const Listings = () => {
   const { data: bikes, isLoading: isLoadingBikes } = useBikes();
 
   const location = searchParams.get("location") || "";
-  const pickupDate = searchParams.get("pickup") || "";
-  const endDate = searchParams.get("end") || "";
+  const pickupDate = searchParams.get("from") || searchParams.get("pickup") || "";
+  const endDate = searchParams.get("to") || searchParams.get("end") || "";
   const cityName = searchParams.get("city") || "";
   const cityId = searchParams.get("cityId") || "";
 
