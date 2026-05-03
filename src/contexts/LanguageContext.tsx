@@ -56,7 +56,7 @@ export const LanguageProvider = ({ children }: LanguageProviderProps) => {
   };
 
   const t = (key: string, options?: { defaultValue?: string; [key: string]: unknown }): string => {
-    return i18nT(key, options as never) as string;
+    return i18nT(key, options as never) as unknown as string;
   };
 
   return (
