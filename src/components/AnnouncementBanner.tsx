@@ -126,7 +126,23 @@ function buildSegments(language: "en" | "fr" | "ar"): Segment[] {
 
 export const AnnouncementBanner = () => {
   const { language, isRTL } = useLanguage();
+  const { pathname } = useLocation();
   const [reducedMotion, setReducedMotion] = useState(false);
+
+  // Hide on bike browse/details/booking flow + messages pages
+  const hidden =
+    pathname.startsWith("/rent/") ||
+    pathname === "/rent" ||
+    pathname === "/listings" ||
+    pathname.startsWith("/bike/") ||
+    pathname.startsWith("/booking-review") ||
+    pathname.startsWith("/checkout") ||
+    pathname.startsWith("/payment-selection") ||
+    pathname.startsWith("/pay/") ||
+    pathname.startsWith("/payment-status") ||
+    pathname.startsWith("/confirmation") ||
+    pathname.startsWith("/inbox") ||
+    pathname.startsWith("/contact-messages");
 
   useEffect(() => {
     if (typeof window === "undefined" || !window.matchMedia) return;
