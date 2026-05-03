@@ -457,6 +457,7 @@ const AdminAgencyVerifications = () => {
                             {a.bio && (
                               <p className="text-sm mt-2 line-clamp-2">{a.bio}</p>
                             )}
+                            <AgencyHoursReadout workingHours={(a as any).working_hours} />
                           </div>
                         </div>
                         <div className="flex gap-2 shrink-0">
