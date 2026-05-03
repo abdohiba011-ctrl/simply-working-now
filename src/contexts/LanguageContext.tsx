@@ -55,8 +55,8 @@ export const LanguageProvider = ({ children }: LanguageProviderProps) => {
     i18n.changeLanguage(lang);
   };
 
-  const t = (key: string): string => {
-    return i18nT(key);
+  const t = (key: string, options?: { defaultValue?: string; [key: string]: unknown }): string => {
+    return i18nT(key, options as never) as string;
   };
 
   return (
