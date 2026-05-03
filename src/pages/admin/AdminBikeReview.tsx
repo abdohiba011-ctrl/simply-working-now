@@ -94,6 +94,7 @@ const AdminBikeReview = () => {
   const [photos, setPhotos] = useState<{ id: string; image_url: string }[]>([]);
   const [agency, setAgency] = useState<{ business_name: string | null; city: string | null; primary_neighborhood: string | null; address: string | null; is_verified: boolean | null; phone: string | null } | null>(null);
   const [bikeCityName, setBikeCityName] = useState<string | null>(null);
+  const [tiers, setTiers] = useState<{ min_days: number; daily_price_mad: number }[]>([]);
   const [loading, setLoading] = useState(true);
   const [acting, setActing] = useState(false);
   const [rejectOpen, setRejectOpen] = useState(false);
