@@ -52,6 +52,8 @@ interface ServiceCity {
   name: string;
   name_key: string;
   image_url: string | null;
+  image_focal_x: number;
+  image_focal_y: number;
   bikes_count: number;
   price_from: number;
   is_available: boolean;
@@ -81,6 +83,8 @@ const generateNameKey = (name: string) => {
 const emptyNewCity = {
   name: "",
   image_url: "" as string | null,
+  image_focal_x: 0.5,
+  image_focal_y: 0.5,
   is_available: false,
   is_coming_soon: true,
   show_in_homepage: true,
