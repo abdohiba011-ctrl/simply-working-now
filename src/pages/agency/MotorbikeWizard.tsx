@@ -324,6 +324,30 @@ const MotorbikeWizard = () => {
 
       const isDraftFirstSubmit = !editing && currentStatus === "draft";
 
+      // Detect if "trigger" fields changed vs DB (for messaging only;
+      // server-side trigger enforces correctness).
+      let triggerChanged = false;
+      if (editing && (currentStatus === "approved" || currentStatus === "rejected")) {
+        const { data: prev } = await supabase
+          .from("bike_types")
+          .select("description,brand,model,year,category,engine_cc,fuel_type,transmission,license_required,main_image_url")
+          .eq("id", bikeId).maybeSingle();
+        if (prev) {
+          const yr = Number(year);
+          const cc = Number(engineCc);
+          triggerChanged =
+            (prev.description || "") !== (description.trim() || "") ||
+            (prev.brand || "") !== (brand || "") ||
+            (prev.model || "") !== (model || "") ||
+            (prev.year ?? -1) !== (Number.isFinite(yr) && yr > 0 ? yr : -1) ||
+            (prev.category || "") !== (category || "") ||
+            (prev.engine_cc ?? -1) !== (Number.isFinite(cc) && cc > 0 ? cc : -1) ||
+            (prev.fuel_type || "") !== (fuelType || "") ||
+            (prev.transmission || "") !== (transmission || "") ||
+            (prev.license_required || "") !== (licenseRequired || "");
+        }
+      }
+
       if (isDraftFirstSubmit) {
         const { error: updErr } = await supabase
           .from("bike_types")
