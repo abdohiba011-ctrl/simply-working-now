@@ -52,25 +52,6 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
-const CITIES = [
-  "Casablanca",
-  "Marrakech",
-  "Rabat",
-  "Tangier",
-  "Agadir",
-  "Fes",
-  "Dakhla",
-  "Essaouira",
-  "Meknes",
-  "Oujda",
-  "Tetouan",
-  "El Jadida",
-  "Kenitra",
-  "Nador",
-  "Ifrane",
-  "Chefchaouen",
-  "Other",
-];
 
 function SignupExtraInner() {
   const t = useT();
