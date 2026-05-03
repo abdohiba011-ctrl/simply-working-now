@@ -39,6 +39,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { MotorbikeWizardDialog } from "@/components/agency/MotorbikeWizardDialog";
 
 type View = "grid" | "table";
 type Tab = "active" | "archived";
@@ -52,6 +53,13 @@ const Motorbikes = () => {
   const { bikes, loading, refresh } = useAgencyBikes({ archived: tab === "archived" });
   const [busyId, setBusyId] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<{ id: string; name: string } | null>(null);
+  const [wizardOpen, setWizardOpen] = useState(false);
+  const [wizardBikeId, setWizardBikeId] = useState<string | undefined>(undefined);
+
+  const openWizard = (id?: string) => {
+    setWizardBikeId(id);
+    setWizardOpen(true);
+  };
 
   const filtered = useMemo(() => {
     if (!search) return bikes;
