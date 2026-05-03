@@ -120,6 +120,8 @@ type CityRow = {
   is_available: boolean | null;
   is_coming_soon: boolean | null;
   image_url: string | null;
+  image_focal_x: number | null;
+  image_focal_y: number | null;
   description: string | null;
 };
 
