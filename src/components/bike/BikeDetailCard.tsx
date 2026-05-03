@@ -253,7 +253,10 @@ export const BikeDetailCard = ({
               <div className="mt-2 border-t border-border/50 pt-2">
                 <p className="mb-0.5 text-[10px] uppercase tracking-wider text-muted-foreground">Working hours</p>
                 {whSummary.map((line) => (
-                  <p key={line} className="text-[11px]">{line}</p>
+                  <p key={line.label} className="text-[11px] flex justify-between gap-2">
+                    <span className="text-muted-foreground">{line.label}</span>
+                    <span>{line.value}</span>
+                  </p>
                 ))}
               </div>
             )}
