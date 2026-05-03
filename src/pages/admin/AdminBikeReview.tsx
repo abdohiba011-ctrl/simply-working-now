@@ -246,8 +246,16 @@ const AdminBikeReview = () => {
                     ) : "—"
                   } />
                   <Field label="Contact" value={agency?.phone} />
-                  <Field label="City" value={agency?.city} />
-                  <Field label="Address" value={agency?.address} />
+                  <Field label="Agency city" value={agency?.city} />
+                  <Field label="Agency address" value={agency?.address} />
+                  <Field
+                    label="Bike pickup"
+                    value={
+                      bikeCityName || bike.neighborhood
+                        ? [bike.neighborhood, bikeCityName].filter(Boolean).join(" · ")
+                        : null
+                    }
+                  />
                 </div>
                 {bike.approval_status === "rejected" && bike.rejection_reason && (
                   <div className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm">
