@@ -2635,6 +2635,15 @@ export type Database = {
       approve_bike_type: { Args: { p_bike_type_id: string }; Returns: Json }
       archive_bike_type: { Args: { p_bike_type_id: string }; Returns: Json }
       auto_cancel_stale_pending_bookings: { Args: never; Returns: number }
+      bike_has_conflict: {
+        Args: {
+          _bike_id: string
+          _exclude_booking_id?: string
+          _pickup_date: string
+          _return_date: string
+        }
+        Returns: boolean
+      }
       cancel_booking_by_renter: { Args: { _booking_id: string }; Returns: Json }
       cleanup_old_draft_bookings: { Args: never; Returns: number }
       cleanup_stale_draft_bookings: { Args: never; Returns: number }
