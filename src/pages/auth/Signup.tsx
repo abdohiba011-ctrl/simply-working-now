@@ -621,13 +621,26 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
                         <SelectValue placeholder="Select..." />
                       </SelectTrigger>
                       <SelectContent>
-                        {cityList.map((c) => (
-                          <SelectItem key={c} value={c}>
-                            {c}
-                          </SelectItem>
-                        ))}
+                        {dbCities.map((c) => {
+                          const disabled = !c.is_available || c.is_coming_soon;
+                          return (
+                            <SelectItem key={c.id} value={c.name} disabled={disabled}>
+                              <span className="flex items-center justify-between gap-2 w-full">
+                                <span>{c.name}</span>
+                                {disabled && (
+                                  <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                                    Coming soon
+                                  </span>
+                                )}
+                              </span>
+                            </SelectItem>
+                          );
+                        })}
                       </SelectContent>
                     </Select>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      We currently operate in {availableCityCount} cities. More coming soon.
+                    </p>
                   </Field>
 
                   <Field
