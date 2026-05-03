@@ -22,7 +22,10 @@ export const CityImageUpload = ({
   cityId, 
   currentImageUrl, 
   onImageChange, 
-  disabled = false 
+  disabled = false,
+  focalX = 0.5,
+  focalY = 0.5,
+  onFocalChange,
 }: CityImageUploadProps) => {
   const [uploading, setUploading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
