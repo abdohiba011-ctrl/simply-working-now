@@ -19,6 +19,7 @@ import { AgencyShell } from "./components/agency/AgencyShell";
 import { AuthModalProvider } from "./contexts/AuthModalContext";
 import { AuthModal } from "./components/auth/AuthModal";
 import { AuthModalRedirect } from "./components/auth/AuthModalRedirect";
+import { useServiceCitiesRealtime } from "./hooks/useServiceCitiesRealtime";
 
 // Eagerly load critical above-the-fold pages
 import Index from "./pages/Index";
@@ -126,9 +127,17 @@ const queryClient = new QueryClient({
   },
 });
 
+const GlobalRealtime = () => {
+  // Single global subscription so any consumer of city queries gets
+  // live updates without having to wire its own channel.
+  useServiceCitiesRealtime();
+  return null;
+};
+
 const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
+      <GlobalRealtime />
       <TooltipProvider>
         <LanguageProvider>
           <Toaster />
