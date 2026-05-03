@@ -1,11 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
-  ArrowLeft, CheckCircle2, XCircle, Loader2,
-  RotateCcw, ImageOff, AlertTriangle, MapPin, Tag, Settings2, Gift, DollarSign, Building2,
+  ArrowLeft, CheckCircle2, XCircle, Loader2, RotateCcw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter,
@@ -17,12 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { StatusChip } from "@/components/shared/StatusChip";
-import {
-  BIKE_CATEGORIES, FEATURE_LABELS, FeatureKey,
-  licenseLabel, CANCELLATION_OPTIONS,
-} from "@/lib/bikeFeatures";
-import { TIER_MIN_DAYS, TIER_LABELS, tierSavingsPct, type TierMinDays } from "@/lib/pricingTiers";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { BikeDetailCard, type BikeDetailAgency, type BikeDetailPickup } from "@/components/bike/BikeDetailCard";
 
 const QUICK_REASONS = [
   "Photos are unclear or low quality",
