@@ -40,6 +40,7 @@ const Agencies = lazy(() => import("./pages/Agencies"));
 
 const BecomeBusiness = lazy(() => import("./pages/BecomeBusiness"));
 const Profile = lazy(() => import("./pages/Profile"));
+const Favorites = lazy(() => import("./pages/Favorites"));
 const BikeDetails = lazy(() => import("./pages/BikeDetails"));
 const BookingReview = lazy(() => import("./pages/BookingReview"));
 
