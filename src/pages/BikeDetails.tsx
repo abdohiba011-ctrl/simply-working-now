@@ -828,7 +828,11 @@ const BikeDetails = () => {
                 <div className="mt-3 space-y-1 text-sm text-foreground/80">
                   <p><span className="font-medium text-foreground">Area:</span> {neighborhood}, {cityName}</p>
                   <p className="text-muted-foreground">Exact address shared after booking confirmation.</p>
-                  <p className="text-muted-foreground">Free delivery within {neighborhood} · Other zones: +25 MAD</p>
+                  {resolvedAgency.deliveryOffered && (
+                    <p className="text-muted-foreground">
+                      Home delivery available {agencyDeliveryFee > 0 ? `(+${agencyDeliveryFee} MAD)` : "(free)"}
+                    </p>
+                  )}
                 </div>
               </section>
             </div>
