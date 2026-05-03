@@ -2595,6 +2595,7 @@ export type Database = {
       auto_cancel_stale_pending_bookings: { Args: never; Returns: number }
       cancel_booking_by_renter: { Args: { _booking_id: string }; Returns: Json }
       cleanup_old_draft_bookings: { Args: never; Returns: number }
+      cleanup_stale_draft_bookings: { Args: never; Returns: number }
       compute_bike_type_slug: {
         Args: { _name: string; _neighborhood: string }
         Returns: string
