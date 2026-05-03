@@ -232,7 +232,7 @@ export const BookingDatePicker = ({
     if (!open || isMobile || !triggerRef.current) return;
     const compute = () => {
       const rect = triggerRef.current!.getBoundingClientRect();
-      const width = Math.min(640, window.innerWidth - 16);
+      const width = Math.min(560, window.innerWidth - 16);
       let left = rect.left;
       if (align === "center") left = rect.left + rect.width / 2 - width / 2;
       if (align === "end") left = rect.right - width;
@@ -311,7 +311,7 @@ export const BookingDatePicker = ({
           <div
             ref={popoverRef}
             data-booking-datepicker="panel"
-            style={{ top: popoverPos.top, left: popoverPos.left, width: Math.min(640, window.innerWidth - 16) }}
+            style={{ top: popoverPos.top, left: popoverPos.left, width: Math.min(560, window.innerWidth - 16) }}
             className="fixed z-[200]"
           >
             <Panel
