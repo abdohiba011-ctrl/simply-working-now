@@ -308,7 +308,10 @@ const AdminBikeReview = () => {
                 <AccordionItem value="s3" className="rounded-lg border border-border bg-card">
                   <AccordionTrigger className="px-4">🎁 Step 3 — What's Included</AccordionTrigger>
                   <AccordionContent className="px-4 pb-4 space-y-3">
-                    <Field label="Helmets" value={bike.helmets_count != null ? `${bike.helmets_count} included` : null} />
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                      <Field label="Helmets" value={bike.helmets_count != null ? `${bike.helmets_count} included` : null} />
+                      <Field label="Helmet included" value={(bike.helmets_count ?? 0) > 0 ? "Yes" : "No"} />
+                    </div>
                     <div>
                       <p className="text-xs uppercase tracking-wide text-muted-foreground">Features</p>
                       {featureKeys.length === 0 ? (
@@ -364,6 +367,8 @@ const AdminBikeReview = () => {
                   <AccordionContent className="px-4 pb-4">
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                       <Field label="Daily price" value={bike.daily_price != null ? `${bike.daily_price} MAD` : null} />
+                      <Field label="Weekly price" value={bike.weekly_price != null ? `${bike.weekly_price} MAD` : null} />
+                      <Field label="Monthly price" value={bike.monthly_price != null ? `${bike.monthly_price} MAD` : null} />
                       <Field label="Deposit" value={bike.deposit_amount != null ? `${bike.deposit_amount} MAD` : null} />
                       <Field label="Min rental days" value={bike.min_rental_days} />
                       <Field label="Max rental days" value={bike.max_rental_days} />
