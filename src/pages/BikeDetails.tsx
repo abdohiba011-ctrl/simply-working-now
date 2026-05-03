@@ -627,7 +627,7 @@ const BikeDetails = () => {
 
   return (
     <>
-      <div className="min-h-screen bg-background overflow-x-hidden pb-24 lg:pb-0">
+      <div className="min-h-screen bg-background overflow-x-hidden pb-[130px] md:pb-0">
         <Header />
 
         <main className="container mx-auto px-4 sm:px-6 py-6 max-w-[1200px]">
