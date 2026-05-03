@@ -95,24 +95,17 @@ const formatDate = (dateString: string | null, formatStr: string = "MMM d, yyyy"
   }
 };
 
-type TypeFilter = "all" | "agency" | "company" | "individual" | "unspecified";
+type TypeFilter = "all" | "shop" | "individual";
 type SortField = "created_at" | "name" | "email";
 type SortDir = "asc" | "desc";
 
-// Mapping to actual stored business_type values in profiles.
-const AGENCY_TYPES = ["agency", "rental_shop"];
-const COMPANY_TYPES = ["company"];
+// Exact mapping to stored business_type values in profiles
+const SHOP_TYPES = ["rental_shop"];
 const INDIVIDUAL_TYPES = ["individual_owner", "individual"];
-const KNOWN_TYPES = [...AGENCY_TYPES, ...COMPANY_TYPES, ...INDIVIDUAL_TYPES];
-// Back-compat alias (still used by approval flow which writes "rental_shop").
-const SHOP_TYPES = AGENCY_TYPES;
 
 const businessTypeBadge = (bt: string | null) => {
-  if (bt && AGENCY_TYPES.includes(bt)) {
-    return { label: "Rental Shop / Agency", icon: Store, variant: "default" as const };
-  }
-  if (bt && COMPANY_TYPES.includes(bt)) {
-    return { label: "Company", icon: Building2, variant: "default" as const };
+  if (bt && SHOP_TYPES.includes(bt)) {
+    return { label: "Rental Shop", icon: Store, variant: "default" as const };
   }
   if (bt && INDIVIDUAL_TYPES.includes(bt)) {
     return { label: "Individual Owner", icon: User, variant: "secondary" as const };
@@ -180,16 +173,10 @@ export const AdminBusinessClientsTab = () => {
         )
         .eq("user_type", "business");
 
-      if (typeFilter === "agency") {
-        query = query.in("business_type", AGENCY_TYPES);
-      } else if (typeFilter === "company") {
-        query = query.in("business_type", COMPANY_TYPES);
+      if (typeFilter === "shop") {
+        query = query.in("business_type", SHOP_TYPES);
       } else if (typeFilter === "individual") {
         query = query.in("business_type", INDIVIDUAL_TYPES);
-      } else if (typeFilter === "unspecified") {
-        query = query.or(
-          `business_type.is.null,business_type.not.in.(${KNOWN_TYPES.join(",")})`,
-        );
       }
 
       if (searchQuery) {
@@ -611,24 +598,6 @@ export const AdminBusinessClientsTab = () => {
                   </div>
                 </div>
               </div>
-              <div className="flex flex-wrap gap-2 mt-3">
-                {([
-                  { key: "all", label: "All" },
-                  { key: "agency", label: "Agencies / Rental Shops" },
-                  { key: "company", label: "Companies" },
-                  { key: "individual", label: "Individual Owners" },
-                  { key: "unspecified", label: "Unspecified" },
-                ] as { key: TypeFilter; label: string }[]).map((c) => (
-                  <Button
-                    key={c.key}
-                    size="sm"
-                    variant={typeFilter === c.key ? "default" : "outline"}
-                    onClick={() => setTypeFilter(c.key)}
-                  >
-                    {c.label}
-                  </Button>
-                ))}
-              </div>
             </CardHeader>
             <CardContent>
               {isLoading ? (
@@ -746,7 +715,7 @@ export const AdminBusinessClientsTab = () => {
                                   <Button
                                     size="sm"
                                     variant="outline"
-                                    onClick={() => navigate(`/admin/business/${biz.id}`)}
+                                    onClick={() => navigate(`/admin/clients/${biz.id}`)}
                                   >
                                     <Eye className="h-4 w-4" />
                                   </Button>

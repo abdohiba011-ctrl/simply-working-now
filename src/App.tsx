@@ -72,7 +72,6 @@ const AdminAnalytics = lazy(() => import("./pages/admin/AdminAnalytics"));
 const UserVerificationDetails = lazy(() => import("./pages/UserVerificationDetails"));
 const UserDetails = lazy(() => import("./pages/admin/UserDetails"));
 const AdminClientDetails = lazy(() => import("./pages/admin/AdminClientDetails"));
-const AdminBusinessDetails = lazy(() => import("./pages/admin/AdminBusinessDetails"));
 const AgencyDashboard = lazy(() => import("./pages/agency/Dashboard"));
 const AgencyBookings = lazy(() => import("./pages/agency/Bookings"));
 const AgencyBookingDetail = lazy(() => import("./pages/agency/BookingDetail"));
@@ -238,7 +237,6 @@ const App = () => (
                 <Route path="/admin/analytics" element={<ProtectedRoute requireRole="admin"><AdminAnalytics /></ProtectedRoute>} />
                 <Route path="/admin/users/:id" element={<ProtectedRoute requireRole="admin"><UserDetails /></ProtectedRoute>} />
                 <Route path="/admin/clients/:id" element={<ProtectedRoute requireRole="admin"><AdminClientDetails /></ProtectedRoute>} />
-                <Route path="/admin/business/:id" element={<ProtectedRoute requireRole="admin"><AdminBusinessDetails /></ProtectedRoute>} />
                 <Route path="/admin/verifications/:id" element={<ProtectedRoute requireRole="admin"><UserVerificationDetails /></ProtectedRoute>} />
 
                 {/* Agency dashboard (new Wise-inspired UI) — shared shell so sidebar/header persist */}
