@@ -351,22 +351,6 @@ export default function RentCity() {
     licenses.length +
     features.length;
 
-  const toggleFavorite = (id: string, name: string) => {
-    setFavorites((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-        toast(`Removed ${name} from favorites`);
-      } else {
-        next.add(id);
-        toast.success(`Saved ${name} to favorites`);
-      }
-      try {
-        localStorage.setItem("favorite_bikes", JSON.stringify([...next]));
-      } catch {}
-      return next;
-    });
-  };
 
   const clearAll = () => {
     setNeighborhood(allCityLabel);
