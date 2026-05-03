@@ -95,7 +95,7 @@ export default function Favorites() {
           )}
         </div>
       </main>
-      <Footer />
+      
     </div>
   );
 }
