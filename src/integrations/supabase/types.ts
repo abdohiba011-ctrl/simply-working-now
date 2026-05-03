@@ -2438,6 +2438,9 @@ export type Database = {
           business_name: string | null
           city: string | null
           created_at: string | null
+          delivery_fee_mad: number | null
+          delivery_offered: boolean | null
+          delivery_radius_km: number | null
           id: string | null
           is_verified: boolean | null
           logo_url: string | null
@@ -2449,6 +2452,9 @@ export type Database = {
           business_name?: string | null
           city?: string | null
           created_at?: string | null
+          delivery_fee_mad?: number | null
+          delivery_offered?: boolean | null
+          delivery_radius_km?: number | null
           id?: string | null
           is_verified?: boolean | null
           logo_url?: string | null
@@ -2460,6 +2466,9 @@ export type Database = {
           business_name?: string | null
           city?: string | null
           created_at?: string | null
+          delivery_fee_mad?: number | null
+          delivery_offered?: boolean | null
+          delivery_radius_km?: number | null
           id?: string | null
           is_verified?: boolean | null
           logo_url?: string | null

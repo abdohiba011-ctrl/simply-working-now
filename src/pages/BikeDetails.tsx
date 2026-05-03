@@ -42,7 +42,7 @@ import { getBikeImageUrl } from "@/lib/bikeImages";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { usePricingTiers, getDailyPriceForDuration } from "@/hooks/usePricingTiers";
+// Phase 2: per-bike tiered pricing — currently using flat daily_price
 import { DateRangePicker } from "@/components/DateRangePicker";
 import { BookingDatePicker } from "@/components/BookingDatePicker";
 import { checkBikeAvailability, type Availability } from "@/lib/availability";
@@ -70,7 +70,7 @@ const BikeDetails = () => {
 
   const { data: bike, isLoading: isLoadingBike } = useBike(id || "");
   const { data: detailImages, isLoading: isLoadingImages } = useBikeTypeImages(bike?.bike_type_id || "");
-  const { data: pricingTiers } = usePricingTiers();
+  
 
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [pickupTime, setPickupTime] = useState<string>("08:00");
@@ -219,11 +219,10 @@ const BikeDetails = () => {
     : 0;
 
   const baseDailyPrice = bike?.bike_type ? Number(bike.bike_type.daily_price) : 0;
-  const tieredDailyPrice = getDailyPriceForDuration(pricingTiers, days || 1);
-  const dailyPrice = days > 0 ? tieredDailyPrice : baseDailyPrice;
+  const dailyPrice = baseDailyPrice;
   const subtotal = days * dailyPrice;
-  const baselineSubtotal = days * baseDailyPrice;
-  const tierDiscount = Math.max(0, baselineSubtotal - subtotal);
+  const baselineSubtotal = subtotal;
+  const tierDiscount = 0;
   const agencyDeliveryFee = resolvedAgency.deliveryFee;
   const deliveryFee = deliveryMethod === "delivery" ? agencyDeliveryFee : 0;
   const PLATFORM_FEE = 10;
