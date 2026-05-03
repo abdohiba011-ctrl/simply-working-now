@@ -247,7 +247,6 @@ const AdminBikeReview = () => {
           />
         </div>
       </main>
-      <Footer />
 
       {/* Reject dialog */}
       <Dialog open={rejectOpen} onOpenChange={setRejectOpen}>
@@ -315,7 +314,7 @@ const AdminBikeReview = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </AdminLayout>
   );
 };
 
