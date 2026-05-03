@@ -3,7 +3,7 @@ import { Link, Navigate, useNavigate, useParams, useSearchParams } from "react-r
 import {
   ChevronRight,
   Filter as FilterIcon,
-  Heart,
+  // (Heart icon was removed — favorites button lives inside BikeCard now)
   MapPin,
   Pencil,
   Calendar as CalendarIcon,
