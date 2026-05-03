@@ -46,6 +46,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { BookingDatePicker } from "@/components/BookingDatePicker";
 
 // Neighborhoods are loaded live from `service_locations` per city — no hardcoded list.
 // This means whenever an admin adds/edits/disables a neighborhood, the renter
@@ -612,24 +613,36 @@ export default function RentCity() {
           <span className="text-foreground font-medium">{cityName}</span>
         </nav>
 
-        {/* Date pill (read-only) — tap to go back and re-pick on Hero */}
-        {hasDates && (
+        {/* Editable dates pill: city portion → home, dates portion → opens picker inline */}
+        <div className="mb-4 inline-flex items-stretch rounded-full border border-[#163300]/15 bg-card overflow-hidden hover:border-[#9FE870] transition-colors">
           <button
             type="button"
             onClick={() => navigate("/")}
-            className="inline-flex items-center gap-2 mb-4 rounded-full border border-[#163300]/15 bg-card px-3 py-1.5 text-sm text-foreground hover:border-[#9FE870] transition-colors w-full sm:w-auto"
-            aria-label="Edit dates — back to search"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm text-foreground hover:bg-muted/50"
+            aria-label="Edit city / neighborhood"
           >
             <MapPin className="w-3.5 h-3.5 text-foreground/70" />
             <span className="font-medium">{cityName}{neighborhood !== allCityLabel ? `, ${neighborhood}` : ""}</span>
-            <span className="text-foreground/40">·</span>
-            <CalendarIcon className="w-3.5 h-3.5 text-foreground/70" />
-            <span className="font-medium">
-              {format(fromDate!, "MMM d")} → {format(toDate!, "MMM d")}
-            </span>
-            <Pencil className="w-3.5 h-3.5 text-foreground/50 ml-1" />
           </button>
-        )}
+          <div className="w-px bg-[#163300]/15" />
+          <BookingDatePicker
+            value={hasDates ? { from: fromDate!, to: toDate! } : undefined}
+            onChange={(r) => {
+              const next = new URLSearchParams(searchParams);
+              if (r?.from && r?.to) {
+                next.set("from", format(r.from, "yyyy-MM-dd"));
+                next.set("to", format(r.to, "yyyy-MM-dd"));
+              } else {
+                next.delete("from");
+                next.delete("to");
+              }
+              setSearchParams(next, { replace: true });
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+            triggerClassName="!h-auto !rounded-none !border-0 !bg-transparent !px-3 !py-1.5 !w-auto !text-sm hover:bg-muted/50"
+            placeholder="Pick dates"
+          />
+        </div>
 
         {/* Header row */}
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-6">

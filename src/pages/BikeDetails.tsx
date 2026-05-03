@@ -42,6 +42,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { usePricingTiers, getDailyPriceForDuration } from "@/hooks/usePricingTiers";
 import { DateRangePicker } from "@/components/DateRangePicker";
+import { BookingDatePicker } from "@/components/BookingDatePicker";
+import { checkBikeAvailability, type Availability } from "@/lib/availability";
 import { useDocumentHead } from "@/hooks/useDocumentHead";
 
 const isUuid = (s: string) =>
@@ -84,6 +86,36 @@ const BikeDetails = () => {
       setDateRange({ from: new Date(pickupParam), to: new Date(endParam) });
     }
   }, [pickupParam, endParam]);
+
+  // Availability check (stub for now)
+  const [availability, setAvailability] = useState<Availability>("idle");
+  useEffect(() => {
+    if (!dateRange?.from || !dateRange?.to) {
+      setAvailability("idle");
+      return;
+    }
+    let cancelled = false;
+    setAvailability("loading");
+    checkBikeAvailability(id || "", dateRange.from, dateRange.to).then((ok) => {
+      if (!cancelled) setAvailability(ok ? "available" : "unavailable");
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [id, dateRange?.from, dateRange?.to]);
+
+  // Push date changes to URL so they persist when sharing the link.
+  const updateDatesInUrl = (r: DateRange | undefined) => {
+    const params = new URLSearchParams(window.location.search);
+    if (r?.from && r?.to) {
+      params.set("from", format(r.from, "yyyy-MM-dd"));
+      params.set("to", format(r.to, "yyyy-MM-dd"));
+    } else {
+      params.delete("from");
+      params.delete("to");
+    }
+    navigate({ search: params.toString() }, { replace: true });
+  };
 
   // Resolve real city + agency from DB (no hardcoded Casablanca / Casa Moto Rent).
   const [resolvedCity, setResolvedCity] = useState<string | null>(null);
@@ -358,50 +390,54 @@ const BikeDetails = () => {
 
         <div className="border-t border-border/60" />
 
-        {/* Dates */}
-        {datesLocked && dateRange?.from && dateRange?.to ? (
-          <div className="space-y-2">
-            <Label className="text-[11px] uppercase tracking-wide text-muted-foreground">Rental dates</Label>
-            <div className="rounded-lg border border-border bg-muted/40 p-3">
-              <div className="flex items-center justify-between gap-3">
-                <div className="grid grid-cols-2 gap-4 flex-1">
-                  <div>
-                    <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Pickup</div>
-                    <div className="text-sm font-semibold text-foreground">{format(dateRange.from, "MMM d, yyyy")}</div>
-                  </div>
-                  <div>
-                    <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Return</div>
-                    <div className="text-sm font-semibold text-foreground">{format(dateRange.to, "MMM d, yyyy")}</div>
-                  </div>
-                </div>
-                <div className="flex flex-col items-end gap-0.5 text-[10px] text-muted-foreground">
-                  <Lock className="h-3.5 w-3.5" />
-                  <span>Set from search</span>
+        {/* Editable dates */}
+        <div className="space-y-2">
+          <Label className="text-[11px] uppercase tracking-wide text-muted-foreground">Pickup & Return</Label>
+          <BookingDatePicker
+            value={dateRange}
+            onChange={(r) => {
+              handleDateRangeSelect(r);
+              updateDatesInUrl(r);
+            }}
+            triggerClassName="group hover:border-[#9FE870] hover:shadow-sm transition-all"
+            placeholder="Pick dates"
+          />
+          {dateRange?.from && dateRange?.to && (
+            <p className="text-xs text-muted-foreground">
+              {days} day{days !== 1 ? "s" : ""}
+            </p>
+          )}
+
+          {/* Availability badge */}
+          {availability === "loading" && (
+            <div className="flex items-center gap-2 rounded-md bg-muted px-3 py-2.5 text-xs text-muted-foreground">
+              <Clock className="h-3.5 w-3.5 animate-pulse" />
+              Checking availability...
+            </div>
+          )}
+          {availability === "available" && (
+            <div className="flex items-start gap-2 rounded-md px-3 py-2.5 text-xs" style={{ backgroundColor: "rgba(159,232,112,0.15)", color: "#163300" }}>
+              <CheckCircle2 className="h-4 w-4 mt-0.5 text-[#163300]" />
+              <div>
+                <div className="font-semibold">Available for these dates</div>
+                <div className="opacity-70">Confirm in 60 seconds</div>
+              </div>
+            </div>
+          )}
+          {availability === "unavailable" && (
+            <div className="flex items-start gap-2 rounded-md px-3 py-2.5 text-xs" style={{ backgroundColor: "rgba(255,193,7,0.12)", color: "#7a4a00" }}>
+              <AlertTriangle className="h-4 w-4 mt-0.5" />
+              <div>
+                <div className="font-semibold">Not available for these dates</div>
+                <div className="opacity-90">
+                  <button type="button" onClick={() => updateDatesInUrl(undefined)} className="underline">Try different dates</button>
+                  {" "}or{" "}
+                  <Link to={`/rent/${cityName.toLowerCase()}`} className="underline">browse similar</Link>
                 </div>
               </div>
-              <p className="text-xs text-muted-foreground mt-2">
-                {days} day{days !== 1 ? "s" : ""} · To change dates, go back and re-search.
-              </p>
             </div>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            <Label className="text-[11px] uppercase tracking-wide text-muted-foreground">Rental dates</Label>
-            <div className="rounded-lg border-2 border-dashed border-border p-4 text-center space-y-2">
-              <Lock className="h-4 w-4 mx-auto text-muted-foreground" />
-              <p className="text-sm font-medium text-foreground">No dates selected</p>
-              <p className="text-xs text-muted-foreground">Pick your pickup and return dates to check availability and book.</p>
-              <Button
-                variant="outline"
-                size="sm"
-                className="mt-2"
-                onClick={() => navigate(`/?city=${encodeURIComponent(cityName)}`)}
-              >
-                Select dates to check availability
-              </Button>
-            </div>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* Times */}
         {dateRange?.from && dateRange?.to && (
@@ -550,35 +586,48 @@ const BikeDetails = () => {
         )}
 
         {/* CTA */}
+        {days > 0 && availability !== "unavailable" && (
+          <p className="text-[11px] text-center text-foreground/70">⚡ Confirm in 60 seconds</p>
+        )}
         <Button
           variant="hero"
           size="lg"
           className="w-full h-12 font-bold"
           onClick={handleBookNow}
-          disabled={!dateRange?.from || !dateRange?.to || !pickupTime || !dropoffTime}
+          disabled={
+            !dateRange?.from || !dateRange?.to || !pickupTime || !dropoffTime ||
+            availability === "loading" || availability === "unavailable"
+          }
         >
-          Book Now — Pay {upfrontTotal} MAD
+          {!dateRange?.from || !dateRange?.to
+            ? "Select dates to book"
+            : availability === "loading"
+              ? "Checking..."
+              : availability === "unavailable"
+                ? "Not available for these dates"
+                : `Book Now — Pay ${upfrontTotal} MAD`}
         </Button>
-        <p className="text-xs text-muted-foreground text-center leading-relaxed">
-          You'll pay {upfrontTotal} MAD now via YouCan Pay ({PLATFORM_FEE} MAD platform fee + {CONFIRMATION_FEE} MAD confirmation fee).
-          Pay {pickupTotal.toLocaleString()} MAD to the agency at pickup.
-        </p>
 
-        {/* Trust badges */}
-        <div className="flex items-center justify-center gap-3 pt-2 border-t border-border/60 text-[11px] text-muted-foreground">
+        {/* Trust badges (right under CTA) */}
+        <div className="flex items-center justify-center gap-3 pt-1 text-[11px] text-muted-foreground">
           <span className="inline-flex items-center gap-1"><Shield className="h-3 w-3" /> Verified agency</span>
           <span>·</span>
           <span className="inline-flex items-center gap-1"><Lock className="h-3 w-3" /> Secure payment</span>
           <span>·</span>
           <span className="inline-flex items-center gap-1"><MessageCircle className="h-3 w-3" /> Chat after booking</span>
         </div>
+
+        <p className="text-[11px] text-muted-foreground text-center leading-relaxed pt-2 border-t border-border/60">
+          You'll pay {upfrontTotal} MAD now via YouCan Pay ({PLATFORM_FEE} MAD platform fee + {CONFIRMATION_FEE} MAD confirmation fee).
+          Pay {pickupTotal.toLocaleString()} MAD to the agency at pickup.
+        </p>
       </CardContent>
     </Card>
   );
 
   return (
     <>
-      <div className="min-h-screen bg-background overflow-x-hidden pb-24 lg:pb-0">
+      <div className="min-h-screen bg-background overflow-x-hidden pb-[130px] md:pb-0">
         <Header />
 
         <main className="container mx-auto px-4 sm:px-6 py-6 max-w-[1200px]">
@@ -759,21 +808,39 @@ const BikeDetails = () => {
           </div>
         </main>
 
-        {/* Mobile sticky bottom bar */}
-        <div className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-background border-t border-border shadow-lg p-3 flex items-center justify-between gap-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
-          <div className="min-w-0">
-            <p className="text-lg font-bold text-foreground leading-tight">
-              {Math.round(baseDailyPrice)} MAD<span className="text-xs font-normal text-muted-foreground">/day</span>
+        {/* Mobile sticky bottom bar (mobile only; tablet+ stacks BookingCard below) */}
+        <div className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-background border-t border-border shadow-lg px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
+          <div className="flex items-baseline justify-between gap-2 mb-1">
+            <p className="text-sm font-bold text-foreground leading-tight">
+              {Math.round(baseDailyPrice)} MAD<span className="text-[11px] font-normal text-muted-foreground">/day</span>
+              {availability === "available" && (
+                <span className="ml-2 text-[11px] font-medium text-[#163300]">· ✓ Available</span>
+              )}
+              {availability === "unavailable" && (
+                <span className="ml-2 text-[11px] font-medium text-amber-700">· ⚠ Unavailable</span>
+              )}
             </p>
+            {days > 0 && (
+              <p className="text-[11px] text-muted-foreground">
+                {format(dateRange!.from!, "MMM d")} → {format(dateRange!.to!, "MMM d")} · {Math.round(subtotal)} MAD
+              </p>
+            )}
           </div>
           <Button
             variant="hero"
             size="lg"
-            className="flex-1 max-w-[220px] font-bold"
+            className="w-full font-bold"
             onClick={handleBookNow}
-            disabled={!dateRange?.from || !dateRange?.to || !pickupTime || !dropoffTime}
+            disabled={
+              !dateRange?.from || !dateRange?.to || !pickupTime || !dropoffTime ||
+              availability === "loading" || availability === "unavailable"
+            }
           >
-            Book Now
+            {!dateRange?.from || !dateRange?.to
+              ? "Select dates to book"
+              : availability === "unavailable"
+                ? "Not available"
+                : `Book Now — Pay ${upfrontTotal} MAD`}
           </Button>
         </div>
       </div>
