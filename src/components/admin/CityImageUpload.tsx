@@ -47,11 +47,11 @@ export const CityImageUpload = ({
       const extension = file.name.split('.').pop()?.toLowerCase() || 'jpg';
       const timestamp = Date.now();
       const randomString = Math.random().toString(36).substring(2, 8);
-      const folder = cityId ? `cities/${cityId}` : 'cities/temp';
+      const folder = cityId ? `${cityId}` : 'temp';
       const filename = `${folder}/${timestamp}-${randomString}.${extension}`;
 
       const { data, error: uploadError } = await supabase.storage
-        .from('bike-images')
+        .from('city-images')
         .upload(filename, file, {
           cacheControl: '3600',
           upsert: false
@@ -62,7 +62,7 @@ export const CityImageUpload = ({
       }
 
       const { data: urlData } = supabase.storage
-        .from('bike-images')
+        .from('city-images')
         .getPublicUrl(data.path);
 
       onImageChange(urlData.publicUrl);
