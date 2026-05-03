@@ -92,37 +92,46 @@ export const HeroSection = memo(() => {
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [calendarOpen, setCalendarOpen] = useState(false);
 
-  // Cities loaded from DB so the dropdown reflects real availability.
-  const [availableCities, setAvailableCities] = useState<string[]>([]);
-  const [comingSoonCities, setComingSoonCities] = useState<string[]>([]);
-  const [cityIdByName, setCityIdByName] = useState<Record<string, string>>({});
-  const [neighborhoods, setNeighborhoods] = useState<string[]>([]);
+  // Cities loaded from DB via React Query + realtime so the dropdown
+  // reflects admin changes within ~2s without a reload.
+  useServiceCitiesRealtime();
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      const { data } = await supabase
+  const { data: cityRows = [] } = useQuery({
+    queryKey: ["service-cities-public"],
+    queryFn: async () => {
+      const { data, error } = await supabase
         .from("service_cities")
-        .select("id, name, is_available, is_coming_soon")
+        .select("id, name, slug, is_available, is_coming_soon")
         .order("display_order", { ascending: true })
         .order("name", { ascending: true });
-      if (cancelled || !data) return;
-      const avail: string[] = [];
-      const soon: string[] = [];
-      const idMap: Record<string, string> = {};
-      for (const row of data) {
-        idMap[row.name] = row.id;
-        if (row.is_coming_soon) soon.push(row.name);
-        else if (row.is_available) avail.push(row.name);
-      }
-      setAvailableCities(avail);
-      setComingSoonCities(soon);
-      setCityIdByName(idMap);
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const availableCities = useMemo(
+    () => cityRows.filter((c) => c.is_available && !c.is_coming_soon).map((c) => c.name),
+    [cityRows],
+  );
+  const comingSoonCities = useMemo(
+    () => cityRows.filter((c) => c.is_coming_soon).map((c) => c.name),
+    [cityRows],
+  );
+  const cityIdByName = useMemo(() => {
+    const m: Record<string, string> = {};
+    cityRows.forEach((c) => {
+      m[c.name] = c.id;
+    });
+    return m;
+  }, [cityRows]);
+  const slugByName = useMemo(() => {
+    const m: Record<string, string> = {};
+    cityRows.forEach((c) => {
+      if (c.slug) m[c.name] = c.slug;
+    });
+    return m;
+  }, [cityRows]);
+  const [neighborhoods, setNeighborhoods] = useState<string[]>([]);
 
   // Load neighborhoods live from service_locations whenever the selected city changes.
   useEffect(() => {
