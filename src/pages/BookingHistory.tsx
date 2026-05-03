@@ -341,18 +341,33 @@ const BookingHistory = () => {
                     ({booking.bikes.bike_type.daily_price} DH/day)
                   </span>
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    navigate(`/booking/${booking.id}`);
-                  }}
-                  className="gap-2"
-                >
-                  View Details
-                  <ChevronLeft className="h-4 w-4 rotate-180" />
-                </Button>
+                {isCashplusDraft ? (
+                  <Button
+                    variant="hero"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/checkout/${booking.id}`);
+                    }}
+                    className="gap-2"
+                  >
+                    Verify payment
+                    <ChevronLeft className="h-4 w-4 rotate-180" />
+                  </Button>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/booking/${booking.id}`);
+                    }}
+                    className="gap-2"
+                  >
+                    View Details
+                    <ChevronLeft className="h-4 w-4 rotate-180" />
+                  </Button>
+                )}
               </div>
             </div>
           </div>
