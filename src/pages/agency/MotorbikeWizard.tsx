@@ -374,11 +374,15 @@ const MotorbikeWizard = () => {
         if (bikeErr) throw bikeErr;
       }
 
-      toast.success(
-        editing
-          ? "Changes saved" + (currentStatus === "approved" ? " — bike resubmitted for review" : "")
-          : "Submitted for review. We'll notify you within 24-48 hours."
-      );
+      if (!editing) {
+        toast.success("Submitted for review. We'll notify you within 24-48 hours.");
+      } else if (triggerChanged) {
+        toast.message("Bike submitted for review", {
+          description: "Changes to photos/specs require admin approval. Currently hidden from search.",
+        });
+      } else {
+        toast.success("Bike updated. Changes are live.");
+      }
       navigate("/agency/motorbikes");
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : "Failed to save motorbike";
