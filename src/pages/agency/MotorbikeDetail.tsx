@@ -579,6 +579,13 @@ const MotorbikeDetail = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <MotorbikeWizardDialog
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        bikeId={bike.id}
+        onSaved={() => setRefreshTick((t) => t + 1)}
+      />
     </AgencyLayout>
   );
 };
