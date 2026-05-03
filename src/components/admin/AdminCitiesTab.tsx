@@ -210,6 +210,8 @@ export const AdminCitiesTab = () => {
       const updatePayload = {
         name: editingCity.name,
         image_url: editingCity.image_url,
+        image_focal_x: editingCity.image_focal_x,
+        image_focal_y: editingCity.image_focal_y,
         is_available: editingCity.is_available,
         is_coming_soon: editingCity.is_coming_soon,
         show_in_homepage: editingCity.show_in_homepage,
