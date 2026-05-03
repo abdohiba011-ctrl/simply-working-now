@@ -613,39 +613,20 @@ export default function RentCity() {
         </nav>
 
         {/* Editable dates pill: city portion → home, dates portion → opens picker inline */}
-        <div className="mb-4">
-          <div className="inline-flex items-stretch rounded-full border border-[#163300]/15 bg-card overflow-hidden hover:border-[#9FE870] transition-colors">
-            <button
-              type="button"
-              onClick={() => navigate("/")}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm text-foreground hover:bg-muted/50"
-              aria-label="Edit city / neighborhood"
-            >
-              <MapPin className="w-3.5 h-3.5 text-foreground/70" />
-              <span className="font-medium">{cityName}{neighborhood !== allCityLabel ? `, ${neighborhood}` : ""}</span>
-            </button>
-            <div className="w-px bg-[#163300]/15" />
-            <button
-              type="button"
-              onClick={() => setDatePillOpen(true)}
-              ref={datePillRef}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm text-foreground hover:bg-muted/50"
-              aria-label="Edit dates"
-            >
-              <CalendarIcon className="w-3.5 h-3.5 text-foreground/70" />
-              <span className="font-medium">
-                {hasDates ? `${format(fromDate!, "MMM d")} → ${format(toDate!, "MMM d")}` : "Pick dates"}
-              </span>
-              <Pencil className="w-3.5 h-3.5 text-foreground/50 ml-1" />
-            </button>
-          </div>
-        </div>
-        {datePillOpen && (
-          <PillDatePickerPopover
-            anchorRef={datePillRef}
-            initial={hasDates ? { from: fromDate!, to: toDate! } : undefined}
-            onClose={() => setDatePillOpen(false)}
-            onApply={(r) => {
+        <div className="mb-4 inline-flex items-stretch rounded-full border border-[#163300]/15 bg-card overflow-hidden hover:border-[#9FE870] transition-colors">
+          <button
+            type="button"
+            onClick={() => navigate("/")}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm text-foreground hover:bg-muted/50"
+            aria-label="Edit city / neighborhood"
+          >
+            <MapPin className="w-3.5 h-3.5 text-foreground/70" />
+            <span className="font-medium">{cityName}{neighborhood !== allCityLabel ? `, ${neighborhood}` : ""}</span>
+          </button>
+          <div className="w-px bg-[#163300]/15" />
+          <BookingDatePicker
+            value={hasDates ? { from: fromDate!, to: toDate! } : undefined}
+            onChange={(r) => {
               const next = new URLSearchParams(searchParams);
               if (r?.from && r?.to) {
                 next.set("from", format(r.from, "yyyy-MM-dd"));
@@ -655,11 +636,12 @@ export default function RentCity() {
                 next.delete("to");
               }
               setSearchParams(next, { replace: true });
-              setDatePillOpen(false);
               window.scrollTo({ top: 0, behavior: "smooth" });
             }}
+            triggerClassName="!h-auto !rounded-none !border-0 !bg-transparent !px-3 !py-1.5 !w-auto !text-sm hover:bg-muted/50"
+            placeholder="Pick dates"
           />
-        )}
+        </div>
 
         {/* Header row */}
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-6">
