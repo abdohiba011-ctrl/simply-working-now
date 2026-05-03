@@ -60,7 +60,6 @@ export function BikeCard({
       : totalDays >= 7 && weekly > 0
         ? weekly
         : price;
-  const deposit = Math.round(price * 10);
 
   const features = bike.features || [];
   const visibleFeatures = features.slice(0, 3);
