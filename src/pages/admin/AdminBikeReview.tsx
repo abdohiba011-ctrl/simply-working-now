@@ -24,6 +24,9 @@ import {
   BIKE_CATEGORIES, FEATURE_LABELS, FeatureKey,
   licenseLabel, CANCELLATION_OPTIONS,
 } from "@/lib/bikeFeatures";
+import { TIER_MIN_DAYS, TIER_LABELS, tierSavingsPct, type TierMinDays } from "@/lib/pricingTiers";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { AlertTriangle } from "lucide-react";
 
 const QUICK_REASONS = [
   "Photos are unclear or low quality",
