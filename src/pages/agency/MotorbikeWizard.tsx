@@ -52,6 +52,8 @@ const MotorbikeWizard = () => {
   const [bikeId, setBikeId] = useState<string | null>(editing ? id || null : null);
   const [mainImageUrl, setMainImageUrl] = useState<string | null>(null);
   const [photoCount, setPhotoCount] = useState<number>(0);
+  const [initialPhotoIds, setInitialPhotoIds] = useState<string[]>([]);
+  const [initialMainImageUrl, setInitialMainImageUrl] = useState<string | null>(null);
   const [currentStatus, setCurrentStatus] = useState<string>("draft");
   const [stepIdx, setStepIdx] = useState(0);
 
