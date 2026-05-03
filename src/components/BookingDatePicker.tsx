@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { DateRange } from "react-day-picker";
 import { format, differenceInDays, isBefore, startOfDay } from "date-fns";
-import { Calendar as CalendarIcon, RotateCcw } from "lucide-react";
+import { Calendar as CalendarIcon, RotateCcw, X } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
