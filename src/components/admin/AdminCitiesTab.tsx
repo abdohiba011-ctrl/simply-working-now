@@ -46,6 +46,24 @@ import { toast } from "sonner";
 import { CityImageUpload } from "./CityImageUpload";
 import { useServiceCitiesRealtime } from "@/hooks/useBikeTypesRealtime";
 import { AdminTableSkeleton } from "@/components/ui/admin-skeleton";
+import { GripVertical } from "lucide-react";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  arrayMove,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 interface ServiceCity {
   id: string;
@@ -88,6 +106,38 @@ const emptyNewCity = {
   is_available: false,
   is_coming_soon: true,
   show_in_homepage: true,
+};
+
+interface SortableCityWrapperProps {
+  id: string;
+  children: (handleProps: {
+    listeners: any;
+    attributes: any;
+    setActivatorNodeRef: (el: HTMLElement | null) => void;
+  }) => React.ReactNode;
+}
+
+const SortableCityWrapper = ({ id, children }: SortableCityWrapperProps) => {
+  const {
+    setNodeRef,
+    setActivatorNodeRef,
+    transform,
+    transition,
+    listeners,
+    attributes,
+    isDragging,
+  } = useSortable({ id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.6 : 1,
+    zIndex: isDragging ? 10 : ("auto" as any),
+  };
+  return (
+    <div ref={setNodeRef} style={style} className="border rounded-lg overflow-hidden bg-card">
+      {children({ listeners, attributes, setActivatorNodeRef })}
+    </div>
+  );
 };
 
 export const AdminCitiesTab = () => {
@@ -480,7 +530,45 @@ export const AdminCitiesTab = () => {
     }
   };
 
-  // ---------- Derived ----------
+  // ---------- Drag-to-reorder ----------
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    if (searchQuery.trim()) {
+      toast.info("Clear the search to reorder cities");
+      return;
+    }
+    const oldIndex = cities.findIndex((c) => c.id === active.id);
+    const newIndex = cities.findIndex((c) => c.id === over.id);
+    if (oldIndex < 0 || newIndex < 0) return;
+    const reordered = arrayMove(cities, oldIndex, newIndex).map((c, idx) => ({
+      ...c,
+      display_order: idx + 1,
+    }));
+    setCities(reordered); // optimistic
+    try {
+      // Persist new orders one by one (no upsert on full row to avoid clobbering)
+      const updates = reordered.map((c) =>
+        supabase
+          .from("service_cities")
+          .update({ display_order: c.display_order })
+          .eq("id", c.id),
+      );
+      const results = await Promise.all(updates);
+      const firstErr = results.find((r) => r.error)?.error;
+      if (firstErr) throw firstErr;
+      toast.success("City order updated");
+    } catch {
+      toast.error("Failed to save new order");
+      fetchAll();
+    }
+  };
+
   const locationsByCityId = useMemo(() => {
     const map = new Map<string, ServiceLocation[]>();
     locations.forEach((loc) => {
@@ -587,29 +675,41 @@ export const AdminCitiesTab = () => {
           ) : filteredCities.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">No cities found</div>
           ) : (
-            <div className="space-y-3">
-              {filteredCities.map((city) => {
-                const isOpen = expanded.has(city.id);
-                const hoods = locationsByCityId.get(city.id) || [];
-                const liveBikes = liveCounts.get(city.id) ?? 0;
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+              <SortableContext items={filteredCities.map((c) => c.id)} strategy={verticalListSortingStrategy}>
+                <div className="space-y-3">
+                  {filteredCities.map((city) => {
+                    const isOpen = expanded.has(city.id);
+                    const hoods = locationsByCityId.get(city.id) || [];
+                    const liveBikes = liveCounts.get(city.id) ?? 0;
 
-                return (
-                  <div
-                    key={city.id}
-                    className="border rounded-lg overflow-hidden bg-card"
-                  >
-                    {/* City row */}
-                    <div className="flex items-center gap-3 p-3 hover:bg-muted/40 transition-colors">
-                      <button
-                        type="button"
-                        onClick={() => toggleExpand(city.id)}
-                        className="p-1 rounded hover:bg-muted"
-                        aria-label={isOpen ? "Collapse" : "Expand"}
-                      >
-                        {isOpen ? (
-                          <ChevronDown className="h-4 w-4" />
-                        ) : (
-                          <ChevronRight className="h-4 w-4" />
+                    return (
+                      <SortableCityWrapper key={city.id} id={city.id}>
+                        {({ listeners, attributes, setActivatorNodeRef }) => (
+                          <>
+                            {/* City row */}
+                            <div className="flex items-center gap-3 p-3 hover:bg-muted/40 transition-colors">
+                              <button
+                                ref={setActivatorNodeRef}
+                                type="button"
+                                {...listeners}
+                                {...attributes}
+                                className="p-1 rounded hover:bg-muted cursor-grab active:cursor-grabbing touch-none"
+                                aria-label="Drag to reorder"
+                                title="Drag to reorder"
+                              >
+                                <GripVertical className="h-4 w-4 text-muted-foreground" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => toggleExpand(city.id)}
+                                className="p-1 rounded hover:bg-muted"
+                                aria-label={isOpen ? "Collapse" : "Expand"}
+                              >
+                                {isOpen ? (
+                                  <ChevronDown className="h-4 w-4" />
+                                ) : (
+                                  <ChevronRight className="h-4 w-4" />
                         )}
                       </button>
 
@@ -780,10 +880,14 @@ export const AdminCitiesTab = () => {
                         </Button>
                       </div>
                     )}
-                  </div>
-                );
-              })}
-            </div>
+                          </>
+                        )}
+                      </SortableCityWrapper>
+                    );
+                  })}
+                </div>
+              </SortableContext>
+            </DndContext>
           )}
         </CardContent>
       </Card>
