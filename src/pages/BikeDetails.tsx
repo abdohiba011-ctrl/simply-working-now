@@ -808,7 +808,7 @@ const BikeDetails = () => {
             </p>
             {days > 0 && (
               <p className="text-[11px] text-muted-foreground">
-                {format(dateRange!.from!, "MMM d")} → {format(dateRange!.to!, "MMM d")} · {Math.round(subtotal)} MAD
+                {format(dateRange!.from!, "MMM d")} → {format(dateRange!.to!, "MMM d")} · {tripTotal.toLocaleString()} MAD total
               </p>
             )}
           </div>
