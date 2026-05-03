@@ -18,6 +18,7 @@ import {
   ShieldCheck,
   Lock,
   Info,
+  Loader2,
 } from "lucide-react";
 import { format } from "date-fns";
 import { useAuth } from "@/hooks/useAuth";
@@ -36,8 +37,8 @@ interface DraftBooking {
   bike_id: string;
   pickup_date: string;
   return_date: string;
-  total_days: number;
-  total_price: number;
+  total_days: number | null;
+  total_price: number | null;
   delivery_method: string | null;
   pickup_location: string | null;
   customer_name: string | null;
@@ -45,10 +46,10 @@ interface DraftBooking {
   customer_phone: string | null;
   booking_status: string;
   bike?: {
-    name: string | null;
-    daily_price: number | null;
-    image_url: string | null;
-    city: string | null;
+    name?: string | null;
+    daily_price?: number | null;
+    image_url?: string | null;
+    city?: string | null;
   };
 }
 
@@ -59,10 +60,10 @@ const CheckoutDraft = () => {
   const { isRTL } = useLanguage();
 
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [booking, setBooking] = useState<DraftBooking | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("card");
 
-  // Renter form state
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -79,7 +80,7 @@ const CheckoutDraft = () => {
           .select(
             `id, bike_id, pickup_date, return_date, total_days, total_price,
              delivery_method, pickup_location, customer_name, customer_email,
-             customer_phone, booking_status, user_id`
+             customer_phone, booking_status, user_id`,
           )
           .eq("id", bookingId)
           .maybeSingle();
@@ -91,19 +92,34 @@ const CheckoutDraft = () => {
           return;
         }
         if (data.booking_status !== "draft") {
-          // Already promoted — go to confirmation
           navigate(`/booking/${data.id}/confirmed`);
           return;
         }
 
-        // Fetch bike snapshot for the summary card
-        const { data: bike } = await supabase
-          .from("bikes")
-          .select("name, daily_price, image_url, city")
-          .eq("id", data.bike_id)
-          .maybeSingle();
+        // Fetch bike type info via bike → bike_type.
+        let bikeInfo: DraftBooking["bike"] = undefined;
+        if (data.bike_id) {
+          const { data: bikeRow } = await supabase
+            .from("bikes")
+            .select("location, bike_type_id")
+            .eq("id", data.bike_id)
+            .maybeSingle();
+          if (bikeRow?.bike_type_id) {
+            const { data: bt } = await supabase
+              .from("bike_types")
+              .select("name, daily_price, main_image_url")
+              .eq("id", bikeRow.bike_type_id)
+              .maybeSingle();
+            bikeInfo = {
+              name: bt?.name,
+              daily_price: bt?.daily_price,
+              image_url: bt?.main_image_url,
+              city: bikeRow.location,
+            };
+          }
+        }
 
-        setBooking({ ...(data as any), bike: bike ?? undefined });
+        setBooking({ ...(data as any), bike: bikeInfo });
         setName(data.customer_name || "");
         setEmail(data.customer_email || user?.email || "");
         setPhone(data.customer_phone || "");
@@ -121,6 +137,84 @@ const CheckoutDraft = () => {
   const dailyPrice = booking?.bike?.daily_price ?? 0;
   const rentalSubtotal = booking?.total_price ?? days * dailyPrice;
   const dueAtPickup = Math.max(0, rentalSubtotal - CONFIRMATION_FEE_MAD);
+
+  const validateForm = () => {
+    if (!name.trim()) {
+      toast.error("Please enter your full name.");
+      return false;
+    }
+    if (!email.trim() || !/.+@.+\..+/.test(email)) {
+      toast.error("Please enter a valid email.");
+      return false;
+    }
+    if (!phone.trim()) {
+      toast.error("Please enter your phone number.");
+      return false;
+    }
+    return true;
+  };
+
+  const persistRenterInfo = async () => {
+    const { error } = await supabase
+      .from("bookings")
+      .update({
+        customer_name: name.trim(),
+        customer_email: email.trim(),
+        customer_phone: phone.trim(),
+      })
+      .eq("id", bookingId!)
+      .eq("booking_status", "draft");
+    if (error) throw error;
+  };
+
+  const handleCardPay = async () => {
+    if (!booking || !validateForm()) return;
+    setSubmitting(true);
+    try {
+      await persistRenterInfo();
+
+      const { data: tokenResp, error: tokenErr } =
+        await supabase.functions.invoke("youcanpay-create-token", {
+          body: {
+            purpose: "booking_payment",
+            amount: UPFRONT_TOTAL_MAD,
+            currency: "MAD",
+            related_booking_id: booking.id,
+            customer_email: email.trim(),
+            customer_name: name.trim(),
+          },
+        });
+
+      if (tokenErr || !tokenResp?.token_id || !tokenResp?.public_key) {
+        const detail =
+          (tokenResp && (tokenResp.error || tokenResp.details?.message)) ||
+          tokenErr?.message ||
+          "Payment service is unavailable.";
+        toast.error(`Payment could not start: ${detail}`);
+        setSubmitting(false);
+        return;
+      }
+
+      const successPath = `/booking/${booking.id}/confirmed`;
+      const errorPath = `/checkout/${booking.id}?yc=error`;
+      const qs = new URLSearchParams({
+        token: tokenResp.token_id,
+        pubKey: tokenResp.public_key,
+        pid: tokenResp.payment_id,
+        amount: String(UPFRONT_TOTAL_MAD),
+        currency: "MAD",
+        sandbox: tokenResp.is_sandbox ? "1" : "0",
+        success: successPath,
+        error: errorPath,
+        title: "Pay booking fee",
+      });
+      navigate(`/pay/youcanpay?${qs.toString()}`);
+    } catch (e: any) {
+      console.error(e);
+      toast.error("Could not start payment. Please try again.");
+      setSubmitting(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -149,7 +243,6 @@ const CheckoutDraft = () => {
       <Header />
 
       <div className="container mx-auto px-4 py-6 max-w-6xl">
-        {/* Back + title */}
         <div className="flex items-center gap-3 mb-6">
           <Button
             variant="ghost"
@@ -171,9 +264,7 @@ const CheckoutDraft = () => {
         </div>
 
         <div className="grid lg:grid-cols-5 gap-8">
-          {/* LEFT — Reservation review */}
           <div className="lg:col-span-3 space-y-6">
-            {/* Bike summary */}
             <Card>
               <CardContent className="p-5">
                 <div className="flex gap-4">
@@ -208,7 +299,6 @@ const CheckoutDraft = () => {
               </CardContent>
             </Card>
 
-            {/* Trip details */}
             <Card>
               <CardContent className="p-5 space-y-4">
                 <h3 className="font-semibold text-foreground">Trip details</h3>
@@ -235,7 +325,9 @@ const CheckoutDraft = () => {
                     <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground" />
                     <div>
                       <p className="font-medium text-foreground">
-                        {booking.delivery_method === "delivery" ? "Delivery" : "Pickup at agency"}
+                        {booking.delivery_method === "delivery"
+                          ? "Delivery"
+                          : "Pickup at agency"}
                       </p>
                       <p className="text-muted-foreground">
                         {booking.pickup_location ?? booking.bike?.city ?? "—"}
@@ -246,7 +338,6 @@ const CheckoutDraft = () => {
               </CardContent>
             </Card>
 
-            {/* Renter info */}
             <Card>
               <CardContent className="p-5 space-y-4">
                 <div>
@@ -288,7 +379,6 @@ const CheckoutDraft = () => {
               </CardContent>
             </Card>
 
-            {/* Price breakdown */}
             <Card>
               <CardContent className="p-5 space-y-3">
                 <h3 className="font-semibold text-foreground">Price breakdown</h3>
@@ -324,7 +414,6 @@ const CheckoutDraft = () => {
             </Card>
           </div>
 
-          {/* RIGHT — Payment column */}
           <div className="lg:col-span-2">
             <Card className="lg:sticky lg:top-24">
               <CardContent className="p-5 space-y-5">
@@ -333,7 +422,10 @@ const CheckoutDraft = () => {
                     Payment method
                   </h2>
                   <p className="text-sm text-muted-foreground">
-                    Booking fee: <span className="font-semibold text-foreground">{UPFRONT_TOTAL_MAD} MAD</span>
+                    Booking fee:{" "}
+                    <span className="font-semibold text-foreground">
+                      {UPFRONT_TOTAL_MAD} MAD
+                    </span>
                   </p>
                 </div>
 
@@ -383,20 +475,37 @@ const CheckoutDraft = () => {
                   </label>
                 </RadioGroup>
 
-                {/* Method-specific area (filled in Step 3 / 4) */}
-                <div className="rounded-lg border border-dashed border-border p-4 text-center text-xs text-muted-foreground">
-                  {paymentMethod === "card"
-                    ? "Card form will appear here (Step 3)."
-                    : "Cash Plus instructions will appear here (Step 4)."}
-                </div>
+                {paymentMethod === "cash" && (
+                  <div className="rounded-lg border border-border p-4 text-sm space-y-3">
+                    <p className="font-medium text-foreground">
+                      How to pay with Cash Plus
+                    </p>
+                    <ol className="space-y-2 text-muted-foreground list-decimal list-inside">
+                      <li>Press <span className="font-semibold text-foreground">Continue</span> below to start your payment.</li>
+                      <li>You'll receive a Cash Plus reference code on the next screen.</li>
+                      <li>Visit any Cash Plus agent and pay <span className="font-semibold text-foreground">{UPFRONT_TOTAL_MAD} MAD</span> using the reference.</li>
+                      <li>Your booking confirms automatically once Cash Plus reports the payment (usually within minutes).</li>
+                    </ol>
+                  </div>
+                )}
 
                 <Button
                   variant="hero"
                   size="lg"
                   className="w-full"
-                  disabled
+                  onClick={handleCardPay}
+                  disabled={submitting}
                 >
-                  Pay {UPFRONT_TOTAL_MAD} MAD
+                  {submitting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      Starting payment…
+                    </>
+                  ) : (
+                    <>
+                      {paymentMethod === "cash" ? "Continue to Cash Plus" : "Pay"} {UPFRONT_TOTAL_MAD} MAD
+                    </>
+                  )}
                 </Button>
 
                 <ul className="space-y-2 text-xs text-muted-foreground">
