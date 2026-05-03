@@ -16,6 +16,8 @@ interface BookingDatePickerProps {
   align?: "start" | "center" | "end";
   /** When true, render only the inline panel (no trigger). Used when host opens it. */
   panelOnly?: boolean;
+  /** Already-booked date ranges to disable in the calendar. */
+  disabledRanges?: { from: Date; to: Date }[];
 }
 
 const today0 = () => startOfDay(new Date());
