@@ -92,7 +92,10 @@ export const MotorbikeWizardForm = ({
 
   const [description, setDescription] = useState("");
 
-  const [dailyPrice, setDailyPrice] = useState<string>("");
+  // Tiered pricing: tierPrices[min_days] = string ("" = not set). 1+ is required.
+  const [tierPrices, setTierPrices] = useState<Record<TierMinDays, string>>({
+    1: "", 3: "", 7: "", 15: "", 30: "",
+  });
   const [depositAmount, setDepositAmount] = useState<string>("1500");
   const [minRentalDays, setMinRentalDays] = useState<string>("1");
   const [maxRentalDays, setMaxRentalDays] = useState<string>("30");
