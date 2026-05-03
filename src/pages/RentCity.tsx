@@ -148,7 +148,21 @@ export default function RentCity() {
         .eq("slug", citySlug)
         .maybeSingle();
       if (error) throw error;
-      return (data as unknown as CityRow | null) ?? null;
+      if (data) return data as unknown as CityRow;
+
+      // Fallback: legacy or external links may pass the city name (or a variant).
+      // Try matching against any known name spelling so /rent/marrakesh still works
+      // even if the canonical slug is "marrakech".
+      const variants = slugToCityNameVariants(citySlug);
+      if (variants.length > 0) {
+        const { data: byName } = await supabase
+          .from("service_cities")
+          .select("id, name, is_available, is_coming_soon, image_url, image_focal_x, image_focal_y, description, slug")
+          .in("name", variants)
+          .maybeSingle();
+        if (byName) return byName as unknown as CityRow;
+      }
+      return null;
     },
   });
 
