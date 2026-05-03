@@ -832,6 +832,7 @@ function RentCityComingSoon({ city }: { city: CityRow }) {
                 src={city.image_url}
                 alt={city.name}
                 className="w-full h-full object-cover"
+                style={{ objectPosition: `${(city.image_focal_x ?? 0.5) * 100}% ${(city.image_focal_y ?? 0.5) * 100}%` }}
               />
             </div>
           )}
