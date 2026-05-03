@@ -337,7 +337,7 @@ export const BookingDatePicker = ({
               <div className="flex justify-center pt-3 pb-2 shrink-0">
                 <span className="h-1 w-10 rounded-full bg-gray-300" />
               </div>
-              <div className="flex-1 overflow-y-auto px-2 pb-3">
+              <div className="flex-1 overflow-y-auto px-0 pb-3">
                 <Panel
                   range={tempRange}
                   setRange={handleChange}
