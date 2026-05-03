@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
-import { Header } from "@/components/Header";
-import { Footer } from "@/components/Footer";
+import { AdminLayout } from "@/components/layouts/AdminLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -107,8 +106,7 @@ const AdminBikeApprovals = () => {
   // race with role hydration and bounce admins off the page on refresh.
   if (!isAuthenticated || !isAdmin) {
     return (
-      <div className="min-h-screen bg-background flex flex-col">
-        <Header />
+      <AdminLayout>
         <main className="flex-1 py-16 container mx-auto px-4 text-center">
           <AlertTriangle className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
           <h1 className="text-2xl font-bold">Loading admin session…</h1>
@@ -116,16 +114,14 @@ const AdminBikeApprovals = () => {
             If this persists, try refreshing the page.
           </p>
         </main>
-        <Footer />
-      </div>
+      </AdminLayout>
     );
   }
 
   const totalPending = bikes.length + types.length;
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <Header />
+    <AdminLayout>
       <main className="flex-1 py-8">
         <div className="container mx-auto px-4 max-w-6xl">
           <div className="flex items-center justify-between mb-8">
@@ -281,8 +277,7 @@ const AdminBikeApprovals = () => {
           )}
         </div>
       </main>
-      <Footer />
-    </div>
+    </AdminLayout>
   );
 };
 
