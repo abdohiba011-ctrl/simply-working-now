@@ -186,6 +186,9 @@ const BookingHistory = () => {
           return_date,
           total_price,
           status,
+          booking_status,
+          payment_method,
+          created_at,
           bike_id,
           customer_name,
           customer_phone,
@@ -206,8 +209,18 @@ const BookingHistory = () => {
       clearTimeout(timeoutId);
 
       if (error) throw error;
-      
-      setBookings(data || []);
+
+      // Hide stale drafts: only keep card drafts younger than 24h, cashplus drafts younger than 72h
+      const now = Date.now();
+      const filtered = (data || []).filter((b: any) => {
+        if (b.booking_status !== 'draft') return true;
+        const ageMs = b.created_at ? now - new Date(b.created_at).getTime() : 0;
+        if (b.payment_method === 'cashplus') return ageMs < 72 * 3600 * 1000;
+        // Hide non-cashplus drafts entirely from history (they're abandoned checkouts)
+        return false;
+      });
+
+      setBookings(filtered);
     } catch (error) {
       console.error('Error fetching data:', error);
       setLoadError(true);
