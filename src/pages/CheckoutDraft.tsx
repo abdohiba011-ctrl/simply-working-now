@@ -478,10 +478,17 @@ const CheckoutDraft = () => {
             <Card>
               <CardContent className="p-5 space-y-4">
                 <div>
-                  <h3 className="font-semibold text-foreground">Your info</h3>
+                  <h3 className="font-semibold text-foreground inline-flex items-center gap-2">
+                    Your info
+                    {!showEditor && (
+                      <CheckCircle2 className="h-4 w-4 text-primary" />
+                    )}
+                  </h3>
                   <p className="text-sm text-muted-foreground">
                     {showEditor
-                      ? "Please complete your details before paying."
+                      ? mustEdit
+                        ? "Please complete your details before paying."
+                        : "Update your details, then save."
                       : "Please confirm your details."}
                   </p>
                 </div>
@@ -511,19 +518,36 @@ const CheckoutDraft = () => {
                         placeholder="+212 …"
                       />
                     </div>
-                    {!mustEdit && (
-                      <button
+                    <div className="flex items-center gap-3 pt-1">
+                      <Button
                         type="button"
-                        onClick={() => {
-                          setEditing(false);
-                          setEditName(profileName);
-                          setEditPhone(profilePhone);
-                        }}
-                        className="text-xs text-muted-foreground hover:text-foreground underline"
+                        size="sm"
+                        onClick={handleSaveInfo}
+                        disabled={savingInfo}
                       >
-                        Cancel
-                      </button>
-                    )}
+                        {savingInfo ? (
+                          <>
+                            <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
+                            Saving…
+                          </>
+                        ) : (
+                          "Save info"
+                        )}
+                      </Button>
+                      {!mustEdit && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditing(false);
+                            setEditName(profileName);
+                            setEditPhone(profilePhone);
+                          }}
+                          className="text-xs text-muted-foreground hover:text-foreground underline"
+                        >
+                          Cancel
+                        </button>
+                      )}
+                    </div>
                   </div>
                 ) : (
                   <div className="space-y-2 text-sm">
