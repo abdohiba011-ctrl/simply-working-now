@@ -3,16 +3,13 @@ import { useNavigate, useParams } from "react-router-dom";
 import { AgencyLayout } from "@/components/agency/AgencyLayout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import {
   ChevronLeft,
   ExternalLink,
-  Bike as BikeIcon,
   XCircle,
   Clock,
   AlertTriangle,
-  MapPin,
   Archive,
 } from "lucide-react";
 import { useAgencyBike } from "@/hooks/useAgencyData";
@@ -29,22 +26,8 @@ import {
 import { BikeApprovalBadge } from "@/components/agency/BikeApprovalBadge";
 import { toast } from "sonner";
 import { MotorbikeWizardDialog } from "@/components/agency/MotorbikeWizardDialog";
-import {
-  BIKE_CATEGORIES, FEATURE_LABELS, FeatureKey,
-  licenseLabel, CANCELLATION_OPTIONS,
-} from "@/lib/bikeFeatures";
+import { BikeDetailCard, type BikeDetailAgency, type BikeDetailPickup } from "@/components/bike/BikeDetailCard";
 
-const empty = (v: unknown): boolean =>
-  v === null || v === undefined || (typeof v === "string" && v.trim() === "");
-
-const Field = ({ label, value }: { label: string; value: React.ReactNode }) => (
-  <div>
-    <p className="text-xs uppercase tracking-wide text-muted-foreground">{label}</p>
-    <p className={`mt-0.5 text-sm ${empty(value) ? "text-muted-foreground/60" : "font-medium"}`}>
-      {empty(value) ? "—" : value}
-    </p>
-  </div>
-);
 
 interface GalleryImage {
   id?: string;
