@@ -808,6 +808,9 @@ export const AdminCitiesTab = () => {
               <CityImageUpload
                 currentImageUrl={newCity.image_url}
                 onImageChange={(url) => setNewCity({ ...newCity, image_url: url })}
+                focalX={newCity.image_focal_x}
+                focalY={newCity.image_focal_y}
+                onFocalChange={(x, y) => setNewCity({ ...newCity, image_focal_x: x, image_focal_y: y })}
               />
             </div>
             <p className="text-xs text-muted-foreground -mt-2">
