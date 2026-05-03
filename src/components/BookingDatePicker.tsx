@@ -141,7 +141,28 @@ const Panel = ({
           onSelect={handleSelect}
           numberOfMonths={isMobile ? 1 : 2}
           weekStartsOn={0}
-          disabled={(d) => d < today0()}
+          disabled={(d) => {
+            if (d < today0()) return true;
+            if (disabledRanges?.length) {
+              const t = startOfDay(d).getTime();
+              for (const r of disabledRanges) {
+                if (t >= startOfDay(r.from).getTime() && t <= startOfDay(r.to).getTime()) return true;
+              }
+            }
+            return false;
+          }}
+          modifiers={{
+            booked: (d) => {
+              if (!disabledRanges?.length) return false;
+              const t = startOfDay(d).getTime();
+              return disabledRanges.some(
+                (r) => t >= startOfDay(r.from).getTime() && t <= startOfDay(r.to).getTime(),
+              );
+            },
+          }}
+          modifiersClassNames={{
+            booked: "line-through text-red-500/70 opacity-60",
+          }}
           className="pointer-events-auto p-2 w-full"
         />
       </div>
