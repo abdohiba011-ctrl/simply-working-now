@@ -651,6 +651,15 @@ export const Header = memo(() => {
                     <CalendarIcon className="h-5 w-5" />
                     {t('header.bookingHistory')}
                   </Button>
+                  <Button variant="outline" size="lg" className="justify-start gap-2 text-base min-h-[44px] mx-2" onClick={() => { navigate("/favorites"); setIsMenuOpen(false); }}>
+                    <Heart className="h-5 w-5" />
+                    {t('header.favorites')}
+                    {favoritesCount > 0 && (
+                      <span className="ltr:ml-auto rtl:mr-auto rounded-full bg-primary px-2 py-0.5 text-xs font-semibold text-primary-foreground">
+                        {favoritesCount}
+                      </span>
+                    )}
+                  </Button>
                   <Button variant="outline" size="lg" className="justify-start gap-2 text-base min-h-[44px] mx-2 relative" onClick={() => { navigate("/inbox"); setIsMenuOpen(false); }}>
                     <MessageCircle className="h-5 w-5" />
                     {t('header.messages')}
