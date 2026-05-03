@@ -132,7 +132,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         className={cn(
-          "border-2 border-dashed rounded-lg p-8 text-center transition-colors",
+          "relative border-2 border-dashed rounded-lg p-8 text-center transition-colors overflow-hidden",
           isDragging ? "border-primary bg-primary/5" : "border-muted-foreground/25",
           disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer hover:border-primary/50"
         )}

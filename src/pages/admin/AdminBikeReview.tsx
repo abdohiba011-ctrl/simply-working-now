@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
-  ArrowLeft, CheckCircle2, XCircle, Loader2, Bike as BikeIcon,
-  RotateCcw, ImageOff,
+  ArrowLeft, CheckCircle2, XCircle, Loader2,
+  RotateCcw, ImageOff, AlertTriangle, MapPin, Tag, Settings2, Gift, DollarSign, Building2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -11,9 +11,6 @@ import {
   Dialog, DialogContent, DialogDescription, DialogFooter,
   DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Accordion, AccordionContent, AccordionItem, AccordionTrigger,
-} from "@/components/ui/accordion";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { supabase } from "@/integrations/supabase/client";
@@ -26,7 +23,6 @@ import {
 } from "@/lib/bikeFeatures";
 import { TIER_MIN_DAYS, TIER_LABELS, tierSavingsPct, type TierMinDays } from "@/lib/pricingTiers";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { AlertTriangle } from "lucide-react";
 
 const QUICK_REASONS = [
   "Photos are unclear or low quality",
@@ -222,285 +218,253 @@ const AdminBikeReview = () => {
     (f): f is FeatureKey => f in FEATURE_LABELS,
   );
   const decided = bike.approval_status === "approved" || bike.approval_status === "rejected";
-  const actionsDisabled = decided && !reReview;
+  
+
+  const tierMap = new Map<number, number>(
+    tiers.map((t) => [Number(t.min_days), Number(t.daily_price_mad)]),
+  );
+  const baseRate = tierMap.get(1) ?? 0;
+  const warnings: string[] = [];
+  if ((bike.deposit_amount ?? 0) === 0) warnings.push("Deposit = 0 MAD");
+  if (photos.length < 4) warnings.push(`Only ${photos.length} photo${photos.length === 1 ? "" : "s"} (recommend 4+)`);
+  if (baseRate > 500) warnings.push("Base rate > 500 MAD/day — verify");
+  if (tiers.some((t) => Number(t.min_days) > 1 && baseRate > 0 && Number(t.daily_price_mad) > baseRate))
+    warnings.push("A higher-duration tier costs more than base rate");
+  if (baseRate > 0 && tiers.length <= 1) warnings.push("Only base tier set — no volume discounts");
+
+  const SectionTitle = ({ icon: Icon, children }: { icon: any; children: React.ReactNode }) => (
+    <div className="flex items-center gap-2 mb-2">
+      <Icon className="h-4 w-4 text-muted-foreground" />
+      <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">{children}</h3>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Header />
-      <main className="flex-1 py-6">
-        <div className="container mx-auto px-4 max-w-6xl">
-          <Button variant="ghost" size="sm" onClick={() => navigate("/admin/bikes/approvals")}>
-            <ArrowLeft className="mr-2 h-4 w-4" /> Back to queue
-          </Button>
+      <main className="flex-1">
+        {/* Sticky header */}
+        <div className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur">
+          <div className="container mx-auto max-w-6xl px-4 py-3 flex items-center gap-3">
+            <Button variant="ghost" size="sm" onClick={() => navigate("/admin/bikes/approvals")}>
+              <ArrowLeft className="mr-1 h-4 w-4" /> Back
+            </Button>
+            <div className="min-w-0 flex-1">
+              <h1 className="truncate text-base font-bold sm:text-lg">
+                {bike.name} {bike.year ? <span className="text-muted-foreground font-normal">({bike.year})</span> : null}
+              </h1>
+            </div>
+            <StatusChip status={bike.approval_status} />
+            {decided && !reReview ? (
+              <Button variant="outline" size="sm" onClick={() => setReReview(true)}>
+                <RotateCcw className="mr-1 h-4 w-4" /> Re-review
+              </Button>
+            ) : (
+              <>
+                <Button size="sm" onClick={() => setConfirmApprove(true)} disabled={acting}>
+                  <CheckCircle2 className="mr-1 h-4 w-4" /> Approve
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-destructive/40 text-destructive hover:bg-destructive/10"
+                  onClick={() => setRejectOpen(true)}
+                  disabled={acting}
+                >
+                  <XCircle className="mr-1 h-4 w-4" /> Reject
+                </Button>
+              </>
+            )}
+          </div>
+        </div>
 
-          <div className="mt-4 grid gap-6 lg:grid-cols-[1fr_320px]">
-            {/* Left column */}
+        <div className="container mx-auto max-w-6xl px-4 py-4 space-y-3">
+          {/* Warnings */}
+          {warnings.length > 0 && (
+            <div className="space-y-1">
+              {warnings.map((w) => (
+                <div key={w} className="flex items-center gap-2 rounded-md bg-yellow-100 dark:bg-yellow-900/20 px-3 py-1.5 text-xs text-yellow-800 dark:text-yellow-300">
+                  <AlertTriangle className="h-3.5 w-3.5 flex-shrink-0" />
+                  <span>{w}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {bike.approval_status === "rejected" && bike.rejection_reason && (
+            <div className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm">
+              <p className="font-semibold text-destructive">Previous rejection reason</p>
+              <p className="mt-1 text-foreground/80 whitespace-pre-wrap">{bike.rejection_reason}</p>
+            </div>
+          )}
+
+          <div className="grid gap-4 lg:grid-cols-[3fr_2fr]">
+            {/* LEFT (60%) */}
             <div className="space-y-4">
-              {/* Hero / agency info */}
-              <Card className="p-5 space-y-3">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <h1 className="text-2xl font-bold">{bike.name}</h1>
-                    <p className="text-sm text-muted-foreground mt-0.5">
-                      Submitted {new Date(bike.created_at).toLocaleDateString()}
-                    </p>
+              {/* Photos */}
+              <Card className="p-4">
+                <SectionTitle icon={ImageOff}>Photos ({photos.length})</SectionTitle>
+                {photos.length === 0 ? (
+                  <div className="rounded-md border border-dashed border-border p-4 flex items-center justify-center text-muted-foreground gap-2 text-sm">
+                    <ImageOff className="h-4 w-4" /> No photos uploaded
                   </div>
-                  <StatusChip status={bike.approval_status} />
-                </div>
-                <div className="grid grid-cols-2 gap-3 pt-2 border-t border-border">
-                  <Field label="Agency" value={
-                    agency ? (
-                      <span>
-                        {agency.business_name || "—"}{" "}
-                        {agency.is_verified && <span className="text-success">✓ Verified</span>}
-                      </span>
-                    ) : "—"
-                  } />
-                  <Field label="Contact" value={agency?.phone} />
-                  <Field label="Agency city" value={agency?.city} />
-                  <Field label="Agency address" value={agency?.address} />
-                  <Field
-                    label="Bike pickup"
-                    value={
-                      bikeCityName || bike.neighborhood
-                        ? [bike.neighborhood, bikeCityName].filter(Boolean).join(" · ")
-                        : null
-                    }
-                  />
-                </div>
-                {bike.approval_status === "rejected" && bike.rejection_reason && (
-                  <div className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm">
-                    <p className="font-semibold text-destructive">Previous rejection reason</p>
-                    <p className="mt-1 text-foreground/80 whitespace-pre-wrap">{bike.rejection_reason}</p>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    {photos.map((p) => (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => setLightbox(p.image_url)}
+                        className="overflow-hidden rounded-md bg-muted border border-border hover:opacity-90"
+                        style={{ width: 120, height: 120 }}
+                      >
+                        <img src={p.image_url} alt="" className="h-full w-full object-cover" />
+                      </button>
+                    ))}
                   </div>
                 )}
               </Card>
 
-              <Accordion type="multiple" defaultValue={["s1", "s2", "s3", "s4", "s5"]} className="space-y-3">
-                {/* Step 1 — Basic Info */}
-                <AccordionItem value="s1" className="rounded-lg border border-border bg-card">
-                  <AccordionTrigger className="px-4">📋 Step 1 — Basic Info</AccordionTrigger>
-                  <AccordionContent className="px-4 pb-4">
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                      <Field label="Name" value={bike.name} />
-                      <Field label="Brand" value={bike.brand} />
-                      <Field label="Model" value={bike.model} />
-                      <Field label="Year" value={bike.year} />
-                      <Field label="Color" value={bike.color} />
-                      <Field
-                        label="Category"
-                        value={
-                          categoryMeta
-                            ? <span>{categoryMeta.icon} {categoryMeta.label}</span>
-                            : bike.category
-                        }
-                      />
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
+              {/* Description */}
+              {!empty(bike.description) && (
+                <Card className="p-4">
+                  <SectionTitle icon={Tag}>Description</SectionTitle>
+                  <p className={`text-sm whitespace-pre-wrap ${(bike.description?.length ?? 0) > 200 ? "line-clamp-4" : ""}`}>
+                    {bike.description}
+                  </p>
+                </Card>
+              )}
 
-                {/* Step 2 — Specs */}
-                <AccordionItem value="s2" className="rounded-lg border border-border bg-card">
-                  <AccordionTrigger className="px-4">⚙️ Step 2 — Specifications</AccordionTrigger>
-                  <AccordionContent className="px-4 pb-4">
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                      <Field label="Engine" value={bike.engine_cc ? `${bike.engine_cc}cc` : null} />
-                      <Field label="Fuel type" value={bike.fuel_type} />
-                      <Field label="Transmission" value={bike.transmission} />
-                      <Field label="Mileage" value={bike.mileage_km != null ? `${bike.mileage_km.toLocaleString()} km` : null} />
-                      <Field label="License required" value={licenseLabel(bike.license_required)} />
-                      <Field label="Min age" value={bike.min_age} />
-                      <Field label="Min experience" value={bike.min_experience_years != null ? `${bike.min_experience_years} years` : null} />
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
+              {/* Details grid */}
+              <Card className="p-4">
+                <SectionTitle icon={Settings2}>Details</SectionTitle>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                  <Field label="Brand" value={bike.brand} />
+                  <Field label="Engine" value={bike.engine_cc ? `${bike.engine_cc}cc` : null} />
+                  <Field label="Model" value={bike.model} />
+                  <Field label="Fuel" value={bike.fuel_type} />
+                  <Field label="Year" value={bike.year} />
+                  <Field label="Transmission" value={bike.transmission} />
+                  <Field label="Color" value={bike.color} />
+                  <Field label="Mileage" value={bike.mileage_km != null ? `${bike.mileage_km.toLocaleString()} km` : null} />
+                  <Field
+                    label="Category"
+                    value={categoryMeta ? <span>{categoryMeta.icon} {categoryMeta.label}</span> : bike.category}
+                  />
+                  <Field label="License" value={licenseLabel(bike.license_required)} />
+                  <Field label="Min age" value={bike.min_age} />
+                  <Field label="Min experience" value={bike.min_experience_years != null ? `${bike.min_experience_years}y` : null} />
+                </div>
+              </Card>
 
-                {/* Step 3 — Included */}
-                <AccordionItem value="s3" className="rounded-lg border border-border bg-card">
-                  <AccordionTrigger className="px-4">🎁 Step 3 — What's Included</AccordionTrigger>
-                  <AccordionContent className="px-4 pb-4 space-y-3">
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                      <Field label="Helmets" value={bike.helmets_count != null ? `${bike.helmets_count} included` : null} />
-                      <Field label="Helmet included" value={(bike.helmets_count ?? 0) > 0 ? "Yes" : "No"} />
-                    </div>
-                    <div>
-                      <p className="text-xs uppercase tracking-wide text-muted-foreground">Features</p>
-                      {featureKeys.length === 0 ? (
-                        <p className="mt-1 text-sm text-muted-foreground/60">—</p>
-                      ) : (
-                        <div className="mt-2 flex flex-wrap gap-2">
-                          {featureKeys.map((k) => (
-                            <span key={k} className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted px-2.5 py-1 text-xs">
-                              <span>{FEATURE_LABELS[k].icon}</span>
-                              {FEATURE_LABELS[k].label}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
+              {/* Included */}
+              <Card className="p-4">
+                <SectionTitle icon={Gift}>What's Included</SectionTitle>
+                <div className="flex flex-wrap gap-1.5">
+                  {(bike.helmets_count ?? 0) > 0 && (
+                    <span className="inline-flex items-center gap-1 rounded-full border border-border bg-muted px-2 py-0.5 text-xs">
+                      🪖 {bike.helmets_count} helmet{(bike.helmets_count ?? 0) > 1 ? "s" : ""}
+                    </span>
+                  )}
+                  {featureKeys.map((k) => (
+                    <span key={k} className="inline-flex items-center gap-1 rounded-full border border-border bg-muted px-2 py-0.5 text-xs">
+                      <span>{FEATURE_LABELS[k].icon}</span>
+                      {FEATURE_LABELS[k].label}
+                    </span>
+                  ))}
+                  {featureKeys.length === 0 && (bike.helmets_count ?? 0) === 0 && (
+                    <span className="text-xs text-muted-foreground">— None specified</span>
+                  )}
+                </div>
+              </Card>
 
-                {/* Step 4 — Photos & Description */}
-                <AccordionItem value="s4" className="rounded-lg border border-border bg-card">
-                  <AccordionTrigger className="px-4">📸 Step 4 — Photos & Description</AccordionTrigger>
-                  <AccordionContent className="px-4 pb-4 space-y-4">
-                    {photos.length === 0 ? (
-                      <div className="rounded-md border border-dashed border-border p-6 flex items-center justify-center text-muted-foreground gap-2">
-                        <ImageOff className="h-5 w-5" /> No photos uploaded
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                        {photos.map((p) => (
-                          <button
-                            key={p.id}
-                            type="button"
-                            onClick={() => setLightbox(p.image_url)}
-                            className="aspect-square overflow-hidden rounded-md bg-muted border border-border hover:opacity-90"
-                          >
-                            <img src={p.image_url} alt="" className="h-full w-full object-cover" />
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                    <div>
-                      <p className="text-xs uppercase tracking-wide text-muted-foreground">Description</p>
-                      <p className={`mt-1 text-sm whitespace-pre-wrap ${empty(bike.description) ? "text-muted-foreground/60" : ""}`}>
-                        {empty(bike.description) ? "—" : bike.description}
-                      </p>
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
+              {/* Policies */}
+              <Card className="p-4">
+                <SectionTitle icon={DollarSign}>Policies</SectionTitle>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Deposit</p>
+                    <p className="font-medium">{bike.deposit_amount != null ? `${bike.deposit_amount} MAD` : "—"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Min days</p>
+                    <p className="font-medium">{bike.min_rental_days ?? "—"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Max days</p>
+                    <p className="font-medium">{bike.max_rental_days ?? "—"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Cancel</p>
+                    <p className="font-medium">{cancellationMeta ? `${cancellationMeta.icon} ${cancellationMeta.title}` : "—"}</p>
+                  </div>
+                </div>
+              </Card>
 
-                {/* Step 5 — Pricing & Policies */}
-                <AccordionItem value="s5" className="rounded-lg border border-border bg-card">
-                  <AccordionTrigger className="px-4">💰 Step 5 — Pricing & Policies</AccordionTrigger>
-                  <AccordionContent className="px-4 pb-4 space-y-4">
-                    {(() => {
-                      const tierMap = new Map<number, number>(
-                        tiers.map((t) => [Number(t.min_days), Number(t.daily_price_mad)]),
-                      );
-                      const baseRate = tierMap.get(1) ?? 0;
-                      const warnings: string[] = [];
-                      if (baseRate > 500) warnings.push("Base rate is unusually high (>500 MAD/day) — verify with agency.");
-                      const inconsistent = tiers.some(
-                        (t) => Number(t.min_days) > 1 && baseRate > 0 && Number(t.daily_price_mad) > baseRate,
-                      );
-                      if (inconsistent) warnings.push("A higher-duration tier costs more than the base rate — data inconsistency.");
-                      const hasDiscount = tiers.some(
-                        (t) => Number(t.min_days) > 1 && baseRate > 0 && Number(t.daily_price_mad) < baseRate,
-                      );
-                      if (baseRate > 0 && !hasDiscount && tiers.length > 1)
-                        warnings.push("No volume-discount tiers configured below base rate.");
-                      else if (tiers.length <= 1)
-                        warnings.push("Only base tier set — no volume discounts offered.");
-
-                      return (
-                        <>
-                          <div>
-                            <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">
-                              Pricing Tiers
-                            </p>
-                            <div className="rounded-md border border-border overflow-hidden">
-                              <Table>
-                                <TableHeader>
-                                  <TableRow>
-                                    <TableHead>Duration</TableHead>
-                                    <TableHead>Daily Rate</TableHead>
-                                    <TableHead>Savings</TableHead>
-                                  </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                  {TIER_MIN_DAYS.map((md) => {
-                                    const rate = tierMap.get(md);
-                                    const set = rate != null;
-                                    const pct = set && md > 1 ? tierSavingsPct(baseRate, rate!) : 0;
-                                    return (
-                                      <TableRow key={md}>
-                                        <TableCell className="font-medium">{TIER_LABELS[md as TierMinDays]}</TableCell>
-                                        <TableCell className={set ? "" : "text-muted-foreground/60"}>
-                                          {set ? `${rate} MAD` : "— (not set)"}
-                                        </TableCell>
-                                        <TableCell className={pct > 0 ? "text-primary font-semibold" : "text-muted-foreground/60"}>
-                                          {md === 1 ? "—" : pct > 0 ? `${pct}%` : set ? "0%" : "—"}
-                                        </TableCell>
-                                      </TableRow>
-                                    );
-                                  })}
-                                </TableBody>
-                              </Table>
-                            </div>
-                            {warnings.length > 0 && (
-                              <div className="mt-3 space-y-1.5">
-                                {warnings.map((w) => (
-                                  <div
-                                    key={w}
-                                    className="flex items-start gap-2 rounded-md bg-yellow-100 dark:bg-yellow-900/20 px-3 py-2 text-xs text-yellow-800 dark:text-yellow-300"
-                                  >
-                                    <AlertTriangle className="h-3.5 w-3.5 mt-0.5 flex-shrink-0" />
-                                    <span>{w}</span>
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                            <Field label="Deposit" value={bike.deposit_amount != null ? `${bike.deposit_amount} MAD` : null} />
-                            <Field label="Min rental days" value={bike.min_rental_days} />
-                            <Field label="Max rental days" value={bike.max_rental_days} />
-                            <Field
-                              label="Cancellation policy"
-                              value={cancellationMeta ? `${cancellationMeta.icon} ${cancellationMeta.title} — ${cancellationMeta.text}` : bike.cancellation_policy}
-                            />
-                          </div>
-                        </>
-                      );
-                    })()}
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
+              {/* Location */}
+              <Card className="p-4">
+                <SectionTitle icon={MapPin}>Location</SectionTitle>
+                <p className="text-sm">
+                  {[bikeCityName, bike.neighborhood].filter(Boolean).join(" · ") || "—"}
+                </p>
+              </Card>
             </div>
 
-            {/* Right column — sticky action panel */}
+            {/* RIGHT (40%) */}
             <div className="space-y-4">
-              <Card className="p-5 space-y-3 lg:sticky lg:top-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Status</span>
-                  <StatusChip status={bike.approval_status} />
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Photos</span>
-                  <span>{photos.length}</span>
-                </div>
-
-                {decided && !reReview ? (
-                  <div className="space-y-2 pt-2">
-                    <p className="text-xs text-muted-foreground">
-                      This bike has already been {bike.approval_status}. Open re-review to change the decision.
+              {/* Agency Info */}
+              <Card className="p-4">
+                <SectionTitle icon={Building2}>Agency</SectionTitle>
+                {agency ? (
+                  <div className="space-y-1.5 text-sm">
+                    <p className="font-medium">
+                      {agency.business_name || "—"}{" "}
+                      {agency.is_verified && <span className="text-success text-xs">✓ Verified</span>}
                     </p>
-                    <Button variant="outline" className="w-full" onClick={() => setReReview(true)}>
-                      <RotateCcw className="mr-2 h-4 w-4" /> Re-review
-                    </Button>
+                    {agency.phone && <p className="text-muted-foreground text-xs">📞 {agency.phone}</p>}
+                    {agency.city && <p className="text-muted-foreground text-xs">📍 {agency.city}</p>}
+                    {agency.address && <p className="text-muted-foreground text-xs">{agency.address}</p>}
                   </div>
                 ) : (
-                  <div className="pt-2 space-y-2">
-                    <Button
-                      className="w-full"
-                      onClick={() => setConfirmApprove(true)}
-                      disabled={acting}
-                    >
-                      <CheckCircle2 className="mr-2 h-4 w-4" /> Approve
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="w-full border-destructive/40 text-destructive hover:bg-destructive/10"
-                      onClick={() => setRejectOpen(true)}
-                      disabled={acting}
-                    >
-                      <XCircle className="mr-2 h-4 w-4" /> Reject with reason
-                    </Button>
-                  </div>
+                  <p className="text-sm text-muted-foreground">—</p>
                 )}
+                <p className="mt-2 text-[11px] text-muted-foreground">
+                  Submitted {new Date(bike.created_at).toLocaleDateString()}
+                </p>
+              </Card>
+
+              {/* Pricing tiers */}
+              <Card className="p-4">
+                <SectionTitle icon={DollarSign}>Pricing Tiers</SectionTitle>
+                <div className="rounded-md border border-border overflow-hidden">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="h-8 text-xs">Duration</TableHead>
+                        <TableHead className="h-8 text-xs">Rate</TableHead>
+                        <TableHead className="h-8 text-xs">Save</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {TIER_MIN_DAYS.map((md) => {
+                        const rate = tierMap.get(md);
+                        const set = rate != null;
+                        const pct = set && md > 1 ? tierSavingsPct(baseRate, rate!) : 0;
+                        return (
+                          <TableRow key={md}>
+                            <TableCell className="py-1.5 text-xs font-medium">{TIER_LABELS[md as TierMinDays]}</TableCell>
+                            <TableCell className={`py-1.5 text-xs ${set ? "" : "text-muted-foreground/60"}`}>
+                              {set ? `${rate} MAD` : "—"}
+                            </TableCell>
+                            <TableCell className={`py-1.5 text-xs ${pct > 0 ? "text-primary font-semibold" : "text-muted-foreground/60"}`}>
+                              {md === 1 ? "—" : pct > 0 ? `${pct}%` : set ? "0%" : "—"}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
               </Card>
             </div>
           </div>
