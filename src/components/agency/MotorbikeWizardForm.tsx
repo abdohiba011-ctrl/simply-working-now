@@ -322,21 +322,29 @@ export const MotorbikeWizardForm = ({
     if (!bikeId) return;
     setSaving(true);
     try {
-      const ok = await persistDraft();
-      if (!ok) { setSaving(false); return; }
-
       const isDraftFirstSubmit = !editing && currentStatus === "draft";
 
-      let triggerChanged = false;
-      let photosChanged = false;
+      // Fetch previous DB values BEFORE persisting so diffs are accurate
+      let prev: any = null;
+      let prevImageIds: string[] = [];
       if (editing && (currentStatus === "approved" || currentStatus === "rejected")) {
-        const [{ data: prev }, { data: imgRows }] = await Promise.all([
+        const [{ data: prevRow }, { data: imgRows }] = await Promise.all([
           supabase
             .from("bike_types")
             .select("description,brand,model,year,category,engine_cc,fuel_type,transmission,license_required,main_image_url")
             .eq("id", bikeId).maybeSingle(),
           supabase.from("bike_type_images").select("id").eq("bike_type_id", bikeId),
         ]);
+        prev = prevRow;
+        prevImageIds = ((imgRows as { id: string }[] | null) || []).map((r) => r.id);
+      }
+
+      const ok = await persistDraft();
+      if (!ok) { setSaving(false); return; }
+
+      let triggerChanged = false;
+      let photosChanged = false;
+      if (editing && (currentStatus === "approved" || currentStatus === "rejected")) {
         if (prev) {
           const yr = Number(year);
           const cc = Number(engineCc);
@@ -351,14 +359,16 @@ export const MotorbikeWizardForm = ({
             (prev.transmission || "") !== (transmission || "") ||
             (prev.license_required || "") !== (licenseRequired || "");
         }
-        const currentIds = ((imgRows as { id: string }[] | null) || []).map((r) => r.id).sort();
-        const baselineIds = [...initialPhotoIds].sort();
+        const { data: nowImgRows } = await supabase.from("bike_type_images").select("id").eq("bike_type_id", bikeId);
+        const currentIds = ((nowImgRows as { id: string }[] | null) || []).map((r) => r.id).sort();
+        const baselineIds = [...prevImageIds].sort();
         const idsDiffer =
           currentIds.length !== baselineIds.length ||
           currentIds.some((v, i) => v !== baselineIds[i]);
         const mainChanged = (prev?.main_image_url || "") !== (initialMainImageUrl || "");
         photosChanged = idsDiffer || mainChanged;
       }
+
 
       if (isDraftFirstSubmit) {
         const { error: updErr } = await supabase
