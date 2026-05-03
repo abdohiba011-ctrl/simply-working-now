@@ -82,10 +82,15 @@ export const CityImageUpload = ({
     if (currentImageUrl.includes('.supabase.co/storage/')) {
       try {
         const url = new URL(currentImageUrl);
-        const pathParts = url.pathname.split('/storage/v1/object/public/bike-images/');
-        if (pathParts.length > 1) {
-          const filePath = decodeURIComponent(pathParts[1]);
-          await supabase.storage.from('bike-images').remove([filePath]);
+        // Support both old (bike-images/cities/...) and new (city-images/...) buckets
+        for (const bucket of ['city-images', 'bike-images']) {
+          const marker = `/storage/v1/object/public/${bucket}/`;
+          const idx = url.pathname.indexOf(marker);
+          if (idx >= 0) {
+            const filePath = decodeURIComponent(url.pathname.slice(idx + marker.length));
+            await supabase.storage.from(bucket).remove([filePath]);
+            break;
+          }
         }
       } catch (err) {
         console.error('Delete error:', err);
