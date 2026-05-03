@@ -16,6 +16,7 @@ import {
   ShieldCheck,
   Lock,
   Loader2,
+  CheckCircle2,
 } from "lucide-react";
 import { format } from "date-fns";
 import { useAuth } from "@/hooks/useAuth";
