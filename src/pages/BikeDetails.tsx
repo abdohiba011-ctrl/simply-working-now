@@ -113,22 +113,23 @@ const BikeDetails = () => {
     };
   }, [realBikeIdForDates]);
 
-  // Availability check (stub for now)
+  // Availability check — uses the same bike id (bikes.id) the picker uses
   const [availability, setAvailability] = useState<Availability>("idle");
   useEffect(() => {
+    if (!realBikeIdForDates) return;
     if (!dateRange?.from || !dateRange?.to) {
       setAvailability("idle");
       return;
     }
     let cancelled = false;
     setAvailability("loading");
-    checkBikeAvailability(id || "", dateRange.from, dateRange.to).then((ok) => {
+    checkBikeAvailability(realBikeIdForDates, dateRange.from, dateRange.to).then((ok) => {
       if (!cancelled) setAvailability(ok ? "available" : "unavailable");
     });
     return () => {
       cancelled = true;
     };
-  }, [id, dateRange?.from, dateRange?.to]);
+  }, [realBikeIdForDates, dateRange?.from, dateRange?.to]);
 
   // Push date changes to URL so they persist when sharing the link.
   const updateDatesInUrl = (r: DateRange | undefined) => {
