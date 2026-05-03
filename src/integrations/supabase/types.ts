@@ -2083,6 +2083,7 @@ export type Database = {
           name_key: string | null
           price_from: number | null
           show_in_homepage: boolean | null
+          slug: string
           updated_at: string
         }
         Insert: {
@@ -2100,6 +2101,7 @@ export type Database = {
           name_key?: string | null
           price_from?: number | null
           show_in_homepage?: boolean | null
+          slug: string
           updated_at?: string
         }
         Update: {
@@ -2117,6 +2119,7 @@ export type Database = {
           name_key?: string | null
           price_from?: number | null
           show_in_homepage?: boolean | null
+          slug?: string
           updated_at?: string
         }
         Relationships: []
@@ -2637,6 +2640,7 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      generate_city_slug: { Args: { input_name: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -2714,6 +2718,7 @@ export type Database = {
         Returns: Json
       }
       slugify: { Args: { _input: string }; Returns: string }
+      unaccent: { Args: { "": string }; Returns: string }
       unarchive_bike_type: {
         Args: { p_bike_type_id: string }
         Returns: undefined

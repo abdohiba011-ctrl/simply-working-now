@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, Navigate, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import {
   ChevronRight,
   Filter as FilterIcon,
@@ -112,7 +112,7 @@ type BikeRow = {
   city_id: string | null;
 };
 
-import { slugToDisplayName, slugToCityNameVariants, cityToSlug } from "@/lib/citySlug";
+import { slugToDisplayName, cityToSlug } from "@/lib/citySlug";
 
 type CityRow = {
   id: string;
@@ -138,13 +138,12 @@ export default function RentCity() {
   const { data: cityRow, isLoading: cityLoading } = useQuery({
     queryKey: ["rent-city-row", citySlug],
     queryFn: async () => {
-      const variants = slugToCityNameVariants(citySlug);
-      if (variants.length === 0) return null;
+      // DB-driven: look up the city by its canonical slug. New cities admins
+      // add are immediately reachable without code changes.
       const { data, error } = await supabase
         .from("service_cities")
-        .select("id, name, is_available, is_coming_soon, image_url, description")
-        .in("name", variants)
-        .limit(1)
+        .select("id, name, is_available, is_coming_soon, image_url, description, slug")
+        .eq("slug", citySlug)
         .maybeSingle();
       if (error) throw error;
       return (data as CityRow | null) ?? null;
@@ -563,18 +562,18 @@ export default function RentCity() {
     </div>
   );
 
-  // ─── FIX 4: Coming Soon / unknown city gating ───
-  // - city resolved + is_coming_soon → show waitlist page
-  // - city resolved + not available + not coming soon → 404 (homepage)
-  // - city not found in DB at all → 404 (homepage)
+  // ─── City gating ───
+  // - city resolved + is_coming_soon → waitlist page
+  // - city resolved + not available + not coming soon → 404 (hidden)
+  // - city not found in DB at all → 404
   if (!cityLoading && !cityRow) {
-    return <Navigate to="/" replace />;
+    return <CityNotFound slug={citySlug} />;
   }
   if (!cityLoading && cityRow && cityRow.is_available === false) {
     if (cityRow.is_coming_soon) {
       return <RentCityComingSoon city={cityRow} />;
     }
-    return <Navigate to="/" replace />;
+    return <CityNotFound slug={citySlug} />;
   }
 
   return (
@@ -761,6 +760,34 @@ export default function RentCity() {
 // is_available=false AND is_coming_soon=true. Captures emails into
 // city_waitlist for marketing follow-up when the city goes live.
 // ─────────────────────────────────────────────────────────────────────
+function CityNotFound({ slug }: { slug: string }) {
+  const navigate = useNavigate();
+  const label = slugToDisplayName(slug);
+  useEffect(() => {
+    document.title = `City not found · Motonita`;
+  }, []);
+  return (
+    <div className="min-h-screen flex flex-col bg-background">
+      <Header />
+      <main className="flex-1 container mx-auto px-4 py-20 flex flex-col items-center text-center">
+        <div className="text-6xl mb-4">🛵</div>
+        <h1 className="text-3xl md:text-4xl font-bold mb-3">City not found</h1>
+        <p className="text-muted-foreground max-w-md mb-8">
+          We don&apos;t operate in <span className="font-medium">{label}</span> yet,
+          but we&apos;re expanding fast across Morocco.
+        </p>
+        <div className="flex flex-wrap gap-3 justify-center">
+          <Button onClick={() => navigate("/")}>Back to home</Button>
+          <Button variant="outline" onClick={() => navigate("/#cities")}>
+            See available cities
+          </Button>
+        </div>
+      </main>
+      <Footer />
+    </div>
+  );
+}
+
 function RentCityComingSoon({ city }: { city: CityRow }) {
   const [email, setEmail] = useState("");
   const [submitting, setSubmitting] = useState(false);
