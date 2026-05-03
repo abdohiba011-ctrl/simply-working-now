@@ -255,6 +255,79 @@ const CheckoutDraft = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [booking?.id]);
 
+  // ---------- Detect Cash Plus selection by observing the YouCan Pay form DOM ----------
+  useEffect(() => {
+    if (ycStatus !== "ready" && ycStatus !== "paying") return;
+    const target = document.getElementById("ycpay-form");
+    if (!target) return;
+
+    const detect = () => {
+      const text = (target.innerText || "").toLowerCase();
+      // YouCan Pay shows "cashplus" / "cash plus" / "agence" / French instructions
+      if (
+        text.includes("cashplus") ||
+        text.includes("cash plus") ||
+        text.includes("agence cashplus") ||
+        text.includes("nearest cashplus")
+      ) {
+        if (!cashplusActive) {
+          setCashplusActive(true);
+          // Persist to draft so cleanup respects 72h TTL
+          if (booking?.id) {
+            supabase
+              .from("bookings")
+              .update({ payment_method: "cashplus" })
+              .eq("id", booking.id)
+              .eq("booking_status", "draft")
+              .then(({ error }) => {
+                if (error) console.warn("mark cashplus failed", error);
+              });
+          }
+        }
+      }
+    };
+
+    detect();
+    const obs = new MutationObserver(detect);
+    obs.observe(target, { childList: true, subtree: true, characterData: true });
+    return () => obs.disconnect();
+  }, [ycStatus, booking?.id, cashplusActive]);
+
+  const handleVerifyCashplus = async () => {
+    if (!booking?.id || verifying) return;
+    setVerifying(true);
+    try {
+      const { data: pay } = await supabase
+        .from("youcanpay_payments")
+        .select("id, transaction_id")
+        .eq("related_booking_id", booking.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (!pay?.id) {
+        toast.error("No payment record found yet. Please try again in a moment.");
+        return;
+      }
+      const { data, error } = await supabase.functions.invoke(
+        "youcanpay-verify-payment",
+        {
+          body: { payment_id: pay.id, transaction_id: pay.transaction_id || undefined },
+        },
+      );
+      if (error) throw error;
+      if ((data as any)?.status === "paid") {
+        toast.success("Payment received!");
+        navigate(`/booking/${booking.id}/confirmed`);
+      } else {
+        toast.info("Payment not received yet. Please try again after paying at Cash Plus.");
+      }
+    } catch (e: any) {
+      toast.error(e?.message || "Could not verify payment.");
+    } finally {
+      setVerifying(false);
+    }
+  };
+
   const days = booking?.total_days ?? 1;
   const dailyPrice = booking?.bike?.daily_price ?? 0;
   const rentalSubtotal = booking?.total_price ?? days * dailyPrice;
