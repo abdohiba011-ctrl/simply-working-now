@@ -147,6 +147,7 @@ const Panel = ({
           weekStartsOn={0}
           disabled={(d) => {
             if (d < today0()) return true;
+            if (closedWeekdays?.includes(d.getDay())) return true;
             if (disabledRanges?.length) {
               const t = startOfDay(d).getTime();
               for (const r of disabledRanges) {
@@ -163,9 +164,11 @@ const Panel = ({
                 (r) => t >= startOfDay(r.from).getTime() && t <= startOfDay(r.to).getTime(),
               );
             },
+            closed: (d) => !!closedWeekdays?.includes(d.getDay()),
           }}
           modifiersClassNames={{
             booked: "line-through text-red-500/70 opacity-60",
+            closed: "line-through text-muted-foreground opacity-50",
           }}
           className="pointer-events-auto p-2 w-full"
         />
