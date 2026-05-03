@@ -419,6 +419,13 @@ const Motorbikes = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <MotorbikeWizardDialog
+        open={wizardOpen}
+        onOpenChange={setWizardOpen}
+        bikeId={wizardBikeId}
+        onSaved={() => refresh()}
+      />
     </AgencyLayout>
   );
 };
