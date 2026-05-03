@@ -305,23 +305,43 @@ export const BookingDatePicker = ({
         </button>
       )}
 
-      {/* Desktop popover via portal */}
-      {open && !isMobile && popoverPos &&
+      {/* Desktop modal popup via portal */}
+      {open && !isMobile &&
         createPortal(
           <div
-            ref={popoverRef}
-            data-booking-datepicker="panel"
-            style={{ top: popoverPos.top, left: popoverPos.left, width: Math.min(560, window.innerWidth - 16) }}
-            className="fixed z-[200]"
+            data-booking-datepicker="overlay"
+            className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/40"
+            onMouseDown={(e) => {
+              if (e.target === e.currentTarget) commitAndClose();
+            }}
           >
-            <Panel
-              range={tempRange}
-              setRange={handleChange}
-              focus={focus}
-              setFocus={setFocus}
-              isMobile={false}
-              onClose={() => setOpen(false)}
-            />
+            <div
+              ref={popoverRef}
+              data-booking-datepicker="panel"
+              className="w-full max-w-[600px] max-h-[90vh] overflow-hidden rounded-2xl bg-white shadow-2xl flex flex-col"
+            >
+              <div className="flex items-center justify-between px-4 h-12 border-b border-[#163300]/10 shrink-0">
+                <h2 className="text-sm font-semibold text-[#163300]">Select Date</h2>
+                <button
+                  type="button"
+                  onClick={commitAndClose}
+                  aria-label="Close"
+                  className="inline-flex items-center justify-center h-8 w-8 rounded-full text-[#163300] hover:bg-[#163300]/10 transition-colors"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+              <div className="overflow-y-auto">
+                <Panel
+                  range={tempRange}
+                  setRange={handleChange}
+                  focus={focus}
+                  setFocus={setFocus}
+                  isMobile={false}
+                  onClose={() => setOpen(false)}
+                />
+              </div>
+            </div>
           </div>,
           document.body,
         )}
