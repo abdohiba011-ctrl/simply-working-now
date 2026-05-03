@@ -197,8 +197,8 @@ export const HeroSection = memo(() => {
     if (neighborhood && neighborhood !== ALL_NEIGHBORHOODS) {
       params.set("neighborhood", neighborhood);
     }
-    if (dateRange?.from) params.set("start", format(dateRange.from, "yyyy-MM-dd"));
-    if (dateRange?.to) params.set("end", format(dateRange.to, "yyyy-MM-dd"));
+    if (dateRange?.from) params.set("from", format(dateRange.from, "yyyy-MM-dd"));
+    if (dateRange?.to) params.set("to", format(dateRange.to, "yyyy-MM-dd"));
     const slug = cityToSlug(city);
     const qs = params.toString();
     navigate(`/rent/${slug}${qs ? `?${qs}` : ""}`);
