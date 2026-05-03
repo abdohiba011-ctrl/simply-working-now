@@ -102,6 +102,8 @@ const CheckoutDraft = () => {
   const [agreed, setAgreed] = useState(false);
   const [ycStatus, setYcStatus] = useState<"idle" | "loading" | "ready" | "paying" | "error">("idle");
   const [ycError, setYcError] = useState<string | null>(null);
+  const [cashplusActive, setCashplusActive] = useState(false);
+  const [verifying, setVerifying] = useState(false);
   const ycRef = useRef<any>(null);
   const tokenRef = useRef<{ token: string; pid: string } | null>(null);
 
