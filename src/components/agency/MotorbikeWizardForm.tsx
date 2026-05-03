@@ -269,7 +269,7 @@ export const MotorbikeWizardForm = ({
       helmets_count: helmetIncluded ? Math.max(1, Number(helmetsCount) || 1) : 0,
       features: featuresArr,
       description: description.trim() || null,
-      daily_price: Number.isFinite(dp) && dp > 0 ? dp : 0,
+      daily_price: Number.isFinite(baseTier) && baseTier > 0 ? baseTier : 0,
       deposit_amount: Number.isFinite(dep) && dep >= 0 ? dep : 0,
       min_rental_days: Number.isFinite(minR) && minR > 0 ? minR : 1,
       max_rental_days: Number.isFinite(maxR) && maxR > 0 ? maxR : 30,
