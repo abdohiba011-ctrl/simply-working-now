@@ -375,19 +375,87 @@ const AdminBikeReview = () => {
                 {/* Step 5 — Pricing & Policies */}
                 <AccordionItem value="s5" className="rounded-lg border border-border bg-card">
                   <AccordionTrigger className="px-4">💰 Step 5 — Pricing & Policies</AccordionTrigger>
-                  <AccordionContent className="px-4 pb-4">
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                      <Field label="Daily price" value={bike.daily_price != null ? `${bike.daily_price} MAD` : null} />
-                      <Field label="Weekly price" value={bike.weekly_price != null ? `${bike.weekly_price} MAD` : null} />
-                      <Field label="Monthly price" value={bike.monthly_price != null ? `${bike.monthly_price} MAD` : null} />
-                      <Field label="Deposit" value={bike.deposit_amount != null ? `${bike.deposit_amount} MAD` : null} />
-                      <Field label="Min rental days" value={bike.min_rental_days} />
-                      <Field label="Max rental days" value={bike.max_rental_days} />
-                      <Field
-                        label="Cancellation policy"
-                        value={cancellationMeta ? `${cancellationMeta.icon} ${cancellationMeta.title} — ${cancellationMeta.text}` : bike.cancellation_policy}
-                      />
-                    </div>
+                  <AccordionContent className="px-4 pb-4 space-y-4">
+                    {(() => {
+                      const tierMap = new Map<number, number>(
+                        tiers.map((t) => [Number(t.min_days), Number(t.daily_price_mad)]),
+                      );
+                      const baseRate = tierMap.get(1) ?? 0;
+                      const warnings: string[] = [];
+                      if (baseRate > 500) warnings.push("Base rate is unusually high (>500 MAD/day) — verify with agency.");
+                      const inconsistent = tiers.some(
+                        (t) => Number(t.min_days) > 1 && baseRate > 0 && Number(t.daily_price_mad) > baseRate,
+                      );
+                      if (inconsistent) warnings.push("A higher-duration tier costs more than the base rate — data inconsistency.");
+                      const hasDiscount = tiers.some(
+                        (t) => Number(t.min_days) > 1 && baseRate > 0 && Number(t.daily_price_mad) < baseRate,
+                      );
+                      if (baseRate > 0 && !hasDiscount && tiers.length > 1)
+                        warnings.push("No volume-discount tiers configured below base rate.");
+                      else if (tiers.length <= 1)
+                        warnings.push("Only base tier set — no volume discounts offered.");
+
+                      return (
+                        <>
+                          <div>
+                            <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">
+                              Pricing Tiers
+                            </p>
+                            <div className="rounded-md border border-border overflow-hidden">
+                              <Table>
+                                <TableHeader>
+                                  <TableRow>
+                                    <TableHead>Duration</TableHead>
+                                    <TableHead>Daily Rate</TableHead>
+                                    <TableHead>Savings</TableHead>
+                                  </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                  {TIER_MIN_DAYS.map((md) => {
+                                    const rate = tierMap.get(md);
+                                    const set = rate != null;
+                                    const pct = set && md > 1 ? tierSavingsPct(baseRate, rate!) : 0;
+                                    return (
+                                      <TableRow key={md}>
+                                        <TableCell className="font-medium">{TIER_LABELS[md as TierMinDays]}</TableCell>
+                                        <TableCell className={set ? "" : "text-muted-foreground/60"}>
+                                          {set ? `${rate} MAD` : "— (not set)"}
+                                        </TableCell>
+                                        <TableCell className={pct > 0 ? "text-primary font-semibold" : "text-muted-foreground/60"}>
+                                          {md === 1 ? "—" : pct > 0 ? `${pct}%` : set ? "0%" : "—"}
+                                        </TableCell>
+                                      </TableRow>
+                                    );
+                                  })}
+                                </TableBody>
+                              </Table>
+                            </div>
+                            {warnings.length > 0 && (
+                              <div className="mt-3 space-y-1.5">
+                                {warnings.map((w) => (
+                                  <div
+                                    key={w}
+                                    className="flex items-start gap-2 rounded-md bg-yellow-100 dark:bg-yellow-900/20 px-3 py-2 text-xs text-yellow-800 dark:text-yellow-300"
+                                  >
+                                    <AlertTriangle className="h-3.5 w-3.5 mt-0.5 flex-shrink-0" />
+                                    <span>{w}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                            <Field label="Deposit" value={bike.deposit_amount != null ? `${bike.deposit_amount} MAD` : null} />
+                            <Field label="Min rental days" value={bike.min_rental_days} />
+                            <Field label="Max rental days" value={bike.max_rental_days} />
+                            <Field
+                              label="Cancellation policy"
+                              value={cancellationMeta ? `${cancellationMeta.icon} ${cancellationMeta.title} — ${cancellationMeta.text}` : bike.cancellation_policy}
+                            />
+                          </div>
+                        </>
+                      );
+                    })()}
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
