@@ -39,6 +39,7 @@ const schema = z.object({
   businessName: z.string().min(2, "Business name is required"),
   businessType: z.string().min(1, "Pick a business type"),
   city: z.string().min(1, "Pick a city"),
+  neighborhood: z.string().optional(),
   numBikes: z.string().min(1, "Select number of motorbikes"),
   phone: z
     .string()
