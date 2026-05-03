@@ -377,37 +377,12 @@ export const HeroSection = memo(() => {
                 <CalendarIcon className="h-4 w-4" aria-hidden="true" />
                 Dates
               </label>
-              <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-                <PopoverTrigger asChild>
-                  <button
-                    id="hero-dates"
-                    type="button"
-                    className={cn(
-                      "h-12 w-full rounded-md border-2 bg-white px-3 text-left text-sm flex items-center justify-between gap-2",
-                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-                      !dateRange?.from && "text-muted-foreground",
-                    )}
-                    aria-label="Pick rental dates"
-                  >
-                    <span className="truncate">{dateLabel}</span>
-                    <CalendarIcon className="h-4 w-4 opacity-60 shrink-0" />
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent
-                  className="w-auto p-0 bg-white z-50"
-                  align="start"
-                >
-                  <Calendar
-                    mode="range"
-                    selected={dateRange}
-                    onSelect={setDateRange}
-                    numberOfMonths={1}
-                    disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
-                    initialFocus
-                    className={cn("p-3 pointer-events-auto")}
-                  />
-                </PopoverContent>
-              </Popover>
+              <BookingDatePicker
+                value={dateRange}
+                onChange={setDateRange}
+                align="end"
+                placeholder="Pick-up → Return"
+              />
             </div>
           </div>
 
