@@ -10,7 +10,7 @@ export function useServiceCitiesRealtime() {
   const qc = useQueryClient();
   useEffect(() => {
     const channel = supabase
-      .channel("service_cities_global")
+      .channel(`service_cities_${Math.random().toString(36).slice(2)}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "service_cities" },
