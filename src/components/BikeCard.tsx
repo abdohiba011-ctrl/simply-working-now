@@ -225,9 +225,6 @@ export function BikeCard({
             <span className="text-[20px] font-bold text-foreground">{effective}</span>
             <span className="text-[12px] text-muted-foreground ml-1">MAD /day</span>
           </div>
-          <div className="text-[11px] text-muted-foreground mt-1">
-            Deposit: {deposit} MAD
-          </div>
         </div>
         <Button
           type="button"
