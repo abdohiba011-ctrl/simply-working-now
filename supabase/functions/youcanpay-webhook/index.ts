@@ -34,6 +34,107 @@ function timingSafeEqual(a: string, b: string): boolean {
   return out === 0;
 }
 
+/**
+ * Apply a successful booking payment.
+ *
+ * Two flows:
+ *  - NEW (draft): booking_status='draft' → call promote_draft_to_pending,
+ *    which sets status='pending', writes the 10 MAD platform fee, assigns
+ *    the agency owner, and re-checks date conflicts (refunding if lost race).
+ *  - LEGACY (pending): booking_status='pending' → just mark payment_status='paid'
+ *    and write the fee split. Used by the old promote_hold_to_booking flow.
+ *
+ * Idempotent: writes a unique booking_payments ledger row keyed on
+ * (booking_id, provider, payment_type) and only inserts if absent.
+ * Agency notification fires AFTER promotion so the booking is visible to them.
+ */
+export async function applyBookingPayment(
+  admin: any,
+  bookingId: string,
+  payment: any,
+  transactionId: string | null,
+): Promise<Record<string, unknown>> {
+  const { data: booking } = await admin
+    .from("bookings")
+    .select("user_id, assigned_to_business, customer_name, bike_id, booking_status")
+    .eq("id", bookingId)
+    .maybeSingle();
+
+  if (!booking) return { error: "booking_not_found", bookingId };
+
+  let promoteResult: any = null;
+  let conflict = false;
+
+  if (booking.booking_status === "draft") {
+    const { data: rpcData, error: rpcErr } = await admin.rpc("promote_draft_to_pending", {
+      _booking_id: bookingId,
+      _platform_fee_paid: 10,
+      _confirmation_fee_pending: 50,
+    });
+    promoteResult = rpcErr ? { error: rpcErr.message } : rpcData;
+    conflict = !!(rpcData && rpcData.conflict);
+  } else if (booking.booking_status === "pending") {
+    // Legacy hold-based flow: row is already pending, just mark paid + write fees.
+    await admin
+      .from("bookings")
+      .update({
+        payment_status: "paid",
+        platform_fee_paid_amount_mad: 10,
+        confirmation_fee_paid_amount_mad: 0,
+      })
+      .eq("id", bookingId);
+  }
+
+  // Insert ledger rows (idempotent on (booking_id, provider, payment_type)).
+  const ledgerRows = [
+    { payment_type: "platform_fee", amount: 10 },
+    { payment_type: "confirmation_fee", amount: 50 },
+  ];
+  for (const row of ledgerRows) {
+    const { data: existing } = await admin
+      .from("booking_payments")
+      .select("id")
+      .eq("booking_id", bookingId)
+      .eq("provider", "youcanpay")
+      .eq("payment_type", row.payment_type)
+      .maybeSingle();
+    if (!existing) {
+      await admin.from("booking_payments").insert({
+        booking_id: bookingId,
+        amount: row.amount,
+        currency: payment.currency || "MAD",
+        provider: "youcanpay",
+        method: "card",
+        payment_type: row.payment_type,
+        status: "completed",
+        paid_at: new Date().toISOString(),
+        external_reference: transactionId,
+      });
+    }
+  }
+
+  // Notify agency AFTER promotion (so booking is visible & not in conflict state).
+  if (!conflict) {
+    const { data: refreshed } = await admin
+      .from("bookings")
+      .select("assigned_to_business, customer_name")
+      .eq("id", bookingId)
+      .maybeSingle();
+    if (refreshed?.assigned_to_business) {
+      await admin.from("notifications").insert({
+        user_id: refreshed.assigned_to_business,
+        title: "New booking request",
+        message: `${refreshed.customer_name || "A customer"} just paid the booking fee. Please contact them within 24 hours to confirm.`,
+        type: "booking",
+        link: `/agency/bookings/${bookingId}`,
+        action_url: `/agency/bookings/${bookingId}`,
+      });
+    }
+  }
+
+  return { ok: true, bookingId, promoteResult, conflict };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
@@ -248,54 +349,8 @@ Deno.serve(async (req) => {
         { onConflict: "user_id" },
       );
     } else if (payment.purpose === "booking_payment" && payment.related_booking_id) {
-      // Mark booking platform fee as paid. The 10 MAD platform fee is tracked
-      // separately from the rental price (which is paid off-platform to the agency).
-      const { data: booking } = await admin
-        .from("bookings")
-        .select("user_id, assigned_to_business, customer_name, bike_id")
-        .eq("id", payment.related_booking_id)
-        .maybeSingle();
-
-      await admin
-        .from("bookings")
-        .update({
-          payment_status: "paid",
-        })
-        .eq("id", payment.related_booking_id);
-
-      const { data: existingLedger } = await admin
-        .from("booking_payments")
-        .select("id")
-        .eq("booking_id", payment.related_booking_id)
-        .eq("provider", "youcanpay")
-        .eq("payment_type", "platform_fee")
-        .maybeSingle();
-
-      if (!existingLedger) {
-        await admin.from("booking_payments").insert({
-          booking_id: payment.related_booking_id,
-          amount: payment.amount,
-          currency: payment.currency,
-          provider: "youcanpay",
-          method: "card",
-          payment_type: "platform_fee",
-          status: "completed",
-          paid_at: new Date().toISOString(),
-          external_reference: transactionId,
-        });
-      }
-
-      // Notify the agency (if assigned).
-      if (booking?.assigned_to_business) {
-        await admin.from("notifications").insert({
-          user_id: booking.assigned_to_business,
-          title: "New booking request",
-          message: `${booking.customer_name || "A customer"} just paid the booking fee. Please contact them within 24 hours to confirm.`,
-          type: "booking",
-          link: `/agency/bookings/${payment.related_booking_id}`,
-          action_url: `/agency/bookings/${payment.related_booking_id}`,
-        });
-      }
+      const result = await applyBookingPayment(admin, payment.related_booking_id, payment, transactionId);
+      console.log("youcanpay-webhook booking effect", result);
     }
 
     return new Response(JSON.stringify({ ok: true }), {

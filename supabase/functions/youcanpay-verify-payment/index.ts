@@ -14,6 +14,85 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
+// Mirror of applyBookingPayment in youcanpay-webhook. Keep behavior identical:
+// promote drafts, write 10/50 split, ledger rows, notify agency post-promotion.
+async function applyBookingPaymentVerify(
+  admin: any,
+  bookingId: string,
+  payment: any,
+  transactionId: string | null,
+): Promise<void> {
+  const { data: booking } = await admin
+    .from("bookings")
+    .select("booking_status")
+    .eq("id", bookingId)
+    .maybeSingle();
+  if (!booking) return;
+
+  let conflict = false;
+  if (booking.booking_status === "draft") {
+    const { data: rpcData } = await admin.rpc("promote_draft_to_pending", {
+      _booking_id: bookingId,
+      _platform_fee_paid: 10,
+      _confirmation_fee_pending: 50,
+    });
+    conflict = !!(rpcData && rpcData.conflict);
+  } else if (booking.booking_status === "pending") {
+    await admin
+      .from("bookings")
+      .update({
+        payment_status: "paid",
+        platform_fee_paid_amount_mad: 10,
+        confirmation_fee_paid_amount_mad: 0,
+      })
+      .eq("id", bookingId);
+  }
+
+  for (const row of [
+    { payment_type: "platform_fee", amount: 10 },
+    { payment_type: "confirmation_fee", amount: 50 },
+  ]) {
+    const { data: existing } = await admin
+      .from("booking_payments")
+      .select("id")
+      .eq("booking_id", bookingId)
+      .eq("provider", "youcanpay")
+      .eq("payment_type", row.payment_type)
+      .maybeSingle();
+    if (!existing) {
+      await admin.from("booking_payments").insert({
+        booking_id: bookingId,
+        amount: row.amount,
+        currency: payment.currency || "MAD",
+        provider: "youcanpay",
+        method: "card",
+        payment_type: row.payment_type,
+        status: "completed",
+        paid_at: new Date().toISOString(),
+        external_reference: transactionId,
+      });
+    }
+  }
+
+  if (!conflict) {
+    const { data: refreshed } = await admin
+      .from("bookings")
+      .select("assigned_to_business, customer_name")
+      .eq("id", bookingId)
+      .maybeSingle();
+    if (refreshed?.assigned_to_business) {
+      await admin.from("notifications").insert({
+        user_id: refreshed.assigned_to_business,
+        title: "New booking request",
+        message: `${refreshed.customer_name || "A customer"} just paid the booking fee. Please contact them within 24 hours to confirm.`,
+        type: "booking",
+        link: `/agency/bookings/${bookingId}`,
+        action_url: `/agency/bookings/${bookingId}`,
+      });
+    }
+  }
+}
+
 interface Body {
   payment_id: string;
   transaction_id?: string;
@@ -262,49 +341,7 @@ Deno.serve(async (req) => {
         { onConflict: "user_id" },
       );
     } else if (payment.purpose === "booking_payment" && payment.related_booking_id) {
-      const { data: booking } = await admin
-        .from("bookings")
-        .select("user_id, assigned_to_business, customer_name, bike_id")
-        .eq("id", payment.related_booking_id)
-        .maybeSingle();
-
-      await admin
-        .from("bookings")
-        .update({ payment_status: "paid" })
-        .eq("id", payment.related_booking_id);
-
-      const { data: existingLedger } = await admin
-        .from("booking_payments")
-        .select("id")
-        .eq("booking_id", payment.related_booking_id)
-        .eq("provider", "youcanpay")
-        .eq("payment_type", "platform_fee")
-        .maybeSingle();
-
-      if (!existingLedger) {
-        await admin.from("booking_payments").insert({
-          booking_id: payment.related_booking_id,
-          amount: payment.amount,
-          currency: payment.currency,
-          provider: "youcanpay",
-          method: "card",
-          payment_type: "platform_fee",
-          status: "completed",
-          paid_at: new Date().toISOString(),
-          external_reference: providerTxn,
-        });
-      }
-
-      if (booking?.assigned_to_business) {
-        await admin.from("notifications").insert({
-          user_id: booking.assigned_to_business,
-          title: "New booking request",
-          message: `${booking.customer_name || "A customer"} just paid the booking fee. Please contact them within 24 hours to confirm.`,
-          type: "booking",
-          link: `/agency/bookings/${payment.related_booking_id}`,
-          action_url: `/agency/bookings/${payment.related_booking_id}`,
-        });
-      }
+      await applyBookingPaymentVerify(admin, payment.related_booking_id, payment, providerTxn);
     }
 
     const { data: updated } = await admin
