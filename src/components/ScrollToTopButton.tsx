@@ -21,8 +21,7 @@ export const ScrollToTopButton = () => {
   const location = useLocation();
 
   // Check if current route is a long page (includes /bike/* paths)
-  const isLongPage = LONG_PAGES.includes(location.pathname) || 
-                     location.pathname.startsWith('/bike/');
+  const isLongPage = LONG_PAGES.includes(location.pathname);
 
   useEffect(() => {
     if (!isLongPage) {

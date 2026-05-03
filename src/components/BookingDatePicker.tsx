@@ -59,7 +59,14 @@ const Panel = ({
     if (!clicked) return;
 
     if (focus === "from") {
-      // Start a new selection from this date
+      if (prev?.to) {
+        const normalized = isBefore(clicked, prev.to)
+          ? { from: clicked, to: prev.to }
+          : { from: prev.to, to: clicked };
+        setRange(normalized);
+        window.setTimeout(() => onClose(), 280);
+        return;
+      }
       setRange({ from: clicked, to: undefined });
       setFocus("to");
       return;
@@ -71,14 +78,10 @@ const Panel = ({
       setFocus("to");
       return;
     }
-    if (isBefore(clicked, prev.from)) {
-      // Clicked earlier than pickup → make it the new pickup
-      setRange({ from: clicked, to: undefined });
-      setFocus("to");
-      return;
-    }
-    setRange({ from: prev.from, to: clicked });
-    // Auto-close after a short delay
+    const normalized = isBefore(clicked, prev.from)
+      ? { from: clicked, to: prev.from }
+      : { from: prev.from, to: clicked };
+    setRange(normalized);
     window.setTimeout(() => onClose(), 280);
   };
 
@@ -229,7 +232,7 @@ export const BookingDatePicker = ({
     if (!open || isMobile || !triggerRef.current) return;
     const compute = () => {
       const rect = triggerRef.current!.getBoundingClientRect();
-      const width = Math.min(640, window.innerWidth - 16);
+      const width = Math.min(560, window.innerWidth - 16);
       let left = rect.left;
       if (align === "center") left = rect.left + rect.width / 2 - width / 2;
       if (align === "end") left = rect.right - width;
@@ -308,7 +311,7 @@ export const BookingDatePicker = ({
           <div
             ref={popoverRef}
             data-booking-datepicker="panel"
-            style={{ top: popoverPos.top, left: popoverPos.left, width: Math.min(640, window.innerWidth - 16) }}
+            style={{ top: popoverPos.top, left: popoverPos.left, width: Math.min(560, window.innerWidth - 16) }}
             className="fixed z-[200]"
           >
             <Panel
@@ -334,7 +337,7 @@ export const BookingDatePicker = ({
               <div className="flex justify-center pt-3 pb-2 shrink-0">
                 <span className="h-1 w-10 rounded-full bg-gray-300" />
               </div>
-              <div className="flex-1 overflow-y-auto px-2 pb-3">
+              <div className="flex-1 overflow-y-auto px-0 pb-3">
                 <Panel
                   range={tempRange}
                   setRange={handleChange}
