@@ -651,7 +651,7 @@ const CheckoutDraft = () => {
                   <Checkbox
                     checked={agreed}
                     onCheckedChange={(v) => setAgreed(!!v)}
-                    className="mt-0.5 h-5 w-5 border-2 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
+                    className="peer shrink-0 rounded-md border-primary ring-offset-background data-[state=checked]:text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 mt-0.5 h-5 w-5 border-2 data-[state=checked]:border-blue-600 bg-lime-400"
                   />
                   <span className="text-sm font-medium text-foreground leading-snug">
                     I agree to the{" "}
