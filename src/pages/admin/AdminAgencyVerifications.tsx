@@ -459,7 +459,15 @@ const AdminAgencyVerifications = () => {
                             )}
                           </div>
                         </div>
-                        <div className="flex gap-2 shrink-0">
+                        <div className="flex gap-2 shrink-0 flex-wrap">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => navigate(`/admin/business/${a.profile_id}`)}
+                          >
+                            <ExternalLink className="h-4 w-4 mr-1" />
+                            Open details
+                          </Button>
                           <Button
                             variant="outline"
                             size="sm"
