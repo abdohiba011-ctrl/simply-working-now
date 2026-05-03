@@ -53,6 +53,7 @@ export async function applyBookingPayment(
   bookingId: string,
   payment: any,
   transactionId: string | null,
+  paymentMethod: string = "card",
 ): Promise<Record<string, unknown>> {
   const { data: booking } = await admin
     .from("bookings")
