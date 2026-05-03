@@ -224,15 +224,34 @@ const BikeDetails = () => {
     return main ? [main, ...extras] : extras;
   }, [bike, detailImages]);
 
+  // Fetch per-bike pricing tiers
+  const [tiers, setTiers] = useState<BikePricingTier[]>([]);
+  const bikeTypeIdForTiers = (bike?.bike_type as any)?.id;
+  useEffect(() => {
+    if (!bikeTypeIdForTiers) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("bike_pricing_tiers")
+        .select("min_days, daily_price_mad")
+        .eq("bike_type_id", bikeTypeIdForTiers)
+        .order("min_days", { ascending: true });
+      if (!cancelled && data) setTiers(data as BikePricingTier[]);
+    })();
+    return () => { cancelled = true; };
+  }, [bikeTypeIdForTiers]);
+
   const days = dateRange?.from && dateRange?.to
     ? differenceInDays(dateRange.to, dateRange.from)
     : 0;
 
-  const baseDailyPrice = bike?.bike_type ? Number(bike.bike_type.daily_price) : 0;
-  const dailyPrice = baseDailyPrice;
+  const fallbackBase = bike?.bike_type ? Number(bike.bike_type.daily_price) : 0;
+  const baseDailyPrice = getBaseDailyPrice(tiers) || fallbackBase;
+  const { dailyPrice: resolvedDaily, tierMinDays: appliedTier } = resolveTierPrice(tiers, days || 1);
+  const dailyPrice = tiers.length > 0 ? resolvedDaily : fallbackBase;
   const subtotal = days * dailyPrice;
-  const baselineSubtotal = subtotal;
-  const tierDiscount = 0;
+  const baselineSubtotal = days * baseDailyPrice;
+  const tierDiscount = Math.max(0, baselineSubtotal - subtotal);
   const agencyDeliveryFee = resolvedAgency.deliveryFee;
   const deliveryFee = deliveryMethod === "delivery" ? agencyDeliveryFee : 0;
   const PLATFORM_FEE = 10;
@@ -242,6 +261,12 @@ const BikeDetails = () => {
   const deposit = (bike?.bike_type as any)?.deposit_amount ? Number((bike?.bike_type as any).deposit_amount) : 0;
   const pickupTotal = rentalDueAtPickup + (deposit || 0);
   const tripTotal = upfrontTotal + rentalDueAtPickup;
+
+  // Tiers below the base rate (i.e. actual volume discount tiers configured)
+  const discountTiers = tiers
+    .filter((t) => t.min_days > 1 && Number(t.daily_price_mad) < baseDailyPrice)
+    .sort((a, b) => a.min_days - b.min_days);
+  const hasDiscountTiers = discountTiers.length > 0;
 
   const minRentalDays = Math.max(1, Number((bike?.bike_type as any)?.min_rental_days) || 1);
   const maxRentalDays = Math.max(minRentalDays, Number((bike?.bike_type as any)?.max_rental_days) || 30);
