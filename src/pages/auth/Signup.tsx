@@ -322,25 +322,10 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
   const strength = passwordStrength(pwValue ?? "");
   const cityValue = form.watch("city");
   const { cities: dbCities, locations: dbLocations } = useServiceCities();
-  // Merge DB cities with the static fallback so the form keeps working even
-  // before service_cities loads. DB names always win.
-  const cityList = useMemo(() => {
-    const names = new Set<string>();
-    const out: string[] = [];
-    for (const c of dbCities) {
-      if (!names.has(c.name)) {
-        names.add(c.name);
-        out.push(c.name);
-      }
-    }
-    for (const c of CITIES) {
-      if (!names.has(c)) {
-        names.add(c);
-        out.push(c);
-      }
-    }
-    return out;
-  }, [dbCities]);
+  const availableCityCount = useMemo(
+    () => dbCities.filter((c) => c.is_available && !c.is_coming_soon).length,
+    [dbCities],
+  );
   const neighborhoodOptions = useMemo(() => {
     if (!cityValue) return [] as string[];
     const matchedCity = dbCities.find(
