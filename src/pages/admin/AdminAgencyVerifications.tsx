@@ -580,7 +580,6 @@ const AdminAgencyVerifications = () => {
           )}
         </div>
       </main>
-      <Footer />
 
       {/* Reject modal */}
       <Dialog
