@@ -636,7 +636,7 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
                         <SelectValue placeholder="Select..." />
                       </SelectTrigger>
                       <SelectContent>
-                        {CITIES.map((c) => (
+                        {cityList.map((c) => (
                           <SelectItem key={c} value={c}>
                             {c}
                           </SelectItem>
