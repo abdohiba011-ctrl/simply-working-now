@@ -200,6 +200,7 @@ const App = () => (
                 <Route path="/booking-review" element={<BookingReview />} />
                 <Route path="/payment-selection" element={<Navigate to="/booking-review" replace />} />
                 <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
+                <Route path="/checkout/:bookingId" element={<ProtectedRoute><CheckoutDraft /></ProtectedRoute>} />
                 <Route path="/pay/youcanpay" element={<ProtectedRoute><PayYouCan /></ProtectedRoute>} />
                 <Route path="/payment-status" element={<ProtectedRoute><PaymentStatus /></ProtectedRoute>} />
                 <Route path="/confirmation" element={<ProtectedRoute><Confirmation /></ProtectedRoute>} />
