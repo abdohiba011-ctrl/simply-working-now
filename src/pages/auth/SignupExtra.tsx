@@ -105,23 +105,10 @@ function SignupExtraInner() {
   const numBikes = watch("numBikes");
 
   const { cities: dbCities, locations: dbLocations } = useServiceCities();
-  const cityList = useMemo(() => {
-    const names = new Set<string>();
-    const out: string[] = [];
-    for (const c of dbCities) {
-      if (!names.has(c.name)) {
-        names.add(c.name);
-        out.push(c.name);
-      }
-    }
-    for (const c of CITIES) {
-      if (!names.has(c)) {
-        names.add(c);
-        out.push(c);
-      }
-    }
-    return out;
-  }, [dbCities]);
+  const availableCount = useMemo(
+    () => dbCities.filter((c) => c.is_available && !c.is_coming_soon).length,
+    [dbCities],
+  );
   const neighborhoodOptions = useMemo(() => {
     if (!city) return [] as string[];
     const matched = dbCities.find(
