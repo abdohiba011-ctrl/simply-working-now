@@ -52,6 +52,8 @@ const MotorbikeWizard = () => {
   const [bikeId, setBikeId] = useState<string | null>(editing ? id || null : null);
   const [mainImageUrl, setMainImageUrl] = useState<string | null>(null);
   const [photoCount, setPhotoCount] = useState<number>(0);
+  const [initialPhotoIds, setInitialPhotoIds] = useState<string[]>([]);
+  const [initialMainImageUrl, setInitialMainImageUrl] = useState<string | null>(null);
   const [currentStatus, setCurrentStatus] = useState<string>("draft");
   const [stepIdx, setStepIdx] = useState(0);
 
@@ -165,11 +167,14 @@ const MotorbikeWizard = () => {
           setMaxRentalDays(String(b.max_rental_days ?? 30));
           setCancellationPolicy(b.cancellation_policy || "moderate");
           setMainImageUrl(b.main_image_url || null);
+          setInitialMainImageUrl(b.main_image_url || null);
           setCurrentStatus(b.approval_status || "draft");
         }
-        const { count } = await supabase
-          .from("bike_type_images").select("id", { count: "exact", head: true }).eq("bike_type_id", id);
-        setPhotoCount(count || 0);
+        const { data: imgRows } = await supabase
+          .from("bike_type_images").select("id").eq("bike_type_id", id);
+        const ids = (imgRows || []).map((r: { id: string }) => r.id);
+        setInitialPhotoIds(ids);
+        setPhotoCount(ids.length);
         setLoading(false);
       } else if (isVerified) {
         const { data: created, error } = await supabase
@@ -327,11 +332,15 @@ const MotorbikeWizard = () => {
       // Detect if "trigger" fields changed vs DB (for messaging only;
       // server-side trigger enforces correctness).
       let triggerChanged = false;
+      let photosChanged = false;
       if (editing && (currentStatus === "approved" || currentStatus === "rejected")) {
-        const { data: prev } = await supabase
-          .from("bike_types")
-          .select("description,brand,model,year,category,engine_cc,fuel_type,transmission,license_required,main_image_url")
-          .eq("id", bikeId).maybeSingle();
+        const [{ data: prev }, { data: imgRows }] = await Promise.all([
+          supabase
+            .from("bike_types")
+            .select("description,brand,model,year,category,engine_cc,fuel_type,transmission,license_required,main_image_url")
+            .eq("id", bikeId).maybeSingle(),
+          supabase.from("bike_type_images").select("id").eq("bike_type_id", bikeId),
+        ]);
         if (prev) {
           const yr = Number(year);
           const cc = Number(engineCc);
@@ -346,6 +355,13 @@ const MotorbikeWizard = () => {
             (prev.transmission || "") !== (transmission || "") ||
             (prev.license_required || "") !== (licenseRequired || "");
         }
+        const currentIds = ((imgRows as { id: string }[] | null) || []).map((r) => r.id).sort();
+        const baselineIds = [...initialPhotoIds].sort();
+        const idsDiffer =
+          currentIds.length !== baselineIds.length ||
+          currentIds.some((v, i) => v !== baselineIds[i]);
+        const mainChanged = (prev?.main_image_url || "") !== (initialMainImageUrl || "");
+        photosChanged = idsDiffer || mainChanged;
       }
 
       if (isDraftFirstSubmit) {
@@ -376,6 +392,10 @@ const MotorbikeWizard = () => {
 
       if (!editing) {
         toast.success("Submitted for review. We'll notify you within 24-48 hours.");
+      } else if (photosChanged && !triggerChanged) {
+        toast.message("Bike submitted for review", {
+          description: "Photo changes require admin approval, so this bike is currently hidden from search.",
+        });
       } else if (triggerChanged) {
         toast.message("Bike submitted for review", {
           description: "Changes to photos/specs require admin approval. Currently hidden from search.",

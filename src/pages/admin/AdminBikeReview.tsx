@@ -26,11 +26,11 @@ import {
 } from "@/lib/bikeFeatures";
 
 const QUICK_REASONS = [
-  "Photos unclear or low quality",
-  "Missing required information",
-  "Inaccurate specifications",
-  "Pricing seems wrong",
-  "Other (write reason)",
+  "Photos are unclear or low quality",
+  "Missing required information in listing",
+  "Inaccurate specifications provided",
+  "Pricing information seems incorrect",
+  "Other (please write a detailed reason)",
 ];
 
 interface BikeType {
@@ -430,7 +430,7 @@ const AdminBikeReview = () => {
               <button
                 key={q}
                 type="button"
-                onClick={() => setReason(q === "Other (write reason)" ? "" : q)}
+                onClick={() => setReason(q.startsWith("Other") ? "" : q)}
                 className="rounded-full border border-border bg-muted px-2.5 py-1 text-xs hover:bg-muted/70"
               >
                 {q}
