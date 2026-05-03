@@ -625,11 +625,13 @@ const BikeDetails = () => {
           <p className="text-[11px] text-center text-foreground/70">⚡ Confirm in 60 seconds</p>
         )}
 
-        {/* Trust signals — three only */}
+        {/* Trust signals */}
         <div className="flex flex-col gap-1.5 pt-2 text-xs text-foreground/80">
           <span className="inline-flex items-center gap-2"><CheckCircle2 className="h-3.5 w-3.5 text-primary" /> Verified agency</span>
           <span className="inline-flex items-center gap-2"><CheckCircle2 className="h-3.5 w-3.5 text-primary" /> Secure payment</span>
-          <span className="inline-flex items-center gap-2"><CheckCircle2 className="h-3.5 w-3.5 text-primary" /> Free cancellation up to 2 days</span>
+          {cancellationText(bikeType.cancellation_policy) && (
+            <span className="inline-flex items-center gap-2"><CheckCircle2 className="h-3.5 w-3.5 text-primary" /> {cancellationText(bikeType.cancellation_policy)}</span>
+          )}
         </div>
       </CardContent>
     </Card>
