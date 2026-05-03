@@ -57,6 +57,9 @@ interface BikeType {
   neighborhood: string | null;
   rejection_reason: string | null;
   rejected_at: string | null;
+  approved_at: string | null;
+  approved_by: string | null;
+  rejected_by: string | null;
   created_at: string;
 }
 
@@ -132,7 +135,8 @@ const AdminBikeReview = () => {
     setConfirmApprove(false);
     if (error) { toast.error(error.message || "Failed to approve"); return; }
     toast.success("Bike approved and now live on Motonita");
-    navigate("/admin/bikes/approvals");
+    setReReview(false);
+    await load();
   };
 
   const handleReject = async () => {
@@ -148,8 +152,19 @@ const AdminBikeReview = () => {
     setActing(false);
     setRejectOpen(false);
     if (error) { toast.error(error.message || "Failed to reject"); return; }
-    toast.success("Bike rejected and agency notified");
-    navigate("/admin/bikes/approvals");
+    toast.success("Bike rejected. Agency will be notified.");
+    setReason("");
+    setReReview(false);
+    await load();
+  };
+
+  const formatDecidedAt = (iso: string | null) => {
+    if (!iso) return "";
+    try {
+      return new Date(iso).toLocaleString(undefined, {
+        month: "short", day: "numeric", hour: "2-digit", minute: "2-digit",
+      });
+    } catch { return ""; }
   };
 
   if (!isAuthenticated || !isAdmin) {
