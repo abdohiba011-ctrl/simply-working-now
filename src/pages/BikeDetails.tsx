@@ -47,18 +47,19 @@ import { DateRangePicker } from "@/components/DateRangePicker";
 import { BookingDatePicker } from "@/components/BookingDatePicker";
 import { checkBikeAvailability, type Availability } from "@/lib/availability";
 import { useDocumentHead } from "@/hooks/useDocumentHead";
+import { FEATURE_LABELS, FeatureKey, licenseLabel, cancellationText } from "@/lib/bikeFeatures";
 
 const isUuid = (s: string) =>
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
 const SITE_URL = "https://motonita.ma";
+
+const cap = (s?: string | null) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : "");
 
 const timeSlots = [
   "08:00", "08:30", "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
   "12:00", "12:30", "13:00", "13:30", "14:00", "14:30", "15:00", "15:30",
   "16:00", "16:30", "17:00", "17:30", "18:00", "18:30", "19:00", "19:30", "20:00"
 ];
-
-const MAX_RENTAL_DAYS = 30;
 
 const BikeDetails = () => {
   const { id } = useParams();
