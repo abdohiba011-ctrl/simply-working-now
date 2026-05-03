@@ -164,17 +164,20 @@ const Panel = ({
             <span className="h-2 w-2 rounded-full bg-[#9FE870]" />
             Selected
           </span>
-          {isMobile && (
-            <button
-              type="button"
-              onClick={onClose}
-              className="ml-2 rounded-md bg-[#163300] text-white px-3 py-1 text-[11px] font-semibold"
-            >
-              Done
-            </button>
-          )}
         </div>
       </div>
+
+      {isMobile && (
+        <div className="px-3 pt-2 pb-3">
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-full h-12 rounded-lg bg-[#9FE870] text-[#163300] font-semibold text-base hover:bg-[#8DD85F] active:bg-[#7BC850] transition-colors"
+          >
+            Done
+          </button>
+        </div>
+      )}
     </div>
   );
 };
