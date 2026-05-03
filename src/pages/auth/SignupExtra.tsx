@@ -224,13 +224,16 @@ function SignupExtraInner() {
               <Label>{t("city")}</Label>
               <Select
                 value={city}
-                onValueChange={(v) => setValue("city", v, { shouldValidate: true })}
+                onValueChange={(v) => {
+                  setValue("city", v, { shouldValidate: true });
+                  setValue("neighborhood", "", { shouldValidate: false });
+                }}
               >
                 <SelectTrigger className="h-10">
                   <SelectValue placeholder={t("select_placeholder")} />
                 </SelectTrigger>
                 <SelectContent>
-                  {CITIES.map((c) => (
+                  {cityList.map((c) => (
                     <SelectItem key={c} value={c}>
                       {c}
                     </SelectItem>
@@ -239,6 +242,36 @@ function SignupExtraInner() {
               </Select>
               {errors.city && (
                 <p className="mt-1 text-xs text-red-600">{errors.city.message}</p>
+              )}
+            </div>
+
+            <div>
+              <Label>Neighborhood</Label>
+              {neighborhoodOptions.length > 0 ? (
+                <Select
+                  value={neighborhood ?? ""}
+                  onValueChange={(v) =>
+                    setValue("neighborhood", v, { shouldValidate: true })
+                  }
+                >
+                  <SelectTrigger className="h-10">
+                    <SelectValue placeholder={t("select_placeholder")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {neighborhoodOptions.map((n) => (
+                      <SelectItem key={n} value={n}>
+                        {n}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <Input
+                  placeholder={city ? "e.g. Centre-Ville" : "Pick a city first"}
+                  disabled={!city}
+                  className="h-10"
+                  {...register("neighborhood")}
+                />
               )}
             </div>
 
