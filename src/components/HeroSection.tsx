@@ -209,10 +209,10 @@ export const HeroSection = memo(() => {
     }
     if (dateRange?.from) params.set("from", format(dateRange.from, "yyyy-MM-dd"));
     if (dateRange?.to) params.set("to", format(dateRange.to, "yyyy-MM-dd"));
-    const slug = cityToSlug(city);
+    const slug = slugByName[city] ?? city.toLowerCase().replace(/\s+/g, "-");
     const qs = params.toString();
     navigate(`/rent/${slug}${qs ? `?${qs}` : ""}`);
-  }, [city, neighborhood, dateRange, navigate]);
+  }, [city, neighborhood, dateRange, navigate, slugByName]);
 
   const dateLabel =
     dateRange?.from && dateRange?.to
