@@ -16,7 +16,9 @@ import {
   FileText,
   Download,
   ChevronLeft,
+  BadgeCheck,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { format, isToday, isYesterday } from "date-fns";
 import { toast } from "sonner";
@@ -84,6 +86,50 @@ export const ChatThread = ({
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Renter verification banner state
+  const [isVerified, setIsVerified] = useState<boolean | null>(null);
+  const [verifyDismissed, setVerifyDismissed] = useState<boolean>(() => {
+    try {
+      return sessionStorage.getItem(`verifyBannerDismissed:${bookingId}`) === "1";
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    if (viewerRole !== "renter" || !user) {
+      setIsVerified(true);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("is_verified, verification_status")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (cancelled) return;
+      const verified =
+        !!data?.is_verified ||
+        ["verified", "approved"].includes(String(data?.verification_status || ""));
+      setIsVerified(verified);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user, viewerRole]);
+
+  const dismissVerifyBanner = () => {
+    try {
+      sessionStorage.setItem(`verifyBannerDismissed:${bookingId}`, "1");
+    } catch {
+      /* ignore */
+    }
+    setVerifyDismissed(true);
+  };
+  const showVerifyBanner =
+    viewerRole === "renter" && isVerified === false && !verifyDismissed;
 
   // Auto-scroll to bottom on new messages
   useEffect(() => {
@@ -280,6 +326,35 @@ export const ChatThread = ({
           )}
         </div>
       </div>
+
+      {/* Renter verification banner */}
+      {showVerifyBanner && (
+        <div className="shrink-0 border-b border-amber-500/30 bg-amber-50 dark:bg-amber-900/20 px-3 py-3 sm:px-4">
+          <div className="mx-auto flex max-w-3xl flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-2 text-sm text-amber-900 dark:text-amber-100">
+              <BadgeCheck className="mt-0.5 h-4 w-4 shrink-0" />
+              <div>
+                <p className="font-semibold">Verify your identity</p>
+                <p className="text-xs opacity-90">
+                  Upload your ID and license to help the agency prepare for your pickup.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button asChild size="sm" variant="hero">
+                <Link to="/verification">Upload ID</Link>
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={dismissVerifyBanner}
+              >
+                Later
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Messages */}
       <div

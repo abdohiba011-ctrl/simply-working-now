@@ -16,6 +16,7 @@ import {
   ShieldCheck,
   Lock,
   Loader2,
+  CheckCircle2,
 } from "lucide-react";
 import { format } from "date-fns";
 import { useAuth } from "@/hooks/useAuth";
@@ -254,8 +255,9 @@ const CheckoutDraft = () => {
   const rentalSubtotal = booking?.total_price ?? days * dailyPrice;
   const dueAtPickup = Math.max(0, rentalSubtotal - CONFIRMATION_FEE_MAD);
 
-  const persistInfoIfNeeded = async () => {
-    if (!showEditor) return true;
+  const [savingInfo, setSavingInfo] = useState(false);
+
+  const handleSaveInfo = async () => {
     const nm = editName.trim();
     const ph = editPhone.trim();
     if (!nm) {
@@ -266,31 +268,36 @@ const CheckoutDraft = () => {
       toast.error("Please enter your phone number.");
       return false;
     }
-    // Update profile (source of truth) and mirror into the booking.
-    if (user?.id) {
-      const { error: pErr } = await supabase
-        .from("profiles")
-        .update({ full_name: nm, phone: ph })
-        .eq("user_id", user.id);
-      if (pErr) {
-        console.error(pErr);
-        toast.error("Could not save your info. Please try again.");
-        return false;
+    setSavingInfo(true);
+    try {
+      if (user?.id) {
+        const { error: pErr } = await supabase
+          .from("profiles")
+          .update({ full_name: nm, phone: ph })
+          .eq("user_id", user.id);
+        if (pErr) {
+          console.error(pErr);
+          toast.error("Could not save your info. Please try again.");
+          return false;
+        }
       }
+      await supabase
+        .from("bookings")
+        .update({
+          customer_name: nm,
+          customer_email: profileEmail,
+          customer_phone: ph,
+        })
+        .eq("id", bookingId!)
+        .eq("booking_status", "draft");
+      setProfileName(nm);
+      setProfilePhone(ph);
+      setEditing(false);
+      toast.success("Details saved");
+      return true;
+    } finally {
+      setSavingInfo(false);
     }
-    await supabase
-      .from("bookings")
-      .update({
-        customer_name: nm,
-        customer_email: profileEmail,
-        customer_phone: ph,
-      })
-      .eq("id", bookingId!)
-      .eq("booking_status", "draft");
-    setProfileName(nm);
-    setProfilePhone(ph);
-    setEditing(false);
-    return true;
   };
 
   const handlePay = async () => {
@@ -299,21 +306,20 @@ const CheckoutDraft = () => {
       toast.error("Please accept the Terms & Cancellation policy.");
       return;
     }
-    const ok = await persistInfoIfNeeded();
-    if (!ok) return;
-
-    // Make sure booking has the latest renter info even if not editing.
-    if (!showEditor) {
-      await supabase
-        .from("bookings")
-        .update({
-          customer_name: profileName,
-          customer_email: profileEmail,
-          customer_phone: profilePhone,
-        })
-        .eq("id", bookingId!)
-        .eq("booking_status", "draft");
+    if (!profileName.trim() || !profilePhone.trim()) {
+      toast.error("Please save your name and phone before paying.");
+      return;
     }
+    // Make sure booking has the latest renter info.
+    await supabase
+      .from("bookings")
+      .update({
+        customer_name: profileName,
+        customer_email: profileEmail,
+        customer_phone: profilePhone,
+      })
+      .eq("id", bookingId!)
+      .eq("booking_status", "draft");
 
     setYcStatus("paying");
     const { token, pid } = tokenRef.current;
@@ -473,10 +479,17 @@ const CheckoutDraft = () => {
             <Card>
               <CardContent className="p-5 space-y-4">
                 <div>
-                  <h3 className="font-semibold text-foreground">Your info</h3>
+                  <h3 className="font-semibold text-foreground inline-flex items-center gap-2">
+                    Your info
+                    {!showEditor && (
+                      <CheckCircle2 className="h-4 w-4 text-primary" />
+                    )}
+                  </h3>
                   <p className="text-sm text-muted-foreground">
                     {showEditor
-                      ? "Please complete your details before paying."
+                      ? mustEdit
+                        ? "Please complete your details before paying."
+                        : "Update your details, then save."
                       : "Please confirm your details."}
                   </p>
                 </div>
@@ -506,19 +519,36 @@ const CheckoutDraft = () => {
                         placeholder="+212 …"
                       />
                     </div>
-                    {!mustEdit && (
-                      <button
+                    <div className="flex items-center gap-3 pt-1">
+                      <Button
                         type="button"
-                        onClick={() => {
-                          setEditing(false);
-                          setEditName(profileName);
-                          setEditPhone(profilePhone);
-                        }}
-                        className="text-xs text-muted-foreground hover:text-foreground underline"
+                        size="sm"
+                        onClick={handleSaveInfo}
+                        disabled={savingInfo}
                       >
-                        Cancel
-                      </button>
-                    )}
+                        {savingInfo ? (
+                          <>
+                            <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
+                            Saving…
+                          </>
+                        ) : (
+                          "Save info"
+                        )}
+                      </Button>
+                      {!mustEdit && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditing(false);
+                            setEditName(profileName);
+                            setEditPhone(profilePhone);
+                          }}
+                          className="text-xs text-muted-foreground hover:text-foreground underline"
+                        >
+                          Cancel
+                        </button>
+                      )}
+                    </div>
                   </div>
                 ) : (
                   <div className="space-y-2 text-sm">
@@ -641,7 +671,7 @@ const CheckoutDraft = () => {
                   size="lg"
                   className="w-full"
                   onClick={handlePay}
-                  disabled={ycStatus !== "ready" || !agreed}
+                  disabled={ycStatus !== "ready" || !agreed || mustEdit || editing}
                 >
                   {ycStatus === "paying" ? (
                     <>
