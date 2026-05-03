@@ -3,7 +3,7 @@ import { Link, Navigate, useNavigate, useParams, useSearchParams } from "react-r
 import {
   ChevronRight,
   Filter as FilterIcon,
-  Heart,
+  // (Heart icon was removed — favorites button lives inside BikeCard now)
   MapPin,
   Pencil,
   Calendar as CalendarIcon,
@@ -47,6 +47,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { BookingDatePicker } from "@/components/BookingDatePicker";
+import { BikeCard } from "@/components/BikeCard";
+import { useFavoriteIds } from "@/lib/favorites";
 
 // Neighborhoods are loaded live from `service_locations` per city — no hardcoded list.
 // This means whenever an admin adds/edits/disables a neighborhood, the renter
@@ -203,7 +205,7 @@ export default function RentCity() {
   const [sortBy, setSortBy] = useState<string>(
     searchParams.get("sort") || "price_asc"
   );
-  const [favorites, setFavorites] = useState<Set<string>>(new Set());
+  // favorites are loaded from DB via useFavoriteIds (see below)
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   // Read selected dates from URL (from/to). Backwards-compat with start/end & pickup.
@@ -250,13 +252,8 @@ export default function RentCity() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [city, neighborhoodRows]);
 
-  // Load favorites from localStorage
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem("favorite_bikes");
-      if (stored) setFavorites(new Set(JSON.parse(stored)));
-    } catch {}
-  }, []);
+  // DB-backed favorites
+  const { data: favoriteIds = new Set<string>() } = useFavoriteIds();
 
   // ─── Fetch bikes for the resolved city ──────────────────────────────
   // Only runs once we have a city.id. Skipped for unknown / not-found
@@ -354,22 +351,6 @@ export default function RentCity() {
     licenses.length +
     features.length;
 
-  const toggleFavorite = (id: string, name: string) => {
-    setFavorites((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-        toast(`Removed ${name} from favorites`);
-      } else {
-        next.add(id);
-        toast.success(`Saved ${name} to favorites`);
-      }
-      try {
-        localStorage.setItem("favorite_bikes", JSON.stringify([...next]));
-      } catch {}
-      return next;
-    });
-  };
 
   const clearAll = () => {
     setNeighborhood(allCityLabel);
@@ -758,10 +739,10 @@ export default function RentCity() {
                   <BikeCard
                     key={b.id}
                     bike={b}
-                    favorite={favorites.has(b.id)}
-                    onToggleFavorite={() => toggleFavorite(b.id, b.name)}
-                    onOpen={() => navigate(`/bike/${b.slug || b.id}${datesQS}`)}
+                    isFavorited={favoriteIds.has(b.id)}
                     totalDays={totalDays}
+                    datesQS={datesQS}
+                    cityName={cityName}
                   />
                 ))}
               </div>
@@ -775,122 +756,7 @@ export default function RentCity() {
   );
 }
 
-function BikeCard({
-  bike,
-  favorite,
-  onToggleFavorite,
-  onOpen,
-  totalDays,
-}: {
-  bike: BikeRow;
-  favorite: boolean;
-  onToggleFavorite: () => void;
-  onOpen: () => void;
-  totalDays: number;
-}) {
-  const price = Number(bike.daily_price) || 0;
-  const weekly = Number(bike.weekly_price) || 0;
-  const monthly = Number(bike.monthly_price) || 0;
-  const effective =
-    totalDays >= 30 && monthly > 0
-      ? monthly
-      : totalDays >= 7 && weekly > 0
-        ? weekly
-        : price;
-
-  return (
-    <article
-      onClick={onOpen}
-      className="group cursor-pointer bg-card border border-border rounded-xl overflow-hidden transition-all hover:shadow-lg hover:-translate-y-0.5 focus-within:ring-2 focus-within:ring-ring"
-    >
-      <div className="relative aspect-[16/9] bg-muted overflow-hidden">
-        {bike.main_image_url ? (
-          <img
-            src={bike.main_image_url}
-            alt={`${bike.name}${bike.year ? ` ${bike.year}` : ""}`}
-            loading="lazy"
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">
-            No image
-          </div>
-        )}
-
-        <Badge
-          aria-label="Available"
-          className="absolute top-3 left-3 bg-primary text-primary-foreground border-0 shadow-sm"
-        >
-          Available
-        </Badge>
-
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onToggleFavorite();
-          }}
-          aria-label={favorite ? "Remove from favorites" : "Save to favorites"}
-          className="absolute top-3 right-3 w-9 h-9 rounded-full bg-background/90 backdrop-blur flex items-center justify-center hover:bg-background transition-colors"
-        >
-          <Heart
-            className={cn(
-              "w-4 h-4 transition-colors",
-              favorite ? "fill-destructive text-destructive" : "text-foreground"
-            )}
-          />
-        </button>
-
-        <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
-          <Button variant="hero" size="sm" className="h-7 px-3 text-xs rounded-md">
-            View details
-          </Button>
-        </div>
-      </div>
-
-      <div className="p-4 space-y-2">
-        <h3 className="font-semibold text-foreground leading-tight line-clamp-1">
-          {bike.name}
-        </h3>
-        <div className="text-xs text-muted-foreground capitalize">
-          {[bike.category, bike.fuel_type, bike.engine_cc ? `${bike.engine_cc}cc` : null]
-            .filter(Boolean)
-            .join(" · ")}
-        </div>
-        <div className="flex items-center text-xs text-muted-foreground">
-          <MapPin className="w-3.5 h-3.5 mr-1" />
-          {bike.neighborhood || "—"}
-        </div>
-
-        <div className="flex items-baseline justify-between pt-1">
-          <div>
-            <span className="text-2xl font-bold text-foreground">{effective}</span>
-            <span className="text-sm text-muted-foreground ml-1">MAD/day</span>
-            {effective !== price && (
-              <div className="text-[11px] text-muted-foreground line-through">{price} MAD/day</div>
-            )}
-          </div>
-          {bike.rating ? (
-            <div className="flex items-center gap-1 text-xs">
-              <Star className="w-3.5 h-3.5 fill-primary text-primary" />
-              <span className="font-semibold text-foreground">
-                {Number(bike.rating).toFixed(1)}
-              </span>
-              <span className="text-muted-foreground">
-                ({bike.review_count || 0})
-              </span>
-            </div>
-          ) : null}
-        </div>
-
-        <div className="text-[11px] text-muted-foreground pt-1 border-t border-border">
-          by Casa Moto Rent · ✓ Verified
-        </div>
-      </div>
-    </article>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────
+// BikeCard moved to src/components/BikeCard.tsx
 // Coming Soon page (FIX 4) — shown when admin marks a city as
 // is_available=false AND is_coming_soon=true. Captures emails into
 // city_waitlist for marketing follow-up when the city goes live.

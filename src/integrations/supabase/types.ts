@@ -1603,6 +1603,35 @@ export type Database = {
         }
         Relationships: []
       }
+      favorites: {
+        Row: {
+          bike_type_id: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          bike_type_id: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          bike_type_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "favorites_bike_type_id_fkey"
+            columns: ["bike_type_id"]
+            isOneToOne: false
+            referencedRelation: "bike_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       motonita_credits: {
         Row: {
           amount_mad: number

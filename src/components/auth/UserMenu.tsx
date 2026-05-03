@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import {
   Briefcase,
+  Heart,
   LogOut,
   Settings as SettingsIcon,
   Shield,
@@ -135,6 +136,13 @@ export function UserMenu({ align = "end" }: Props) {
             <SettingsIcon className="mr-2 h-4 w-4" />
             {t("settings_link")}
           </DropdownMenuItem>
+
+          {currentRole !== "agency" && (
+            <DropdownMenuItem onClick={() => navigate("/favorites")}>
+              <Heart className="mr-2 h-4 w-4" />
+              Favorites
+            </DropdownMenuItem>
+          )}
 
           {showAdmin && (
             <>

@@ -40,6 +40,7 @@ const Agencies = lazy(() => import("./pages/Agencies"));
 
 const BecomeBusiness = lazy(() => import("./pages/BecomeBusiness"));
 const Profile = lazy(() => import("./pages/Profile"));
+const Favorites = lazy(() => import("./pages/Favorites"));
 const BikeDetails = lazy(() => import("./pages/BikeDetails"));
 const BookingReview = lazy(() => import("./pages/BookingReview"));
 
@@ -183,7 +184,8 @@ const App = () => (
                 <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                 <Route path="/terms" element={<TermsConditions />} />
                 <Route path="/cookies" element={<CookiesPolicy />} />
-                <Route path="/profile" element={<ProtectedRoute><Suspense fallback={<ProfileSkeleton />}><Profile /></Suspense></ProtectedRoute>} />
+               <Route path="/profile" element={<ProtectedRoute><Suspense fallback={<ProfileSkeleton />}><Profile /></Suspense></ProtectedRoute>} />
+               <Route path="/favorites" element={<ProtectedRoute><Suspense fallback={<PageLoadingSkeleton />}><Favorites /></Suspense></ProtectedRoute>} />
                 <Route path="/bike/:id" element={<Suspense fallback={<BikeDetailsSkeleton />}><BikeDetails /></Suspense>} />
                 <Route path="/booking-review" element={<BookingReview />} />
                 <Route path="/payment-selection" element={<Navigate to="/booking-review" replace />} />
