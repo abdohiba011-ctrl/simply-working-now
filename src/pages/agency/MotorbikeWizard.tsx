@@ -324,6 +324,30 @@ const MotorbikeWizard = () => {
 
       const isDraftFirstSubmit = !editing && currentStatus === "draft";
 
+      // Detect if "trigger" fields changed vs DB (for messaging only;
+      // server-side trigger enforces correctness).
+      let triggerChanged = false;
+      if (editing && (currentStatus === "approved" || currentStatus === "rejected")) {
+        const { data: prev } = await supabase
+          .from("bike_types")
+          .select("description,brand,model,year,category,engine_cc,fuel_type,transmission,license_required,main_image_url")
+          .eq("id", bikeId).maybeSingle();
+        if (prev) {
+          const yr = Number(year);
+          const cc = Number(engineCc);
+          triggerChanged =
+            (prev.description || "") !== (description.trim() || "") ||
+            (prev.brand || "") !== (brand || "") ||
+            (prev.model || "") !== (model || "") ||
+            (prev.year ?? -1) !== (Number.isFinite(yr) && yr > 0 ? yr : -1) ||
+            (prev.category || "") !== (category || "") ||
+            (prev.engine_cc ?? -1) !== (Number.isFinite(cc) && cc > 0 ? cc : -1) ||
+            (prev.fuel_type || "") !== (fuelType || "") ||
+            (prev.transmission || "") !== (transmission || "") ||
+            (prev.license_required || "") !== (licenseRequired || "");
+        }
+      }
+
       if (isDraftFirstSubmit) {
         const { error: updErr } = await supabase
           .from("bike_types")
@@ -350,11 +374,15 @@ const MotorbikeWizard = () => {
         if (bikeErr) throw bikeErr;
       }
 
-      toast.success(
-        editing
-          ? "Changes saved" + (currentStatus === "approved" ? " — bike resubmitted for review" : "")
-          : "Submitted for review. We'll notify you within 24-48 hours."
-      );
+      if (!editing) {
+        toast.success("Submitted for review. We'll notify you within 24-48 hours.");
+      } else if (triggerChanged) {
+        toast.message("Bike submitted for review", {
+          description: "Changes to photos/specs require admin approval. Currently hidden from search.",
+        });
+      } else {
+        toast.success("Bike updated. Changes are live.");
+      }
       navigate("/agency/motorbikes");
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : "Failed to save motorbike";
