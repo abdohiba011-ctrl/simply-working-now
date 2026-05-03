@@ -92,6 +92,7 @@ function SignupExtraInner() {
       businessName: "",
       businessType: "",
       city: "",
+      neighborhood: "",
       numBikes: "",
       phone: user?.phone ?? "",
     },
@@ -104,6 +105,7 @@ function SignupExtraInner() {
         businessName: data.businessName,
         businessType: data.businessType,
         city: data.city,
+        neighborhood: data.neighborhood || undefined,
         numBikes: data.numBikes,
         phone: data.phone || undefined,
       });
@@ -118,7 +120,37 @@ function SignupExtraInner() {
 
   const businessType = watch("businessType");
   const city = watch("city");
+  const neighborhood = watch("neighborhood");
   const numBikes = watch("numBikes");
+
+  const { cities: dbCities, locations: dbLocations } = useServiceCities();
+  const cityList = useMemo(() => {
+    const names = new Set<string>();
+    const out: string[] = [];
+    for (const c of dbCities) {
+      if (!names.has(c.name)) {
+        names.add(c.name);
+        out.push(c.name);
+      }
+    }
+    for (const c of CITIES) {
+      if (!names.has(c)) {
+        names.add(c);
+        out.push(c);
+      }
+    }
+    return out;
+  }, [dbCities]);
+  const neighborhoodOptions = useMemo(() => {
+    if (!city) return [] as string[];
+    const matched = dbCities.find(
+      (c) => c.name.toLowerCase() === city.toLowerCase(),
+    );
+    if (!matched) return [];
+    return dbLocations
+      .filter((l) => l.city_id === matched.id)
+      .map((l) => l.name);
+  }, [city, dbCities, dbLocations]);
 
   const steps = [
     { icon: Building2, label: t("setup_step_1"), active: true },
