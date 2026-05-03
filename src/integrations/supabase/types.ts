@@ -2661,6 +2661,13 @@ export type Database = {
         Returns: number
       }
       generate_city_slug: { Args: { input_name: string }; Returns: string }
+      get_booked_date_ranges: {
+        Args: { _bike_id: string }
+        Returns: {
+          pickup_date: string
+          return_date: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
