@@ -42,7 +42,7 @@ export default function Favorites() {
           variant="ghost"
           size="sm"
           onClick={() => navigate(-1)}
-          className="gap-2 -ml-2 mb-4 text-muted-foreground hover:text-foreground"
+          className="gap-2 mb-4 bg-muted text-foreground hover:bg-muted/80"
         >
           <ArrowLeft className="w-4 h-4" /> Back
         </Button>
