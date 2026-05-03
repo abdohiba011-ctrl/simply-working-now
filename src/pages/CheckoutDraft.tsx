@@ -156,6 +156,7 @@ const CheckoutDraft = () => {
               daily_price: bt?.daily_price,
               image_url: bt?.main_image_url,
               city: bikeRow.location,
+              bike_type_id: bikeRow.bike_type_id,
             };
           }
         }
