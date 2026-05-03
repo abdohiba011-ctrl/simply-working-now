@@ -9,8 +9,7 @@ import {
   Dialog, DialogContent, DialogDescription, DialogFooter,
   DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
-import { Header } from "@/components/Header";
-import { Footer } from "@/components/Footer";
+import { AdminLayout } from "@/components/layouts/AdminLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -179,16 +178,14 @@ const AdminBikeReview = () => {
 
   if (!bike) {
     return (
-      <div className="min-h-screen flex flex-col">
-        <Header />
+      <AdminLayout>
         <main className="flex-1 container mx-auto px-4 py-16 text-center">
           <h1 className="text-2xl font-bold">Bike not found</h1>
           <Button className="mt-4" onClick={() => navigate("/admin/bikes/approvals")}>
             Back to queue
           </Button>
         </main>
-        <Footer />
-      </div>
+      </AdminLayout>
     );
   }
 
@@ -202,11 +199,10 @@ const AdminBikeReview = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <Header />
+    <AdminLayout>
       <main className="flex-1">
         {/* Sticky header */}
-        <div className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur">
+        <div className="sticky top-14 z-30 border-b border-border bg-background/95 backdrop-blur">
           <div className="container mx-auto max-w-6xl px-4 h-10 flex items-center gap-2">
             <Button variant="ghost" size="sm" onClick={() => navigate("/admin/bikes/approvals")}>
               <ArrowLeft className="mr-1 h-4 w-4" /> Back
