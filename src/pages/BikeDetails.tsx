@@ -611,16 +611,23 @@ const BikeDetails = () => {
         {/* Cost breakdown — three-tier */}
         {days > 0 && (
           <div className="space-y-3 pt-3 border-t border-border/60">
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Price summary</p>
+            <div className="flex items-center justify-between">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Price summary</p>
+              {appliedTier && hasDiscountTiers && (
+                <span className="text-[11px] text-muted-foreground">
+                  Tier: {appliedTier}+ days
+                </span>
+              )}
+            </div>
             <div className="space-y-1.5">
               <div className="flex justify-between text-sm text-muted-foreground">
                 <span>Rental ({Math.round(dailyPrice)} × {days} day{days !== 1 ? "s" : ""})</span>
-                <span>{Math.round(baselineSubtotal).toLocaleString()} MAD</span>
+                <span>{Math.round(subtotal).toLocaleString()} MAD</span>
               </div>
-              {tierDiscount > 0 && (
-                <div className="flex justify-between text-sm text-primary">
-                  <span>Duration discount</span>
-                  <span>−{Math.round(tierDiscount).toLocaleString()} MAD</span>
+              {tierDiscount > 0 && hasDiscountTiers && (
+                <div className="flex justify-between text-sm" style={{ color: "#22C55E" }}>
+                  <span>Volume discount</span>
+                  <span>-{Math.round(tierDiscount).toLocaleString()} MAD</span>
                 </div>
               )}
               <div className="flex justify-between text-sm text-muted-foreground">
