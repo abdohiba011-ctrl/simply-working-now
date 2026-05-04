@@ -148,10 +148,21 @@ const AdminBikeApprovals = () => {
             <Card>
               <CardContent className="py-16 text-center">
                 <CheckCircle className="h-16 w-16 text-primary mx-auto mb-4" />
-                <h2 className="text-xl font-semibold">All Caught Up!</h2>
+                <h2 className="text-xl font-semibold">All Caught Up! ✅</h2>
                 <p className="text-muted-foreground">
                   No motorbikes waiting for approval.
                 </p>
+                <div className="mt-6 flex flex-wrap justify-center gap-2">
+                  <Button variant="outline" size="sm" onClick={() => navigate("/admin/fleet")}>
+                    View all bikes
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => navigate("/admin/fleet?status=approved")}>
+                    Recently approved
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => navigate("/admin/fleet?status=rejected")}>
+                    Recently rejected
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           ) : (
