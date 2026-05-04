@@ -214,7 +214,7 @@ const BecomeBusiness = () => {
           body: {
             type: 'new_business_application',
             recipientEmail: 'admin@motonita.ma',
-            recipientName: 'Motonita Admin',
+            recipientName: 'Admin',
             data: {
               partnerType,
               businessName: businessName || 'Individual Partner',

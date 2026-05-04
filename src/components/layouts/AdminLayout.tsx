@@ -100,7 +100,7 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
             <Link to="/admin/panel" className="flex items-center gap-2">
               <img src={logo} alt="Motonita Logo" className="h-8 w-auto" />
               <span className="font-bold text-sm hidden sm:inline bg-gradient-to-r from-gray-900 via-gray-700 to-gray-900 dark:from-gray-100 dark:via-gray-300 dark:to-gray-100 bg-clip-text text-transparent">
-                Motonita Admin
+                Admin
               </span>
             </Link>
 
