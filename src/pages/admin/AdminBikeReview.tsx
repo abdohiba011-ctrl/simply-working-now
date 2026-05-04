@@ -57,6 +57,9 @@ interface BikeType {
   neighborhood: string | null;
   rejection_reason: string | null;
   rejected_at: string | null;
+  approved_at: string | null;
+  approved_by: string | null;
+  rejected_by: string | null;
   created_at: string;
 }
 
@@ -132,7 +135,8 @@ const AdminBikeReview = () => {
     setConfirmApprove(false);
     if (error) { toast.error(error.message || "Failed to approve"); return; }
     toast.success("Bike approved and now live on Motonita");
-    navigate("/admin/bikes/approvals");
+    setReReview(false);
+    await load();
   };
 
   const handleReject = async () => {
@@ -148,8 +152,19 @@ const AdminBikeReview = () => {
     setActing(false);
     setRejectOpen(false);
     if (error) { toast.error(error.message || "Failed to reject"); return; }
-    toast.success("Bike rejected and agency notified");
-    navigate("/admin/bikes/approvals");
+    toast.success("Bike rejected. Agency will be notified.");
+    setReason("");
+    setReReview(false);
+    await load();
+  };
+
+  const formatDecidedAt = (iso: string | null) => {
+    if (!iso) return "";
+    try {
+      return new Date(iso).toLocaleString(undefined, {
+        month: "short", day: "numeric", hour: "2-digit", minute: "2-digit",
+      });
+    } catch { return ""; }
   };
 
   if (!isAuthenticated || !isAdmin) {
@@ -199,7 +214,7 @@ const AdminBikeReview = () => {
       <main className="flex-1">
         {/* Sticky header */}
         <div className="sticky top-14 z-30 border-b border-border bg-background/95 backdrop-blur">
-          <div className="container mx-auto max-w-6xl px-4 h-10 flex items-center gap-2">
+          <div className="container mx-auto max-w-6xl px-4 min-h-10 py-1.5 flex flex-wrap items-center gap-2">
             <Button variant="ghost" size="sm" onClick={() => navigate("/admin/bikes/approvals")}>
               <ArrowLeft className="mr-1 h-4 w-4" /> Back
             </Button>
@@ -210,14 +225,19 @@ const AdminBikeReview = () => {
             </div>
             <StatusChip status={bike.approval_status} />
             {decided && !reReview ? (
-              <Button variant="outline" size="sm" onClick={() => setReReview(true)}>
-                <RotateCcw className="mr-1 h-4 w-4" /> Re-review
-              </Button>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <span className="hidden sm:inline">
+                  {bike.approval_status === "approved" ? "✅ Approved" : "❌ Rejected"}
+                  {(bike.approved_at || bike.rejected_at) && (
+                    <> on {formatDecidedAt(bike.approved_at || bike.rejected_at)}</>
+                  )}
+                </span>
+                <Button variant="outline" size="sm" onClick={() => setReReview(true)}>
+                  <RotateCcw className="mr-1 h-4 w-4" /> Re-review
+                </Button>
+              </div>
             ) : (
               <>
-                <Button size="sm" onClick={() => setConfirmApprove(true)} disabled={acting}>
-                  <CheckCircle2 className="mr-1 h-4 w-4" /> Approve
-                </Button>
                 <Button
                   variant="outline"
                   size="sm"
@@ -227,12 +247,21 @@ const AdminBikeReview = () => {
                 >
                   <XCircle className="mr-1 h-4 w-4" /> Reject
                 </Button>
+                <Button size="sm" onClick={() => setConfirmApprove(true)} disabled={acting}>
+                  <CheckCircle2 className="mr-1 h-4 w-4" /> Approve
+                </Button>
               </>
             )}
           </div>
         </div>
 
-        <div className="container mx-auto max-w-6xl px-4 py-3">
+        <div className="container mx-auto max-w-6xl px-4 py-3 space-y-3">
+          {bike.approval_status === "rejected" && bike.rejection_reason && !reReview && (
+            <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm">
+              <div className="font-medium text-destructive mb-0.5">Rejection reason</div>
+              <div className="text-foreground/90">{bike.rejection_reason}</div>
+            </div>
+          )}
           <BikeDetailCard
             bike={bike as any}
             photos={photos}
