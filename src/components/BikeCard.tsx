@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useToggleFavorite } from "@/lib/favorites";
 import { useState } from "react";
+import { FEATURE_LABELS, BIKE_CATEGORIES, type FeatureKey } from "@/lib/bikeFeatures";
 
 export type BikeCardData = {
   id: string;
@@ -61,9 +62,15 @@ export function BikeCard({
         ? weekly
         : price;
 
-  const features = bike.features || [];
-  const visibleFeatures = features.slice(0, 3);
-  const extra = features.length - visibleFeatures.length;
+  const featureKeys = ((bike.features || []) as string[]).filter(
+    (k): k is FeatureKey => k in FEATURE_LABELS,
+  );
+  const visibleFeatures = featureKeys.slice(0, 3);
+  const extra = featureKeys.length - visibleFeatures.length;
+
+  const categoryMeta = bike.category
+    ? BIKE_CATEGORIES.find((c) => c.key === bike.category)
+    : null;
 
   const handleOpen = () => {
     navigate(`/bike/${bike.slug || bike.id}${datesQS}`);
@@ -156,8 +163,9 @@ export function BikeCard({
 
         {/* Category tag (bottom-left) */}
         {bike.category && (
-          <div className="absolute bottom-3 left-3 px-2.5 py-1 rounded-full text-[11px] font-medium text-white bg-black/70 capitalize">
-            {bike.category}
+          <div className="absolute bottom-3 left-3 inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium text-white bg-black/70">
+            {categoryMeta && <span>{categoryMeta.icon}</span>}
+            <span className="capitalize">{categoryMeta?.label || bike.category}</span>
           </div>
         )}
       </div>
@@ -201,14 +209,19 @@ export function BikeCard({
         {/* Amenities */}
         {visibleFeatures.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-1.5">
-            {visibleFeatures.map((f, i) => (
-              <span
-                key={i}
-                className="px-2 py-0.5 rounded-md text-[11px] bg-muted text-foreground/70"
-              >
-                {f}
-              </span>
-            ))}
+            {visibleFeatures.map((k) => {
+              const meta = FEATURE_LABELS[k];
+              return (
+                <span
+                  key={k}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] bg-muted text-foreground/70"
+                  title={meta.label}
+                >
+                  <span>{meta.icon}</span>
+                  <span className="truncate max-w-[100px]">{meta.label}</span>
+                </span>
+              );
+            })}
             {extra > 0 && (
               <span className="px-2 py-0.5 rounded-md text-[11px] bg-muted text-foreground/70">
                 +{extra} more
