@@ -49,6 +49,7 @@ import { toast } from "sonner";
 import { BookingDatePicker } from "@/components/BookingDatePicker";
 import { BikeCard } from "@/components/BikeCard";
 import { useFavoriteIds } from "@/lib/favorites";
+import { PriceRangeFilter } from "@/components/filters/PriceRangeFilter";
 
 // Neighborhoods are loaded live from `service_locations` per city — no hardcoded list.
 // This means whenever an admin adds/edits/disables a neighborhood, the renter
