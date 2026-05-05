@@ -18,7 +18,7 @@ import {
   MapPin,
   Plug,
   Shield,
-  Vest,
+  Shirt,
   Wrench,
 } from "lucide-react";
 
@@ -60,7 +60,7 @@ export const RENTER_FEATURE_ICONS: Record<FeatureKey, LucideIcon> = {
   gps:          MapPin,
   usb_charger:  Plug,
   guards:       Shield,
-  vest:         Vest,
+  vest:         Shirt,
   toolkit:      Wrench,
 };
 
