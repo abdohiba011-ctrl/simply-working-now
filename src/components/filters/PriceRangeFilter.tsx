@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from "react";
-import * as SliderPrimitive from "@radix-ui/react-slider";
+import Slider from "@mui/material/Slider";
 import { cn } from "@/lib/utils";
 
 interface PriceRangeFilterProps {
@@ -26,7 +26,6 @@ export function PriceRangeFilter({
   const [min, max] = bounds;
   const span = Math.max(1, max - min);
 
-  // Histogram buckets — last bucket is open-ended.
   const buckets = useMemo(() => {
     const counts = new Array(bucketCount).fill(0);
     for (const p of prices) {
@@ -41,12 +40,10 @@ export function PriceRangeFilter({
   }, [prices, bucketCount, min, span]);
 
   const maxCount = Math.max(1, ...buckets);
-  // sqrt scaling so a single outlier doesn't flatten the chart
   const heights = buckets.map((c) =>
     c === 0 ? 0 : Math.max(0.12, Math.sqrt(c / maxCount)),
   );
 
-  // Inputs (free typing, commit on blur/Enter)
   const [minInput, setMinInput] = useState(String(value[0]));
   const [maxInput, setMaxInput] = useState(String(value[1]));
   useEffect(() => setMinInput(String(value[0])), [value[0]]);
@@ -64,29 +61,9 @@ export function PriceRangeFilter({
   };
 
   const isMaxAtCap = value[1] >= max;
-  const minPct = ((value[0] - min) / span) * 100;
-  const maxPct = ((value[1] - min) / span) * 100;
 
-  // Tooltip only while dragging
-  const [dragging, setDragging] = useState<null | "min" | "max" | "both">(null);
-  const stopDrag = () => setDragging(null);
-  useEffect(() => {
-    if (!dragging) return;
-    const onUp = () => setDragging(null);
-    window.addEventListener("pointerup", onUp);
-    window.addEventListener("touchend", onUp);
-    return () => {
-      window.removeEventListener("pointerup", onUp);
-      window.removeEventListener("touchend", onUp);
-    };
-  }, [dragging]);
-
-  const showMinTip = dragging === "min" || dragging === "both";
-  const showMaxTip = dragging === "max" || dragging === "both";
-
-  const formatMax = (v: number) =>
-    `${v}${isMaxAtCap ? "+" : ""} ${currency}`;
-  const formatMin = (v: number) => `${v} ${currency}`;
+  const formatTip = (v: number) =>
+    v >= max ? `${v}+ ${currency}` : `${v} ${currency}`;
 
   return (
     <div className="space-y-5">
@@ -95,7 +72,7 @@ export function PriceRangeFilter({
       )}
 
       <div className="relative">
-        {/* Histogram — subtle, no longer overlapping the slider */}
+        {/* Histogram */}
         <div className="flex h-12 items-end gap-px px-1">
           {heights.map((h, i) => {
             const bucketStart = min + (span * i) / bucketCount;
@@ -106,7 +83,6 @@ export function PriceRangeFilter({
                 key={i}
                 className={cn(
                   "flex-1 rounded-[1px] transition-colors",
-                  // Empty buckets: nothing (no dotted-line illusion)
                   h === 0
                     ? "bg-transparent"
                     : inRange
@@ -119,84 +95,65 @@ export function PriceRangeFilter({
           })}
         </div>
 
-        {/* Slider — true dual-thumb. Extra top padding leaves room for tooltips. */}
-        <div className="relative px-1 pt-7 pb-1">
-          {/* Tooltips above thumbs, only while dragging */}
-          <div className="pointer-events-none absolute inset-x-1 top-0 h-6">
-            {showMinTip && (
-              <div
-                className="absolute -top-0.5 whitespace-nowrap rounded bg-foreground text-background text-[10px] font-medium px-1.5 py-0.5 shadow-sm"
-                style={{
-                  left: `${minPct}%`,
-                  transform:
-                    minPct < 8
-                      ? "translateX(0)"
-                      : minPct > 92
-                        ? "translateX(-100%)"
-                        : "translateX(-50%)",
-                }}
-              >
-                {formatMin(value[0])}
-              </div>
-            )}
-            {showMaxTip && (
-              <div
-                className="absolute -top-0.5 whitespace-nowrap rounded bg-foreground text-background text-[10px] font-medium px-1.5 py-0.5 shadow-sm"
-                style={{
-                  left: `${maxPct}%`,
-                  transform:
-                    maxPct > 92
-                      ? "translateX(-100%)"
-                      : maxPct < 8
-                        ? "translateX(0)"
-                        : "translateX(-50%)",
-                }}
-              >
-                {formatMax(value[1])}
-              </div>
-            )}
-          </div>
-
-          <SliderPrimitive.Root
+        {/* MUI dual-thumb slider */}
+        <div className="px-1 pt-2 pb-1">
+          <Slider
+            value={value}
             min={min}
             max={max}
             step={step}
-            value={value}
-            minStepsBetweenThumbs={1}
-            onValueChange={(v) => onChange([v[0], v[1]] as [number, number])}
-            className="relative flex w-full touch-none select-none items-center"
-          >
-            {/* Track: light gray base */}
-            <SliderPrimitive.Track className="relative h-1.5 w-full grow overflow-hidden rounded-full bg-muted">
-              {/* Range: green only between the two handles */}
-              <SliderPrimitive.Range className="absolute h-full bg-primary" />
-            </SliderPrimitive.Track>
-
-            {/* Two visible thumbs */}
-            <SliderPrimitive.Thumb
-              aria-label="Minimum price"
-              onPointerDown={() => setDragging("min")}
-              onKeyDown={() => setDragging("min")}
-              onBlur={stopDrag}
-              className="block h-5 w-5 rounded-full border-2 border-primary bg-background shadow-sm ring-offset-background transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            />
-            <SliderPrimitive.Thumb
-              aria-label="Maximum price"
-              onPointerDown={() => setDragging("max")}
-              onKeyDown={() => setDragging("max")}
-              onBlur={stopDrag}
-              className="block h-5 w-5 rounded-full border-2 border-primary bg-background shadow-sm ring-offset-background transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            />
-          </SliderPrimitive.Root>
+            onChange={(_, v) => {
+              const arr = v as number[];
+              onChange([arr[0], arr[1]] as [number, number]);
+            }}
+            valueLabelDisplay="auto"
+            valueLabelFormat={(v) => formatTip(v as number)}
+            disableSwap
+            getAriaLabel={(i) => (i === 0 ? "Minimum price" : "Maximum price")}
+            sx={{
+              color: "hsl(var(--primary))",
+              height: 6,
+              padding: "14px 0",
+              "& .MuiSlider-rail": {
+                opacity: 1,
+                backgroundColor: "hsl(var(--muted))",
+              },
+              "& .MuiSlider-track": {
+                border: "none",
+                backgroundColor: "hsl(var(--primary))",
+              },
+              "& .MuiSlider-thumb": {
+                height: 20,
+                width: 20,
+                backgroundColor: "hsl(var(--background))",
+                border: "2px solid hsl(var(--primary))",
+                boxShadow: "0 1px 2px rgba(0,0,0,0.08)",
+                "&:hover, &.Mui-focusVisible": {
+                  boxShadow: "0 0 0 6px hsl(var(--primary) / 0.15)",
+                },
+                "&.Mui-active": {
+                  boxShadow: "0 0 0 10px hsl(var(--primary) / 0.2)",
+                },
+              },
+              "& .MuiSlider-valueLabel": {
+                backgroundColor: "hsl(var(--foreground))",
+                color: "hsl(var(--background))",
+                fontSize: 11,
+                fontWeight: 500,
+                padding: "2px 6px",
+                borderRadius: 4,
+                top: -2,
+                "&::before": { display: "none" },
+              },
+            }}
+          />
         </div>
       </div>
 
       {/* Min / Max inputs */}
       <div className="grid grid-cols-2 gap-3 pt-1">
         <label className="block">
-          <span className="mb-1 block text-xs text-muted-foreground">
-            Minimum
-          </span>
+          <span className="mb-1 block text-xs text-muted-foreground">Minimum</span>
           <div className="flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-2">
             <input
               inputMode="numeric"
@@ -212,32 +169,20 @@ export function PriceRangeFilter({
           </div>
         </label>
         <label className="block">
-          <span className="mb-1 block text-xs text-muted-foreground">
-            Maximum
-          </span>
+          <span className="mb-1 block text-xs text-muted-foreground">Maximum</span>
           <div className="flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-2">
-            <div className="relative flex-1 min-w-0">
-              <input
-                inputMode="numeric"
-                value={maxInput}
-                onChange={(e) => setMaxInput(e.target.value.replace(/[^\d]/g, ""))}
-                onBlur={() => commit(minInput, maxInput)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") (e.target as HTMLInputElement).blur();
-                }}
-                style={isMaxAtCap ? { paddingRight: `${String(maxInput).length === 0 ? 8 : 10}px` } : undefined}
-                className="w-full min-w-0 bg-transparent text-sm font-medium outline-none"
-              />
-              {isMaxAtCap && (
-                <span
-                  aria-hidden
-                  className="pointer-events-none absolute top-1/2 -translate-y-1/2 text-sm font-medium text-foreground"
-                  style={{ left: `${String(maxInput).length}ch` }}
-                >
-                  +
-                </span>
-              )}
-            </div>
+            <input
+              inputMode="numeric"
+              value={isMaxAtCap ? `${maxInput}+` : maxInput}
+              onChange={(e) =>
+                setMaxInput(e.target.value.replace(/[^\d]/g, ""))
+              }
+              onBlur={() => commit(minInput, maxInput)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+              }}
+              className="w-full min-w-0 bg-transparent text-sm font-medium outline-none"
+            />
             <span className="shrink-0 text-xs text-muted-foreground">{currency}</span>
           </div>
         </label>
