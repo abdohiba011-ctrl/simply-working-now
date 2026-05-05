@@ -202,7 +202,13 @@ function mapSupabaseAuthError(message: string): AuthError {
       "This email is already registered. Try logging in instead.",
     );
   }
-  if (m.includes("password should be") || m.includes("weak password") || m.includes("pwned")) {
+  if (m.includes("pwned") || m.includes("known to be weak") || m.includes("data breach")) {
+    return makeAuthError(
+      "WEAK_PASSWORD",
+      "This password has appeared in a public data breach. Please choose a different password to keep your account safe.",
+    );
+  }
+  if (m.includes("password should be") || m.includes("weak password")) {
     return makeAuthError("WEAK_PASSWORD", message);
   }
   if (m.includes("rate") || m.includes("too many")) {

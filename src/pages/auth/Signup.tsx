@@ -1114,6 +1114,9 @@ function StrengthMeter({
           </li>
         ))}
       </ul>
+      <p className="mt-2 text-[11px] leading-snug text-muted-foreground">
+        💡 Avoid common passwords like "Password123" or "TestPass2024". We check against known data breaches for your safety.
+      </p>
     </div>
   );
 }
