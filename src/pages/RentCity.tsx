@@ -378,7 +378,7 @@ export default function RentCity() {
   const activeFilterCount =
     (neighborhood !== allCityLabel ? 1 : 0) +
     (duration !== "1" ? 1 : 0) +
-    (priceRange[0] !== 50 || priceRange[1] !== 1000 ? 1 : 0) +
+    (priceRange[0] !== priceBounds[0] || priceRange[1] !== priceBounds[1] ? 1 : 0) +
     selectedTypes.length +
     (fuel !== "all" ? 1 : 0) +
     licenses.length +
