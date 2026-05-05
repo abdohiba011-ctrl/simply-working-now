@@ -397,7 +397,7 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
     }
 
     try {
-      await signup(
+      const newUser = await signup(
         {
           name: values.name,
           email: values.email,
@@ -411,6 +411,18 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
         },
         role,
       );
+      // If the project auto-confirms emails, signup() returns an
+      // already-authenticated user — skip the verify-email detour.
+      const { isAuthenticated: nowAuthed, user: storeUser } = useAuthStore.getState();
+      if (nowAuthed && storeUser) {
+        toast.success(
+          t("mockAuth.welcome_motonita", {
+            defaultValue: "Welcome to Motonita!",
+          }),
+        );
+        navigateAfterAuth(navigate, storeUser, role);
+        return;
+      }
       toast.success(
         t("mockAuth.account_created", {
           defaultValue: "Account created! Check your email for the 6-digit verification code.",
