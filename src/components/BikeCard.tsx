@@ -1,4 +1,4 @@
-import { Heart, MapPin, Settings2, Fuel, Calendar as CalendarIcon } from "lucide-react";
+import { Heart, MapPin, Settings2, Fuel, Calendar as CalendarIcon, Bike, Zap, Flag, Mountain, Route } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -6,7 +6,16 @@ import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useToggleFavorite } from "@/lib/favorites";
 import { useState } from "react";
-import { FEATURE_LABELS, BIKE_CATEGORIES, type FeatureKey } from "@/lib/bikeFeatures";
+import { FEATURE_LABELS, RENTER_FEATURE_ICONS, BIKE_CATEGORIES, type FeatureKey } from "@/lib/bikeFeatures";
+
+const CATEGORY_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+  scooter: Bike,
+  standard: Bike,
+  sport: Flag,
+  electric: Zap,
+  cruiser: Route,
+  adventure: Mountain,
+};
 
 export type BikeCardData = {
   id: string;
@@ -162,12 +171,15 @@ export function BikeCard({
         </button>
 
         {/* Category tag (bottom-left) */}
-        {bike.category && (
-          <div className="absolute bottom-3 left-3 inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium text-white bg-black/70">
-            {categoryMeta && <span>{categoryMeta.icon}</span>}
-            <span className="capitalize">{categoryMeta?.label || bike.category}</span>
-          </div>
-        )}
+        {bike.category && (() => {
+          const CatIcon = CATEGORY_ICONS[bike.category] ?? Bike;
+          return (
+            <div className="absolute bottom-3 left-3 inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium text-white bg-black/70">
+              <CatIcon className="w-3 h-3" />
+              <span className="capitalize">{categoryMeta?.label || bike.category}</span>
+            </div>
+          );
+        })()}
       </div>
 
       {/* Body */}
@@ -211,13 +223,14 @@ export function BikeCard({
           <div className="mt-2 flex flex-wrap gap-1.5">
             {visibleFeatures.map((k) => {
               const meta = FEATURE_LABELS[k];
+              const FIcon = RENTER_FEATURE_ICONS[k];
               return (
                 <span
                   key={k}
                   className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] bg-muted text-foreground/70"
                   title={meta.label}
                 >
-                  <span>{meta.icon}</span>
+                  <FIcon className="w-3 h-3" />
                   <span className="truncate max-w-[100px]">{meta.label}</span>
                 </span>
               );
