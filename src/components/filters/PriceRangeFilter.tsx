@@ -102,14 +102,20 @@ export function PriceRangeFilter({
           {/* Floating handle labels — make it visually obvious there are TWO handles */}
           <div className="pointer-events-none absolute inset-x-1 -top-0.5 h-6">
             <div
-              className="absolute -translate-x-1/2 whitespace-nowrap rounded-md bg-foreground text-background text-[10px] font-semibold px-1.5 py-0.5 shadow-sm"
-              style={{ left: `${minPct}%` }}
+              className="absolute whitespace-nowrap rounded-md bg-foreground text-background text-[10px] font-semibold px-1.5 py-0.5 shadow-sm"
+              style={{
+                left: `${minPct}%`,
+                transform: `translateX(-${minPct}%)`,
+              }}
             >
               Min · {formatVal(value[0], false)}
             </div>
             <div
-              className="absolute -translate-x-1/2 whitespace-nowrap rounded-md bg-foreground text-background text-[10px] font-semibold px-1.5 py-0.5 shadow-sm"
-              style={{ left: `${maxPct}%` }}
+              className="absolute whitespace-nowrap rounded-md bg-foreground text-background text-[10px] font-semibold px-1.5 py-0.5 shadow-sm"
+              style={{
+                left: `${maxPct}%`,
+                transform: `translateX(-${maxPct}%)`,
+              }}
             >
               Max · {formatVal(value[1], true)}
             </div>
