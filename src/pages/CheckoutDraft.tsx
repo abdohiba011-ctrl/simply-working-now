@@ -141,10 +141,10 @@ const CheckoutDraft = () => {
         let bikeInfo: DraftBooking["bike"] = undefined;
         if (data.bike_id) {
           const { data: bikeRow } = await supabase
-            .from("bikes")
+            .from("bikes_public" as any)
             .select("location, bike_type_id")
             .eq("id", data.bike_id)
-            .maybeSingle();
+            .maybeSingle() as any;
           if (bikeRow?.bike_type_id) {
             const { data: bt } = await supabase
               .from("bike_types")
