@@ -21,7 +21,7 @@ export function PriceRangeFilter({
   step = 10,
   bucketCount = 28,
   currency = "MAD",
-  subtitle = "Per day, includes all fees",
+  subtitle = "Per day · MAD",
 }: PriceRangeFilterProps) {
   const [min, max] = bounds;
   const span = Math.max(1, max - min);
@@ -68,10 +68,9 @@ export function PriceRangeFilter({
 
   return (
     <div className="space-y-4">
-      <div>
-        <div className="text-sm font-semibold text-foreground">Price range</div>
+      {subtitle && (
         <div className="text-xs text-muted-foreground">{subtitle}</div>
-      </div>
+      )}
 
       <div className="relative pt-2">
         {/* Histogram */}
@@ -132,13 +131,7 @@ export function PriceRangeFilter({
           <div className="flex items-center gap-2 rounded-full border border-border bg-background px-3 py-2">
             <input
               inputMode="numeric"
-              value={isMaxAtCap ? `${maxInput}+` : maxInput}
-              onFocus={(e) => {
-                // strip the "+" when editing
-                if (e.target.value.endsWith("+")) {
-                  e.target.value = e.target.value.slice(0, -1);
-                }
-              }}
+              value={maxInput}
               onChange={(e) => setMaxInput(e.target.value.replace(/[^\d]/g, ""))}
               onBlur={() => commit(minInput, maxInput)}
               onKeyDown={(e) => {
@@ -146,7 +139,9 @@ export function PriceRangeFilter({
               }}
               className="w-full bg-transparent text-sm font-medium outline-none"
             />
-            <span className="text-xs text-muted-foreground">{currency}</span>
+            <span className="text-xs text-muted-foreground">
+              {isMaxAtCap ? `+ ${currency}` : currency}
+            </span>
           </div>
         </label>
       </div>

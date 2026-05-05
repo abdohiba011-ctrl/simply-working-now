@@ -1,63 +1,37 @@
 ## Goal
 
-Replace the current minimal price slider on `/rent/:city` with an Airbnb-style price range filter: a histogram of bike prices in the current city sitting behind a two-handle range slider, with editable Min/Max number inputs underneath.
+Match the spec layout exactly:
 
-## Reference
-
-Airbnb pattern (from your screenshot):
-- Title "Price range" + subtitle
-- Bar histogram (one bar per price bucket) showing distribution
-- Two-handle slider overlaid on the histogram
-- Two pill inputs below: "Minimum" / "Maximum" (max shows `1300+` when at the cap)
-- Bars inside the selected range are highlighted (brand green for us); bars outside are muted
-
-## Scope
-
-Only the Price filter inside the existing `Filters` accordion in `src/pages/RentCity.tsx`. No changes to the bike query, no changes to other filters.
-
-## Design (Motonita tokens)
-
-```text
+```
 Price range
-Per day, MAD
-
-[muted bar][muted bar][green bar][green bar][green bar][muted bar]   <- histogram (~30 buckets)
-o━━━━━━━━━━━━━━━━━●━━━━━━━━━━━━━━━━━━━━━●━━━━━━━━━━━━o              <- range slider
-
-  Minimum                                       Maximum
-  [  260  ] MAD                                 [ 1000+ ] MAD
+Per day · MAD
+[ subtle histogram ]
+[min handle]====selected range====[max handle]
+Minimum  [ 80 MAD ]
+Maximum  [ 450+ MAD ]
 ```
 
-- Bars: `bg-muted` outside range, `bg-primary` inside range, `rounded-sm`, `gap-px`
-- Histogram height: 56px on desktop, 48px on mobile
-- Min/Max inputs: `rounded-full border border-border px-3 py-2`, numeric, debounced
-- "1000+" suffix only when the max handle is at the upper bound AND there are bikes priced above (already covered by bucketing the top bin as "and above")
+The current `PriceRangeFilter` already renders all of these pieces, but it duplicates "Price range" (the accordion trigger in `RentCity.tsx` already says "Price range", and the component renders it again right below), and the `+` suffix on the Maximum input has a fragile focus handler that mutates `e.target.value` directly (React/controlled-input footgun).
 
-## Build steps
+## Changes
 
-1. **New component** `src/components/filters/PriceRangeFilter.tsx`
-   - Props: `prices: number[]` (raw daily_price list), `value: [number, number]`, `onChange`, `bounds: [number, number]`
-   - Computes ~30 equal-width buckets between `bounds[0]` and `bounds[1]`; the last bucket is open-ended ("and above")
-   - Renders bars normalized to max bucket count (`Math.sqrt` scaling so a few outliers don't flatten the chart, same as Airbnb)
-   - Renders the existing shadcn `Slider` (range mode) absolutely positioned over the bars
-   - Renders two number inputs; clamps and snaps to slider step on blur/Enter
+### 1. `src/components/filters/PriceRangeFilter.tsx`
 
-2. **Wire into `RentCity.tsx`**
-   - Replace the current `<Slider>` block (lines ~478–488) with `<PriceRangeFilter prices={...} value={priceRange} onChange={setPriceRange} bounds={priceBounds} />`
-   - Pass the unfiltered-by-price bike prices so the histogram doesn't collapse as the user drags (Airbnb behavior). Compute via `useMemo` from `bikes` after applying every filter EXCEPT price.
+- Remove the inner `Price range` title — the parent (accordion trigger or section heading) owns it.
+- Keep the small `subtitle` line (defaults to `Per day · MAD`).
+- Replace the focus-mutation trick on the Max input with a proper controlled display: show `${maxInput}+` in the input value when `value[1] >= max`, strip the `+` in the `onChange` regex (already filters non-digits anyway), so editing just works.
+- Default `subtitle` from `"Per day, includes all fees"` → `"Per day · MAD"` to match the spec.
 
-3. **Polish**
-   - When `priceRange` equals `priceBounds`, no URL params written (already implemented)
-   - Active filter count already correct
-   - RTL: flip histogram and slider with `dir`-aware flex-row-reverse (Arabic users)
+### 2. `src/pages/RentCity.tsx`
 
-## Files
-
-- create `src/components/filters/PriceRangeFilter.tsx` (~120 lines)
-- edit `src/pages/RentCity.tsx` — swap the slider, add `pricesForHistogram` memo (~20 lines net)
+- Pass `subtitle="Per day · MAD"` (or rely on new default) — drop the redundant `currency="MAD"` text duplication. No structural change to the accordion.
 
 ## Out of scope
 
-- Server-side price aggregation (city has ≤ a few hundred bikes, client-side bucketing is fine)
-- Histogram on `/` homepage search (different UX)
-- Animating bar heights
+- No change to the histogram math, slider behavior, bucket count, sqrt scaling, or the `pricesForHistogram` memo in RentCity.
+- No new props, no API change for callers other than the (optional) subtitle text.
+
+## Files
+
+- edit `src/components/filters/PriceRangeFilter.tsx` (~10 lines)
+- edit `src/pages/RentCity.tsx` (1 line, subtitle prop)

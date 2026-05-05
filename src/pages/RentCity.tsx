@@ -506,7 +506,6 @@ export default function RentCity() {
               bounds={priceBounds}
               step={10}
               currency="MAD"
-              subtitle="Per day, MAD"
             />
           </AccordionContent>
         </AccordionItem>
