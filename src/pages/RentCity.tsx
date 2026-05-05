@@ -238,8 +238,8 @@ export default function RentCity() {
       const params = new URLSearchParams();
       if (neighborhood !== allCityLabel) params.set("neighborhood", neighborhood);
       if (duration !== "1") params.set("duration", duration);
-      if (priceRange[0] !== 50) params.set("minPrice", String(priceRange[0]));
-      if (priceRange[1] !== 1000) params.set("maxPrice", String(priceRange[1]));
+      if (priceRange[0] !== priceBounds[0]) params.set("minPrice", String(priceRange[0]));
+      if (priceRange[1] !== priceBounds[1]) params.set("maxPrice", String(priceRange[1]));
       if (selectedTypes.length) params.set("types", selectedTypes.join(","));
       if (fuel !== "all") params.set("fuel", fuel);
       if (licenses.length) params.set("licenses", licenses.join(","));
