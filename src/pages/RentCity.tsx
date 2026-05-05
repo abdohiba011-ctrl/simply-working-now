@@ -495,22 +495,18 @@ export default function RentCity() {
 
         <AccordionItem value="price" className="border-border">
           <AccordionTrigger className="text-sm font-semibold">
-            Price (per day)
+            Price range
           </AccordionTrigger>
           <AccordionContent>
-            <div className="space-y-3 pt-2">
-              <div className="flex justify-between text-xs font-medium">
-                <span>{priceRange[0]} MAD</span>
-                <span>{priceRange[1]} MAD</span>
-              </div>
-              <Slider
-                min={priceBounds[0]}
-                max={priceBounds[1]}
-                step={10}
-                value={priceRange}
-                onValueChange={(v) => setPriceRange([v[0], v[1]] as [number, number])}
-              />
-            </div>
+            <PriceRangeFilter
+              prices={pricesForHistogram}
+              value={priceRange}
+              onChange={setPriceRange}
+              bounds={priceBounds}
+              step={10}
+              currency="MAD"
+              subtitle="Per day, MAD"
+            />
           </AccordionContent>
         </AccordionItem>
 
