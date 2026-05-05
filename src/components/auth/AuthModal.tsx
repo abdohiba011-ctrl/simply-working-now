@@ -491,29 +491,25 @@ export function AuthModal() {
                   className="h-11"
                 />
               </div>
-              <label className="flex items-start gap-2 cursor-pointer text-xs text-[#163300]/70">
+              <label
+                className={`flex items-start gap-3 cursor-pointer rounded-xl border-2 p-4 transition-colors ${
+                  acceptTerms
+                    ? "border-[#9FE870] bg-[#9FE870]/20"
+                    : "border-[#9FE870]/60 bg-[#9FE870]/10 hover:bg-[#9FE870]/15"
+                }`}
+              >
                 <Checkbox
                   checked={acceptTerms}
                   onCheckedChange={(v) => setAcceptTerms(Boolean(v))}
-                  className="mt-0.5"
+                  className="mt-0.5 h-6 w-6 shrink-0"
                 />
-                <span>
+                <span className="text-base font-semibold leading-snug text-[#163300]">
                   I agree to the{" "}
-                  <a
-                    href="/terms"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="underline font-medium text-[#163300]"
-                  >
+                  <a href="/terms" target="_blank" rel="noreferrer" className="underline text-[#163300]">
                     Terms of Service
                   </a>{" "}
                   and{" "}
-                  <a
-                    href="/privacy-policy"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="underline font-medium text-[#163300]"
-                  >
+                  <a href="/privacy-policy" target="_blank" rel="noreferrer" className="underline text-[#163300]">
                     Privacy Policy
                   </a>
                 </span>
