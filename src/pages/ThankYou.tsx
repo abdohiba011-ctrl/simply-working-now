@@ -90,7 +90,7 @@ const ThankYou = () => {
     if (type === "booking") {
       if (needsVerification) {
         return {
-          title: "Payment received ✅",
+          title: "Payment received ",
           description: "One last step — verify your ID and phone so the agency can finalize your booking.",
           details: "We're taking you to verification in a moment…",
           verificationInfo: false,
@@ -99,7 +99,7 @@ const ThankYou = () => {
         };
       }
       return {
-        title: "Booking request sent! 🎉",
+        title: "Booking request sent! ",
         description: "Your 60 MAD upfront payment was received (10 MAD platform fee + 50 MAD confirmation fee). The agency will contact you in the chat within 5–10 minutes to confirm pickup details.",
         details: "You can chat with the agency from your booking page.",
         verificationInfo: false,

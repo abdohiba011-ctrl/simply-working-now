@@ -121,8 +121,8 @@ const Inbox = () => {
             ? last.body ||
               (last.attachment_url
                 ? last.attachment_mime?.startsWith("image/")
-                  ? "📷 Photo"
-                  : "📎 File"
+                  ? "Photo"
+                  : "File"
                 : "")
             : null,
         };
