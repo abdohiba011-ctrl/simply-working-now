@@ -204,8 +204,8 @@ export default function RentCity() {
     searchParams.get("duration") || "1"
   );
   const [priceRange, setPriceRange] = useState<[number, number]>([
-    Number(searchParams.get("minPrice")) || 50,
-    Number(searchParams.get("maxPrice")) || 1000,
+    Number(searchParams.get("minPrice")) || 0,
+    Number(searchParams.get("maxPrice")) || 0,
   ]);
   const [selectedTypes, setSelectedTypes] = useState<string[]>(
     searchParams.get("types")?.split(",").filter(Boolean) || []
@@ -238,8 +238,8 @@ export default function RentCity() {
       const params = new URLSearchParams();
       if (neighborhood !== allCityLabel) params.set("neighborhood", neighborhood);
       if (duration !== "1") params.set("duration", duration);
-      if (priceRange[0] !== 50) params.set("minPrice", String(priceRange[0]));
-      if (priceRange[1] !== 1000) params.set("maxPrice", String(priceRange[1]));
+      if (priceRange[0] !== priceBounds[0]) params.set("minPrice", String(priceRange[0]));
+      if (priceRange[1] !== priceBounds[1]) params.set("maxPrice", String(priceRange[1]));
       if (selectedTypes.length) params.set("types", selectedTypes.join(","));
       if (fuel !== "all") params.set("fuel", fuel);
       if (licenses.length) params.set("licenses", licenses.join(","));
@@ -308,6 +308,24 @@ export default function RentCity() {
 
   const isLoading = cityLoading || bikesLoading;
 
+  // Derive actual price bounds from the bikes available in this city
+  const priceBounds = useMemo<[number, number]>(() => {
+    if (!bikes.length) return [50, 1000];
+    const prices = bikes.map((b) => Number(b.daily_price) || 0).filter((p) => p > 0);
+    if (!prices.length) return [50, 1000];
+    const min = Math.floor(Math.min(...prices) / 10) * 10;
+    const max = Math.ceil(Math.max(...prices) / 10) * 10;
+    return [min, Math.max(max, min + 10)];
+  }, [bikes]);
+
+  // Initialize priceRange to bounds once they're known (if user hasn't set it via URL)
+  useEffect(() => {
+    if (priceRange[0] === 0 && priceRange[1] === 0) {
+      setPriceRange(priceBounds);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [priceBounds]);
+
   const filtered = useMemo(() => {
     let list = bikes.filter((b) => {
       // Neighborhood
@@ -360,7 +378,7 @@ export default function RentCity() {
   const activeFilterCount =
     (neighborhood !== allCityLabel ? 1 : 0) +
     (duration !== "1" ? 1 : 0) +
-    (priceRange[0] !== 50 || priceRange[1] !== 1000 ? 1 : 0) +
+    (priceRange[0] !== priceBounds[0] || priceRange[1] !== priceBounds[1] ? 1 : 0) +
     selectedTypes.length +
     (fuel !== "all" ? 1 : 0) +
     licenses.length +
@@ -370,7 +388,7 @@ export default function RentCity() {
   const clearAll = () => {
     setNeighborhood(allCityLabel);
     setDuration("1");
-    setPriceRange([50, 1000]);
+    setPriceRange(priceBounds);
     setSelectedTypes([]);
     setFuel("all");
     setLicenses([]);
@@ -461,8 +479,8 @@ export default function RentCity() {
                 <span>{priceRange[1]} MAD</span>
               </div>
               <Slider
-                min={50}
-                max={1000}
+                min={priceBounds[0]}
+                max={priceBounds[1]}
                 step={10}
                 value={priceRange}
                 onValueChange={(v) => setPriceRange([v[0], v[1]] as [number, number])}
