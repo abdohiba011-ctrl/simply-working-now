@@ -72,29 +72,6 @@ export function PriceRangeFilter({
       )}
 
       <div className="relative">
-        {/* Histogram */}
-        <div className="flex h-12 items-end gap-px px-1">
-          {heights.map((h, i) => {
-            const bucketStart = min + (span * i) / bucketCount;
-            const bucketEnd = min + (span * (i + 1)) / bucketCount;
-            const inRange = bucketEnd > value[0] && bucketStart < value[1];
-            return (
-              <div
-                key={i}
-                className={cn(
-                  "flex-1 rounded-[1px] transition-colors",
-                  h === 0
-                    ? "bg-transparent"
-                    : inRange
-                      ? "bg-primary/55"
-                      : "bg-muted-foreground/20",
-                )}
-                style={{ height: h === 0 ? 0 : `${h * 100}%` }}
-              />
-            );
-          })}
-        </div>
-
         {/* MUI dual-thumb slider */}
         <div className="px-1 pt-2 pb-1">
           <Slider
