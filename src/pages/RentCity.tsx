@@ -308,6 +308,24 @@ export default function RentCity() {
 
   const isLoading = cityLoading || bikesLoading;
 
+  // Derive actual price bounds from the bikes available in this city
+  const priceBounds = useMemo<[number, number]>(() => {
+    if (!bikes.length) return [50, 1000];
+    const prices = bikes.map((b) => Number(b.daily_price) || 0).filter((p) => p > 0);
+    if (!prices.length) return [50, 1000];
+    const min = Math.floor(Math.min(...prices) / 10) * 10;
+    const max = Math.ceil(Math.max(...prices) / 10) * 10;
+    return [min, Math.max(max, min + 10)];
+  }, [bikes]);
+
+  // Initialize priceRange to bounds once they're known (if user hasn't set it via URL)
+  useEffect(() => {
+    if (priceRange[0] === 0 && priceRange[1] === 0) {
+      setPriceRange(priceBounds);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [priceBounds]);
+
   const filtered = useMemo(() => {
     let list = bikes.filter((b) => {
       // Neighborhood
