@@ -14,7 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { StatusChip } from "@/components/shared/StatusChip";
-import { BikeDetailCard, type BikeDetailAgency, type BikeDetailPickup } from "@/components/bike/BikeDetailCard";
+import { AdminBikeReviewSteps } from "@/components/admin/AdminBikeReviewSteps";
 
 const QUICK_REASONS = [
   "Photos are unclear or low quality",
@@ -202,13 +202,6 @@ const AdminBikeReview = () => {
 
   const decided = bike.approval_status === "approved" || bike.approval_status === "rejected";
 
-  const pickup: BikeDetailPickup = {
-    city: bikeCityName,
-    neighborhood: bike.neighborhood,
-    address: null,
-    usingAgencyFallback: false,
-  };
-
   return (
     <AdminLayout>
       <main className="flex-1">
@@ -262,13 +255,11 @@ const AdminBikeReview = () => {
               <div className="text-foreground/90">{bike.rejection_reason}</div>
             </div>
           )}
-          <BikeDetailCard
+          <AdminBikeReviewSteps
             bike={bike as any}
             photos={photos}
             tiers={tiers}
-            agency={agency as BikeDetailAgency | null}
-            pickup={pickup}
-            mode="admin"
+            agency={agency as any}
           />
         </div>
       </main>
