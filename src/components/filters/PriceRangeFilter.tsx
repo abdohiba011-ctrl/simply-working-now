@@ -100,12 +100,13 @@ export function PriceRangeFilter({
         {/* Slider sits just below the histogram */}
         <div className="relative px-1 pt-6">
           {/* Floating handle labels — make it visually obvious there are TWO handles */}
-          <div className="pointer-events-none absolute inset-x-1 -top-0.5 h-6">
+          <div className="pointer-events-none absolute inset-x-1 -top-1 h-6">
             <div
               className="absolute whitespace-nowrap rounded-md bg-foreground text-background text-[10px] font-semibold px-1.5 py-0.5 shadow-sm"
               style={{
                 left: `${minPct}%`,
-                transform: `translateX(-${minPct}%)`,
+                // Pin to left edge near 0%, center otherwise
+                transform: minPct < 15 ? "translateX(0)" : "translateX(-50%)",
               }}
             >
               Min · {formatVal(value[0], false)}
@@ -114,7 +115,8 @@ export function PriceRangeFilter({
               className="absolute whitespace-nowrap rounded-md bg-foreground text-background text-[10px] font-semibold px-1.5 py-0.5 shadow-sm"
               style={{
                 left: `${maxPct}%`,
-                transform: `translateX(-${maxPct}%)`,
+                // Pin to right edge near 100%, center otherwise
+                transform: maxPct > 85 ? "translateX(-100%)" : "translateX(-50%)",
               }}
             >
               Max · {formatVal(value[1], true)}
