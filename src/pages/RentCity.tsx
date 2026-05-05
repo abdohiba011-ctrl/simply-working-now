@@ -479,8 +479,8 @@ export default function RentCity() {
                 <span>{priceRange[1]} MAD</span>
               </div>
               <Slider
-                min={50}
-                max={1000}
+                min={priceBounds[0]}
+                max={priceBounds[1]}
                 step={10}
                 value={priceRange}
                 onValueChange={(v) => setPriceRange([v[0], v[1]] as [number, number])}
