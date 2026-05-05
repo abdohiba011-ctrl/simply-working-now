@@ -388,7 +388,7 @@ export default function RentCity() {
   const clearAll = () => {
     setNeighborhood(allCityLabel);
     setDuration("1");
-    setPriceRange([50, 1000]);
+    setPriceRange(priceBounds);
     setSelectedTypes([]);
     setFuel("all");
     setLicenses([]);
