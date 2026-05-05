@@ -1,57 +1,33 @@
-## Three fixes for the renter side
+## Renter signup — two fixes
 
-### 1. Bug: "0 bikes" on the detail page
+### 1) Make the "I agree to Terms / Privacy" much more prominent
 
-**What I need from you first.** I couldn't reproduce a "0 bikes" string from the data alone — the city has 8 approved bikes, each with a `bikes_public` row, and `useBike()` resolves them by slug. I'll start by reproducing in the browser tool: navigate to `/rent/casablanca`, click each card, and capture exactly which element shows `0` (and on which bike). Three plausible culprits:
+File: `src/pages/auth/Signup.tsx` (renter block around lines 898–924).
 
-- **Pricing tier 0**: `tiers[0].daily_price_mad` reads as `0` for a bike that has no tiers configured → "From 0 MAD" appears in the price block.
-- **Helmets count 0**: `helmetsCount = 0` may render an empty "What's included" line as "0 helmets" instead of hiding it.
-- **Days = 0** before a date is picked: total displays as "0 MAD" until dates are chosen.
+Change the current small checkbox row into a **bordered, highlighted callout** that's hard to miss:
 
-After I reproduce, I'll fix the specific render path so the number either hides or shows a sensible fallback (e.g., fall back to `bike_type.daily_price` when no tiers exist, hide the helmet line when 0, hide totals when `days === 0`).
+- Wrap it in a card-like container: thicker border (`border-2`), tinted background using the brand lime (`bg-primary/10`), rounded corners, generous padding (`p-4`).
+- Larger checkbox (use `h-6 w-6` via className on the Radix `Checkbox`).
+- Larger, bolder label text (`text-base font-semibold` instead of `text-sm`), with the **Terms of Service** and **Privacy Policy** links underlined and in foreground color so they stand out.
+- When unchecked & submitted, the error message becomes large and red right under the box.
+- Keep i18n keys (`mockAuth.agree_terms_prefix`, `mockAuth.terms_of_service`, `mockAuth.and`, `mockAuth.privacy_policy`) — only the visual presentation changes.
 
-### 2. Remove emojis from all renter-facing pages
+The "Send me product updates" optional checkbox stays small/muted below — it should visually sit *under* the consent callout, not next to it, so the consent stays the dominant element.
 
-Confirmed emoji locations on renter surfaces:
+### 2) Auto-login after signup (no manual login step)
 
-| File | Line | Emoji |
-|------|------|-------|
-| `src/pages/RentCity.tsx` | 828 | 🛵 (city-not-found illustration) |
-| `src/pages/BikeDetails.tsx` | 744 | ⚡ "Confirm in 60 seconds" |
-| `src/pages/BikeDetails.tsx` | 893 | 🪖 helmet icon |
-| `src/pages/BikeDetails.tsx` | 991 | ✓ Available |
-| `src/pages/BikeDetails.tsx` | 994 | ⚠ Unavailable |
+The signup store path (`src/stores/useAuthStore.ts`, lines 599–615) already handles the auto-confirmed case by setting `isAuthenticated: true` when `data.session` exists. Auto-confirm is already enabled for this project. The bug is that the renter `onSubmit` in `Signup.tsx` (lines 414–419) **always** navigates to `/verify-email`, even when the user is now signed in.
 
-Replace each with a `lucide-react` icon (`Zap`, `HardHat` / shield, `Check`, `AlertTriangle`) sized and colored to match. I'll also sweep `src/pages/Index.tsx`, `src/pages/Favorites.tsx`, `src/pages/Bookings*`, `src/components/BikeCard.tsx`, the renter header/footer, and checkout for any remaining emojis and convert them the same way.
+Fix in `src/pages/auth/Signup.tsx` `onSubmit`:
 
-**Excluded (kept as-is):**
-- The bike `description` field (free text written by the agency).
-- Agency dashboard pages (`src/pages/agency/*`, `src/components/agency/*`).
-- Admin pages (`src/pages/admin/*`, `src/components/admin/*`).
+- After `await signup(...)`, read `useAuthStore.getState()` (or use the already-imported `isAuthenticated` snapshot via `getState`).
+- If `isAuthenticated && user` → call `navigateAfterAuth(navigate, user, role)` and show a "Welcome to Motonita" toast. No verify-email detour.
+- Only fall back to `navigate('/verify-email?...')` when the session was NOT returned (i.e. confirmation really is required for that account).
 
-### 3. Price range slider — clearer two-handle behavior
+This preserves correct behavior for both modes (auto-confirm on or off) and matches the user's expectation: signed-up renters land logged-in, and are only asked to log in again if they explicitly log out later.
 
-You skipped the question, so I'll go with the lighter option that keeps the existing histogram intact:
+### Out of scope
 
-- Keep the single Radix two-handle slider (left = min, right = max — both already independently draggable).
-- Add small floating labels above each thumb: `Min · 80 MAD` on the left thumb, `Max · 450+ MAD` on the right thumb, so it's visually obvious there are two handles.
-- Show the value in a tooltip-style chip while dragging (fades out 1s after release).
-- Keep the Minimum / Maximum number inputs below as the precise entry path.
-
-If you actually wanted **two separate sliders stacked** instead, tell me and I'll swap the approach — but the labeled-handles version preserves the histogram-as-context UX, which is the part that makes it feel like Airbnb.
-
----
-
-### Technical notes
-
-- `BikeDetails.tsx` ref warning in console (`BikeCard` is a function component being given a ref) — I'll wrap `BikeCard` in `React.forwardRef` while I'm in the file. Unrelated to the bug but cheap to fix.
-- No DB or RLS changes. No new migrations.
-- No changes to agency or admin UI.
-
-### Files I expect to touch
-
-- `src/pages/BikeDetails.tsx` (bug fix + emoji removal)
-- `src/pages/RentCity.tsx` (emoji removal)
-- `src/components/BikeCard.tsx` (forwardRef + any emoji)
-- `src/components/filters/PriceRangeFilter.tsx` (handle labels + drag tooltip)
-- Possibly `src/pages/Index.tsx`, `Favorites.tsx`, renter header/footer if the sweep finds more emojis.
+- No changes to the agency signup flow.
+- No changes to verify-email page, password rules, or schema.
+- No changes to the auth store's signup logic itself — it already supports the auto-login path.

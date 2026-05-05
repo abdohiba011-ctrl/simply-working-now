@@ -397,7 +397,7 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
     }
 
     try {
-      await signup(
+      const newUser = await signup(
         {
           name: values.name,
           email: values.email,
@@ -411,6 +411,18 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
         },
         role,
       );
+      // If the project auto-confirms emails, signup() returns an
+      // already-authenticated user — skip the verify-email detour.
+      const { isAuthenticated: nowAuthed, user: storeUser } = useAuthStore.getState();
+      if (nowAuthed && storeUser) {
+        toast.success(
+          t("mockAuth.welcome_motonita", {
+            defaultValue: "Welcome to Motonita!",
+          }),
+        );
+        navigateAfterAuth(navigate, storeUser, role);
+        return;
+      }
       toast.success(
         t("mockAuth.account_created", {
           defaultValue: "Account created! Check your email for the 6-digit verification code.",
@@ -895,10 +907,19 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
             register={form.register("confirmPassword")}
           />
 
-          <div className="space-y-2 pt-2">
-            <label className="flex items-start gap-2 cursor-pointer">
+          <div className="space-y-3 pt-2">
+            <label
+              className={cn(
+                "flex items-start gap-3 cursor-pointer rounded-xl border-2 p-4 transition-colors",
+                form.formState.errors.acceptTerms
+                  ? "border-red-400 bg-red-50"
+                  : !!form.watch("acceptTerms")
+                    ? "border-primary bg-primary/15"
+                    : "border-primary/60 bg-primary/10 hover:bg-primary/15",
+              )}
+            >
               <Checkbox
-                className="mt-0.5"
+                className="mt-0.5 h-6 w-6 shrink-0"
                 checked={!!form.watch("acceptTerms")}
                 onCheckedChange={(v) =>
                   form.setValue("acceptTerms", (v ? true : undefined) as true, {
@@ -906,7 +927,7 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
                   })
                 }
               />
-              <span className="text-sm text-foreground">
+              <span className="text-base font-semibold leading-snug text-foreground">
                 {t("mockAuth.agree_terms_prefix", { defaultValue: "I agree to Motonita's" })}{" "}
                 <a href="/terms" target="_blank" rel="noreferrer" className="underline text-foreground">
                   {t("mockAuth.terms_of_service", { defaultValue: "Terms of Service" })}
@@ -918,12 +939,12 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
               </span>
             </label>
             {form.formState.errors.acceptTerms ? (
-              <p className="text-xs text-red-600 ms-6">
+              <p className="text-sm font-medium text-red-600">
                 {form.formState.errors.acceptTerms.message}
               </p>
             ) : null}
 
-            <label className="flex items-start gap-2 cursor-pointer">
+            <label className="flex items-start gap-2 cursor-pointer pt-1">
               <Checkbox
                 className="mt-0.5"
                 checked={!!form.watch("marketingOptIn")}
