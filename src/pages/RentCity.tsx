@@ -49,6 +49,7 @@ import { toast } from "sonner";
 import { BookingDatePicker } from "@/components/BookingDatePicker";
 import { BikeCard } from "@/components/BikeCard";
 import { useFavoriteIds } from "@/lib/favorites";
+import { PriceRangeFilter } from "@/components/filters/PriceRangeFilter";
 
 // Neighborhoods are loaded live from `service_locations` per city — no hardcoded list.
 // This means whenever an admin adds/edits/disables a neighborhood, the renter
@@ -375,6 +376,31 @@ export default function RentCity() {
     return list;
   }, [bikes, neighborhood, priceRange, selectedTypes, fuel, licenses, features, sortBy]);
 
+  // Prices for histogram: apply every filter EXCEPT price (Airbnb behavior — bars don't collapse as you drag)
+  const pricesForHistogram = useMemo(() => {
+    return bikes
+      .filter((b) => {
+        if (neighborhood !== allCityLabel && b.neighborhood !== neighborhood) return false;
+        if (selectedTypes.length && !selectedTypes.includes((b.category || "").toLowerCase())) return false;
+        if (fuel !== "all") {
+          const isElectric = (b.fuel_type || "").toLowerCase().includes("electric");
+          if (fuel === "electric" && !isElectric) return false;
+          if (fuel === "gasoline" && isElectric) return false;
+        }
+        if (licenses.length && !licenses.includes(b.license_required || "")) return false;
+        if (features.length) {
+          const featStr = (b.features || []).join(" ");
+          const allMatch = features.every((fid) => {
+            const opt = FEATURE_OPTIONS.find((f) => f.id === fid);
+            return opt ? opt.match.test(featStr) : true;
+          });
+          if (!allMatch) return false;
+        }
+        return true;
+      })
+      .map((b) => Number(b.daily_price) || 0);
+  }, [bikes, neighborhood, selectedTypes, fuel, licenses, features, allCityLabel]);
+
   const activeFilterCount =
     (neighborhood !== allCityLabel ? 1 : 0) +
     (duration !== "1" ? 1 : 0) +
@@ -470,22 +496,18 @@ export default function RentCity() {
 
         <AccordionItem value="price" className="border-border">
           <AccordionTrigger className="text-sm font-semibold">
-            Price (per day)
+            Price range
           </AccordionTrigger>
           <AccordionContent>
-            <div className="space-y-3 pt-2">
-              <div className="flex justify-between text-xs font-medium">
-                <span>{priceRange[0]} MAD</span>
-                <span>{priceRange[1]} MAD</span>
-              </div>
-              <Slider
-                min={priceBounds[0]}
-                max={priceBounds[1]}
-                step={10}
-                value={priceRange}
-                onValueChange={(v) => setPriceRange([v[0], v[1]] as [number, number])}
-              />
-            </div>
+            <PriceRangeFilter
+              prices={pricesForHistogram}
+              value={priceRange}
+              onChange={setPriceRange}
+              bounds={priceBounds}
+              step={10}
+              currency="MAD"
+              subtitle="Per day, MAD"
+            />
           </AccordionContent>
         </AccordionItem>
 
