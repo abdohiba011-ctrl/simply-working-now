@@ -825,7 +825,9 @@ function CityNotFound({ slug }: { slug: string }) {
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
       <main className="flex-1 container mx-auto px-4 py-20 flex flex-col items-center text-center">
-        <div className="text-6xl mb-4">🛵</div>
+        <div className="mx-auto w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
+          <MapPin className="w-8 h-8 text-muted-foreground" />
+        </div>
         <h1 className="text-3xl md:text-4xl font-bold mb-3">City not found</h1>
         <p className="text-muted-foreground max-w-md mb-8">
           We don&apos;t operate in <span className="font-medium">{label}</span> yet,
