@@ -278,32 +278,33 @@ export default function RentCity() {
     queryKey: ["rent-city-bikes", cityRow?.id],
     enabled: !!cityRow?.id,
     queryFn: async () => {
+      // NOTE: anon role has no SELECT on `bikes` (forced through bikes_public view).
+      // The previous `bikes!inner(...)` embed silently returned 0 rows for logged-out
+      // visitors. We now query bike_types directly (its approval flags already gate
+      // visibility) and filter availability via a separate bikes_public lookup.
       const { data, error } = await supabase
         .from("bike_types")
         .select(
-          "id,slug,name,category,fuel_type,daily_price,weekly_price,monthly_price,rating,review_count,main_image_url,neighborhood,features,license_required,year,engine_cc,city_id,bikes!inner(id,available,approval_status,archived_at)"
+          "id,slug,name,category,fuel_type,daily_price,weekly_price,monthly_price,rating,review_count,main_image_url,neighborhood,features,license_required,year,engine_cc,city_id"
         )
         .eq("is_approved", true)
         .eq("approval_status", "approved")
         .eq("business_status", "active")
         .is("archived_at", null)
-        .eq("city_id", cityRow!.id)
-        .eq("bikes.available", true)
-        .eq("bikes.approval_status", "approved")
-        .is("bikes.archived_at", null);
+        .eq("city_id", cityRow!.id);
 
       if (error) throw error;
-      // Deduplicate (inner join may yield multiple rows per bike_type when there
-      // are several available units) and drop the joined `bikes` array from the row.
-      const seen = new Set<string>();
-      const unique: BikeRow[] = [];
-      for (const row of (data || []) as Array<BikeRow & { bikes?: unknown }>) {
-        if (seen.has(row.id)) continue;
-        seen.add(row.id);
-        const { bikes: _bikes, ...rest } = row as Record<string, unknown>;
-        unique.push(rest as BikeRow);
-      }
-      return unique;
+      const types = (data || []) as BikeRow[];
+      if (types.length === 0) return [];
+
+      // Keep only bike_types that have at least one available physical unit.
+      const { data: units } = await (supabase as any)
+        .from("bikes_public")
+        .select("bike_type_id, available")
+        .in("bike_type_id", types.map((t) => t.id))
+        .eq("available", true);
+      const withUnits = new Set(((units || []) as Array<{ bike_type_id: string }>).map((u) => u.bike_type_id));
+      return types.filter((t) => withUnits.has(t.id));
     },
   });
 
@@ -825,7 +826,9 @@ function CityNotFound({ slug }: { slug: string }) {
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
       <main className="flex-1 container mx-auto px-4 py-20 flex flex-col items-center text-center">
-        <div className="text-6xl mb-4">🛵</div>
+        <div className="mx-auto w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
+          <MapPin className="w-8 h-8 text-muted-foreground" />
+        </div>
         <h1 className="text-3xl md:text-4xl font-bold mb-3">City not found</h1>
         <p className="text-muted-foreground max-w-md mb-8">
           We don&apos;t operate in <span className="font-medium">{label}</span> yet,

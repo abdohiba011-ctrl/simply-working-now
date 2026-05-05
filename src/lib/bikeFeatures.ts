@@ -1,6 +1,26 @@
 // Shared map for bike "What's included" features.
 // Wizard writes the keys to bike_types.features (text[]); BikeCard and
 // BikeDetails read the same keys to render icon + label.
+//
+// NOTE: renter-facing surfaces should NOT show emoji icons. The `icon`
+// field is kept (string) for backwards compatibility with the agency
+// wizard / admin views, but renter components now render lucide icons
+// (see RENTER_FEATURE_ICONS below).
+
+import type { LucideIcon } from "lucide-react";
+import {
+  HardHat,
+  Lock,
+  Smartphone,
+  Briefcase,
+  CloudRain,
+  Hand,
+  MapPin,
+  Plug,
+  Shield,
+  Shirt,
+  Wrench,
+} from "lucide-react";
 
 export type FeatureKey =
   | "helmet"
@@ -27,6 +47,21 @@ export const FEATURE_LABELS: Record<FeatureKey, { icon: string; label: string }>
   guards:       { icon: "🛡️", label: "Knee/elbow guards" },
   vest:         { icon: "🦺", label: "Reflective vest" },
   toolkit:      { icon: "🧰", label: "Basic toolkit" },
+};
+
+// Lucide icons for renter-facing surfaces (no emojis).
+export const RENTER_FEATURE_ICONS: Record<FeatureKey, LucideIcon> = {
+  helmet:       HardHat,
+  lock:         Lock,
+  phone_holder: Smartphone,
+  top_case:     Briefcase,
+  rain_gear:    CloudRain,
+  gloves:       Hand,
+  gps:          MapPin,
+  usb_charger:  Plug,
+  guards:       Shield,
+  vest:         Shirt,
+  toolkit:      Wrench,
 };
 
 export const FEATURE_ORDER: FeatureKey[] = [
@@ -82,7 +117,8 @@ export const CANCELLATION_OPTIONS = [
   },
 ] as const;
 
+// Plain text — renderer is responsible for any iconography.
 export function cancellationText(key?: string | null): string | null {
   const opt = CANCELLATION_OPTIONS.find((o) => o.key === (key || "moderate"));
-  return opt ? `${opt.icon === "🟢" ? "✅" : opt.icon === "🟡" ? "✅" : "⚠️"} ${opt.text}` : null;
+  return opt ? opt.text : null;
 }

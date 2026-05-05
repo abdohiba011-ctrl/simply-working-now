@@ -271,7 +271,7 @@ const BookingHistory = () => {
               />
               {isCashplusDraft ? (
                 <Badge className="absolute top-2 right-2 bg-[#9FE870] text-[#163300] hover:bg-[#9FE870]">
-                  💵 Awaiting Cash Plus
+                  Awaiting Cash Plus
                 </Badge>
               ) : (
                 <StatusBadge status={booking.status} className="absolute top-2 right-2" />

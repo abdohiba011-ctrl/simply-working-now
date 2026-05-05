@@ -47,7 +47,7 @@ import { DateRangePicker } from "@/components/DateRangePicker";
 import { BookingDatePicker } from "@/components/BookingDatePicker";
 import { checkBikeAvailability, type Availability } from "@/lib/availability";
 import { useDocumentHead } from "@/hooks/useDocumentHead";
-import { FEATURE_LABELS, FeatureKey, licenseLabel, cancellationText } from "@/lib/bikeFeatures";
+import { FEATURE_LABELS, RENTER_FEATURE_ICONS, FeatureKey, licenseLabel, cancellationText } from "@/lib/bikeFeatures";
 import {
   TIER_SHORT_LABELS,
   type BikePricingTier,
@@ -741,7 +741,9 @@ const BikeDetails = () => {
         </Button>
 
         {days > 0 && availability !== "unavailable" && (
-          <p className="text-[11px] text-center text-foreground/70">⚡ Confirm in 60 seconds</p>
+          <p className="text-[11px] text-center text-foreground/70 inline-flex items-center justify-center gap-1 w-full">
+            <Clock className="h-3 w-3" /> Confirm in 60 seconds
+          </p>
         )}
 
         {/* Trust signals */}
@@ -890,7 +892,7 @@ const BikeDetails = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {helmetsCount > 0 && (
                       <div className="flex items-start gap-3 p-3 rounded-lg border border-border/60 bg-card">
-                        <span className="text-xl leading-none">🪖</span>
+                        <RENTER_FEATURE_ICONS.helmet className="h-5 w-5 text-foreground mt-0.5" />
                         <p className="text-base font-medium text-foreground">
                           {helmetsCount} helmet{helmetsCount > 1 ? "s" : ""} included
                         </p>
@@ -898,9 +900,10 @@ const BikeDetails = () => {
                     )}
                     {featureKeys.filter((k) => k !== "helmet").map((k) => {
                       const meta = FEATURE_LABELS[k];
+                      const FIcon = RENTER_FEATURE_ICONS[k];
                       return (
                         <div key={k} className="flex items-start gap-3 p-3 rounded-lg border border-border/60 bg-card">
-                          <span className="text-xl leading-none">{meta.icon}</span>
+                          <FIcon className="h-5 w-5 text-foreground mt-0.5" />
                           <p className="text-base font-medium text-foreground">{meta.label}</p>
                         </div>
                       );
@@ -988,10 +991,14 @@ const BikeDetails = () => {
             <p className="text-sm font-bold text-foreground leading-tight">
               {Math.round(baseDailyPrice)} MAD<span className="text-[11px] font-normal text-muted-foreground">/day</span>
               {availability === "available" && (
-                <span className="ml-2 text-[11px] font-medium text-[#163300]">· ✓ Available</span>
+                <span className="ml-2 text-[11px] font-medium text-[#163300] inline-flex items-center gap-0.5">
+                  · <CheckCircle2 className="h-3 w-3" /> Available
+                </span>
               )}
               {availability === "unavailable" && (
-                <span className="ml-2 text-[11px] font-medium text-amber-700">· ⚠ Unavailable</span>
+                <span className="ml-2 text-[11px] font-medium text-amber-700 inline-flex items-center gap-0.5">
+                  · <AlertTriangle className="h-3 w-3" /> Unavailable
+                </span>
               )}
             </p>
             {days > 0 && (
