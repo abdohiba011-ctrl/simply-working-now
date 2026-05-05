@@ -65,6 +65,11 @@ export function PriceRangeFilter({
   };
 
   const isMaxAtCap = value[1] >= max;
+  const minPct = ((value[0] - min) / span) * 100;
+  const maxPct = ((value[1] - min) / span) * 100;
+
+  const formatVal = (v: number, isMax: boolean) =>
+    `${v}${isMax && isMaxAtCap ? "+" : ""} ${currency}`;
 
   return (
     <div className="space-y-4">
@@ -93,7 +98,22 @@ export function PriceRangeFilter({
         </div>
 
         {/* Slider sits just below the histogram */}
-        <div className="px-1 pt-1">
+        <div className="relative px-1 pt-6">
+          {/* Floating handle labels — make it visually obvious there are TWO handles */}
+          <div className="pointer-events-none absolute inset-x-1 -top-0.5 h-6">
+            <div
+              className="absolute -translate-x-1/2 whitespace-nowrap rounded-md bg-foreground text-background text-[10px] font-semibold px-1.5 py-0.5 shadow-sm"
+              style={{ left: `${minPct}%` }}
+            >
+              Min · {formatVal(value[0], false)}
+            </div>
+            <div
+              className="absolute -translate-x-1/2 whitespace-nowrap rounded-md bg-foreground text-background text-[10px] font-semibold px-1.5 py-0.5 shadow-sm"
+              style={{ left: `${maxPct}%` }}
+            >
+              Max · {formatVal(value[1], true)}
+            </div>
+          </div>
           <Slider
             min={min}
             max={max}
