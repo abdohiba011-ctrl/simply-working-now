@@ -203,12 +203,10 @@ export default function RentCity() {
   const [duration, setDuration] = useState<string>(
     searchParams.get("duration") || "1"
   );
-  const [priceRange, setPriceRange] = useState<[number, number] | null>(() => {
-    const min = Number(searchParams.get("minPrice"));
-    const max = Number(searchParams.get("maxPrice"));
-    if (min || max) return [min || 0, max || 99999];
-    return null;
-  });
+  const [priceRange, setPriceRange] = useState<[number, number]>([
+    Number(searchParams.get("minPrice")) || 0,
+    Number(searchParams.get("maxPrice")) || 0,
+  ]);
   const [selectedTypes, setSelectedTypes] = useState<string[]>(
     searchParams.get("types")?.split(",").filter(Boolean) || []
   );
