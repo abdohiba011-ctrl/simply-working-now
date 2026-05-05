@@ -215,8 +215,8 @@ export function PriceRangeFilter({
           <span className="mb-1 block text-xs text-muted-foreground">
             Maximum
           </span>
-          <div className="flex items-baseline gap-1.5 rounded-full border border-border bg-background px-3 py-2">
-            <div className="flex flex-1 items-baseline min-w-0">
+          <div className="flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-2">
+            <div className="relative flex-1 min-w-0">
               <input
                 inputMode="numeric"
                 value={maxInput}
@@ -225,10 +225,17 @@ export function PriceRangeFilter({
                 onKeyDown={(e) => {
                   if (e.key === "Enter") (e.target as HTMLInputElement).blur();
                 }}
+                style={isMaxAtCap ? { paddingRight: `${String(maxInput).length === 0 ? 8 : 10}px` } : undefined}
                 className="w-full min-w-0 bg-transparent text-sm font-medium outline-none"
               />
               {isMaxAtCap && (
-                <span className="text-sm font-medium text-foreground leading-none">+</span>
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute top-1/2 -translate-y-1/2 text-sm font-medium text-foreground"
+                  style={{ left: `${String(maxInput).length}ch` }}
+                >
+                  +
+                </span>
               )}
             </div>
             <span className="shrink-0 text-xs text-muted-foreground">{currency}</span>
