@@ -33,6 +33,7 @@ const Checkout = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [profile, setProfile] = useState<{ name: string; email: string; phone: string; is_verified: boolean } | null>(null);
+  const [referralDiscount, setReferralDiscount] = useState(false);
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -41,19 +42,23 @@ const Checkout = () => {
         return;
       }
       try {
-        const { data } = await supabase
-          .from('profiles')
-          .select('name, email, phone, is_verified')
-          .eq('user_id', user.id)
-          .single();
-        if (data) {
+        const [{ data: profileData }, { data: eligible }] = await Promise.all([
+          supabase
+            .from('profiles')
+            .select('name, email, phone, is_verified')
+            .eq('user_id', user.id)
+            .single(),
+          supabase.rpc('is_referral_discount_eligible'),
+        ]);
+        if (profileData) {
           setProfile({
-            name: data.name || '',
-            email: data.email || user.email || '',
-            phone: data.phone || '',
-            is_verified: !!data.is_verified,
+            name: profileData.name || '',
+            email: profileData.email || user.email || '',
+            phone: profileData.phone || '',
+            is_verified: !!profileData.is_verified,
           });
         }
+        setReferralDiscount(!!eligible);
       } catch (error) {
         console.error('Error fetching profile:', error);
       } finally {
