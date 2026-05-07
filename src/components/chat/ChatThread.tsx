@@ -406,7 +406,7 @@ export const ChatThread = ({
                   )}
                   <div
                     className={cn(
-                      "group max-w-[78%] sm:max-w-[70%]",
+                      "group max-w-[78%] sm:max-w-[68%] lg:max-w-[60%]",
                       mine ? "items-end" : "items-start"
                     )}
                   >
