@@ -33,6 +33,7 @@ const Checkout = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [profile, setProfile] = useState<{ name: string; email: string; phone: string; is_verified: boolean } | null>(null);
+  const [referralDiscount, setReferralDiscount] = useState(false);
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -41,19 +42,23 @@ const Checkout = () => {
         return;
       }
       try {
-        const { data } = await supabase
-          .from('profiles')
-          .select('name, email, phone, is_verified')
-          .eq('user_id', user.id)
-          .single();
-        if (data) {
+        const [{ data: profileData }, { data: eligible }] = await Promise.all([
+          supabase
+            .from('profiles')
+            .select('name, email, phone, is_verified')
+            .eq('user_id', user.id)
+            .single(),
+          supabase.rpc('is_referral_discount_eligible'),
+        ]);
+        if (profileData) {
           setProfile({
-            name: data.name || '',
-            email: data.email || user.email || '',
-            phone: data.phone || '',
-            is_verified: !!data.is_verified,
+            name: profileData.name || '',
+            email: profileData.email || user.email || '',
+            phone: profileData.phone || '',
+            is_verified: !!profileData.is_verified,
           });
         }
+        setReferralDiscount(!!eligible);
       } catch (error) {
         console.error('Error fetching profile:', error);
       } finally {
@@ -67,6 +72,8 @@ const Checkout = () => {
     ? Math.ceil((new Date(end).getTime() - new Date(pickup).getTime()) / (1000 * 60 * 60 * 24))
     : 1;
   const rentalSubtotal = days * dailyPrice;
+  const effectivePlatformFee = referralDiscount ? 0 : PLATFORM_FEE_MAD;
+  const upfrontTotal = effectivePlatformFee + CONFIRMATION_FEE_MAD;
 
   const handlePay = async () => {
     if (!user || !bikeId || !pickup || !end) {
@@ -115,7 +122,7 @@ const Checkout = () => {
         {
           body: {
             purpose: 'booking_payment',
-            amount: UPFRONT_TOTAL_MAD,
+            amount: upfrontTotal,
             currency: 'MAD',
             related_booking_id: bookingId,
             customer_email: profile.email,
@@ -151,7 +158,7 @@ const Checkout = () => {
         token: tokenResp.token_id,
         pubKey: tokenResp.public_key,
         pid: tokenResp.payment_id,
-        amount: String(UPFRONT_TOTAL_MAD),
+        amount: String(upfrontTotal),
         currency: 'MAD',
         sandbox: tokenResp.is_sandbox ? '1' : '0',
         success: successPath,
@@ -196,13 +203,26 @@ const Checkout = () => {
                 <div className="rounded-lg border border-border p-4 space-y-3 bg-muted/30">
                   <div className="flex justify-between items-baseline">
                     <span className="text-sm text-muted-foreground">Amount due now</span>
-                    <span className="text-3xl font-bold text-foreground">{UPFRONT_TOTAL_MAD} MAD</span>
+                    <span className="text-3xl font-bold text-foreground">{upfrontTotal} MAD</span>
                   </div>
                   <div className="text-xs text-muted-foreground space-y-1">
                     <div className="flex justify-between">
                       <span>Platform fee</span>
-                      <span>{PLATFORM_FEE_MAD} MAD</span>
+                      {referralDiscount ? (
+                        <span>
+                          <span className="line-through text-muted-foreground/70 mr-1">{PLATFORM_FEE_MAD} MAD</span>
+                          <span className="font-semibold text-primary">0 MAD</span>
+                        </span>
+                      ) : (
+                        <span>{PLATFORM_FEE_MAD} MAD</span>
+                      )}
                     </div>
+                    {referralDiscount && (
+                      <div className="flex justify-between text-primary">
+                        <span>Referral discount: first Motonita booking fee free</span>
+                        <span>−{PLATFORM_FEE_MAD} MAD</span>
+                      </div>
+                    )}
                     <div className="flex justify-between">
                       <span>Confirmation fee</span>
                       <span>{CONFIRMATION_FEE_MAD} MAD</span>
@@ -237,13 +257,14 @@ const Checkout = () => {
                       Redirecting to payment…
                     </>
                   ) : (
-                    <>Pay {UPFRONT_TOTAL_MAD} MAD with card</>
+                    <>Pay {upfrontTotal} MAD with card</>
                   )}
                 </Button>
 
                 <p className="text-xs text-muted-foreground text-center">
-                  The {PLATFORM_FEE_MAD} MAD platform fee is non-refundable. The {CONFIRMATION_FEE_MAD} MAD
-                  confirmation fee is refunded as Motonita Credit if no alternative bike is available.
+                  {referralDiscount
+                    ? `Your first Motonita booking fee is free thanks to your referral. The ${CONFIRMATION_FEE_MAD} MAD confirmation fee is refunded as Motonita Credit if no alternative bike is available.`
+                    : `The ${PLATFORM_FEE_MAD} MAD platform fee is non-refundable. The ${CONFIRMATION_FEE_MAD} MAD confirmation fee is refunded as Motonita Credit if no alternative bike is available.`}
                 </p>
               </CardContent>
             </Card>
@@ -301,7 +322,7 @@ const Checkout = () => {
                     <Separator />
                     <div className="flex justify-between text-base font-bold pt-2">
                       <span className="text-foreground">Pay now</span>
-                      <span className="text-primary">{UPFRONT_TOTAL_MAD} DH</span>
+                      <span className="text-primary">{upfrontTotal} DH</span>
                     </div>
                   </div>
                 </div>
