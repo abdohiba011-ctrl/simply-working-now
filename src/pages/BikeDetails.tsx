@@ -773,11 +773,12 @@ const BikeDetails = () => {
           {/* Breadcrumb */}
           <nav aria-label="Breadcrumb" className="mb-6 flex items-center gap-2 text-sm">
             <button
-              onClick={() => navigate(-1)}
-              className="inline-flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
-              aria-label="Back"
+              onClick={() => navigate('/listings')}
+              className="inline-flex items-center gap-1.5 h-10 px-3 rounded-full bg-muted text-foreground border border-border hover:bg-primary hover:text-primary-foreground hover:border-primary shadow-sm transition-all font-medium"
+              aria-label="Back to bikes list"
             >
-              <ChevronLeft className="h-4 w-4" />
+              <ChevronLeft className="h-5 w-5" />
+              <span className="hidden sm:inline text-sm">Back</span>
             </button>
             <ol className="flex items-center gap-1.5 text-muted-foreground flex-wrap">
               <li><Link to="/" className="hover:text-foreground">Home</Link></li>
