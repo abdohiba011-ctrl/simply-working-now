@@ -85,7 +85,7 @@ const Inbox = () => {
         agencyIds.length
           ? supabase
               .from("booking_counterparty_profiles")
-              .select("user_id, business_name, full_name, name, avatar_url")
+              .select("user_id, business_name, full_name, name, avatar_url, business_logo_url")
               .in("user_id", agencyIds)
           : Promise.resolve({ data: [] as any[] }),
       ]);
@@ -94,7 +94,7 @@ const Inbox = () => {
       ((agencies as any).data || []).forEach((a: any) => {
         agencyMap.set(a.user_id, {
           name: a.business_name || a.full_name || a.name || "Agency",
-          avatar: a.avatar_url || null,
+          avatar: a.business_logo_url || a.avatar_url || null,
         });
       });
 
