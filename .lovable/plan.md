@@ -1,58 +1,30 @@
 ## Goal
-Polish the renter Messages page (`/inbox`) so it feels like a focused, modern messaging app — no global site header, clear hierarchy, generous spacing, soft rounded surfaces, and a clean (invisible) scroll experience.
+Stop the homepage from showing skeleton/fade placeholders every time. Images should load immediately, then rely on the browser's HTTP cache so returning users see them instantly without any lazy/skeleton flash.
 
-## Scope
-Renter side only:
-- `src/pages/Inbox.tsx`
-- `src/components/chat/ChatThread.tsx` (cosmetic refinements only)
-- `src/index.css` (add a small `.scrollbar-hide` utility class — keeps content scrollable but hides the scrollbar in WebKit/Firefox)
-
-Agency Messages, BookingChat (legacy), and other pages are untouched.
+## Root cause
+`src/components/ui/responsive-image.tsx` uses an `IntersectionObserver` + `bg-muted animate-pulse` skeleton + opacity fade-in for every non-priority image. Even cached images briefly render a placeholder. Several homepage `<img>` tags also set `loading="lazy"`, so the browser delays them until scroll.
 
 ## Changes
 
-### 1. `src/pages/Inbox.tsx` — replace site header with focused chat shell
-- Remove `<Header />`.
-- Add a slim top bar inside the page:
-  - Left: round back button (`ChevronLeft` in a soft circle) → `navigate(-1)` (fallback `/`).
-  - Center / left next to it: page title "Messages" (smaller, only shown when no conversation selected on mobile; on desktop always present in the list pane header).
-  - Right: small Motonita logo wordmark (using `motonita-logo.svg`) acting as a quiet brand mark / home link.
-- Outer layout becomes `min-h-[100dvh]` with a generous max-width container (`max-w-6xl`), `rounded-2xl` card on desktop with `shadow-sm border border-border/60`, and a soft page background (`bg-muted/30`).
-- Conversation list:
-  - Increase row padding (`px-4 py-3.5`), increase avatar to `h-11 w-11`, use a soft `rounded-xl` hover/active pill instead of full-width borders. Replace per-row borders with thin `divide-y divide-border/40` so rows feel like one continuous surface.
-  - Active row: `bg-primary/10 ring-1 ring-primary/20 rounded-xl` (uses brand lime token).
-  - Unread badge: keep brand lime, slightly larger (`h-5 min-w-5`), `font-semibold`.
-  - List header: "Messages" `text-xl font-semibold`, subtle subtitle ("Your booking conversations"), thin bottom border.
-  - Apply `scrollbar-hide` to list scroll area.
-- Empty state: bigger icon, friendlier copy, lime-tinted background circle behind the icon.
-- Right pane (no conversation selected): centered illustration block with same circle + helpful hint.
+### 1. `src/components/ui/responsive-image.tsx` — load eagerly, no skeleton, no observer
+- Remove the `IntersectionObserver` and the `isInView` skeleton branch — always render the `<img>` immediately.
+- Remove the opacity fade transition entirely (no `opacity-0` / `transition-opacity`).
+- Default `loading` to `"eager"` (still allow `priority` to set `fetchPriority="high"`).
+- Keep the `srcSet` / `sizes` / `fallback` / error-handling logic untouched.
 
-### 2. `src/components/chat/ChatThread.tsx` — light cosmetic pass
-- Header: increase padding to `px-4 py-3.5`, `bg-card/95 backdrop-blur`, name `text-base font-semibold`.
-- Messages scroll container:
-  - Background: `bg-[hsl(var(--muted)/0.4)]` for a calmer surface.
-  - Add `scrollbar-hide` class so the scrollbar disappears (still scrollable via wheel/touch).
-  - Increase vertical gap between messages (`gap-1.5`) and add more breathing room around day separators.
-- Bubbles: bump radius to `rounded-2xl` (already used) but soften shadows (`shadow-none`) and tighten the "tail" corner (`rounded-br-md` / `rounded-bl-md`) so corners look more uniformly rounded.
-- Composer area: `rounded-2xl` input wrapper with `border border-border/70`, `bg-card`, subtle shadow; send button becomes a circular `rounded-full` brand-colored button.
-- Back button on mobile: round soft button matching Inbox header style.
+Result: the browser fetches images on first visit (and caches them via standard HTTP cache headers); on subsequent visits or in-session navigations they appear instantly with no placeholder.
 
-### 3. `src/index.css` — add scrollbar-hide utility
-Append a small layer:
-```css
-@layer utilities {
-  .scrollbar-hide { scrollbar-width: none; -ms-overflow-style: none; }
-  .scrollbar-hide::-webkit-scrollbar { display: none; }
-}
-```
+### 2. Homepage `<img>` tags — drop explicit `loading="lazy"`
+Remove `loading="lazy"` from these (let browser default = eager):
+- `src/components/HeroSection.tsx` (line 238 — keep `eager` for the first slide, drop the `lazy` for the rest)
+- `src/components/TestimonialsSection.tsx` (line 68 — testimonial avatars)
 
-## Out of scope
-- Agency Messages page, real-time logic, data shape, i18n strings.
-- No business-logic or routing changes beyond removing `<Header />` on `/inbox`.
+### Out of scope
+- Chat thread image attachments (`ChatThread.tsx`, `BookingChat.tsx`) — these aren't on the homepage and lazy is appropriate there.
+- Admin fleet thumbnails (`AdminFleetTab.tsx`) — admin-only.
+- Route-level `React.lazy()` code-splitting in `App.tsx` — that's JS bundle splitting (not image lazy-loading) and is unrelated to the user's complaint about visual flashes.
 
 ## Verification
-- Visit `/inbox` → no global Motonita top header; new slim back/logo bar.
-- Conversation list scrolls without a visible scrollbar.
-- Message thread scrolls without a visible scrollbar.
-- Spacing, rounding, and brand-lime accents read as polished and consistent.
-- Mobile (375px): list takes full width; opening a conversation hides the list and shows a back arrow inside the chat header.
+- First visit to `/`: hero, top cities, testimonials, value props all render together without skeleton pulses or fade-ins.
+- Reload the page: same images appear instantly from cache, no flash.
+- Mobile viewport: same behavior, no scroll-triggered loading.
