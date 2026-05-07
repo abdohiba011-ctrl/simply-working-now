@@ -43,11 +43,12 @@ export const Sidebar = ({ collapsed, onToggle, hideCollapseToggle }: SidebarProp
   const location = useLocation();
   const user = useAuthStore((s) => s.user);
   const agency = useAgencyStore();
-  const unread = useAgencyStore((s) => s.unreadMessages);
+  const { pendingBookings, unreadMessages } = useAgencyBadges();
   const [logoutOpen, setLogoutOpen] = useState(false);
 
   const itemBadge = (label: string): number | undefined => {
-    if (label === "Messages") return unread;
+    if (label === "Messages") return unreadMessages;
+    if (label === "Bookings") return pendingBookings;
     return undefined;
   };
 
