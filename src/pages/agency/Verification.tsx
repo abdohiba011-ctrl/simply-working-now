@@ -440,7 +440,7 @@ const Verification = () => {
   const SectionTitle = ({ num, title, hint }: { num: string; title: string; hint?: string }) => (
     <div className="mb-4">
       <div className="flex items-center gap-2">
-        <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary/10 px-1.5 text-[10px] font-semibold text-primary">
+        <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-slate-100 px-1.5 text-[10px] font-semibold text-slate-700">】
           {num}
         </span>
         <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
