@@ -39,6 +39,7 @@ export interface ChatThreadProps {
   counterpartyName: string;
   counterpartySubtitle?: string;
   onBack?: () => void;
+  onRead?: () => void;
   className?: string;
 }
 
