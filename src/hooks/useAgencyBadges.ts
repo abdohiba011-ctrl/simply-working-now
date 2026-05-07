@@ -66,8 +66,11 @@ export const useAgencyBadges = (): AgencyBadgeCounts & { refresh: () => void } =
       () => refreshRef.current?.()
     );
     ch.subscribe();
+    const onManualRefresh = () => refreshRef.current?.();
+    window.addEventListener("agency:badges:refresh", onManualRefresh);
     return () => {
       supabase.removeChannel(ch);
+      window.removeEventListener("agency:badges:refresh", onManualRefresh);
     };
   }, [user]);
 

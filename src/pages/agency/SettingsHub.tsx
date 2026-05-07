@@ -4,13 +4,11 @@ import { SegmentedTabs } from "@/components/agency/SegmentedTabs";
 
 const Preferences = lazy(() => import("./Preferences"));
 const NotificationSettings = lazy(() => import("./NotificationSettings"));
-const Integrations = lazy(() => import("./Integrations"));
 const Help = lazy(() => import("./Help"));
 
 const TABS = [
   { key: "preferences", label: "Preferences" },
   { key: "notifications", label: "Notifications" },
-  { key: "integrations", label: "Integrations" },
   { key: "help", label: "Help & Support" },
 ];
 
@@ -38,7 +36,6 @@ const SettingsHub = () => {
       <Suspense fallback={<div className="py-10 text-center text-sm text-muted-foreground">Loading…</div>}>
         {tab === "preferences" && <Preferences />}
         {tab === "notifications" && <NotificationSettings />}
-        {tab === "integrations" && <Integrations />}
         {tab === "help" && <Help />}
       </Suspense>
     </div>

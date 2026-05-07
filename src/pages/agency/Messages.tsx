@@ -142,29 +142,28 @@ const Messages = () => {
 
   return (
     <AgencyLayout>
-      {/* Negate AgencyShell main padding for a full-bleed chat experience */}
-      <div className="-mx-4 -mt-2 -mb-24 h-[calc(100dvh-4.5rem)] lg:-mx-6 lg:-mb-8 lg:h-[calc(100dvh-4.5rem)]">
-        <div className="flex h-full overflow-hidden bg-background">
+      <div className="-mx-4 -mt-2 -mb-24 h-[calc(100dvh-4.5rem)] px-2 pb-3 sm:px-3 lg:-mx-6 lg:-mb-8 lg:h-[calc(100dvh-4.5rem)] lg:px-4 lg:pb-4">
+        <div className="flex h-full overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
           {showList && (
             <aside
               className={cn(
-                "flex flex-col border-r border-border bg-card",
-                isMobile ? "w-full" : "w-[340px] shrink-0 lg:w-[360px]"
+                "flex flex-col border-border bg-card",
+                isMobile ? "w-full" : "w-[340px] shrink-0 border-r lg:w-[360px]"
               )}
             >
-              <div className="space-y-2 border-b border-border px-4 py-3">
-                <h1 className="text-lg font-bold tracking-tight text-foreground">Messages</h1>
+              <div className="space-y-2.5 border-b border-border px-4 py-4">
+                <h1 className="text-lg font-semibold tracking-tight text-foreground">Messages</h1>
                 <div className="relative">
-                  <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                  <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     placeholder="Search renter or message…"
-                    className="h-9 pl-8 text-sm"
+                    className="h-9 rounded-full bg-muted/50 pl-9 text-sm focus-visible:bg-background"
                   />
                 </div>
               </div>
-              <div className="flex-1 overflow-y-auto">
+              <div className="flex-1 overflow-y-auto p-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 {loading ? (
                   <div className="flex items-center justify-center py-10 text-sm text-muted-foreground">
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading…
@@ -182,7 +181,8 @@ const Messages = () => {
                     </p>
                   </div>
                 ) : (
-                  filtered.map((c) => {
+                  <div className="flex flex-col gap-1">
+                  {filtered.map((c) => {
                     const name = c.customer_name || c.customer_email || "Renter";
                     const isActive = activeId === c.id;
                     return (
@@ -190,7 +190,7 @@ const Messages = () => {
                         key={c.id}
                         onClick={() => setActiveId(c.id)}
                         className={cn(
-                          "flex w-full items-start gap-3 border-b border-border px-3 py-3 text-left transition-colors hover:bg-muted/60",
+                          "flex w-full items-start gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-muted/60",
                           isActive && "bg-muted"
                         )}
                       >
@@ -234,13 +234,14 @@ const Messages = () => {
                         </div>
                       </button>
                     );
-                  })
+                  })}
+                  </div>
                 )}
               </div>
             </aside>
           )}
           {showChat && (
-            <section className="flex-1 min-w-0">
+            <section className="flex-1 min-w-0 [&_*]:[scrollbar-width:none] [&_*::-webkit-scrollbar]:hidden">
               {active ? (
                 <ChatThread
                   bookingId={active.id}
@@ -255,7 +256,7 @@ const Messages = () => {
                   }}
                 />
               ) : (
-                <div className="flex h-full items-center justify-center bg-[#FAFAFA] p-8">
+                <div className="flex h-full items-center justify-center bg-muted/20 p-8">
                   <div className="text-center">
                     <MessageCircle className="mx-auto mb-3 h-10 w-10 text-muted-foreground/60" />
                     <p className="text-sm font-medium text-foreground">Select a conversation</p>

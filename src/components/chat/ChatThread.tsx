@@ -166,7 +166,14 @@ export const ChatThread = ({
         .from("booking_messages")
         .update({ read_at: new Date().toISOString() })
         .in("id", ids);
-      if (!error) onRead?.();
+      if (!error) {
+        onRead?.();
+        try {
+          window.dispatchEvent(new Event("agency:badges:refresh"));
+        } catch {
+          /* ignore */
+        }
+      }
     })();
   }, [messages, user, onRead]);
 
