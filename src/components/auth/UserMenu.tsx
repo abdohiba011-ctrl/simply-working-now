@@ -37,9 +37,10 @@ function useT() {
 
 interface Props {
   align?: "start" | "center" | "end";
+  avatarUrl?: string | null;
 }
 
-export function UserMenu({ align = "end" }: Props) {
+export function UserMenu({ align = "end", avatarUrl }: Props) {
   const t = useT();
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
@@ -96,12 +97,20 @@ export function UserMenu({ align = "end" }: Props) {
             aria-label="User menu"
             data-admin={user.isAdmin ? "true" : "false"}
           >
-            <span
-              className="flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold"
-              style={{ backgroundColor: "rgba(159,232,112,0.4)", color: "#163300" }}
-            >
-              {initials}
-            </span>
+            {avatarUrl ? (
+              <img
+                src={avatarUrl}
+                alt={user.name || "Avatar"}
+                className="h-9 w-9 rounded-full object-cover"
+              />
+            ) : (
+              <span
+                className="flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold"
+                style={{ backgroundColor: "rgba(159,232,112,0.4)", color: "#163300" }}
+              >
+                {initials}
+              </span>
+            )}
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align={align} className="w-64">
