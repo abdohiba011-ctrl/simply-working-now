@@ -763,7 +763,7 @@ const CheckoutDraft = () => {
                 </div>
 
                 {cashplusActive && (
-                  <div className="rounded-lg border-2 border-[#9FE870] bg-[#9FE870]/10 p-4 space-y-3">
+                  <div className="rounded-lg border-2 border-[#9FE870] bg-[#9FE870]/10 p-4 space-y-3 max-w-full overflow-hidden min-w-0">
                     <div className="flex items-center gap-2">
                       <Banknote className="h-5 w-5 text-[#163300]" />
                       <h4 className="font-semibold text-foreground">Pay with Cash Plus</h4>
