@@ -352,7 +352,7 @@ const Verification = () => {
           "relative rounded-lg border p-3.5 transition-colors",
           done
             ? "border-success/40 bg-success/5"
-            : "border-dashed border-input bg-muted/30 hover:bg-muted/50 hover:border-primary/50",
+            : "border-dashed border-input bg-muted/30 hover:bg-muted/50 hover:border-slate-400",
           locked && "opacity-90",
         )}
       >
@@ -360,7 +360,7 @@ const Verification = () => {
           <div
             className={cn(
               "rounded-md p-1.5 shrink-0",
-              done ? "bg-success/15 text-success" : "bg-primary/10 text-primary",
+              done ? "bg-success/15 text-success" : "bg-slate-100 text-slate-700",
             )}
           >
             {done ? <FileCheck2 className="h-3.5 w-3.5" /> : icon}
@@ -440,7 +440,7 @@ const Verification = () => {
   const SectionTitle = ({ num, title, hint }: { num: string; title: string; hint?: string }) => (
     <div className="mb-4">
       <div className="flex items-center gap-2">
-        <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary/10 px-1.5 text-[10px] font-semibold text-primary">
+        <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-slate-100 px-1.5 text-[10px] font-semibold text-slate-700">
           {num}
         </span>
         <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -457,7 +457,7 @@ const Verification = () => {
       <Card className="p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="rounded-lg bg-primary/10 p-2 text-primary">
+            <div className="rounded-lg bg-slate-100 p-2 text-slate-700">
               <ShieldCheck className="h-5 w-5" />
             </div>
             <div>
@@ -541,7 +541,7 @@ const Verification = () => {
                     >
                       <Building2 className="h-4 w-4" />
                       Company
-                      {entityType === "company" && <CheckCircle2 className="h-3.5 w-3.5 text-primary" />}
+                      {entityType === "company" && <CheckCircle2 className="h-3.5 w-3.5 text-slate-900" />}
                     </button>
                     <button
                       type="button"
@@ -557,7 +557,7 @@ const Verification = () => {
                     >
                       <UserIcon className="h-4 w-4" />
                       Auto-entrepreneur
-                      {entityType === "auto_entrepreneur" && <CheckCircle2 className="h-3.5 w-3.5 text-primary" />}
+                      {entityType === "auto_entrepreneur" && <CheckCircle2 className="h-3.5 w-3.5 text-slate-900" />}
                     </button>
                   </div>
                 </div>
