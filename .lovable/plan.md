@@ -1,94 +1,88 @@
-# Filter Sheet Redesign — Listings (all devices)
+# Redesign Filter Panel — RentCity (`/rent/:city`)
 
-Scope: the **bottom-sheet filter UI** in `src/pages/Listings.tsx` (the `<SheetContent>` block, ~lines 319–414). One sheet covers mobile / tablet / desktop, so a single redesign solves all viewports.
+## Context (important — different file from before)
 
-## Problems today
+My previous redesigns targeted `src/pages/Listings.tsx` (the `/listings` page), but the filter the user is actually seeing is on `/rent/casablanca`, owned by **`src/pages/RentCity.tsx`** (lines 447–639 — the `filterPanel` JSX, plus the trigger Sheet at lines 716–734). That panel has 7 sections (Neighborhood, Rental duration, Price range, Bike type, Engine/Fuel, License, Features) inside an `Accordion`, with a sticky footer that splits Clear all / count / Apply across two rows.
 
-1. The sheet body still shows a visible scrollbar while scrolling.
-2. All sections look the same — no visual separation between Where / When / Sort, hard to scan.
-3. Tap targets are small (px-4 py-2 pills, py-3 sort rows).
-4. Footer is a 2-column grid with Clear/Apply, and the active count badge sits up in the trigger button — disconnected.
-5. "Clear all" is abrupt — no smooth transition.
+I confirmed this by opening the preview at `/listings`, clicking Filters, getting redirected to `/rent/casablanca`, and seeing the screenshot match `RentCity.filterPanel`.
 
-## What we'll build
+## Problems to fix
 
-### 1. Hidden scroll, fully
+1. **Visible scrollbar** — `[scrollbar-width:thin]` on the scroll container shows the bar; user wants it hidden.
+2. **No visual separation** between sections — all accordion items look identical and visually flat.
+3. **Targets too small** — pills (`px-3 py-1.5 text-xs`) and radio rows are cramped.
+4. **Footer wastes a row** — Clear all + count are on one line, Apply button on a second line. User wants them all on one line.
+5. **Clear all is abrupt** — no animation/feedback.
+6. **Mobile sheet uses `side="left"` and width 320px** — feels like a desktop sidebar, not a mobile-native bottom sheet.
 
-- Scroll container gets `scrollbar-hide overscroll-contain [&::-webkit-scrollbar]:hidden` plus `scrollbar-width: none` via the existing global utility.
-- Add `mask-image: linear-gradient(...)` top + bottom fade so content gracefully fades behind sticky header/footer instead of showing a hard cut.
-- Verify no inner element re-introduces overflow.
+## Plan
 
-### 2. Color-coded section cards (clear visual separation)
+### A. New file: `src/components/rent-city/FiltersPanel.tsx`
 
-Each filter group becomes a self-contained card with a tinted background, colored icon chip, and section title. Tints stay subtle so they read as separators, not decoration.
+Extract the panel from `RentCity.tsx` (it's ~190 lines inline) into a reusable component that takes all state + setters as props. Same logic, redesigned UI.
+
+### B. Color-coded section cards (replace flat accordion)
+
+Each filter section becomes a self-contained tinted card with an icon chip and title. Sections stay collapsible but the trigger sits inside the card.
+
+| Section          | Tone            | Icon            |
+|------------------|-----------------|-----------------|
+| Neighborhood     | primary (lime)  | `MapPin`        |
+| Rental duration  | sky             | `Clock`         |
+| Price range      | amber           | `Banknote`      |
+| Bike type        | violet          | `Bike`          |
+| Engine / Fuel    | rose            | `Fuel`          |
+| License          | indigo          | `IdCard`        |
+| Features         | teal            | `Sparkles`      |
+
+Card tokens: `rounded-2xl p-4 ring-1 ring-inset bg-{hue}/[0.06] ring-{hue}/20`. Icon chip: `h-9 w-9 rounded-xl bg-{hue}/15 text-{hue-fg}`. Title: `text-[15px] font-semibold`.
+
+Each card replaces an `AccordionItem`; expand/collapse uses Radix Collapsible (or keep Accordion but hide the underline border — the card edges become the separators).
+
+### C. Bigger, easier targets
+
+- Duration pills: `h-10 px-4 text-sm rounded-full gap-2` (up from `py-1.5 text-xs`).
+- Bike type / License / Features rows: convert from `Checkbox + Label` text rows into **chip toggles** (`h-10 px-4 rounded-full border`) with icon when relevant. Selected: `bg-foreground text-background border-foreground shadow-sm`.
+- Neighborhood radio list: keep list layout (it's long), but each row becomes `h-11 px-3 rounded-xl hover:bg-muted/60` with the count badge as a soft pill on the right.
+- Engine/Fuel: 3-up segmented control (`grid grid-cols-3 gap-2`, each option a `h-11 rounded-xl border` with icon).
+
+### D. Hidden scroll + edge fade
+
+- Scroll container: `overflow-y-auto overscroll-contain scrollbar-hide [&::-webkit-scrollbar]:hidden` (drop `[scrollbar-width:thin]`).
+- Add `mask-image: linear-gradient(to bottom, transparent 0, black 16px, black calc(100% - 16px), transparent 100%)` so content fades behind sticky header/footer.
+
+### E. Single-row sticky action bar
+
+Replace the 2-row footer with one row:
 
 ```text
-┌─────────────────────────────────┐
-│ 🟢  Where                       │  bg-primary/8        ring-primary/15
-│   [Anfa] [Maârif] [Gauthier]…   │
-└─────────────────────────────────┘
-┌─────────────────────────────────┐
-│ 🔵  When                        │  bg-sky-500/8        ring-sky-500/15
-│   [date picker]                 │
-└─────────────────────────────────┘
-┌─────────────────────────────────┐
-│ 🟣  Sort by                     │  bg-violet-500/8     ring-violet-500/15
-│   ◉ Recommended       ✓        │
-│   ○ Price: low → high           │
-└─────────────────────────────────┘
+[ 3 active ]   Clear all                      Apply 3 filters →
 ```
 
-Card tokens:
-- `rounded-2xl p-5 ring-1 ring-inset` with the hue ring above.
-- Icon chip: `h-9 w-9 rounded-xl flex items-center justify-center` matching hue at /15.
-- Section title: `text-[15px] font-semibold` next to the chip, with a muted helper line under it ("Choose neighborhood", "Pick rental dates", "How to order results").
+- Layout: `flex items-center gap-3 border-t border-border bg-background/95 backdrop-blur px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]`.
+- Left: count pill `h-8 px-3 rounded-full bg-muted text-foreground text-xs font-semibold` — only when count > 0.
+- Middle: ghost "Clear all" — only when count > 0; `active:scale-95 transition-transform` for smooth feedback.
+- Right: primary CTA `ml-auto h-12 rounded-full px-6 font-semibold` showing `Apply N filters` (or `Show {filtered.length} bikes` when count = 0). Includes `ArrowRight` icon.
 
-### 3. Bigger, easier targets
+### F. Smooth Clear all
 
-- Location pills: `h-11 px-5 text-[15px] rounded-full gap-2.5`, hover lift `hover:-translate-y-px hover:shadow-sm`. Selected: `bg-foreground text-background shadow-sm`.
-- Sort options: full-width rows `h-14 rounded-2xl px-5` with a left radio dot, label, and right `Check` icon when active. Active row: `bg-primary/10 border-primary ring-1 ring-primary/30`.
-- Date picker stays embedded but inside a clean white card (no nested border noise).
+- Wrap the panel body in a `key={resetKey}` div; `clearAll()` bumps `resetKey` → `animate-fade-in` re-runs.
+- Toast: `toast.success("Filters cleared")`.
 
-### 4. Single-row sticky action bar
+### G. Mobile sheet polish
 
-Replace the 2-column footer with a 3-zone bar so count + clear + apply share one line:
-
-```text
-[ 3 active ]   Clear all                    Show 24 results  →
-```
-
-- Layout: `flex items-center gap-3 justify-between border-t border-border bg-background/95 backdrop-blur px-5 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]`.
-- **Left**: count pill `h-8 px-3 rounded-full bg-muted text-foreground text-xs font-semibold` — only when count > 0, with `transition-all`.
-- **Middle**: ghost "Clear all" — `text-muted-foreground hover:text-foreground` — only when count > 0.
-- **Right**: primary CTA "Show {N} results" — `flex-1 max-w-[55%] h-12 rounded-full font-semibold` with arrow icon. Always present.
-- Remove the count badge from the trigger button (it now lives in the bar).
-
-### 5. Smooth Clear all
-
-- Reset wrapped in a tiny stagger: bump a `resetKey` state on the scroll container so children fade-in (`animate-fade-in`) on reset.
-- Toast confirmation `t("listings.cleared") || "Filters cleared"`.
-- Clear button itself: `transition-opacity` + `active:scale-95`.
-
-### 6. Header polish
-
-- Title `text-lg font-semibold` (lighter than current `text-xl font-bold`).
-- Add a top grab handle on mobile only: `h-1.5 w-12 rounded-full bg-muted-foreground/30 mx-auto mt-2`.
-- Close button stays top-right.
-
-### 7. Component split (architecture)
-
-`Listings.tsx` is already long. Extract the sheet into:
-- `src/components/listings/FilterSheet.tsx` — owns the `<Sheet>`, sections, and action bar; receives state + setters via props.
-
-`Listings.tsx` keeps the trigger button (without the count badge) and renders `<FilterSheet ... />`.
+In `RentCity.tsx` at the trigger:
+- Change `side="left"` to **`side="bottom"`** with `h-[88dvh] rounded-t-[28px] p-0`.
+- Add a grab handle at the top, lighter title (`text-lg font-semibold`), close button as a rounded muted icon button.
+- Desktop sidebar usage of `filterPanel` (if present elsewhere on the page) keeps the same component but rendered inline — the visual treatment works in both contexts.
 
 ## Files to change
 
-- `src/pages/Listings.tsx` — replace lines 303–415 (Sheet block); drop the badge in the trigger.
-- `src/components/listings/FilterSheet.tsx` — new file containing the redesigned sheet.
+- **New**: `src/components/rent-city/FiltersPanel.tsx` — redesigned panel + section cards.
+- **Edited**: `src/pages/RentCity.tsx` — remove inline `filterPanel`, import `<FiltersPanel ... />`, update the mobile Sheet to `side="bottom"`, drop the old footer markup.
 
 ## Out of scope
 
-- Desktop top toolbar (already redone with chip-popovers in a previous turn).
-- Adding **Rental duration** or **Price range** as new filters — they were used as examples by the user but require schema/query work; happy to plan separately if wanted.
-- i18n strings: reuse existing keys (`home.where`, `home.when`, `listings.sortBy`, `listings.clearAll`, `listings.applyFilters`, `listings.filtersTitle`); add `listings.cleared` only if missing.
+- Changing what each filter does (the underlying filter logic is correct).
+- Backend / data shape.
+- Desktop sidebar layout if it exists elsewhere — visuals will improve automatically since the panel is shared.
