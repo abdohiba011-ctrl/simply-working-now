@@ -465,20 +465,24 @@ export default function RentCity() {
             <RadioGroup value={neighborhood} onValueChange={setNeighborhood} className="space-y-2">
               {neighborhoodOptions.map((n) => {
                 const isPopular = popularNeighborhoodSet.has(n);
+                const count = neighborhoodCounts[n] ?? 0;
                 return (
                   <div key={n} className="flex items-center gap-2">
                     <RadioGroupItem value={n} id={`n-${n}`} />
                     <Label
                       htmlFor={`n-${n}`}
-                      className="text-sm font-normal cursor-pointer flex items-center gap-1.5"
+                      className="text-sm font-normal cursor-pointer flex items-center gap-1.5 flex-1"
                     >
-                      {n}
+                      <span className={count === 0 ? "text-muted-foreground" : ""}>{n}</span>
                       {isPopular && (
                         <Star
                           className="h-3 w-3 fill-primary text-primary"
                           aria-label="Popular"
                         />
                       )}
+                      <span className="ml-auto text-xs text-muted-foreground tabular-nums">
+                        ({count})
+                      </span>
                     </Label>
                   </div>
                 );
