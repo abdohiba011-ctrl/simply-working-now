@@ -390,7 +390,7 @@ export const FiltersPanel = ({
 
       {/* Single-row sticky action bar */}
       <div
-        className="flex items-center gap-2 border-t border-border bg-background/95 backdrop-blur px-4 py-3 shrink-0"
+        className="@container flex items-center gap-2 border-t border-border bg-background/95 backdrop-blur px-4 py-3 shrink-0"
         style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom, 0px))" }}
       >
         <Button
