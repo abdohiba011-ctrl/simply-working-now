@@ -206,13 +206,42 @@ const Affiliate = () => {
 
   const handleCopy = async () => {
     if (!referralLink) return;
-    try {
-      await navigator.clipboard.writeText(referralLink);
+    const showSuccess = () => {
       setCopied(true);
       toast({ description: "Link copied to clipboard" });
       setTimeout(() => setCopied(false), 1800);
+    };
+    // Try modern clipboard API first (requires secure context + permission)
+    if (navigator.clipboard && window.isSecureContext) {
+      try {
+        await navigator.clipboard.writeText(referralLink);
+        showSuccess();
+        return;
+      } catch {
+        // fall through to legacy fallback (iframes/preview often block clipboard)
+      }
+    }
+    // Legacy fallback: hidden textarea + execCommand
+    try {
+      const ta = document.createElement("textarea");
+      ta.value = referralLink;
+      ta.setAttribute("readonly", "");
+      ta.style.position = "fixed";
+      ta.style.top = "0";
+      ta.style.left = "0";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      ta.setSelectionRange(0, referralLink.length);
+      const ok = document.execCommand("copy");
+      document.body.removeChild(ta);
+      if (ok) {
+        showSuccess();
+        return;
+      }
+      throw new Error("execCommand failed");
     } catch {
-      toast({ description: "Could not copy link", variant: "destructive" });
+      toast({ description: "Could not copy — long-press the link to copy manually", variant: "destructive" });
     }
   };
 
