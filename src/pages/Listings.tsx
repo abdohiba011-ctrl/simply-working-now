@@ -51,6 +51,7 @@ import { DateRange } from "react-day-picker";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { DesktopFilterBar } from "@/components/listings/DesktopFilterBar";
+import { FilterSheet } from "@/components/listings/FilterSheet";
 
 interface Neighborhood {
   id: string;
@@ -300,8 +301,17 @@ const Listings = () => {
               <span className="hidden sm:inline">{t("listings.backToHomepage")}</span>
             </Button>
 
-            <Sheet>
-              <SheetTrigger asChild>
+            <FilterSheet
+              t={t}
+              neighborhoods={neighborhoods}
+              selectedTab={selectedTab}
+              handleTabChange={handleTabChange}
+              dateRange={dateRange}
+              handleDateChange={handleDateChange}
+              sortBy={sortBy}
+              setSortBy={setSortBy}
+              resultCount={sortedGroups.length}
+              trigger={
                 <Button
                   variant="outline"
                   size="sm"
@@ -309,113 +319,9 @@ const Listings = () => {
                 >
                   <SlidersHorizontal className="h-4 w-4" />
                   <span>{t("listings.filtersTitle")}</span>
-                  {(selectedTab || dateRange) && (
-                    <Badge variant="secondary" className="h-4 w-4 p-0 flex items-center justify-center bg-primary text-primary-foreground border-0 text-[10px]">
-                      {[selectedTab, dateRange].filter(Boolean).length}
-                    </Badge>
-                  )}
                 </Button>
-              </SheetTrigger>
-              <SheetContent side="bottom" className="h-[85dvh] rounded-t-[24px] p-0 border-t-0 bg-background transition-transform duration-300 ease-in-out">
-                <div className="flex flex-col h-full">
-                  <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-                    <SheetTitle className="text-xl font-bold">{t("listings.filtersTitle")}</SheetTitle>
-                    <SheetClose className="rounded-full p-2 bg-muted/50 hover:bg-muted transition-colors">
-                      <X className="h-5 w-5" />
-                    </SheetClose>
-                  </div>
-                  
-                  <div className="flex-1 overflow-y-auto p-6 space-y-8 scrollbar-hide">
-                    {/* Location Section */}
-                    <div className="space-y-4">
-                      <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
-                        <MapPinIcon className="h-4 w-4" />
-                        {t("home.where")}
-                      </h3>
-                      <div className="flex flex-wrap gap-2">
-                        {neighborhoods.map((n) => (
-                          <button
-                            key={n.id}
-                            onClick={() => handleTabChange(n.id)}
-                            className={cn(
-                              "px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 border",
-                              selectedTab === n.id
-                                ? "bg-foreground text-background border-foreground"
-                                : "bg-background text-foreground border-border hover:border-foreground/40"
-                            )}
-                          >
-                            {n.name}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Date Section */}
-                    <div className="space-y-4 pt-4">
-                      <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
-                        <Calendar className="h-4 w-4" />
-                        {t("home.when")}
-                      </h3>
-                      <div className="bg-muted/30 p-1 rounded-2xl border border-border">
-                        <BookingDatePicker
-                          value={dateRange}
-                          onChange={handleDateChange}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Sort Section */}
-                    <div className="space-y-4 pt-4 pb-4">
-                      <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
-                        <SlidersHorizontal className="h-4 w-4" />
-                        {t("listings.sortBy")}
-                      </h3>
-                      <div className="grid grid-cols-1 gap-2">
-                        {[
-                          { value: "recommended", label: t("listings.sortRecommended") },
-                          { value: "price-asc", label: t("listings.sortPriceLow") },
-                          { value: "price-desc", label: t("listings.sortPriceHigh") },
-                          { value: "rating", label: t("listings.sortRating") },
-                        ].map((opt) => (
-                          <button
-                            key={opt.value}
-                            onClick={() => setSortBy(opt.value as SortOption)}
-                            className={cn(
-                              "flex items-center justify-between px-4 py-3 rounded-xl border text-sm font-medium transition-all",
-                              sortBy === opt.value
-                                ? "bg-primary/10 border-primary text-foreground"
-                                : "bg-background border-border text-muted-foreground"
-                            )}
-                          >
-                            {opt.label}
-                            {sortBy === opt.value && <div className="h-2 w-2 rounded-full bg-primary" />}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="p-6 border-t border-border bg-background grid grid-cols-2 gap-4">
-                    <Button 
-                      variant="outline" 
-                      className="rounded-full h-12 font-semibold"
-                      onClick={() => {
-                        setSelectedTab(neighborhoods[0]?.id || "");
-                        setDateRange(undefined);
-                        setSortBy("recommended");
-                      }}
-                    >
-                      {t("listings.clearAll") || "Reset"}
-                    </Button>
-                    <SheetClose asChild>
-                      <Button className="rounded-full h-12 font-semibold bg-primary text-primary-foreground hover:bg-primary/90">
-                        {t("listings.applyFilters") || "Show results"}
-                      </Button>
-                    </SheetClose>
-                  </div>
-                </div>
-              </SheetContent>
-            </Sheet>
+              }
+            />
           </div>
 
           {/* Desktop Filter Bar (lg and up) */}

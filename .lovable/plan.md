@@ -1,83 +1,94 @@
-# Desktop Filter Bar Redesign — Listings page
+# Filter Sheet Redesign — Listings (all devices)
 
-Scope: only the **desktop (lg+) filter bar** on `src/pages/Listings.tsx` (lines 410–468). Mobile/tablet bottom-sheet stays as-is.
+Scope: the **bottom-sheet filter UI** in `src/pages/Listings.tsx` (the `<SheetContent>` block, ~lines 319–414). One sheet covers mobile / tablet / desktop, so a single redesign solves all viewports.
 
-## Issues today
+## Problems today
 
-1. Location pill row scrolls horizontally and the **scrollbar is visible** while scrolling.
-2. Layout is flat: back button + title row, then pills row, then date+sort row — no clear hierarchy, weak hover states, inconsistent radii, no active-filter feedback, no clear-all.
+1. The sheet body still shows a visible scrollbar while scrolling.
+2. All sections look the same — no visual separation between Where / When / Sort, hard to scan.
+3. Tap targets are small (px-4 py-2 pills, py-3 sort rows).
+4. Footer is a 2-column grid with Clear/Apply, and the active count badge sits up in the trigger button — disconnected.
+5. "Clear all" is abrupt — no smooth transition.
 
-## What to build
+## What we'll build
 
-### 1. Hide horizontal scrollbar (functional fix)
+### 1. Hidden scroll, fully
 
-The `.scrollbar-hide` class is already applied on the pill row but the scrollbar still shows. Confirm the global utility exists in `src/index.css`; if not, add:
+- Scroll container gets `scrollbar-hide overscroll-contain [&::-webkit-scrollbar]:hidden` plus `scrollbar-width: none` via the existing global utility.
+- Add `mask-image: linear-gradient(...)` top + bottom fade so content gracefully fades behind sticky header/footer instead of showing a hard cut.
+- Verify no inner element re-introduces overflow.
 
-```css
-.scrollbar-hide::-webkit-scrollbar { display: none; }
-.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
-```
+### 2. Color-coded section cards (clear visual separation)
 
-Also add subtle **edge fade masks** (left/right gradient) so users sense more content off-screen, plus left/right chevron buttons that appear on hover and scroll the row by ~240px.
-
-### 2. Restructure the desktop bar into one cohesive card
-
-Replace the 3 stacked rows with a single elevated **toolbar card** inside the sticky container:
+Each filter group becomes a self-contained card with a tinted background, colored icon chip, and section title. Tints stay subtle so they read as separators, not decoration.
 
 ```text
-┌───────────────────────────────────────────────────────────────────────┐
-│  ← Back     [📍 Location ▼]  [📅 Dates ▼]  [⇅ Sort ▼]      3 active  │
-│             ─────────────────────────────────────────────  Clear all  │
-│  ‹  [Anfa] [Maârif] [Gauthier] [Aïn Diab] [Bourgogne] …          ›   │
-└───────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────┐
+│ 🟢  Where                       │  bg-primary/8        ring-primary/15
+│   [Anfa] [Maârif] [Gauthier]…   │
+└─────────────────────────────────┘
+┌─────────────────────────────────┐
+│ 🔵  When                        │  bg-sky-500/8        ring-sky-500/15
+│   [date picker]                 │
+└─────────────────────────────────┘
+┌─────────────────────────────────┐
+│ 🟣  Sort by                     │  bg-violet-500/8     ring-violet-500/15
+│   ◉ Recommended       ✓        │
+│   ○ Price: low → high           │
+└─────────────────────────────────┘
 ```
 
-- Wrapper: `rounded-2xl border border-border bg-card shadow-sm` with `p-2` inside the sticky band.
-- Top row = three **filter trigger chips** (Location / Dates / Sort), each shows the current value as a secondary label (e.g. "Location · Anfa"). Active chips get `bg-primary/10 border-primary text-foreground`, inactive get `bg-background hover:bg-muted hover:border-foreground/30`. All `rounded-full h-10`.
-- Right side: active-filter count badge + **Clear all** ghost link (only when ≥1 filter active).
-- Bottom row = the neighborhood pill rail (existing behavior), now with hidden scrollbar, edge fade, and hover chevrons.
+Card tokens:
+- `rounded-2xl p-5 ring-1 ring-inset` with the hue ring above.
+- Icon chip: `h-9 w-9 rounded-xl flex items-center justify-center` matching hue at /15.
+- Section title: `text-[15px] font-semibold` next to the chip, with a muted helper line under it ("Choose neighborhood", "Pick rental dates", "How to order results").
 
-### 3. Pill polish
+### 3. Bigger, easier targets
 
-- `rounded-full px-4 h-9` consistent.
-- Selected: `bg-foreground text-background` (keep) + subtle `shadow-sm`.
-- Unselected: `bg-muted/40 border-transparent hover:bg-muted hover:border-border` — softer than current border-on-default look.
-- Hover lifts with `transition-all` + `-translate-y-0.5` micro-interaction.
-- Add `aria-pressed` for a11y.
+- Location pills: `h-11 px-5 text-[15px] rounded-full gap-2.5`, hover lift `hover:-translate-y-px hover:shadow-sm`. Selected: `bg-foreground text-background shadow-sm`.
+- Sort options: full-width rows `h-14 rounded-2xl px-5` with a left radio dot, label, and right `Check` icon when active. Active row: `bg-primary/10 border-primary ring-1 ring-primary/30`.
+- Date picker stays embedded but inside a clean white card (no nested border noise).
 
-### 4. Date & Sort moved into popovers
+### 4. Single-row sticky action bar
 
-Instead of always-visible inputs, both open as `Popover` panels anchored to their chip:
+Replace the 2-column footer with a 3-zone bar so count + clear + apply share one line:
 
-- **Dates** popover: contains the existing `BookingDatePicker`, shows formatted range on the chip (`Mar 12 – Mar 16`), with a small "Clear" button inside.
-- **Sort** popover: list of 4 options as the same styled radio buttons used in the mobile sheet (consistency), with a check on the active one.
+```text
+[ 3 active ]   Clear all                    Show 24 results  →
+```
 
-Both popovers use shadcn `Popover` with `rounded-xl border-border shadow-lg p-3 w-[320px]`, animate-in fade+slide.
+- Layout: `flex items-center gap-3 justify-between border-t border-border bg-background/95 backdrop-blur px-5 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]`.
+- **Left**: count pill `h-8 px-3 rounded-full bg-muted text-foreground text-xs font-semibold` — only when count > 0, with `transition-all`.
+- **Middle**: ghost "Clear all" — `text-muted-foreground hover:text-foreground` — only when count > 0.
+- **Right**: primary CTA "Show {N} results" — `flex-1 max-w-[55%] h-12 rounded-full font-semibold` with arrow icon. Always present.
+- Remove the count badge from the trigger button (it now lives in the bar).
 
-### 5. Active-state summary + Clear all
+### 5. Smooth Clear all
 
-- Compute `activeCount = (selectedTab !== defaultTab) + !!dateRange + (sortBy !== 'recommended')`.
-- Show small `Badge` with count when > 0.
-- "Clear all" resets all three; uses `text-muted-foreground hover:text-foreground` ghost button.
+- Reset wrapped in a tiny stagger: bump a `resetKey` state on the scroll container so children fade-in (`animate-fade-in`) on reset.
+- Toast confirmation `t("listings.cleared") || "Filters cleared"`.
+- Clear button itself: `transition-opacity` + `active:scale-95`.
 
-### 6. RTL & i18n
+### 6. Header polish
 
-- All chevrons flip with `isRTL && rotate-180` (already pattern in file).
-- No hardcoded strings — reuse existing `t("listings.*")` keys; add `listings.clearAll`, `listings.location`, `listings.dates` if missing in `src/i18n/locales/{en,fr,ar}.json`.
+- Title `text-lg font-semibold` (lighter than current `text-xl font-bold`).
+- Add a top grab handle on mobile only: `h-1.5 w-12 rounded-full bg-muted-foreground/30 mx-auto mt-2`.
+- Close button stays top-right.
+
+### 7. Component split (architecture)
+
+`Listings.tsx` is already long. Extract the sheet into:
+- `src/components/listings/FilterSheet.tsx` — owns the `<Sheet>`, sections, and action bar; receives state + setters via props.
+
+`Listings.tsx` keeps the trigger button (without the count badge) and renders `<FilterSheet ... />`.
 
 ## Files to change
 
-- `src/pages/Listings.tsx` — replace lines 410–468 (desktop bar block) only.
-- `src/index.css` — add `.scrollbar-hide` utility if not already present.
-- `src/i18n/locales/en.json`, `fr.json`, `ar.json` — add any missing keys.
+- `src/pages/Listings.tsx` — replace lines 303–415 (Sheet block); drop the badge in the trigger.
+- `src/components/listings/FilterSheet.tsx` — new file containing the redesigned sheet.
 
 ## Out of scope
 
-- Mobile/tablet bottom sheet (already done last turn).
-- Grid/card layout below.
-- Backend / data filtering logic — purely presentational.  
-  
-  
-  
-NOT ONLY DESKTOP ALL DEVICES NEEDS TO HAVE SAME UI AND UX 
-- &nbsp;
+- Desktop top toolbar (already redone with chip-popovers in a previous turn).
+- Adding **Rental duration** or **Price range** as new filters — they were used as examples by the user but require schema/query work; happy to plan separately if wanted.
+- i18n strings: reuse existing keys (`home.where`, `home.when`, `listings.sortBy`, `listings.clearAll`, `listings.applyFilters`, `listings.filtersTitle`); add `listings.cleared` only if missing.
