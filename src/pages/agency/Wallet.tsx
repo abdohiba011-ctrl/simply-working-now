@@ -53,7 +53,7 @@ const Wallet = () => {
 
   const navigate = useNavigate();
   const handleTopup = async () => {
-    if (!amount || amount <= 0) return toast.error("Enter a valid amount");
+    if (!amount || amount < 10) return toast.error("Minimum top-up is 10 MAD");
     setProcessing(true);
     try {
       const { data, error } = await supabase.functions.invoke("youcanpay-create-token", {
