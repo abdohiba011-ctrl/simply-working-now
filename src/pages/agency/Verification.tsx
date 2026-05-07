@@ -541,7 +541,7 @@ const Verification = () => {
                     >
                       <Building2 className="h-4 w-4" />
                       Company
-                      {entityType === "company" && <CheckCircle2 className="h-3.5 w-3.5 text-primary" />}
+                      {entityType === "company" && <CheckCircle2 className="h-3.5 w-3.5 text-slate-900" />}
                     </button>
                     <button
                       type="button"
