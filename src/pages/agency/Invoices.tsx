@@ -20,7 +20,7 @@ const Invoices = () => {
           {loading ? (
             <div className="py-16 text-center text-sm text-muted-foreground">Loading…</div>
           ) : completed.length === 0 ? (
-            <EmptyState icon={Receipt} title="No invoices yet" description="Paid subscription invoices and top-up receipts will appear here." />
+            <EmptyState icon={Receipt} title="No invoices yet" description="Top-up receipts will appear here." />
           ) : (
             <Table>
               <TableHeader>

@@ -589,7 +589,7 @@ const Verification = () => {
                 <Label htmlFor="ice" className="text-sm font-semibold">ICE Number</Label>
                 <p className="mt-1 text-xs text-muted-foreground">
                   Your 15-digit ICE number from your Registre de Commerce. Required for invoicing
-                  your Motonita subscription and booking fees.
+                  your Motonita booking fees.
                 </p>
                 <div className="mt-3 max-w-xs">
                   <Input

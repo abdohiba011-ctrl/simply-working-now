@@ -9,7 +9,7 @@ const Integrations = () => {
         <EmptyState
           icon={Webhook}
           title="Integrations coming soon"
-          description="Connect Google Calendar, WhatsApp Business, accounting tools and more. Available soon based on your subscription."
+          description="Connect Google Calendar, WhatsApp Business, accounting tools and more. Coming soon."
         />
       </div>
     </AgencyLayout>

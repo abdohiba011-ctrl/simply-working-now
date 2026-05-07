@@ -266,7 +266,7 @@ const App = () => (
                   {/* Legacy direct routes (still navigable, redirect-friendly) */}
                   <Route path="wallet" element={<Navigate to="/agency/finance#wallet" replace />} />
                   <Route path="transactions" element={<Navigate to="/agency/finance#transactions" replace />} />
-                  <Route path="subscription" element={<Navigate to="/agency/finance#subscription" replace />} />
+                  <Route path="subscription" element={<Navigate to="/agency/finance" replace />} />
                   <Route path="invoices" element={<Navigate to="/agency/finance#invoices" replace />} />
                   <Route path="profile" element={<Navigate to="/agency/agency-center#profile" replace />} />
                   <Route path="team" element={<Navigate to="/agency/agency-center#team" replace />} />

@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { StatusChip } from "@/components/shared/StatusChip";
 import { EmptyState } from "@/components/shared/EmptyState";
 import {
-  useAgencyWallet, useAgencyBookingsWithBikes, useAgencySubscription,
+  useAgencyWallet, useAgencyBookingsWithBikes,
 } from "@/hooks/useAgencyData";
 import { cn } from "@/lib/utils";
 import { MotorbikeWizardDialog } from "@/components/agency/MotorbikeWizardDialog";
@@ -19,7 +19,6 @@ import { MotorbikeWizardDialog } from "@/components/agency/MotorbikeWizardDialog
 const Dashboard = () => {
   const navigate = useNavigate();
   const { wallet } = useAgencyWallet();
-  const { subscription } = useAgencySubscription();
   const { bookings, loading } = useAgencyBookingsWithBikes();
   const [addOpen, setAddOpen] = useState(false);
 
@@ -49,11 +48,6 @@ const Dashboard = () => {
               Your business at a glance
             </h1>
           </div>
-          {subscription && (
-            <div className="rounded-full border border-border bg-card px-3.5 py-1.5 text-sm capitalize">
-              Plan: <span className="font-semibold text-foreground">{subscription.plan}</span>
-            </div>
-          )}
         </section>
 
         <section className="grid grid-cols-2 gap-4 lg:grid-cols-4">
