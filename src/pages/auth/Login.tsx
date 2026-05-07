@@ -104,9 +104,10 @@ export default function Login({ context = "renter" }: LoginProps) {
   // being bounced to /admin/panel.
   useEffect(() => {
     if (isAuthenticated && user) {
-      const adminOnlyOnAgencyDoor =
-        context === "agency" && user.isAdmin && !user.roles.agency.active;
-      if (adminOnlyOnAgencyDoor) return;
+      // Agency auth pages are a "public door" reached from the /agencies
+      // marketing page. Never auto-redirect away from them — visitors expect
+      // to see the agency login form regardless of existing auth state.
+      if (context === "agency") return;
       navigateAfterAuth(navigate, user, context);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
