@@ -195,6 +195,7 @@ export default function RentCity() {
     [neighborhoodRows],
   );
 
+
   // Initial neighborhood from URL — accept any name; will be reset later
   // if it doesn't belong to this city (after neighborhoods load).
   const [neighborhood, setNeighborhood] = useState<string>(() => {
