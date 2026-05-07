@@ -359,7 +359,7 @@ export const ChatThread = ({
       {/* Messages */}
       <div
         ref={scrollRef}
-        className="flex-1 min-h-0 overflow-y-auto bg-[#FAFAFA] px-3 py-4 sm:px-6"
+        className="flex-1 min-h-0 overflow-y-auto bg-muted/30 px-3 py-4 sm:px-6"
       >
         {loading ? (
           <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
