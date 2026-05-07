@@ -336,6 +336,9 @@ export const ChatThread = ({
           </button>
         )}
         <Avatar className="h-9 w-9">
+          {counterpartyAvatarUrl ? (
+            <AvatarImage src={counterpartyAvatarUrl} alt={counterpartyName} />
+          ) : null}
           <AvatarFallback className="bg-primary/15 text-xs font-semibold text-foreground">
             {initials(counterpartyName)}
           </AvatarFallback>
@@ -418,6 +421,9 @@ export const ChatThread = ({
                     <div className="w-7 shrink-0">
                       {g.showAvatar && (
                         <Avatar className="h-7 w-7">
+                          {counterpartyAvatarUrl ? (
+                            <AvatarImage src={counterpartyAvatarUrl} alt={counterpartyName} />
+                          ) : null}
                           <AvatarFallback className="bg-primary/15 text-[10px] font-semibold text-foreground">
                             {initials(counterpartyName)}
                           </AvatarFallback>
