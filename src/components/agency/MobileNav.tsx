@@ -1,6 +1,7 @@
 import { NavLink } from "react-router-dom";
 import { Home, Calendar, Bike, MessageCircle, MoreHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAgencyBadges } from "@/hooks/useAgencyBadges";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import {
   Wallet, Receipt, FileText, Building, Users, ShieldCheck,
