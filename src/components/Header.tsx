@@ -376,13 +376,13 @@ export const Header = memo(() => {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-[540px] bg-popover/95 backdrop-blur-sm border shadow-lg z-[200] p-4">
                 <div className="grid grid-cols-3 gap-3">
+                  <Link to="/agencies" className="flex flex-col items-center gap-2 p-3 rounded-lg hover:bg-muted transition-colors group">
+                    <Building2 className="h-6 w-6 text-foreground group-hover:scale-110 transition-transform" />
+                    <span className="text-sm font-medium text-center">{t('header.agencies')}</span>
+                  </Link>
                   <Link to="/about" className="flex flex-col items-center gap-2 p-3 rounded-lg hover:bg-muted transition-colors group">
                     <Users className="h-6 w-6 text-foreground group-hover:scale-110 transition-transform" />
                     <span className="text-sm font-medium text-center">{t('header.aboutUs')}</span>
-                  </Link>
-                  <Link to="/fixers" className="flex flex-col items-center gap-2 p-3 rounded-lg hover:bg-muted transition-colors group">
-                    <Wrench className="h-6 w-6 text-foreground group-hover:scale-110 transition-transform" />
-                    <span className="text-sm font-medium text-center">{t('header.fixers')}</span>
                   </Link>
                   <Link to="/contact" className="flex flex-col items-center gap-2 p-3 rounded-lg hover:bg-muted transition-colors group">
                     <Phone className="h-6 w-6 text-foreground group-hover:scale-110 transition-transform" />
@@ -392,10 +392,11 @@ export const Header = memo(() => {
                     <Receipt className="h-6 w-6 text-foreground group-hover:scale-110 transition-transform" />
                     <span className="text-sm font-medium text-center">{t('header.bookingFee')}</span>
                   </Link>
-                  <Link to="/agencies" className="flex flex-col items-center gap-2 p-3 rounded-lg hover:bg-muted transition-colors group">
-                    <Building2 className="h-6 w-6 text-foreground group-hover:scale-110 transition-transform" />
-                    <span className="text-sm font-medium text-center">{t('header.agencies')}</span>
-                  </Link>
+                  {/* Mechanics — Coming Soon. To re-enable: replace with <Link to="/fixers"> using Wrench icon. */}
+                  <div className="flex flex-col items-center gap-2 p-3 rounded-lg opacity-60 cursor-not-allowed">
+                    <Wrench className="h-6 w-6 text-muted-foreground" />
+                    <span className="text-xs font-medium text-center text-muted-foreground">{t('header.fixers')}<br/><span className="text-red-500 font-semibold">{t('header.comingSoon')}</span></span>
+                  </div>
                   <div className="flex flex-col items-center gap-2 p-3 rounded-lg opacity-60 cursor-not-allowed">
                     <ShoppingBag className="h-6 w-6 text-muted-foreground" />
                     <span className="text-xs font-medium text-center text-muted-foreground">{t('header.marketplace')}<br/><span className="text-red-500 font-semibold">{t('header.comingSoon')}</span></span>
@@ -751,13 +752,13 @@ export const Header = memo(() => {
                   </svg>
                 </summary>
                 <div className="ltr:pl-4 rtl:pr-4 space-y-1 mt-1">
+                  <Link to="/agencies" className="text-foreground transition-colors font-medium py-3 px-4 text-sm rounded hover:bg-muted min-h-[44px] flex items-center gap-2" onClick={() => setIsMenuOpen(false)}><Building2 className="h-4 w-4" />{t('header.agencies')}</Link>
                   <Link to="/about" className="text-foreground transition-colors font-medium py-3 px-4 text-sm rounded hover:bg-muted min-h-[44px] flex items-center" onClick={() => setIsMenuOpen(false)}>{t('header.aboutUs')}</Link>
-                  <Link to="/fixers" className="text-foreground transition-colors font-medium py-3 px-4 text-sm rounded hover:bg-muted min-h-[44px] flex items-center" onClick={() => setIsMenuOpen(false)}>{t('header.fixers')}</Link>
                   <Link to="/contact" className="text-foreground transition-colors font-medium py-3 px-4 text-sm rounded hover:bg-muted min-h-[44px] flex items-center" onClick={() => setIsMenuOpen(false)}>{t('header.contactUs')}</Link>
                   <Link to="/booking-fee" className="text-foreground transition-colors font-medium py-3 px-4 text-sm rounded hover:bg-muted min-h-[44px] flex items-center" onClick={() => setIsMenuOpen(false)}>{t('header.bookingFee')}</Link>
-                  <Link to="/agencies" className="text-foreground transition-colors font-medium py-3 px-4 text-sm rounded hover:bg-muted min-h-[44px] flex items-center gap-2" onClick={() => setIsMenuOpen(false)}><Building2 className="h-4 w-4" />{t('header.agencies')}</Link>
+                  {/* Mechanics — Coming Soon. To re-enable: replace with <Link to="/fixers">. */}
+                  <div className="text-muted-foreground py-3 px-4 text-sm rounded min-h-[44px] flex items-center opacity-60">{t('header.fixers')} <span className="text-red-500 font-semibold ltr:ml-2 rtl:mr-2">{t('header.comingSoon')}</span></div>
                   <div className="text-muted-foreground py-3 px-4 text-sm rounded min-h-[44px] flex items-center opacity-60">{t('header.marketplace')} <span className="text-red-500 font-semibold ltr:ml-2 rtl:mr-2">{t('header.comingSoon')}</span></div>
-                  
                   <div className="text-muted-foreground py-3 px-4 text-sm rounded min-h-[44px] flex items-center opacity-60">{t('header.gpsTracking')} <span className="text-red-500 font-semibold ltr:ml-2 rtl:mr-2">{t('header.comingSoon')}</span></div>
                 </div>
               </details>
