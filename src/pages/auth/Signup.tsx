@@ -122,7 +122,18 @@ function buildSchema(role: "renter" | "agency") {
         .max(100, "Name is too long"),
       email: z.string().email("Enter a valid email").max(255),
       phone: z.string().trim().optional().or(z.literal("")),
-      password: z.string().min(8, "Password must be at least 8 characters"),
+      password: role === "agency"
+        ? z
+            .string()
+            .min(8, "Password must be at least 8 characters")
+            .regex(/[A-Z]/, "Add an uppercase letter (A-Z)")
+            .regex(/[a-z]/, "Add a lowercase letter (a-z)")
+            .regex(/\d/, "Add a number (0-9)")
+            .regex(/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/, "Add a special character (e.g. !@#$)")
+            .refine((p) => !COMMON_PASSWORDS.has(p.toLowerCase()), {
+              message: "This password is too common. Pick something unique.",
+            })
+        : z.string().min(8, "Password must be at least 8 characters"),
       confirmPassword: z.string(),
       acceptTerms: z.literal(true, {
         errorMap: () => ({ message: "You must accept the terms to continue" }),
