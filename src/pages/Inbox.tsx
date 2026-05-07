@@ -254,6 +254,11 @@ const Inbox = () => {
                 counterpartyName={active.agency_name}
                 counterpartySubtitle={`Booking #${active.id.slice(0, 8)} · ${active.bike_name}`}
                 onBack={isMobile ? () => setActiveId(null) : undefined}
+                onRead={() => {
+                  setConvs((prev) =>
+                    prev.map((c) => (c.id === active.id ? { ...c, unread: 0 } : c))
+                  );
+                }}
               />
             ) : (
               <div className="flex h-full items-center justify-center bg-[#FAFAFA] p-8">

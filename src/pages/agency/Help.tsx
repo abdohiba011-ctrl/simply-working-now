@@ -36,13 +36,13 @@ const Help = () => {
     <AgencyLayout>
       <div className="mx-auto max-w-5xl space-y-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Help & Support</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Help & Support</h1>
           <p className="mt-1 text-sm text-muted-foreground">Find answers fast or talk to our team.</p>
         </div>
 
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search help articles…" className="pl-10 h-12 text-base" />
+          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search help articles…" className="pl-10 h-10 text-sm" />
         </div>
 
         <div className="grid gap-4 md:grid-cols-3">
@@ -68,12 +68,12 @@ const Help = () => {
         </div>
 
         <Card className="p-5">
-          <h2 className="font-semibold">Frequently asked questions</h2>
+          <h2 className="text-base font-semibold">Frequently asked questions</h2>
           <Accordion type="single" collapsible className="mt-3">
             {filtered.map((f, i) => (
               <AccordionItem key={i} value={`f-${i}`}>
-                <AccordionTrigger className="text-left">
-                  <span><Badge variant="outline" className="mr-2">{f.cat}</Badge>{f.q}</span>
+                <AccordionTrigger className="text-left text-sm font-medium hover:no-underline">
+                  <span className="flex items-center gap-2"><Badge variant="outline" className="text-[10px]">{f.cat}</Badge>{f.q}</span>
                 </AccordionTrigger>
                 <AccordionContent className="text-sm text-muted-foreground">{f.a}</AccordionContent>
               </AccordionItem>
@@ -83,7 +83,7 @@ const Help = () => {
 
         <div className="grid gap-4 md:grid-cols-2">
           <Card className="p-5">
-            <h2 className="flex items-center gap-2 font-semibold"><PlayCircle className="h-4 w-4 text-primary" /> Video tutorials</h2>
+            <h2 className="flex items-center gap-2 text-base font-semibold"><PlayCircle className="h-4 w-4 text-primary" /> Video tutorials</h2>
             <div className="mt-4 grid grid-cols-2 gap-3">
               {["Getting started", "Add your first bike", "Confirm a booking", "Manage wallet"].map((t) => (
                 <div key={t} className="aspect-video rounded-lg bg-gradient-to-br from-primary/15 to-muted p-3 text-xs font-medium">
@@ -95,13 +95,13 @@ const Help = () => {
           </Card>
 
           <Card className="p-5">
-            <h2 className="flex items-center gap-2 font-semibold"><Sparkles className="h-4 w-4 text-primary" /> What's new</h2>
+            <h2 className="flex items-center gap-2 text-base font-semibold"><Sparkles className="h-4 w-4 text-primary" /> What's new</h2>
             <ul className="mt-4 space-y-3 text-sm">
               {changelog.map((c, i) => (
                 <li key={i} className="flex items-start gap-3 border-b border-border/60 pb-3 last:border-0 last:pb-0">
-                  <Badge variant="outline" className="shrink-0">{c.tag}</Badge>
+                  <Badge variant="outline" className="shrink-0 text-[10px]">{c.tag}</Badge>
                   <div>
-                    <p className="font-medium">{c.title}</p>
+                    <p className="text-sm font-medium">{c.title}</p>
                     <p className="text-xs text-muted-foreground">{c.date}</p>
                   </div>
                 </li>
@@ -111,7 +111,7 @@ const Help = () => {
         </div>
 
         <Card className="p-5">
-          <h2 className="font-semibold">Send us a message</h2>
+          <h2 className="text-base font-semibold">Send us a message</h2>
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
             <div><Label>Subject</Label><Input placeholder="What's this about?" /></div>
             <div><Label>Category</Label><Input placeholder="Bookings / Wallet / …" /></div>

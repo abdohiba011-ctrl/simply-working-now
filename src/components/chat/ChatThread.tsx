@@ -39,6 +39,7 @@ export interface ChatThreadProps {
   counterpartyName: string;
   counterpartySubtitle?: string;
   onBack?: () => void;
+  onRead?: () => void;
   className?: string;
 }
 
@@ -75,6 +76,7 @@ export const ChatThread = ({
   counterpartyName,
   counterpartySubtitle,
   onBack,
+  onRead,
   className,
 }: ChatThreadProps) => {
   const { user } = useAuth();
@@ -149,19 +151,29 @@ export const ChatThread = ({
     ta.style.height = `${Math.min(ta.scrollHeight, maxHeight)}px`;
   }, [draft]);
 
-  // Mark inbound as read
+  // Mark inbound as read (idempotent, tracks attempted IDs to avoid re-fire loop)
+  const markedIdsRef = useRef<Set<string>>(new Set());
   useEffect(() => {
     if (!user) return;
-    const unread = messages.filter((m) => m.sender_id !== user.id && !m.read_at);
+    const unread = messages.filter(
+      (m) => m.sender_id !== user.id && !m.read_at && !markedIdsRef.current.has(m.id)
+    );
     if (unread.length === 0) return;
-    void supabase
-      .from("booking_messages")
-      .update({ read_at: new Date().toISOString() })
-      .in(
-        "id",
-        unread.map((m) => m.id)
-      );
-  }, [messages, user]);
+    const ids = unread.map((m) => m.id);
+    ids.forEach((id) => markedIdsRef.current.add(id));
+    (async () => {
+      const { error } = await supabase
+        .from("booking_messages")
+        .update({ read_at: new Date().toISOString() })
+        .in("id", ids);
+      if (!error) onRead?.();
+    })();
+  }, [messages, user, onRead]);
+
+  // Reset marked-set when switching conversations
+  useEffect(() => {
+    markedIdsRef.current = new Set();
+  }, [bookingId]);
 
   // Cleanup preview URLs
   useEffect(() => {
