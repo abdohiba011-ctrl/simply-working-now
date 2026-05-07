@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { ComponentType, SVGProps, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Search, HelpCircle, Wallet, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useAgencyWallet } from "@/hooks/useAgencyData";
+import { useAgencyWallet, useAgencyIdentity } from "@/hooks/useAgencyData";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useLanguageStore, Language } from "@/stores/useLanguageStore";
 import {
@@ -14,6 +14,9 @@ import {
 import { UserMenu } from "@/components/auth/UserMenu";
 import { ThemeToggle } from "@/components/agency/ThemeToggle";
 import { NotificationsPopover } from "@/components/agency/NotificationsPopover";
+import { FrFlag } from "@/components/icons/flags/FrFlag";
+import { GbFlag } from "@/components/icons/flags/GbFlag";
+import { MaFlag } from "@/components/icons/flags/MaFlag";
 
 interface HeaderProps {
   onMobileMenu: () => void;
@@ -49,10 +52,11 @@ const CMD_TARGETS: { label: string; path: string }[] = [
   { label: "Help & Support", path: "/agency/settings#help" },
 ];
 
-const LANGS: { code: Language; flag: string; label: string }[] = [
-  { code: "fr", flag: "🇫🇷", label: "Français" },
-  { code: "en", flag: "🇬🇧", label: "English" },
-  { code: "ar", flag: "🇲🇦", label: "العربية" },
+type FlagIcon = ComponentType<SVGProps<SVGSVGElement>>;
+const LANGS: { code: Language; Icon: FlagIcon; label: string }[] = [
+  { code: "fr", Icon: FrFlag, label: "Français" },
+  { code: "en", Icon: GbFlag, label: "English" },
+  { code: "ar", Icon: MaFlag, label: "العربية" },
 ];
 
 export const Header = ({ onMobileMenu }: HeaderProps) => {
@@ -62,6 +66,7 @@ export const Header = ({ onMobileMenu }: HeaderProps) => {
   const balance = Number(wallet?.balance || 0);
   const { language, setLanguage } = useLanguageStore();
   const user = useAuthStore((s) => s.user);
+  const identity = useAgencyIdentity();
   const [cmdOpen, setCmdOpen] = useState(false);
 
   const segments = location.pathname.split("/").filter(Boolean).slice(1);
@@ -122,14 +127,14 @@ export const Header = ({ onMobileMenu }: HeaderProps) => {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="sm" className="gap-1.5 rounded-full px-3">
-              <span className="text-base">{currentLang.flag}</span>
+              <currentLang.Icon />
               <span className="hidden text-xs font-medium uppercase sm:inline">{currentLang.code}</span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="rounded-xl">
             {LANGS.map((l) => (
-              <DropdownMenuItem key={l.code} onClick={() => setLanguage(l.code)} className="rounded-lg">
-                <span className="mr-2">{l.flag}</span>
+              <DropdownMenuItem key={l.code} onClick={() => setLanguage(l.code)} className="rounded-lg gap-2">
+                <l.Icon />
                 {l.label}
               </DropdownMenuItem>
             ))}
@@ -162,9 +167,11 @@ export const Header = ({ onMobileMenu }: HeaderProps) => {
 
         {/* User chip — avatar + name + role */}
         <div className="flex items-center gap-2 rounded-full border border-border bg-card py-1 ps-1 pe-3">
-          <UserMenu />
+          <UserMenu avatarUrl={identity.logoUrl} />
           <div className="hidden text-left lg:block">
-            <div className="text-xs font-semibold leading-tight text-foreground">{displayName}</div>
+            <div className="text-xs font-semibold leading-tight text-foreground">
+              {identity.name || displayName}
+            </div>
             <div className="text-[10px] leading-tight text-muted-foreground">Agency</div>
           </div>
         </div>

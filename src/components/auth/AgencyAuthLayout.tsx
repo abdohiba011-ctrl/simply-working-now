@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ComponentType, ReactNode, SVGProps } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ArrowLeft, Globe } from "lucide-react";
@@ -12,6 +12,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { FrFlag } from "@/components/icons/flags/FrFlag";
+import { GbFlag } from "@/components/icons/flags/GbFlag";
+import { MaFlag } from "@/components/icons/flags/MaFlag";
 
 import logoLight from "@/assets/motonita-logo.svg";
 import logoDark from "@/assets/motonita-logo-dark.svg";
@@ -22,10 +25,11 @@ interface AgencyAuthLayoutProps {
   children: ReactNode;
 }
 
-const LANGS: Array<{ code: "en" | "fr" | "ar"; label: string; flag: string }> = [
-  { code: "en", label: "English", flag: "🇬🇧" },
-  { code: "fr", label: "Français", flag: "🇫🇷" },
-  { code: "ar", label: "العربية", flag: "🇲🇦" },
+type FlagIcon = ComponentType<SVGProps<SVGSVGElement>>;
+const LANGS: Array<{ code: "en" | "fr" | "ar"; label: string; Icon: FlagIcon }> = [
+  { code: "en", label: "English", Icon: GbFlag },
+  { code: "fr", label: "Français", Icon: FrFlag },
+  { code: "ar", label: "العربية", Icon: MaFlag },
 ];
 
 /**
@@ -112,9 +116,8 @@ export function AgencyAuthLayout({ children }: AgencyAuthLayoutProps) {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" className="h-9 gap-2">
                   <Globe className="h-4 w-4" />
-                  <span className="text-sm">
-                    {currentLang.flag} {currentLang.code.toUpperCase()}
-                  </span>
+                  <currentLang.Icon />
+                  <span className="text-sm">{currentLang.code.toUpperCase()}</span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="min-w-[160px]">
@@ -124,7 +127,7 @@ export function AgencyAuthLayout({ children }: AgencyAuthLayoutProps) {
                     onClick={() => handleLangChange(l.code)}
                     className="gap-2"
                   >
-                    <span>{l.flag}</span>
+                    <l.Icon />
                     <span>{l.label}</span>
                   </DropdownMenuItem>
                 ))}

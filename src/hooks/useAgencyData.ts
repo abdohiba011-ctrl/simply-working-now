@@ -167,6 +167,59 @@ export const useCurrentUser = () => {
   return { userId, loading: isLoading && !authListenerInitialized };
 };
 
+export interface AgencyIdentity {
+  name: string | null;
+  logoUrl: string | null;
+  initial: string;
+}
+
+export const useAgencyIdentity = (): AgencyIdentity & { refresh: () => void } => {
+  const { userId } = useCurrentUser();
+  const userEmail = useAuthStore((s) => s.user?.email ?? null);
+  const [data, setData] = useState<AgencyIdentity>({
+    name: null,
+    logoUrl: null,
+    initial: "A",
+  });
+
+  const refresh = useCallback(async () => {
+    if (!userId) {
+      setData({ name: null, logoUrl: null, initial: "A" });
+      return;
+    }
+    const { data: prof } = await supabase
+      .from("profiles")
+      .select("business_name, business_logo_url, full_name")
+      .eq("user_id", userId)
+      .maybeSingle();
+    const name =
+      (prof?.business_name as string | null) ||
+      (prof?.full_name as string | null) ||
+      (userEmail ? userEmail.split("@")[0] : null);
+    const logoUrl = (prof?.business_logo_url as string | null) || null;
+    const initial = ((name || userEmail || "A").trim().charAt(0) || "A").toUpperCase();
+    setData({ name, logoUrl, initial });
+  }, [userId, userEmail]);
+
+  useEffect(() => {
+    refresh();
+    if (!userId) return;
+    const ch = supabase
+      .channel(`agency-identity-${userId}`)
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "profiles", filter: `user_id=eq.${userId}` },
+        () => refresh()
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(ch);
+    };
+  }, [userId, refresh]);
+
+  return { ...data, refresh };
+};
+
 export const useAgencyWallet = () => {
   const { userId } = useCurrentUser();
   const [wallet, setWallet] = useState<AgencyWallet | null>(null);
