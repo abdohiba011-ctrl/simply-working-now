@@ -69,6 +69,7 @@ const AdminBookingDetails = lazy(() => import("./pages/admin/AdminBookingDetails
 const AdminFleet = lazy(() => import("./pages/admin/AdminFleet"));
 
 const AdminAnalytics = lazy(() => import("./pages/admin/AdminAnalytics"));
+const AdminReferrals = lazy(() => import("./pages/admin/AdminReferrals"));
 const UserVerificationDetails = lazy(() => import("./pages/UserVerificationDetails"));
 const UserDetails = lazy(() => import("./pages/admin/UserDetails"));
 const AdminClientDetails = lazy(() => import("./pages/admin/AdminClientDetails"));
@@ -241,6 +242,7 @@ const App = () => (
                 <Route path="/admin/fleet/new" element={<Navigate to="/admin/bikes/approvals" replace />} />
                 <Route path="/admin/fleet/:id" element={<AdminFleetIdRedirect />} />
                 <Route path="/admin/analytics" element={<ProtectedRoute requireRole="admin"><AdminAnalytics /></ProtectedRoute>} />
+                <Route path="/admin/referrals" element={<ProtectedRoute requireRole="admin"><AdminReferrals /></ProtectedRoute>} />
                 <Route path="/admin/users/:id" element={<ProtectedRoute requireRole="admin"><UserDetails /></ProtectedRoute>} />
                 <Route path="/admin/clients/:id" element={<ProtectedRoute requireRole="admin"><AdminClientDetails /></ProtectedRoute>} />
                 <Route path="/admin/verifications/:id" element={<ProtectedRoute requireRole="admin"><UserVerificationDetails /></ProtectedRoute>} />
