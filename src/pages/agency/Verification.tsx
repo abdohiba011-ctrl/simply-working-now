@@ -452,47 +452,42 @@ const Verification = () => {
   );
 
   return (
-    <div className="space-y-5 pb-28">
+    <div className="mx-auto max-w-4xl space-y-4 pb-28">
       {/* Header */}
-      <Card className="p-6">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="flex items-start gap-3">
+      <Card className="p-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
             <div className="rounded-lg bg-primary/10 p-2 text-primary">
               <ShieldCheck className="h-5 w-5" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold">Business verification</h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Verified agencies appear in renter search results. Reviews take 24–48 hours.
+              <h2 className="text-base font-semibold leading-tight">Business verification</h2>
+              <p className="text-xs text-muted-foreground">
+                Verified agencies appear in renter search results · 24–48h review
               </p>
             </div>
           </div>
           {statusPill()}
         </div>
 
-        {/* Status banner */}
-        <div className={cn("mt-5 flex items-start gap-3 rounded-lg border p-4", bannerClasses)}>
+        <div className={cn("mt-4 flex items-start gap-3 rounded-lg border px-4 py-3", bannerClasses)}>
           <div className="mt-0.5 shrink-0">{banner.icon}</div>
           <div className="min-w-0">
             <div className="text-sm font-semibold">{banner.title}</div>
-            <p className="mt-0.5 text-sm opacity-90">{banner.text}</p>
+            <p className="mt-0.5 text-xs opacity-90">{banner.text}</p>
           </div>
         </div>
 
-        {/* Rejection reason banner */}
         {isRejected && rejectionReason && (
-          <div className="mt-4 rounded-lg border border-destructive/40 bg-destructive/10 p-4 text-destructive">
-            <div className="flex items-start gap-3">
-              <AlertCircle className="h-5 w-5 mt-0.5 shrink-0" />
+          <div className="mt-3 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-destructive">
+            <div className="flex items-start gap-2">
+              <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
               <div className="min-w-0 flex-1">
-                <div className="text-sm font-semibold">Your verification was rejected</div>
-                <p className="mt-1 text-sm whitespace-pre-wrap">{rejectionReason}</p>
-                <p className="mt-2 text-xs opacity-80">
-                  Please review the feedback above, update your documents, and resubmit for review.
-                </p>
+                <div className="text-xs font-semibold">Verification rejected</div>
+                <p className="mt-0.5 text-xs whitespace-pre-wrap">{rejectionReason}</p>
                 {rejectedAt && (
-                  <p className="mt-1 text-xs opacity-70">
-                    Rejected on {new Date(rejectedAt).toLocaleString()}
+                  <p className="mt-1 text-[11px] opacity-70">
+                    {new Date(rejectedAt).toLocaleString()}
                   </p>
                 )}
               </div>
@@ -500,16 +495,15 @@ const Verification = () => {
           </div>
         )}
 
-        {/* Progress (only when actionable) */}
         {!isVerified && (
-          <div className="mt-5">
-            <div className="mb-2 flex items-center justify-between text-xs text-muted-foreground">
+          <div className="mt-4">
+            <div className="mb-1.5 flex items-center justify-between text-xs text-muted-foreground">
               <span>
-                Progress · <span className="font-medium text-foreground">{completed}/{total} items</span>
+                <span className="font-medium text-foreground">{completed}/{total}</span> completed
               </span>
               <span>{progressPct}%</span>
             </div>
-            <Progress value={progressPct} className="h-2" />
+            <Progress value={progressPct} className="h-1.5" />
           </div>
         )}
       </Card>
@@ -520,202 +514,137 @@ const Verification = () => {
         </div>
       ) : (
         <>
-          {/* Step 1 — Entity type */}
-          <Card className="p-6">
-            <div className="flex items-start gap-3">
-              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-semibold">
-                1
-              </div>
-              <div className="flex-1">
-                <Label className="text-sm font-semibold">What kind of business are you?</Label>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Pick the option that matches your legal status. We'll request the matching document next.
-                </p>
-                <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                  <button
-                    type="button"
-                    onClick={() => persistEntityType("company")}
-                    disabled={locked}
-                    className={cn(
-                      "rounded-lg border p-4 text-start transition-all",
-                      entityType === "company"
-                        ? "border-primary bg-primary/5 ring-2 ring-primary/20"
-                        : "border-border hover:border-primary/40 hover:bg-muted/40",
-                      locked && "cursor-not-allowed opacity-60",
-                    )}
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-2">
-                        <Building2 className="h-4 w-4 text-primary" />
-                        <span className="font-medium">Company (SARL, SA…)</span>
-                      </div>
-                      {entityType === "company" && (
-                        <CheckCircle2 className="h-4 w-4 text-primary" />
+          <Card className="p-6 sm:p-7 space-y-6">
+            {/* Section A — Business details */}
+            <div>
+              <SectionTitle
+                num="01"
+                title="Business details"
+                hint="Pick your legal status and enter your ICE number."
+              />
+              <div className="grid gap-4 md:grid-cols-12">
+                {/* Entity type — segmented */}
+                <div className="md:col-span-7">
+                  <Label className="text-xs font-medium text-muted-foreground">Entity type</Label>
+                  <div className="mt-1.5 grid grid-cols-2 gap-1.5 rounded-lg border border-input bg-muted/30 p-1">
+                    <button
+                      type="button"
+                      onClick={() => persistEntityType("company")}
+                      disabled={locked}
+                      className={cn(
+                        "flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                        entityType === "company"
+                          ? "bg-background text-foreground shadow-sm"
+                          : "text-muted-foreground hover:text-foreground",
+                        locked && "cursor-not-allowed opacity-60",
                       )}
-                    </div>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      We'll ask for your Registre de Commerce.
-                    </p>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => persistEntityType("auto_entrepreneur")}
-                    disabled={locked}
-                    className={cn(
-                      "rounded-lg border p-4 text-start transition-all",
-                      entityType === "auto_entrepreneur"
-                        ? "border-primary bg-primary/5 ring-2 ring-primary/20"
-                        : "border-border hover:border-primary/40 hover:bg-muted/40",
-                      locked && "cursor-not-allowed opacity-60",
-                    )}
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-2">
-                        <UserIcon className="h-4 w-4 text-primary" />
-                        <span className="font-medium">Auto-entrepreneur</span>
-                      </div>
-                      {entityType === "auto_entrepreneur" && (
-                        <CheckCircle2 className="h-4 w-4 text-primary" />
+                    >
+                      <Building2 className="h-4 w-4" />
+                      Company
+                      {entityType === "company" && <CheckCircle2 className="h-3.5 w-3.5 text-primary" />}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => persistEntityType("auto_entrepreneur")}
+                      disabled={locked}
+                      className={cn(
+                        "flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                        entityType === "auto_entrepreneur"
+                          ? "bg-background text-foreground shadow-sm"
+                          : "text-muted-foreground hover:text-foreground",
+                        locked && "cursor-not-allowed opacity-60",
                       )}
-                    </div>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      We'll ask for a photo of your card.
-                    </p>
-                  </button>
+                    >
+                      <UserIcon className="h-4 w-4" />
+                      Auto-entrepreneur
+                      {entityType === "auto_entrepreneur" && <CheckCircle2 className="h-3.5 w-3.5 text-primary" />}
+                    </button>
+                  </div>
                 </div>
-              </div>
-            </div>
-          </Card>
 
-          {/* Step 2 — ICE Number */}
-          <Card className="p-6">
-            <div className="flex items-start gap-3">
-              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-semibold">
-                2
-              </div>
-              <div className="flex-1">
-                <Label htmlFor="ice" className="text-sm font-semibold">ICE Number</Label>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Your 15-digit ICE number from your Registre de Commerce. Required for invoicing
-                  your Motonita booking fees.
-                </p>
-                <div className="mt-3 max-w-xs">
-                  <Input
-                    id="ice"
-                    inputMode="numeric"
-                    maxLength={15}
-                    placeholder="000000000000000"
-                    value={ice}
-                    disabled={locked}
-                    onChange={(e) => {
-                      const v = e.target.value.replace(/[^0-9]/g, "").slice(0, 15);
-                      setIce(v);
-                    }}
-                    onBlur={() => setIceTouched(true)}
-                    className={cn(
-                      "font-mono",
-                      iceTouched && !iceValid && ice.length > 0 && "border-destructive",
-                    )}
-                  />
+                {/* ICE Number */}
+                <div className="md:col-span-5">
+                  <Label htmlFor="ice" className="text-xs font-medium text-muted-foreground">
+                    ICE Number
+                  </Label>
+                  <div className="relative mt-1.5">
+                    <Input
+                      id="ice"
+                      inputMode="numeric"
+                      maxLength={15}
+                      placeholder="15-digit ICE"
+                      value={ice}
+                      disabled={locked}
+                      onChange={(e) => {
+                        const v = e.target.value.replace(/[^0-9]/g, "").slice(0, 15);
+                        setIce(v);
+                      }}
+                      onBlur={() => setIceTouched(true)}
+                      className={cn(
+                        "font-mono bg-muted/40 pr-14 focus-visible:bg-background",
+                        iceTouched && !iceValid && ice.length > 0 && "border-destructive",
+                        iceValid && "border-success/50",
+                      )}
+                    />
+                    <span className={cn(
+                      "pointer-events-none absolute inset-y-0 right-3 flex items-center text-[11px] tabular-nums",
+                      iceValid ? "text-success" : "text-muted-foreground",
+                    )}>
+                      {iceValid ? <CheckCircle2 className="h-3.5 w-3.5" /> : `${ice.length}/15`}
+                    </span>
+                  </div>
                   {iceTouched && !iceValid && ice.length > 0 && (
-                    <p className="mt-1 text-xs text-destructive">
-                      ICE must be exactly 15 digits ({ice.length}/15).
-                    </p>
-                  )}
-                  {iceValid && (
-                    <p className="mt-1 text-xs text-success flex items-center gap-1">
-                      <CheckCircle2 className="h-3 w-3" /> Valid format
-                    </p>
+                    <p className="mt-1 text-[11px] text-destructive">Must be exactly 15 digits.</p>
                   )}
                 </div>
               </div>
             </div>
-          </Card>
 
-          {/* Step 3 — Business document */}
-          <Card className="p-6">
-            <div className="flex items-start gap-3">
-              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-semibold">
-                3
-              </div>
-              <div className="flex-1">
-                <Label className="text-sm font-semibold">{businessLabel}</Label>
-                <p className="mt-1 text-xs text-muted-foreground">{businessHelp}</p>
-                <div className="mt-4">
-                  <UploadTile
-                    slot={businessSlot}
-                    title={businessLabel}
-                    help="Make sure the document is in focus and all text is readable."
-                    icon={<Building2 className="h-4 w-4" />}
-                  />
-                </div>
-              </div>
-            </div>
-          </Card>
+            <div className="border-t border-border/60" />
 
-          {/* Step 4 — ICE Certificate */}
-          <Card className="p-6">
-            <div className="flex items-start gap-3">
-              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-semibold">
-                4
-              </div>
-              <div className="flex-1">
-                <Label className="text-sm font-semibold">ICE Certificate</Label>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  PDF or clear photo of your ICE certificate from the tax administration.
-                </p>
-                <div className="mt-4">
-                  <UploadTile
-                    slot="ice_cert"
-                    title="ICE Certificate"
-                    help="Must clearly show your 15-digit ICE number."
-                    icon={<FileCheck2 className="h-4 w-4" />}
-                  />
-                </div>
-              </div>
-            </div>
-          </Card>
-
-          {/* Step 5 — CIN */}
-          <Card className="p-6">
-            <div className="flex items-start gap-3">
-              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-semibold">
-                5
-              </div>
-              <div className="flex-1">
-                <Label className="text-sm font-semibold">Owner ID card (CIN)</Label>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Both sides of the CIN of the person managing the business. Place it on a flat surface and avoid glare.
-                </p>
-                <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                  <UploadTile
-                    slot="id_front"
-                    title="Front side"
-                    icon={<UserIcon className="h-4 w-4" />}
-                    compact
-                  />
-                  <UploadTile
-                    slot="id_back"
-                    title="Back side"
-                    icon={<UserIcon className="h-4 w-4" />}
-                    compact
-                  />
-                </div>
+            {/* Section B — Documents */}
+            <div>
+              <SectionTitle
+                num="02"
+                title="Documents"
+                hint="Upload clear scans or photos. PDF, JPG, PNG · max 5 MB each."
+              />
+              <div className="grid gap-3 md:grid-cols-2">
+                <UploadTile
+                  slot={businessSlot}
+                  title={businessLabel}
+                  icon={<Building2 className="h-3.5 w-3.5" />}
+                />
+                <UploadTile
+                  slot="ice_cert"
+                  title="ICE Certificate"
+                  icon={<FileCheck2 className="h-3.5 w-3.5" />}
+                />
+                <UploadTile
+                  slot="id_front"
+                  title="Owner CIN — Front"
+                  icon={<UserIcon className="h-3.5 w-3.5" />}
+                />
+                <UploadTile
+                  slot="id_back"
+                  title="Owner CIN — Back"
+                  icon={<UserIcon className="h-3.5 w-3.5" />}
+                />
               </div>
             </div>
           </Card>
 
           {/* Sticky submit bar */}
           <div className="sticky bottom-4 z-10">
-            <Card className="flex flex-wrap items-center justify-between gap-3 border-2 p-4 shadow-lg">
+            <Card className="flex flex-wrap items-center justify-between gap-3 border-2 px-4 py-3 shadow-lg">
               <div className="flex items-center gap-3">
                 <div
                   className={cn(
-                    "flex h-9 w-9 items-center justify-center rounded-full",
+                    "flex h-8 w-8 items-center justify-center rounded-full",
                     allReady ? "bg-success/15 text-success" : "bg-muted text-muted-foreground",
                   )}
                 >
-                  {allReady ? <CheckCircle2 className="h-5 w-5" /> : <Info className="h-5 w-5" />}
+                  {allReady ? <CheckCircle2 className="h-4 w-4" /> : <Info className="h-4 w-4" />}
                 </div>
                 <div className="text-sm">
                   {isVerified ? (
@@ -724,14 +653,14 @@ const Verification = () => {
                     <span className="font-medium">Documents under review · 24–48h</span>
                   ) : isRejected ? (
                     <span className="font-medium text-destructive">
-                      Please replace flagged documents and resubmit.
+                      Replace flagged documents and resubmit.
                     </span>
                   ) : allReady ? (
-                    <span className="font-medium">All set — ready to submit for review.</span>
+                    <span className="font-medium">All set — ready to submit.</span>
                   ) : (
                     <span>
                       <span className="font-medium text-foreground">{total - completed}</span>{" "}
-                      item{total - completed === 1 ? "" : "s"} left to complete.
+                      item{total - completed === 1 ? "" : "s"} left.
                     </span>
                   )}
                 </div>
