@@ -233,7 +233,7 @@ export const FiltersPanel = ({
     <div className="flex flex-col h-full min-h-0">
       <div
         key={resetKey}
-        className="flex-1 min-h-0 overflow-y-auto overscroll-contain scrollbar-hide [&::-webkit-scrollbar]:hidden px-3 pt-2 pb-4 space-y-3 animate-fade-in"
+        className="flex-1 min-h-0 overflow-y-auto overscroll-contain scrollbar-hide [&::-webkit-scrollbar]:hidden px-3 pb-4 space-y-3 animate-fade-in pt-[12px]"
         style={{
           maskImage:
             "linear-gradient(to bottom, transparent 0, black 12px, black calc(100% - 12px), transparent 100%)",
