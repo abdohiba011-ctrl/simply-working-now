@@ -57,7 +57,7 @@ const BookingHistory = lazy(() => import("./pages/BookingHistory"));
 const BookingDetails = lazy(() => import("./pages/BookingDetails"));
 const Notifications = lazy(() => import("./pages/Notifications"));
 const Inbox = lazy(() => import("./pages/Inbox"));
-const Billing = lazy(() => import("./pages/Billing"));
+
 const AdminVerifications = lazy(() => import("./pages/AdminVerifications"));
 const AdminAgencyVerifications = lazy(() => import("./pages/admin/AdminAgencyVerifications"));
 const AdminBikeApprovals = lazy(() => import("./pages/admin/AdminBikeApprovals"));
@@ -228,7 +228,7 @@ const App = () => (
                 <Route path="/booking/:id" element={<ProtectedRoute><BookingDetails /></ProtectedRoute>} />
                 <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
                 <Route path="/inbox" element={<ProtectedRoute><Inbox /></ProtectedRoute>} />
-                <Route path="/billing" element={<ProtectedRoute><Billing /></ProtectedRoute>} />
+                
                 <Route path="/admin/verifications" element={<ProtectedRoute requireRole="admin"><AdminVerifications /></ProtectedRoute>} />
                 <Route path="/admin/agencies/verifications" element={<ProtectedRoute requireRole="admin"><AdminAgencyVerifications /></ProtectedRoute>} />
                 <Route path="/admin/bikes/approvals" element={<ProtectedRoute requireRole="admin"><AdminBikeApprovals /></ProtectedRoute>} />
