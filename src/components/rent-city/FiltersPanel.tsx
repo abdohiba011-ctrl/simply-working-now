@@ -392,32 +392,33 @@ export const FiltersPanel = ({
         className="flex items-center gap-2 border-t border-border bg-background/95 backdrop-blur px-4 py-3 shrink-0"
         style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom, 0px))" }}
       >
-        <div
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={clearAll}
           className={cn(
-            "flex items-center gap-1.5 transition-all duration-200",
+            "h-9 rounded-full text-muted-foreground hover:text-foreground active:scale-95 transition-all duration-200 px-3",
             activeFilterCount === 0 && "opacity-0 pointer-events-none -ml-1"
           )}
         >
-          <span className="h-8 inline-flex items-center px-2.5 rounded-full bg-muted text-foreground text-xs font-semibold">
-            {activeFilterCount}
-          </span>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={clearAll}
-            className="h-9 rounded-full text-muted-foreground hover:text-foreground active:scale-95 transition-transform px-3"
-          >
-            Clear all
-          </Button>
-        </div>
+          Clear all
+        </Button>
 
         <Button
           onClick={onApply}
           className="ml-auto h-12 px-5 rounded-full font-semibold bg-primary text-primary-foreground hover:bg-primary/90 gap-2 shadow-sm"
         >
-          {activeFilterCount > 0
-            ? `Apply ${activeFilterCount} filter${activeFilterCount > 1 ? "s" : ""}`
-            : `Show ${filteredCount} bike${filteredCount === 1 ? "" : "s"}`}
+          {activeFilterCount > 0 ? (
+            <>
+              <span>Apply</span>
+              <span className="inline-flex items-center justify-center min-w-6 h-6 px-1.5 rounded-full bg-white text-primary text-xs font-bold">
+                {activeFilterCount}
+              </span>
+              <span>{activeFilterCount > 1 ? "filters" : "filter"}</span>
+            </>
+          ) : (
+            <span>{`Show ${filteredCount} bike${filteredCount === 1 ? "" : "s"}`}</span>
+          )}
           <ArrowRight className="h-4 w-4" />
         </Button>
       </div>
