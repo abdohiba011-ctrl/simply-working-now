@@ -36,13 +36,13 @@ const Help = () => {
     <AgencyLayout>
       <div className="mx-auto max-w-5xl space-y-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Help & Support</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Help & Support</h1>
           <p className="mt-1 text-sm text-muted-foreground">Find answers fast or talk to our team.</p>
         </div>
 
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search help articles…" className="pl-10 h-12 text-base" />
+          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search help articles…" className="pl-10 h-10 text-sm" />
         </div>
 
         <div className="grid gap-4 md:grid-cols-3">
