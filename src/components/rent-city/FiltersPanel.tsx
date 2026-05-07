@@ -20,6 +20,7 @@ import {
   Check,
   ArrowRight,
   Star,
+  X,
 } from "lucide-react";
 
 export type Tone = "primary" | "sky" | "amber" | "violet" | "rose" | "indigo" | "teal";
@@ -397,10 +398,11 @@ export const FiltersPanel = ({
           size="sm"
           onClick={clearAll}
           className={cn(
-            "h-9 rounded-full text-muted-foreground hover:text-foreground active:scale-95 transition-all duration-200 px-3",
+            "h-9 rounded-full gap-1.5 px-3 bg-destructive/10 text-destructive hover:bg-destructive hover:text-destructive-foreground active:scale-95 transition-all duration-200",
             activeFilterCount === 0 && "opacity-0 pointer-events-none -ml-1"
           )}
         >
+          <X className="h-4 w-4" />
           Clear all
         </Button>
 
