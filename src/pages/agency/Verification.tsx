@@ -474,7 +474,7 @@ const Verification = () => {
           <div className="mt-0.5 shrink-0">{banner.icon}</div>
           <div className="min-w-0">
             <div className="text-sm font-semibold">{banner.title}</div>
-            <p className="mt-0.5 text-xs opacity-90">{banner.text}</p>
+            <p className="mt-0.5 text-xs opacity-90 text-slate-800">{banner.text}</p>
           </div>
         </div>
 
