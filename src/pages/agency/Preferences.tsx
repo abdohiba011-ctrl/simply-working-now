@@ -62,17 +62,6 @@ const Preferences = () => {
               </SelectContent>
             </Select>
           </Row>
-          <Row label="Theme">
-            <div className="flex items-center gap-2">
-              <Select defaultValue="light" disabled>
-                <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="light">Light</SelectItem>
-                </SelectContent>
-              </Select>
-              <Badge variant="outline">Dark — coming soon</Badge>
-            </div>
-          </Row>
         </Card>
 
         <Card className="space-y-5 p-6">
