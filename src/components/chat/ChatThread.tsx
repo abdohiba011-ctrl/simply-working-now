@@ -383,7 +383,7 @@ export const ChatThread = ({
       {/* Messages */}
       <div
         ref={scrollRef}
-        className="flex-1 min-h-0 overflow-y-auto bg-muted/30 px-3 py-4 sm:px-6"
+        className="scrollbar-hide flex-1 min-h-0 overflow-y-auto bg-muted/40 px-3 py-5 sm:px-6"
       >
         {loading ? (
           <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
@@ -394,7 +394,7 @@ export const ChatThread = ({
             No messages yet — say hi to get the conversation started.
           </div>
         ) : (
-          <div className="mx-auto flex max-w-3xl flex-col gap-1">
+          <div className="mx-auto flex max-w-3xl flex-col gap-1.5">
             {grouped.map((g) => {
               if (g.kind === "day") {
                 return (
