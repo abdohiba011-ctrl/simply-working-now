@@ -57,13 +57,12 @@ export const useAgencyBadges = (): AgencyBadgeCounts & { refresh: () => void } =
   useEffect(() => {
     refresh();
     if (!user) return;
-    const ch = supabase
-      .channel(`agency-badges-${user.id}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "bookings" },
-        () => refresh()
-      )
+    const ch = supabase.channel(`agency-badges-${user.id}`);
+    ch.on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "bookings" },
+      () => refresh()
+    )
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "booking_messages" },
