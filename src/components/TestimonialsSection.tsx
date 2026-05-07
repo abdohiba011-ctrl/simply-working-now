@@ -13,21 +13,21 @@ const testimonials: Testimonial[] = [
       "Renting through Motonita was not just about getting a motorbike. It gave me freedom. I could explore Casablanca at my own rhythm, stop where I wanted, and enjoy the city without feeling stuck. The process was simple, clear, and trustworthy.",
     name: "Adam",
     location: "Ain Diab, Casablanca",
-    image: "https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=400",
+    image: "/testimonials/adam_v2.png",
   },
   {
     quote:
       "Casablanca traffic can destroy your whole day. With Motonita, I booked a scooter quickly and moved between Maarif, Ain Diab, and the city center without waiting for taxis. It felt like I finally had control over my time.",
     name: "Youssef",
     location: "Maarif, Casablanca",
-    image: "https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg?auto=compress&cs=tinysrgb&w=400",
+    image: "/testimonials/youssef.jpg",
   },
   {
     quote:
       "I was worried about renting a scooter in Casablanca because I didn't know which agency to trust. Motonita made the choice easier. I could see the bike, the price, the agency, and the booking details before confirming. It removed the stress and gave me confidence to book.",
     name: "Sara",
     location: "Casablanca",
-    image: "https://images.pexels.com/photos/1462637/pexels-photo-1462637.jpeg?auto=compress&cs=tinysrgb&w=400",
+    image: "/testimonials/sara.jpg",
   },
 ];
 
