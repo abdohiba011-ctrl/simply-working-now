@@ -66,7 +66,7 @@ export const testimonials: Testimonial[] = [
       "J'ai aimé la simplicité. Trouver un scooter proche de moi était beaucoup plus facile que d'appeler plusieurs agences une par une.",
       "أعجبتني السهولة الكبيرة في إيجاد سكوتر قريب مني. كان الأمر أسرع بكثير من الاتصال بعدّة وكالات وطرح الأسئلة نفسها مراراً وتكراراً."
     ),
-    avatarUrl: "https://i.pravatar.cc/120?img=47",
+    avatarUrl: "/testimonials/sara.jpg",
     durationSec: 34,
     verified: true,
     rating: 5,
