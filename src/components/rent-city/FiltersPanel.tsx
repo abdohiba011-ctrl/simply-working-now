@@ -20,6 +20,7 @@ import {
   Check,
   ArrowRight,
   Star,
+  X,
 } from "lucide-react";
 
 export type Tone = "primary" | "sky" | "amber" | "violet" | "rose" | "indigo" | "teal";
