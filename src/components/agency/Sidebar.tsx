@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useAgencyStore } from "@/stores/useAgencyStore";
 import { useAuthStore } from "@/stores/useAuthStore";
+import { useAgencyBadges } from "@/hooks/useAgencyBadges";
 import { LogoutConfirmDialog } from "@/components/auth/LogoutConfirmDialog";
 import {
   Home, Calendar, Bike, MessageCircle, CalendarDays,
