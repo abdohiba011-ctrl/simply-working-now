@@ -195,6 +195,7 @@ export default function RentCity() {
     [neighborhoodRows],
   );
 
+
   // Initial neighborhood from URL — accept any name; will be reset later
   // if it doesn't belong to this city (after neighborhoods load).
   const [neighborhood, setNeighborhood] = useState<string>(() => {
@@ -309,6 +310,21 @@ export default function RentCity() {
   });
 
   const isLoading = cityLoading || bikesLoading;
+
+  // Real available-bike counts per neighborhood for the current city.
+  // `bikes` is already filtered by the same public visibility rules used in
+  // listings (approved + active + verified agency + has available unit + correct
+  // city). So counts derived from it always match what the user will see.
+  const neighborhoodCounts = useMemo<Record<string, number>>(() => {
+    const counts: Record<string, number> = { [allCityLabel]: bikes.length };
+    for (const n of neighborhoodRows) counts[n.name] = 0;
+    for (const b of bikes) {
+      const key = b.neighborhood || "";
+      if (key && key in counts) counts[key] += 1;
+    }
+    return counts;
+  }, [bikes, neighborhoodRows, allCityLabel]);
+
 
   // Derive actual price bounds from the bikes available in this city
   const priceBounds = useMemo<[number, number]>(() => {
@@ -449,20 +465,24 @@ export default function RentCity() {
             <RadioGroup value={neighborhood} onValueChange={setNeighborhood} className="space-y-2">
               {neighborhoodOptions.map((n) => {
                 const isPopular = popularNeighborhoodSet.has(n);
+                const count = neighborhoodCounts[n] ?? 0;
                 return (
                   <div key={n} className="flex items-center gap-2">
                     <RadioGroupItem value={n} id={`n-${n}`} />
                     <Label
                       htmlFor={`n-${n}`}
-                      className="text-sm font-normal cursor-pointer flex items-center gap-1.5"
+                      className="text-sm font-normal cursor-pointer flex items-center gap-1.5 flex-1"
                     >
-                      {n}
+                      <span className={count === 0 ? "text-muted-foreground" : ""}>{n}</span>
                       {isPopular && (
                         <Star
                           className="h-3 w-3 fill-primary text-primary"
                           aria-label="Popular"
                         />
                       )}
+                      <span className="ml-auto text-xs text-muted-foreground tabular-nums">
+                        ({count})
+                      </span>
                     </Label>
                   </div>
                 );
