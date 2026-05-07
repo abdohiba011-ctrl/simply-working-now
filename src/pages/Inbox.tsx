@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -7,8 +7,17 @@ import { format, isToday, isYesterday } from "date-fns";
 import { cn } from "@/lib/utils";
 import { ChatThread } from "@/components/chat/ChatThread";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { MessageCircle, Loader2, ChevronLeft } from "lucide-react";
-import logo from "@/assets/motonita-logo.svg";
+import { MessageCircle, Loader2, ChevronLeft, Globe } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useLanguageStore } from "@/stores/useLanguageStore";
+import { FrFlag } from "@/components/icons/flags/FrFlag";
+import { GbFlag } from "@/components/icons/flags/GbFlag";
+import { MaFlag } from "@/components/icons/flags/MaFlag";
 
 interface Conv {
   id: string;
@@ -171,30 +180,18 @@ const Inbox = () => {
     else navigate("/");
   };
 
-  return (
-    <div className="flex h-[100dvh] flex-col bg-muted/30">
-      {/* Slim top bar */}
-      <div className="shrink-0 bg-background/80 backdrop-blur border-b border-border/60">
-        <div className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between px-4">
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handleBack}
-              aria-label="Back"
-              className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-muted/70 text-foreground hover:bg-muted transition-colors"
-            >
-              <ChevronLeft className="h-5 w-5" />
-            </button>
-            <span className="text-sm font-semibold text-foreground sm:text-base">Messages</span>
-          </div>
-          <Link to="/" aria-label="Motonita home" className="flex items-center">
-            <img src={logo} alt="Motonita" className="h-6 w-auto opacity-90" />
-          </Link>
-        </div>
-      </div>
+  const { language, setLanguage } = useLanguageStore();
+  const LANGS = [
+    { code: "fr" as const, Icon: FrFlag, label: "Français" },
+    { code: "en" as const, Icon: GbFlag, label: "English" },
+    { code: "ar" as const, Icon: MaFlag, label: "العربية" },
+  ];
 
+  return (
+    <div className="flex min-h-[100dvh] flex-col bg-muted/30">
       {/* Main shell */}
       <div className="flex flex-1 min-h-0 overflow-hidden">
-        <div className="mx-auto flex h-full w-full max-w-6xl flex-1 min-h-0 overflow-hidden md:my-4 md:rounded-2xl md:border md:border-border/60 md:bg-background md:shadow-sm">
+        <div className="mx-auto flex h-[100dvh] w-full max-w-6xl flex-1 min-h-0 overflow-hidden md:my-4 md:h-[calc(100dvh-2rem)] md:rounded-2xl md:border md:border-border/60 md:bg-background md:shadow-sm">
           {showList && (
             <aside
               className={cn(
@@ -204,11 +201,39 @@ const Inbox = () => {
                   : "w-[320px] shrink-0 border-r border-border/60 xl:w-[360px]"
               )}
             >
-              <div className="border-b border-border/60 px-5 py-4">
-                <h1 className="text-xl font-semibold tracking-tight text-foreground">Messages</h1>
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                  Your booking conversations
-                </p>
+              <div className="flex items-center gap-2 border-b border-border/60 px-4 py-3">
+                <button
+                  onClick={handleBack}
+                  aria-label="Back"
+                  className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted/70 text-foreground hover:bg-muted transition-colors"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                </button>
+                <h1 className="flex-1 text-base font-semibold tracking-tight text-foreground">
+                  Messages
+                </h1>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      aria-label="Change language"
+                      className="inline-flex h-9 w-9 items-center justify-center rounded-full text-foreground hover:bg-muted/70 transition-colors"
+                    >
+                      <Globe className="h-[18px] w-[18px]" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="rounded-xl">
+                    {LANGS.map((l) => (
+                      <DropdownMenuItem
+                        key={l.code}
+                        onClick={() => setLanguage(l.code)}
+                        className={cn("gap-2 rounded-lg", language === l.code && "bg-muted")}
+                      >
+                        <l.Icon />
+                        {l.label}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
               <div className="scrollbar-hide flex-1 overflow-y-auto p-2">
                 {loading ? (
