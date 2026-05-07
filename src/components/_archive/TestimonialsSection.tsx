@@ -1,3 +1,4 @@
+// ARCHIVED: Replaced with simple testimonials May 2026. Restore later when audio/video reviews are real.
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { ShieldCheck } from "lucide-react";
