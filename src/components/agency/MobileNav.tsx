@@ -3,7 +3,7 @@ import { Home, Calendar, Bike, MessageCircle, MoreHorizontal } from "lucide-reac
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import {
-  Wallet, Receipt, Sparkles, FileText, Building, Users, ShieldCheck,
+  Wallet, Receipt, FileText, Building, Users, ShieldCheck,
   BarChart, Settings, Bell, Plug, LifeBuoy, CalendarDays,
 } from "lucide-react";
 
