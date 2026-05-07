@@ -17,7 +17,7 @@ const faqs = [
   { cat: "Wallet", q: "How long do withdrawals take?", a: "Withdrawals are processed within 3 business days to your registered RIB." },
   { cat: "Verification", q: "Why is verification mandatory?", a: "Unverified agencies don't appear in renter search results. Verification protects both renters and your business." },
   { cat: "Verification", q: "How long does document review take?", a: "Most documents are reviewed within 24-48 hours. Complex cases may take up to 5 business days." },
-  { cat: "Subscription", q: "Can I switch plans anytime?", a: "Yes, upgrades take effect immediately. Downgrades apply at the end of your billing cycle." },
+  
 ];
 
 const changelog = [
@@ -25,7 +25,7 @@ const changelog = [
   { date: "Apr 10, 2026", title: "Improved: faster fleet calendar load times", tag: "Improved" },
   { date: "Apr 02, 2026", title: "New: Top-up bonuses up to 500 MAD", tag: "New" },
   { date: "Mar 25, 2026", title: "Fixed: WhatsApp link detection in messages", tag: "Fixed" },
-  { date: "Mar 12, 2026", title: "New: Multi-location support for Business plan", tag: "New" },
+  
 ];
 
 const Help = () => {
