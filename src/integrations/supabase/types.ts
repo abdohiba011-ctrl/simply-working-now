@@ -2697,6 +2697,7 @@ export type Database = {
           avatar_url: string | null
           business_address: string | null
           business_city: string | null
+          business_logo_url: string | null
           business_name: string | null
           business_type: string | null
           full_name: string | null
@@ -2709,6 +2710,7 @@ export type Database = {
           avatar_url?: string | null
           business_address?: string | null
           business_city?: string | null
+          business_logo_url?: string | null
           business_name?: string | null
           business_type?: string | null
           full_name?: string | null
@@ -2721,6 +2723,7 @@ export type Database = {
           avatar_url?: string | null
           business_address?: string | null
           business_city?: string | null
+          business_logo_url?: string | null
           business_name?: string | null
           business_type?: string | null
           full_name?: string | null
