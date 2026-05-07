@@ -3,13 +3,11 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { SegmentedTabs } from "@/components/agency/SegmentedTabs";
 
 const Profile = lazy(() => import("./Profile"));
-const Team = lazy(() => import("./Team"));
 const Verification = lazy(() => import("./Verification"));
 const Analytics = lazy(() => import("./Analytics"));
 
 const TABS = [
   { key: "profile", label: "Profile" },
-  { key: "team", label: "Team" },
   { key: "verification", label: "Verification" },
   { key: "analytics", label: "Analytics" },
 ];
