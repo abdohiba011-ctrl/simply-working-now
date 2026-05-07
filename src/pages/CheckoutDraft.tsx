@@ -723,9 +723,9 @@ const CheckoutDraft = () => {
             </Card>
           </div>
 
-          <div className="lg:col-span-2">
-            <Card className="lg:sticky lg:top-24">
-              <CardContent className="p-5 space-y-5">
+          <div className="lg:col-span-2 min-w-0">
+            <Card className="lg:sticky lg:top-24 min-w-0 overflow-hidden">
+              <CardContent className="p-5 space-y-5 min-w-0">
                 <div>
                   <h2 className="text-lg font-semibold text-foreground">
                     Booking fee:{" "}
@@ -747,7 +747,7 @@ const CheckoutDraft = () => {
                   <div id="ycpay-error" className="text-sm text-destructive mb-2" />
                   <div
                     id="ycpay-form"
-                    className="min-h-[180px] rounded-lg border border-border p-3 bg-muted/30"
+                    className="ycpay-mount min-h-[180px] w-full max-w-full min-w-0 overflow-x-auto rounded-lg border border-border p-3 bg-muted/30"
                   />
                   {ycStatus === "loading" && (
                     <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground mt-2">
@@ -763,7 +763,7 @@ const CheckoutDraft = () => {
                 </div>
 
                 {cashplusActive && (
-                  <div className="rounded-lg border-2 border-[#9FE870] bg-[#9FE870]/10 p-4 space-y-3">
+                  <div className="rounded-lg border-2 border-[#9FE870] bg-[#9FE870]/10 p-4 space-y-3 max-w-full overflow-hidden min-w-0">
                     <div className="flex items-center gap-2">
                       <Banknote className="h-5 w-5 text-[#163300]" />
                       <h4 className="font-semibold text-foreground">Pay with Cash Plus</h4>

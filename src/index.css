@@ -375,3 +375,21 @@ svg.lucide {
   stroke-linecap: round;
   stroke-linejoin: round;
 }
+
+/* ============================================================
+   YouCan Pay widget containment (Cash Plus illustration etc.)
+   Prevents injected images/iframes from overflowing the column
+   on mobile checkout.
+   ============================================================ */
+.ycpay-mount,
+.ycpay-mount * {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+.ycpay-mount img,
+.ycpay-mount svg,
+.ycpay-mount iframe,
+.ycpay-mount video {
+  max-width: 100% !important;
+  height: auto;
+}
