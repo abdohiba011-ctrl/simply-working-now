@@ -1,0 +1,1 @@
+ALTER VIEW public.booking_counterparty_profiles SET (security_invoker = false);
