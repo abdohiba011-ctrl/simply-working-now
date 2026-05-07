@@ -1,43 +1,43 @@
-## Goal
+## Problem
 
-Make the entire agency dashboard free. Hide all subscription/upgrade/lock UI. Keep the underlying subscription code intact so we can re-enable later.
+On the renter checkout page (`src/pages/CheckoutDraft.tsx`), selecting **Debit or Credit Card** renders a compact YouCan Pay form that fits the mobile column. Selecting **Cash Plus** swaps in a wider widget (gateway header banner + Cash Plus storefront illustration) injected by YouCan Pay's `ycpay.js` into `#ycpay-form`. That iframe/illustration is wider than the mobile column, so it pushes the whole card past the viewport width — causing horizontal scroll, clipped text ("ooking fee", "atform fee", "onfirmation fee"), and a misaligned page (visible in the uploaded screenshot).
 
-## Changes
+Card payment looks fine because that variant fits inside the column; only Cash Plus overflows.
 
-### 1. `src/components/agency/AgencyShell.tsx`
-- Remove the trial banner, past-due banner, and the "Account locked" full-screen overlay.
-- Always render `<Outlet />` (no `isLocked` gating).
-- Drop the `useAgencySubscription` / `computeLifecycle` calls.
-- Keep the unverified-agency banner — that's verification, not billing.
+## Root cause
 
-### 2. `src/pages/agency/Dashboard.tsx`
-- Remove the "Plan: free" line (and related `useAgencySubscription` usage on this page).
+The container that hosts the YouCan Pay widget has no width containment:
 
-### 3. `src/components/agency/MobileNav.tsx` & `src/components/agency/Header.tsx`
-- Remove the "Subscription" entry from the mobile bottom nav and the Header dropdown/menu.
+```tsx
+<div
+  id="ycpay-form"
+  className="min-h-[180px] rounded-lg border border-border p-3 bg-muted/30"
+/>
+```
 
-### 4. `src/pages/agency/Finance.tsx`
-- Remove the "Subscription" tab. Keep Wallet / Transactions / Invoices.
+Combined with the parent `<Card>` and the two-column grid, when YouCan Pay injects a wider DOM subtree (Cash Plus illustration), it stretches the column and pushes the rest of the page sideways on mobile.
 
-### 5. Subscription routes
-- In `App.tsx`, keep the redirect from `/agency/subscription` but redirect to `/agency/finance` (no `#subscription` hash) so any old link lands on a real page instead of a missing tab.
+## Fix (frontend / CSS only)
 
-### 6. Copy cleanup (small, surgical)
-- `src/pages/agency/Verification.tsx` line 592: replace the "your Motonita subscription and booking fees" sentence with a free-version equivalent ("your Motonita booking fees").
-- `src/pages/agency/Team.tsx`: drop the "enabled with Pro and Business plans" wording (becomes "Coming soon").
-- `src/pages/agency/Integrations.tsx`: drop "based on your subscription" (becomes "Coming soon").
-- `src/pages/agency/Help.tsx`: remove the "Subscription" FAQ entry and the "Multi-location for Business plan" announcement entry.
-- `src/pages/agency/Invoices.tsx`: change empty-state text to "Top-up receipts will appear here" (drop "subscription invoices").
-- `src/pages/agency/NotificationSettings.tsx`: remove the "Subscription renewal" notification row.
+Edit only `src/pages/CheckoutDraft.tsx`. No changes to YouCan Pay integration, no logic changes, no other flows touched.
 
-### 7. Files NOT changed
-- `src/pages/agency/Subscription.tsx` — left in place (unrouted, dead code) so we can revive it later.
-- `src/hooks/useAgencyData.ts` (`useAgencySubscription`, `computeLifecycle`) — left in place; just no longer consumed by the shell/dashboard.
-- DB tables/RLS — untouched.
+1. **Constrain the YouCan Pay mount node** — add `w-full max-w-full overflow-x-auto` (and `min-w-0`) so any wider injected content scrolls *inside* this box instead of expanding the page.
+2. **Force injected children to respect the container width** — add a small scoped style/class so descendant `img`, `svg`, and `iframe` inside `#ycpay-form` are capped at `max-width: 100%; height: auto;`. This shrinks the Cash Plus storefront illustration to fit the mobile column gracefully, instead of pushing the layout.
+3. **Add `min-w-0` to the right column wrapper** (`<div className="lg:col-span-2">`) and to the surrounding `<Card>` body so the flex/grid child can actually shrink below its intrinsic content width on mobile (standard Tailwind grid-overflow fix).
+4. **Cap the Cash Plus instructions block** with `max-w-full overflow-hidden` so the green "Pay with Cash Plus" panel underneath also stays inside the column.
 
-## Out of scope
-- No backend changes.
-- No translations beyond touched strings (English-only updates; Fr/Ar can follow later).
-- Marketing/agencies landing page pricing copy — only touch if you tell me to.
+No changes to:
+- The card-payment path (already responsive)
+- YouCan Pay token/script loading
+- Cash Plus detection logic, verify handler, or DB writes
+- The desktop layout (changes are width-safe at `lg:` and above)
 
-Should I also strip the "Free / Pro / Business" pricing block from the public `/agencies` marketing page, or leave that as-is for now?
+## QA after change (mobile 390px)
+
+- Card flow: layout unchanged, no regression.
+- Cash Plus flow: page no longer scrolls horizontally; "Booking fee", "Platform fee", "Confirmation fee" labels are fully visible; the Cash Plus illustration is contained (either scaled down or scrolls within its own box); the green instructions panel and "I've paid — verify now" button stay inside the column.
+- Desktop: unchanged.
+
+## Files changed
+
+- `src/pages/CheckoutDraft.tsx` (CSS-only edits to the payment container, its parent column, and the Cash Plus instructions panel)
