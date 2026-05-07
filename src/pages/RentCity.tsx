@@ -445,197 +445,35 @@ export default function RentCity() {
   const totalDays = DURATION_OPTIONS.find((d) => d.id === duration)?.days ?? 1;
 
   const filterPanel = (
-    <div className="flex flex-col h-full min-h-0">
-      <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain pr-3 [scrollbar-width:thin]">
-        <Accordion
-          type="multiple"
-          defaultValue={[
-            "neighborhood",
-            "duration",
-            "price",
-            "type",
-          ]}
-          className="space-y-1"
-        >
-        <AccordionItem value="neighborhood" className="border-border">
-          <AccordionTrigger className="text-sm font-semibold">
-            Neighborhood
-          </AccordionTrigger>
-          <AccordionContent>
-            <RadioGroup value={neighborhood} onValueChange={setNeighborhood} className="space-y-2">
-              {neighborhoodOptions.map((n) => {
-                const isPopular = popularNeighborhoodSet.has(n);
-                const count = neighborhoodCounts[n] ?? 0;
-                return (
-                  <div key={n} className="flex items-center gap-2">
-                    <RadioGroupItem value={n} id={`n-${n}`} />
-                    <Label
-                      htmlFor={`n-${n}`}
-                      className="text-sm font-normal cursor-pointer flex items-center gap-1.5 flex-1"
-                    >
-                      <span className={count === 0 ? "text-muted-foreground" : ""}>{n}</span>
-                      {isPopular && (
-                        <Star
-                          className="h-3 w-3 fill-primary text-primary"
-                          aria-label="Popular"
-                        />
-                      )}
-                      <span className="ml-auto text-xs text-muted-foreground tabular-nums">
-                        ({count})
-                      </span>
-                    </Label>
-                  </div>
-                );
-              })}
-            </RadioGroup>
-          </AccordionContent>
-        </AccordionItem>
-
-        <AccordionItem value="duration" className="border-border">
-          <AccordionTrigger className="text-sm font-semibold">
-            Rental duration
-          </AccordionTrigger>
-          <AccordionContent>
-            <div className="flex flex-wrap gap-2">
-              {DURATION_OPTIONS.map((d) => (
-                <button
-                  key={d.id}
-                  onClick={() => setDuration(d.id)}
-                  className={cn(
-                    "px-3 py-1.5 rounded-full text-xs font-medium border transition-colors",
-                    duration === d.id
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-background text-foreground border-border hover:border-primary/50"
-                  )}
-                >
-                  {d.label}
-                </button>
-              ))}
-            </div>
-          </AccordionContent>
-        </AccordionItem>
-
-        <AccordionItem value="price" className="border-border">
-          <AccordionTrigger className="text-sm font-semibold">
-            Price range
-          </AccordionTrigger>
-          <AccordionContent>
-            <PriceRangeFilter
-              prices={pricesForHistogram}
-              value={priceRange}
-              onChange={setPriceRange}
-              bounds={priceBounds}
-              step={10}
-              currency="MAD"
-            />
-          </AccordionContent>
-        </AccordionItem>
-
-        <AccordionItem value="type" className="border-border">
-          <AccordionTrigger className="text-sm font-semibold">Bike type</AccordionTrigger>
-          <AccordionContent>
-            <div className="space-y-2">
-              {BIKE_TYPES.map((bt) => (
-                <div key={bt.id} className="flex items-center gap-2">
-                  <Checkbox
-                    id={`bt-${bt.id}`}
-                    checked={selectedTypes.includes(bt.id)}
-                    onCheckedChange={() => toggle(selectedTypes, bt.id, setSelectedTypes)}
-                  />
-                  <Label htmlFor={`bt-${bt.id}`} className="text-sm font-normal cursor-pointer">
-                    {bt.label}
-                  </Label>
-                </div>
-              ))}
-            </div>
-          </AccordionContent>
-        </AccordionItem>
-
-        <AccordionItem value="fuel" className="border-border">
-          <AccordionTrigger className="text-sm font-semibold">Engine / Fuel</AccordionTrigger>
-          <AccordionContent>
-            <RadioGroup value={fuel} onValueChange={setFuel} className="space-y-2">
-              {[
-                { id: "all", label: "All" },
-                { id: "gasoline", label: "Gasoline" },
-                { id: "electric", label: "Electric" },
-              ].map((f) => (
-                <div key={f.id} className="flex items-center gap-2">
-                  <RadioGroupItem value={f.id} id={`f-${f.id}`} />
-                  <Label htmlFor={`f-${f.id}`} className="text-sm font-normal cursor-pointer">
-                    {f.label}
-                  </Label>
-                </div>
-              ))}
-            </RadioGroup>
-          </AccordionContent>
-        </AccordionItem>
-
-        <AccordionItem value="license" className="border-border">
-          <AccordionTrigger className="text-sm font-semibold">License required</AccordionTrigger>
-          <AccordionContent>
-            <div className="space-y-2">
-              {LICENSE_OPTIONS.map((l) => (
-                <div key={l.id} className="flex items-center gap-2">
-                  <Checkbox
-                    id={`l-${l.id}`}
-                    checked={licenses.includes(l.id)}
-                    onCheckedChange={() => toggle(licenses, l.id, setLicenses)}
-                  />
-                  <Label htmlFor={`l-${l.id}`} className="text-sm font-normal cursor-pointer">
-                    {l.label}
-                  </Label>
-                </div>
-              ))}
-            </div>
-          </AccordionContent>
-        </AccordionItem>
-
-        <AccordionItem value="features" className="border-border">
-          <AccordionTrigger className="text-sm font-semibold">Features</AccordionTrigger>
-          <AccordionContent>
-            <div className="space-y-2">
-              {FEATURE_OPTIONS.map((f) => (
-                <div key={f.id} className="flex items-center gap-2">
-                  <Checkbox
-                    id={`feat-${f.id}`}
-                    checked={features.includes(f.id)}
-                    onCheckedChange={() => toggle(features, f.id, setFeatures)}
-                  />
-                  <Label htmlFor={`feat-${f.id}`} className="text-sm font-normal cursor-pointer">
-                    {f.label}
-                  </Label>
-                </div>
-              ))}
-            </div>
-          </AccordionContent>
-        </AccordionItem>
-        </Accordion>
-      </div>
-
-      <div className="border-t border-border pt-4 mt-3 space-y-3 bg-background shrink-0">
-        <div className="flex items-center justify-between">
-          <button
-            onClick={clearAll}
-            className="text-sm font-medium text-foreground/70 underline underline-offset-2 hover:text-foreground"
-          >
-            Clear all
-          </button>
-          <span className="text-xs text-muted-foreground">
-            {filtered.length} {filtered.length === 1 ? "bike" : "bikes"}
-          </span>
-        </div>
-        <Button
-          variant="hero"
-          className="w-full"
-          onClick={() => setDrawerOpen(false)}
-        >
-          {activeFilterCount > 0
-            ? `Apply ${activeFilterCount} filter${activeFilterCount > 1 ? "s" : ""}`
-            : "Apply filters"}
-        </Button>
-      </div>
-    </div>
+    <FiltersPanel
+      neighborhoodOptions={neighborhoodOptions}
+      popularNeighborhoodSet={popularNeighborhoodSet}
+      neighborhoodCounts={neighborhoodCounts}
+      allCityLabel={allCityLabel}
+      pricesForHistogram={pricesForHistogram}
+      priceBounds={priceBounds}
+      filteredCount={filtered.length}
+      durationOptions={DURATION_OPTIONS}
+      bikeTypes={BIKE_TYPES}
+      licenseOptions={LICENSE_OPTIONS}
+      featureOptions={FEATURE_OPTIONS}
+      neighborhood={neighborhood}
+      setNeighborhood={setNeighborhood}
+      duration={duration}
+      setDuration={setDuration}
+      priceRange={priceRange}
+      setPriceRange={setPriceRange}
+      selectedTypes={selectedTypes}
+      setSelectedTypes={setSelectedTypes}
+      fuel={fuel}
+      setFuel={setFuel}
+      licenses={licenses}
+      setLicenses={setLicenses}
+      features={features}
+      setFeatures={setFeatures}
+      activeFilterCount={activeFilterCount}
+      onApply={() => setDrawerOpen(false)}
+    />
   );
 
   // ─── City gating ───
