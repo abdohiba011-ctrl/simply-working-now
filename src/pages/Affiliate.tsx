@@ -619,23 +619,30 @@ const Affiliate = () => {
                         help a friend save their first Motonita booking fee.
                       </p>
                     ) : (
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                        {[
-                          { label: "Invited", value: stats.invited },
-                          { label: "Signed up", value: stats.signedUp },
-                          { label: "Booked", value: stats.booked },
-                          { label: "Completed", value: stats.completed },
-                          { label: "Approved (MAD)", value: stats.approvedBalanceMad },
-                          { label: "Paid (MAD)", value: stats.paidTotalMad },
-                        ].map((s) => (
-                          <div key={s.label} className="rounded-lg border bg-muted/30 p-3 text-center">
-                            <div className="text-xl font-bold" style={{ color: FOREST }}>
-                              {s.value}
+                      <>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                          {[
+                            { label: "Invited", value: stats.invited },
+                            { label: "Signed up", value: stats.signedUp },
+                            { label: "Booked", value: stats.booked },
+                            { label: "Completed", value: stats.completed },
+                            { label: "Approved (MAD)", value: stats.approvedBalanceMad },
+                            { label: "Paid (MAD)", value: stats.paidTotalMad },
+                          ].map((s) => (
+                            <div key={s.label} className="rounded-lg border bg-muted/30 p-3 text-center">
+                              <div className="text-xl font-bold" style={{ color: FOREST }}>
+                                {s.value}
+                              </div>
+                              <div className="text-xs text-muted-foreground mt-1">{s.label}</div>
                             </div>
-                            <div className="text-xs text-muted-foreground mt-1">{s.label}</div>
-                          </div>
-                        ))}
-                      </div>
+                          ))}
+                        </div>
+                        <div className="mt-4 rounded-lg border p-3 text-center text-sm" style={{ color: FOREST }}>
+                          {stats.approvedBalanceMad >= 50
+                            ? "You are eligible for the next weekly payout."
+                            : `You need ${50 - stats.approvedBalanceMad} MAD more to be eligible for weekly payout.`}
+                        </div>
+                      </>
                     )}
                   </div>
                 </>
