@@ -42,13 +42,56 @@ const Affiliate = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const userId = useAuthStore((s) => s.user?.id ?? null);
   const referralRef = useRef<HTMLDivElement | null>(null);
   const [copied, setCopied] = useState(false);
+  const [referralCode, setReferralCode] = useState<string | null>(null);
+  const [codeLoading, setCodeLoading] = useState(false);
+  const [stats, setStats] = useState<{
+    invited: number;
+    signedUp: number;
+    booked: number;
+    completed: number;
+    approvedBalanceMad: number;
+    paidTotalMad: number;
+  }>({ invited: 0, signedUp: 0, booked: 0, completed: 0, approvedBalanceMad: 0, paidTotalMad: 0 });
 
-  // Referral backend is not yet wired. When it ships, replace this with the
-  // real link from the user's profile.
-  const referralLinkAvailable = false;
-  const referralLink = "";
+  const referralLinkAvailable = !!referralCode;
+  const referralLink = referralCode
+    ? `${window.location.origin}/signup?ref=${referralCode}`
+    : "";
+
+  // Fetch (or create) the user's referral code + stats once authenticated.
+  useEffect(() => {
+    if (!isAuthenticated || !userId) {
+      setReferralCode(null);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      setCodeLoading(true);
+      try {
+        const { supabase } = await import("@/integrations/supabase/client");
+        const { fetchReferralStats } = await import("@/lib/referral");
+        const [{ data: code, error: codeErr }, freshStats] = await Promise.all([
+          supabase.rpc("get_or_create_referral_code"),
+          fetchReferralStats(userId),
+        ]);
+        if (cancelled) return;
+        if (codeErr) {
+          console.warn("[affiliate] could not load referral code", codeErr);
+        } else if (typeof code === "string") {
+          setReferralCode(code);
+        }
+        setStats(freshStats);
+      } finally {
+        if (!cancelled) setCodeLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthenticated, userId]);
 
   useEffect(() => {
     document.documentElement.lang = language;
@@ -506,14 +549,17 @@ const Affiliate = () => {
                     </Button>
                   </div>
                 </>
+              ) : codeLoading && !referralLinkAvailable ? (
+                <div className="mt-6 rounded-lg border border-dashed bg-muted/40 p-6 text-center">
+                  <p className="text-sm text-muted-foreground">Loading your referral link…</p>
+                </div>
               ) : !referralLinkAvailable ? (
                 <div className="mt-6 rounded-lg border border-dashed bg-muted/40 p-6 text-center">
                   <p className="text-base font-medium" style={{ color: FOREST }}>
-                    Your referral link will appear here once referrals are activated.
+                    We couldn't load your referral link right now.
                   </p>
                   <p className="mt-2 text-sm text-muted-foreground">
-                    We're finalizing the referral system. You'll be notified the
-                    moment your link is ready — no action needed.
+                    Please refresh the page or try again in a moment.
                   </p>
                 </div>
               ) : (
@@ -560,6 +606,37 @@ const Affiliate = () => {
                     For Instagram or TikTok, copy the link and paste it in your bio
                     or story.
                   </p>
+
+                  {/* Real stats from DB */}
+                  <div className="mt-8 border-t pt-6">
+                    <h3 className="text-center text-base font-semibold mb-4" style={{ color: FOREST }}>
+                      Your referral stats
+                    </h3>
+                    {stats.invited === 0 ? (
+                      <p className="text-center text-sm text-muted-foreground">
+                        You haven't invited anyone yet. Share your link on WhatsApp to
+                        help a friend save their first Motonita booking fee.
+                      </p>
+                    ) : (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        {[
+                          { label: "Invited", value: stats.invited },
+                          { label: "Signed up", value: stats.signedUp },
+                          { label: "Booked", value: stats.booked },
+                          { label: "Completed", value: stats.completed },
+                          { label: "Approved (MAD)", value: stats.approvedBalanceMad },
+                          { label: "Paid (MAD)", value: stats.paidTotalMad },
+                        ].map((s) => (
+                          <div key={s.label} className="rounded-lg border bg-muted/30 p-3 text-center">
+                            <div className="text-xl font-bold" style={{ color: FOREST }}>
+                              {s.value}
+                            </div>
+                            <div className="text-xs text-muted-foreground mt-1">{s.label}</div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </>
               )}
             </div>
