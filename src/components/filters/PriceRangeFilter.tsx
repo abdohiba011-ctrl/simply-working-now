@@ -73,7 +73,7 @@ export function PriceRangeFilter({
 
       <div className="relative">
         {/* MUI dual-thumb slider */}
-        <div className="px-1 pt-2 pb-1">
+        <div className="px-1 pt-2 pb-1 py-0">
           <Slider
             value={value}
             min={min}
