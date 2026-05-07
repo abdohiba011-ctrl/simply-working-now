@@ -470,7 +470,7 @@ const Listings = () => {
       </div>
 
       {/* Results header */}
-      <div className="container mx-auto px-4 pt-6 pb-2">
+      <div className="container mx-auto px-[16px] pt-6 pb-2">
         <div className="max-w-7xl mx-auto">
           <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-1">
             {currentNeighborhood || t("listings.title")}
@@ -487,10 +487,10 @@ const Listings = () => {
       </div>
 
       {/* Grid */}
-      <div className="container mx-auto px-4 py-6 md:py-8">
+      <div className="container mx-auto px-[16px] py-6 md:py-8">
         <div className="max-w-7xl mx-auto">
           {isLoading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 md:gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-[24px]">
               {[1, 2, 3, 4].map((i) => (
                 <BikeTypeSkeleton key={i} />
               ))}
@@ -511,7 +511,7 @@ const Listings = () => {
               }}
             />
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 md:gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-[24px]">
               {sortedGroups.map(({ type, first, list }, idx) => {
                 const quantity = first?.quantity || 0;
                 const isFav = first ? favorites.has(first.id) : false;
