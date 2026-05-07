@@ -72,8 +72,8 @@ const Checkout = () => {
     ? Math.ceil((new Date(end).getTime() - new Date(pickup).getTime()) / (1000 * 60 * 60 * 24))
     : 1;
   const rentalSubtotal = days * dailyPrice;
-
-  const handlePay = async () => {
+  const effectivePlatformFee = referralDiscount ? 0 : PLATFORM_FEE_MAD;
+  const upfrontTotal = effectivePlatformFee + CONFIRMATION_FEE_MAD;
     if (!user || !bikeId || !pickup || !end) {
       toast.error(t('checkoutPage.missingInfo'));
       return;
