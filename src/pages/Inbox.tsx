@@ -268,6 +268,7 @@ const Inbox = () => {
             )}
           </section>
         )}
+        </div>
       </div>
     </div>
   );
