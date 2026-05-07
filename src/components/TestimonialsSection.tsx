@@ -65,7 +65,7 @@ export const TestimonialsSection = () => {
                 <img
                   src={tm.image}
                   alt={`${tm.name}, Motonita client in ${tm.location}`}
-                  loading="lazy"
+                  loading="eager"
                   decoding="async"
                   className="h-12 w-12 rounded-full object-cover ring-2 ring-[#9FE870]/40"
                 />
