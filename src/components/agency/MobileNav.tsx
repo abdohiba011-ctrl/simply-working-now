@@ -123,4 +123,5 @@ export const MobileNav = ({ open, onOpenChange }: Props) => {
       </SheetContent>
     </Sheet>
   </>
-);
+  );
+};
