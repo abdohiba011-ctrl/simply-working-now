@@ -27,7 +27,7 @@ const testimonials: Testimonial[] = [
       "I was worried about renting a scooter in Casablanca because I didn't know which agency to trust. Motonita made the choice easier. I could see the bike, the price, the agency, and the booking details before confirming. It removed the stress and gave me confidence to book.",
     name: "Sara",
     location: "Casablanca",
-    image: "https://images.pexels.com/photos/1462637/pexels-photo-1462637.jpeg?auto=compress&cs=tinysrgb&w=400",
+    image: "/testimonials/sara.jpg",
   },
 ];
 
