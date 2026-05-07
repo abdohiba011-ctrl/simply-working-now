@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { useAgencyStore } from "@/stores/useAgencyStore";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useAgencyBadges } from "@/hooks/useAgencyBadges";
+import { useAgencyIdentity } from "@/hooks/useAgencyData";
+import { AgencyAvatar } from "@/components/agency/AgencyAvatar";
 import { LogoutConfirmDialog } from "@/components/auth/LogoutConfirmDialog";
 import {
   Home, Calendar, Bike, MessageCircle, CalendarDays,
