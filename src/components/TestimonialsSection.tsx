@@ -20,7 +20,7 @@ const testimonials: Testimonial[] = [
       "Casablanca traffic can destroy your whole day. With Motonita, I booked a scooter quickly and moved between Maarif, Ain Diab, and the city center without waiting for taxis. It felt like I finally had control over my time.",
     name: "Youssef",
     location: "Maarif, Casablanca",
-    image: "https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg?auto=compress&cs=tinysrgb&w=400",
+    image: "/testimonials/youssef.jpg",
   },
   {
     quote:
