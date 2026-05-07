@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthStore } from "@/stores/useAuthStore";
 
@@ -7,17 +7,11 @@ export interface AgencyBadgeCounts {
   unreadMessages: number;
 }
 
-/**
- * Loads live counts for agency sidebar badges:
- *  - pendingBookings: bookings assigned to this agency with status = pending
- *  - unreadMessages : booking_messages on the agency's bookings sent by
- *                     someone else (renter/admin) and not yet read
- * Subscribes to realtime changes on both tables.
- */
 export const useAgencyBadges = (): AgencyBadgeCounts & { refresh: () => void } => {
   const user = useAuthStore((s) => s.user);
   const [pendingBookings, setPending] = useState(0);
   const [unreadMessages, setUnread] = useState(0);
+  const refreshRef = useRef<() => void>(() => {});
 
   const refresh = useCallback(async () => {
     if (!user) {
@@ -26,7 +20,6 @@ export const useAgencyBadges = (): AgencyBadgeCounts & { refresh: () => void } =
       return;
     }
 
-    // Pending bookings
     const { count: pCount } = await supabase
       .from("bookings")
       .select("id", { count: "exact", head: true })
@@ -34,7 +27,6 @@ export const useAgencyBadges = (): AgencyBadgeCounts & { refresh: () => void } =
       .or("booking_status.eq.pending,status.eq.pending");
     setPending(pCount || 0);
 
-    // Unread messages on this agency's bookings
     const { data: bks } = await supabase
       .from("bookings")
       .select("id")
@@ -54,26 +46,30 @@ export const useAgencyBadges = (): AgencyBadgeCounts & { refresh: () => void } =
     setUnread(mCount || 0);
   }, [user]);
 
+  // Keep latest refresh in ref so the realtime effect doesn't resubscribe
   useEffect(() => {
+    refreshRef.current = refresh;
     refresh();
+  }, [refresh]);
+
+  useEffect(() => {
     if (!user) return;
-    const ch = supabase
-      .channel(`agency-badges-${user.id}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "bookings" },
-        () => refresh()
-      )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "booking_messages" },
-        () => refresh()
-      )
-      .subscribe();
+    const ch = supabase.channel(`agency-badges-${user.id}-${Date.now()}`);
+    ch.on(
+      "postgres_changes" as any,
+      { event: "*", schema: "public", table: "bookings" },
+      () => refreshRef.current?.()
+    );
+    ch.on(
+      "postgres_changes" as any,
+      { event: "*", schema: "public", table: "booking_messages" },
+      () => refreshRef.current?.()
+    );
+    ch.subscribe();
     return () => {
       supabase.removeChannel(ch);
     };
-  }, [user, refresh]);
+  }, [user]);
 
   return { pendingBookings, unreadMessages, refresh };
 };
