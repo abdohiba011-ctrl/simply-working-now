@@ -1,3 +1,4 @@
+// Old agencies page, replaced May 2026 with redesigned version
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/useAuthStore";
