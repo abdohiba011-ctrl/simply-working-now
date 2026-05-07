@@ -4,12 +4,9 @@ import { SegmentedTabs } from "@/components/agency/SegmentedTabs";
 
 const Wallet = lazy(() => import("./Wallet"));
 const Transactions = lazy(() => import("./Transactions"));
-const Invoices = lazy(() => import("./Invoices"));
-
 const TABS = [
   { key: "wallet", label: "Wallet" },
   { key: "transactions", label: "Transactions" },
-  { key: "invoices", label: "Invoices" },
 ];
 
 const Finance = () => {
@@ -36,7 +33,6 @@ const Finance = () => {
       <Suspense fallback={<div className="py-10 text-center text-sm text-muted-foreground">Loading…</div>}>
         {tab === "wallet" && <Wallet />}
         {tab === "transactions" && <Transactions />}
-        {tab === "invoices" && <Invoices />}
       </Suspense>
     </div>
   );
