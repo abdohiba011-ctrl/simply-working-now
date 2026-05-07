@@ -42,13 +42,56 @@ const Affiliate = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const userId = useAuthStore((s) => s.user?.id ?? null);
   const referralRef = useRef<HTMLDivElement | null>(null);
   const [copied, setCopied] = useState(false);
+  const [referralCode, setReferralCode] = useState<string | null>(null);
+  const [codeLoading, setCodeLoading] = useState(false);
+  const [stats, setStats] = useState<{
+    invited: number;
+    signedUp: number;
+    booked: number;
+    completed: number;
+    approvedBalanceMad: number;
+    paidTotalMad: number;
+  }>({ invited: 0, signedUp: 0, booked: 0, completed: 0, approvedBalanceMad: 0, paidTotalMad: 0 });
 
-  // Referral backend is not yet wired. When it ships, replace this with the
-  // real link from the user's profile.
-  const referralLinkAvailable = false;
-  const referralLink = "";
+  const referralLinkAvailable = !!referralCode;
+  const referralLink = referralCode
+    ? `${window.location.origin}/signup?ref=${referralCode}`
+    : "";
+
+  // Fetch (or create) the user's referral code + stats once authenticated.
+  useEffect(() => {
+    if (!isAuthenticated || !userId) {
+      setReferralCode(null);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      setCodeLoading(true);
+      try {
+        const { supabase } = await import("@/integrations/supabase/client");
+        const { fetchReferralStats } = await import("@/lib/referral");
+        const [{ data: code, error: codeErr }, freshStats] = await Promise.all([
+          supabase.rpc("get_or_create_referral_code"),
+          fetchReferralStats(userId),
+        ]);
+        if (cancelled) return;
+        if (codeErr) {
+          console.warn("[affiliate] could not load referral code", codeErr);
+        } else if (typeof code === "string") {
+          setReferralCode(code);
+        }
+        setStats(freshStats);
+      } finally {
+        if (!cancelled) setCodeLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthenticated, userId]);
 
   useEffect(() => {
     document.documentElement.lang = language;
