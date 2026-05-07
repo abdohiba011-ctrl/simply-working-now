@@ -774,7 +774,7 @@ const BikeDetails = () => {
           <nav aria-label="Breadcrumb" className="mb-6 flex items-center gap-2 text-sm">
             <button
               onClick={() => navigate('/listings')}
-              className="inline-flex items-center gap-1.5 h-10 px-3 rounded-full bg-muted text-foreground border border-border hover:bg-primary hover:text-primary-foreground hover:border-primary shadow-sm transition-all font-medium"
+              className="inline-flex items-center gap-1.5 h-10 px-3 rounded-full bg-muted text-foreground border border-border hover:bg-primary hover:text-primary-foreground hover:border-primary shadow-sm transition-all font-medium mr-[12px]"
               aria-label="Back to bikes list"
             >
               <ChevronLeft className="h-5 w-5" />
