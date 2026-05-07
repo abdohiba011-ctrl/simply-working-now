@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -7,8 +7,17 @@ import { format, isToday, isYesterday } from "date-fns";
 import { cn } from "@/lib/utils";
 import { ChatThread } from "@/components/chat/ChatThread";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { MessageCircle, Loader2, ChevronLeft } from "lucide-react";
-import logo from "@/assets/motonita-logo.svg";
+import { MessageCircle, Loader2, ChevronLeft, Globe } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useLanguageStore } from "@/stores/useLanguageStore";
+import { FrFlag } from "@/components/icons/flags/FrFlag";
+import { GbFlag } from "@/components/icons/flags/GbFlag";
+import { MaFlag } from "@/components/icons/flags/MaFlag";
 
 interface Conv {
   id: string;
