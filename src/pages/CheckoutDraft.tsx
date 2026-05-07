@@ -428,15 +428,38 @@ const CheckoutDraft = () => {
 
     setYcStatus("paying");
     const { token, pid } = tokenRef.current;
+    const usingCashplus = cashplusActive;
+
+    // If user picked Cash Plus inside the YouCan widget, lock that on the
+    // booking server-side BEFORE redirecting so the confirmation page knows
+    // to use the 72h poll + voucher UI instead of the 60s card flow.
+    if (usingCashplus) {
+      await supabase
+        .from("bookings")
+        .update({ payment_method: "cashplus" })
+        .eq("id", booking.id)
+        .eq("booking_status", "draft");
+    }
+
     ycRef.current
       .pay(token)
       .then((response: any) => {
-        toast.success("Payment submitted");
+        toast.success(usingCashplus ? "Cash Plus voucher created" : "Payment submitted");
         const transactionId =
           response?.transaction_id ||
           response?.transactionId ||
           response?.transaction?.id ||
           response?.id;
+
+        // Cash Plus = no online charge yet; the user must walk to an agency.
+        // Skip the 60s /payment-status polling page (built for cards) and
+        // jump straight to the confirmation page which has the proper
+        // voucher UI + 72h background poll.
+        if (usingCashplus) {
+          navigate(`/booking/${booking.id}/confirmed`, { replace: true });
+          return;
+        }
+
         const qs = new URLSearchParams({
           pid,
           next: `/booking/${booking.id}/confirmed`,
