@@ -45,6 +45,7 @@ export const Sidebar = ({ collapsed, onToggle, hideCollapseToggle }: SidebarProp
   const location = useLocation();
   const user = useAuthStore((s) => s.user);
   const agency = useAgencyStore();
+  const identity = useAgencyIdentity();
   const { pendingBookings, unreadMessages } = useAgencyBadges();
   const [logoutOpen, setLogoutOpen] = useState(false);
 
@@ -152,13 +153,16 @@ export const Sidebar = ({ collapsed, onToggle, hideCollapseToggle }: SidebarProp
           )}
         >
           <div className={cn("flex items-center gap-3", collapsed && "flex-col gap-0")}>
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/25 text-sm font-semibold text-foreground">
-              {(user?.email || "A").charAt(0).toUpperCase()}
-            </div>
+            <AgencyAvatar
+              logoUrl={identity.logoUrl}
+              name={identity.name || user?.email}
+              size="md"
+              className="shrink-0"
+            />
             {!collapsed && (
               <div className="min-w-0 flex-1">
                 <div className="truncate text-sm font-semibold text-foreground">
-                  {user?.email?.split("@")[0] || "Agency user"}
+                  {identity.name || user?.email?.split("@")[0] || "Agency user"}
                 </div>
                 <div className="mt-0.5 inline-flex items-center rounded-full bg-card px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
                   {agency.name || "Agency"}
