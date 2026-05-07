@@ -163,12 +163,13 @@ const Inbox = () => {
   return (
     <div className="flex h-[100dvh] flex-col bg-background">
       <Header />
-      <div className="flex flex-1 min-h-0 overflow-hidden">
+      <div className="flex flex-1 min-h-0 overflow-hidden bg-muted/20">
+        <div className="mx-auto flex h-full w-full max-w-[1200px] 2xl:max-w-[1360px] flex-1 min-h-0 overflow-hidden border-x border-border bg-background shadow-sm">
         {showList && (
           <aside
             className={cn(
               "flex flex-col border-r border-border bg-card",
-              isMobile ? "w-full" : "w-[340px] shrink-0 lg:w-[360px]"
+              isMobile ? "w-full" : "w-[320px] shrink-0 xl:w-[340px] 2xl:w-[360px]"
             )}
           >
             <div className="border-b border-border px-4 py-3">
@@ -267,6 +268,7 @@ const Inbox = () => {
             )}
           </section>
         )}
+        </div>
       </div>
     </div>
   );

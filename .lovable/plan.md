@@ -1,43 +1,36 @@
-## Problem
+## Goal
+On the renter `/inbox` page, the conversation list + chat currently stretch edge‑to‑edge on large desktops, which makes message bubbles span the full screen and feel unprofessional. Add proper max‑width breakpoints and refine the chat surface so it looks like a polished messenger (Linear / WhatsApp Web / Wise style).
 
-On the renter checkout page (`src/pages/CheckoutDraft.tsx`), selecting **Debit or Credit Card** renders a compact YouCan Pay form that fits the mobile column. Selecting **Cash Plus** swaps in a wider widget (gateway header banner + Cash Plus storefront illustration) injected by YouCan Pay's `ycpay.js` into `#ycpay-form`. That iframe/illustration is wider than the mobile column, so it pushes the whole card past the viewport width — causing horizontal scroll, clipped text ("ooking fee", "atform fee", "onfirmation fee"), and a misaligned page (visible in the uploaded screenshot).
+## Scope
+Frontend / presentation only. No schema, no business logic, no realtime changes.
 
-Card payment looks fine because that variant fits inside the column; only Cash Plus overflows.
+Files to edit:
+- `src/pages/Inbox.tsx` — wrap the two‑pane layout in a centered, max‑width container with side gutters on `xl`/`2xl` screens.
+- `src/components/chat/ChatThread.tsx` — tighten the message column (cap bubble row width), refine spacing, header and composer paddings.
 
-## Root cause
+## Layout rules
 
-The container that hosts the YouCan Pay widget has no width containment:
-
-```tsx
-<div
-  id="ycpay-form"
-  className="min-h-[180px] rounded-lg border border-border p-3 bg-muted/30"
-/>
+```text
+< 768px   : full‑width single pane (list OR chat) — unchanged mobile behavior
+768–1279  : list 320px + chat fills remaining, full width
+1280–1535 : centered shell, max‑w 1200px, list 340px
+≥ 1536    : centered shell, max‑w 1360px, list 360px, soft side gutters
 ```
 
-Combined with the parent `<Card>` and the two-column grid, when YouCan Pay injects a wider DOM subtree (Cash Plus illustration), it stretches the column and pushes the rest of the page sideways on mobile.
+Inside the chat pane:
+- Messages scroll area gets an inner `max-w-[760px] mx-auto` wrapper so bubbles never span the entire desktop width.
+- Bubbles capped at `max-w-[68%]` (down from current full‑width feel).
+- Header and composer share the same inner max‑width so everything aligns.
 
-## Fix (frontend / CSS only)
+## Visual polish
+- Soft neutral chat background (`bg-muted/30`) instead of the hard `#FAFAFA`.
+- Add a subtle top shadow under the chat header on scroll.
+- Date separators centered with thin divider lines on each side.
+- Message bubbles: `rounded-2xl`, `px-3.5 py-2`, slightly tighter line‑height, time chip moved inside the bubble bottom‑right (muted).
+- Conversation list rows: increase vertical rhythm slightly, add a 2px left accent bar on the active row in primary color, and make the unread dot a solid pill consistent with the rest of the app.
+- Empty‑state ("Select a conversation") gets a slightly larger icon and a softer copy block.
 
-Edit only `src/pages/CheckoutDraft.tsx`. No changes to YouCan Pay integration, no logic changes, no other flows touched.
-
-1. **Constrain the YouCan Pay mount node** — add `w-full max-w-full overflow-x-auto` (and `min-w-0`) so any wider injected content scrolls *inside* this box instead of expanding the page.
-2. **Force injected children to respect the container width** — add a small scoped style/class so descendant `img`, `svg`, and `iframe` inside `#ycpay-form` are capped at `max-width: 100%; height: auto;`. This shrinks the Cash Plus storefront illustration to fit the mobile column gracefully, instead of pushing the layout.
-3. **Add `min-w-0` to the right column wrapper** (`<div className="lg:col-span-2">`) and to the surrounding `<Card>` body so the flex/grid child can actually shrink below its intrinsic content width on mobile (standard Tailwind grid-overflow fix).
-4. **Cap the Cash Plus instructions block** with `max-w-full overflow-hidden` so the green "Pay with Cash Plus" panel underneath also stays inside the column.
-
-No changes to:
-- The card-payment path (already responsive)
-- YouCan Pay token/script loading
-- Cash Plus detection logic, verify handler, or DB writes
-- The desktop layout (changes are width-safe at `lg:` and above)
-
-## QA after change (mobile 390px)
-
-- Card flow: layout unchanged, no regression.
-- Cash Plus flow: page no longer scrolls horizontally; "Booking fee", "Platform fee", "Confirmation fee" labels are fully visible; the Cash Plus illustration is contained (either scaled down or scrolls within its own box); the green instructions panel and "I've paid — verify now" button stay inside the column.
-- Desktop: unchanged.
-
-## Files changed
-
-- `src/pages/CheckoutDraft.tsx` (CSS-only edits to the payment container, its parent column, and the Cash Plus instructions panel)
+## Out of scope
+- Agency dashboard messages page (separate route).
+- Any change to message sending, attachments, read‑receipts, or hooks.
+- Translations / i18n keys (no new strings introduced).

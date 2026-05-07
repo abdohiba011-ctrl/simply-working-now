@@ -359,7 +359,7 @@ export const ChatThread = ({
       {/* Messages */}
       <div
         ref={scrollRef}
-        className="flex-1 min-h-0 overflow-y-auto bg-[#FAFAFA] px-3 py-4 sm:px-6"
+        className="flex-1 min-h-0 overflow-y-auto bg-muted/30 px-3 py-4 sm:px-6"
       >
         {loading ? (
           <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
@@ -406,7 +406,7 @@ export const ChatThread = ({
                   )}
                   <div
                     className={cn(
-                      "group max-w-[78%] sm:max-w-[70%]",
+                      "group max-w-[78%] sm:max-w-[68%] lg:max-w-[60%]",
                       mine ? "items-end" : "items-start"
                     )}
                   >
@@ -494,7 +494,8 @@ export const ChatThread = ({
       </div>
 
       {/* Composer */}
-      <div className="shrink-0 border-t border-[#E0E0E0] bg-white px-3 py-2 sm:px-4 sm:py-3">
+      <div className="shrink-0 border-t border-border bg-card px-3 py-2 sm:px-6 sm:py-3">
+        <div className="mx-auto max-w-3xl">
         {pending.length > 0 && (
           <div className="mb-2 flex flex-wrap gap-2">
             {pending.map((p, i) => (
@@ -576,6 +577,7 @@ export const ChatThread = ({
               <Send className="h-4 w-4" />
             )}
           </Button>
+        </div>
         </div>
       </div>
 
