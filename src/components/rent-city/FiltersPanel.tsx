@@ -400,7 +400,7 @@ export const FiltersPanel = ({
           aria-label="Clear all filters"
           className={cn(
             "h-12 rounded-full gap-1.5 bg-destructive/10 text-destructive hover:bg-destructive hover:text-destructive-foreground active:scale-95 transition-all duration-200",
-            "px-3 @[280px]:px-4",
+            "w-12 p-0 justify-center @[260px]:w-auto @[260px]:px-4",
             activeFilterCount === 0 && "opacity-0 pointer-events-none -ml-1"
           )}
         >
