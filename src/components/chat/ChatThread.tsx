@@ -4,7 +4,7 @@ import { useBookingMessages, type BookingMessage } from "@/hooks/useBookingMessa
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Paperclip,
   Send,
@@ -38,6 +38,7 @@ export interface ChatThreadProps {
   viewerRole: "renter" | "agency" | "admin";
   counterpartyName: string;
   counterpartySubtitle?: string;
+  counterpartyAvatarUrl?: string | null;
   onBack?: () => void;
   onRead?: () => void;
   className?: string;
@@ -75,6 +76,7 @@ export const ChatThread = ({
   viewerRole,
   counterpartyName,
   counterpartySubtitle,
+  counterpartyAvatarUrl,
   onBack,
   onRead,
   className,
