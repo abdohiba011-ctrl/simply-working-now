@@ -248,6 +248,11 @@ const Messages = () => {
                   counterpartyName={active.customer_name || active.customer_email || "Renter"}
                   counterpartySubtitle={`Booking #${active.id.slice(0, 8)} · ${format(new Date(active.pickup_date), "MMM d")} → ${format(new Date(active.return_date), "MMM d")}`}
                   onBack={isMobile ? () => setActiveId(null) : undefined}
+                  onRead={() => {
+                    setConvs((prev) =>
+                      prev.map((c) => (c.id === active.id ? { ...c, unread: 0 } : c))
+                    );
+                  }}
                 />
               ) : (
                 <div className="flex h-full items-center justify-center bg-[#FAFAFA] p-8">
