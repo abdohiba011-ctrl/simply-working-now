@@ -51,6 +51,7 @@ import { DateRange } from "react-day-picker";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { DesktopFilterBar } from "@/components/listings/DesktopFilterBar";
+import { FilterSheet } from "@/components/listings/FilterSheet";
 
 interface Neighborhood {
   id: string;
