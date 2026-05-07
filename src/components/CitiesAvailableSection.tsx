@@ -313,16 +313,27 @@ export const CitiesAvailableSection = () => {
         )}
 
         <div className="text-center mt-12">
-          <h3 className="text-xl md:text-2xl font-semibold mb-5">
-            {t("cities.coverageQuestion")}
+          <h3 className="text-xl md:text-2xl font-semibold mb-3">
+            Ready to ride? Book your motorbike now
           </h3>
+          <p className="text-background/70 mb-5 max-w-xl mx-auto text-sm md:text-base">
+            Pick your city, neighborhood and dates — and find your bike in 60 seconds.
+          </p>
           <div className="flex flex-wrap items-center justify-center gap-3">
             <Button
               size="lg"
-              onClick={() => navigate("/agencies")}
+              onClick={() => {
+                const el = document.getElementById("hero-city");
+                if (el) {
+                  el.scrollIntoView({ behavior: "smooth", block: "center" });
+                  setTimeout(() => (el as HTMLElement).focus?.(), 600);
+                } else {
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }
+              }}
               className="bg-primary text-primary-foreground hover:bg-primary/90"
             >
-              {t("cities.checkNow")}
+              Book your bike
               <ChevronRight className={`h-4 w-4 ${isRTL ? "mr-2 rotate-180" : "ml-2"}`} />
             </Button>
             <Button

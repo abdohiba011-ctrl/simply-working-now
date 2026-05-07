@@ -4,6 +4,7 @@ interface Testimonial {
   quote: string;
   name: string;
   location: string;
+  image: string;
 }
 
 const testimonials: Testimonial[] = [
@@ -12,18 +13,21 @@ const testimonials: Testimonial[] = [
       "Renting through Motonita was not just about getting a motorbike. It gave me freedom. I could explore Casablanca at my own rhythm, stop where I wanted, and enjoy the city without feeling stuck. The process was simple, clear, and trustworthy.",
     name: "Adam",
     location: "Ain Diab, Casablanca",
+    image: "https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=400",
   },
   {
     quote:
       "Casablanca traffic can destroy your whole day. With Motonita, I booked a scooter quickly and moved between Maarif, Ain Diab, and the city center without waiting for taxis. It felt like I finally had control over my time.",
     name: "Youssef",
     location: "Maarif, Casablanca",
+    image: "https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg?auto=compress&cs=tinysrgb&w=400",
   },
   {
     quote:
       "I was worried about renting a scooter in Casablanca because I didn't know which agency to trust. Motonita made the choice easier. I could see the bike, the price, the agency, and the booking details before confirming. It removed the stress and gave me confidence to book.",
     name: "Sara",
     location: "Casablanca",
+    image: "https://images.pexels.com/photos/1462637/pexels-photo-1462637.jpeg?auto=compress&cs=tinysrgb&w=400",
   },
 ];
 
@@ -39,10 +43,10 @@ export const TestimonialsSection = () => {
             id="testimonials-heading"
             className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-foreground"
           >
-            What early riders are saying
+            What clients are saying about us
           </h2>
           <p className="mt-3 text-base sm:text-lg text-muted-foreground">
-            Feedback from our first beta testers
+            Feedback from our clients
           </p>
         </header>
 
@@ -57,18 +61,27 @@ export const TestimonialsSection = () => {
                 animationFillMode: "backwards",
               }}
             >
+              <div className="flex items-center gap-3 mb-4">
+                <img
+                  src={tm.image}
+                  alt={`${tm.name}, Motonita client in ${tm.location}`}
+                  loading="lazy"
+                  decoding="async"
+                  className="h-12 w-12 rounded-full object-cover ring-2 ring-[#9FE870]/40"
+                />
+                <div>
+                  <div className="font-bold text-sm" style={{ color: "#163300" }}>
+                    {tm.name}
+                  </div>
+                  <div className="text-xs text-gray-500">{tm.location}</div>
+                </div>
+              </div>
               <div className="flex items-center gap-0.5 mb-3" aria-label="5 out of 5 stars">
                 {Array.from({ length: 5 }).map((_, j) => (
                   <Star key={j} className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
                 ))}
               </div>
-              <p className="text-sm leading-relaxed text-gray-700">{tm.quote}</p>
-              <div className="mt-4">
-                <span className="font-bold" style={{ color: "#9FE870" }}>
-                  — {tm.name}
-                </span>
-                <span className="text-sm text-gray-500"> · {tm.location}</span>
-              </div>
+              <p className="text-sm leading-relaxed text-gray-700">"{tm.quote}"</p>
             </article>
           ))}
         </div>
