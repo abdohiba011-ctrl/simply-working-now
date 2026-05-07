@@ -21,7 +21,16 @@ import {
   ArrowLeft,
   Heart,
   SlidersHorizontal,
+  X,
 } from "lucide-react";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+  SheetClose,
+} from "@/components/ui/sheet";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useBikeTypes, useBikes } from "@/hooks/useBikes";
 import { getBikeImageUrl } from "@/lib/bikeImages";
