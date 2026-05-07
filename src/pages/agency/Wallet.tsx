@@ -146,7 +146,7 @@ const Wallet = () => {
           </DialogHeader>
           <div className="grid gap-3 py-2">
             <Label>Amount (MAD)</Label>
-            <Input type="number" min={1} value={amount} onChange={(e) => setAmount(Number(e.target.value))} />
+            <Input type="number" min={10} value={amount} onChange={(e) => setAmount(Number(e.target.value))} />
             <div className="flex flex-wrap gap-2">
               {PRESETS.map((p) => (
                 <Button key={p} type="button" size="sm" variant="outline" onClick={() => setAmount(p)}>
