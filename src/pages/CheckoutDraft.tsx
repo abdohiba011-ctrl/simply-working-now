@@ -747,7 +747,7 @@ const CheckoutDraft = () => {
                   <div id="ycpay-error" className="text-sm text-destructive mb-2" />
                   <div
                     id="ycpay-form"
-                    className="min-h-[180px] rounded-lg border border-border p-3 bg-muted/30"
+                    className="ycpay-mount min-h-[180px] w-full max-w-full min-w-0 overflow-x-auto rounded-lg border border-border p-3 bg-muted/30"
                   />
                   {ycStatus === "loading" && (
                     <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground mt-2">
