@@ -76,6 +76,7 @@ export const ChatThread = ({
   counterpartyName,
   counterpartySubtitle,
   onBack,
+  onRead,
   className,
 }: ChatThreadProps) => {
   const { user } = useAuth();
