@@ -98,9 +98,15 @@ export default function Login({ context = "renter" }: LoginProps) {
   const identifierValue = form.watch("identifier");
   const idType = useMemo(() => detectIdentifierType(identifierValue ?? ""), [identifierValue]);
 
-  // If already authenticated, send them to the right place
+  // If already authenticated, send them to the right place.
+  // Exception: on the agency login page, an admin-only account (no agency role)
+  // should be allowed to stay and sign in / add an agency profile instead of
+  // being bounced to /admin/panel.
   useEffect(() => {
     if (isAuthenticated && user) {
+      const adminOnlyOnAgencyDoor =
+        context === "agency" && user.isAdmin && !user.roles.agency.active;
+      if (adminOnlyOnAgencyDoor) return;
       navigateAfterAuth(navigate, user, context);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

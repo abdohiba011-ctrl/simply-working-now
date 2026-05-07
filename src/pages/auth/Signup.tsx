@@ -222,7 +222,15 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
   useEffect(() => {
     // Already authenticated AND we're not in the "add agency profile" flow:
     // bounce them to their proper destination.
+    // Exception: on the agency signup page, an admin-only account (no agency
+    // role) should be allowed to stay and create an agency profile instead of
+    // being bounced to /admin/panel.
     if (isAuthenticated && authedUser && !isAddingAgencyToExistingAccount) {
+      const adminOnlyOnAgencyDoor =
+        defaultRole === "agency" &&
+        authedUser.isAdmin &&
+        !authedUser.roles.agency.active;
+      if (adminOnlyOnAgencyDoor) return;
       navigateAfterAuth(navigate, authedUser, defaultRole);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
