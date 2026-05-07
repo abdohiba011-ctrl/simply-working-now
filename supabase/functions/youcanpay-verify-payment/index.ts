@@ -151,13 +151,11 @@ Deno.serve(async (req) => {
     // Authorization: owner or admin only
     let isAdmin = false;
     {
-      const { data: roleRow } = await admin
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user.id)
-        .eq("role", "admin")
-        .maybeSingle();
-      isAdmin = !!roleRow;
+      const { data: hasAdminRole } = await admin.rpc("has_role", {
+        _user_id: user.id,
+        _role: "admin",
+      });
+      isAdmin = !!hasAdminRole;
     }
     if (payment.user_id !== user.id && !isAdmin) {
       return new Response(JSON.stringify({ error: "Forbidden" }), {

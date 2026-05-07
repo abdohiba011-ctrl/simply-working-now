@@ -74,11 +74,10 @@ Deno.serve(async (req) => {
 
     // Authorization: owner or admin
     if (tx.user_id !== user.id) {
-      const { data: roles } = await admin
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user.id);
-      const isAdmin = (roles ?? []).some((r: { role: string }) => r.role === "admin");
+      const { data: isAdmin } = await admin.rpc("has_role", {
+        _user_id: user.id,
+        _role: "admin",
+      });
       if (!isAdmin) return jsonError(403, "Forbidden");
     }
 
