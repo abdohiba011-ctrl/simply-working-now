@@ -1,4 +1,8 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
+/**
+ * Listings page showing available motorbikes for a selected city and neighborhood.
+ * Filters are displayed in a sticky bar on desktop and as a bottom sheet on mobile/tablet.
+ */
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Card, CardContent } from "@/components/ui/card";
