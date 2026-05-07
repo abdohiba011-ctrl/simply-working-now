@@ -411,7 +411,7 @@ export const FiltersPanel = ({
           {activeFilterCount > 0 ? (
             <>
               <span>Apply</span>
-              <span className="inline-flex items-center justify-center min-w-6 h-6 px-1.5 rounded-full bg-white text-primary text-xs font-bold">
+              <span className="inline-flex items-center justify-center min-w-6 h-6 px-1.5 rounded-full bg-white text-black text-xs font-bold">
                 {activeFilterCount}
               </span>
               <span>{activeFilterCount > 1 ? "filters" : "filter"}</span>
