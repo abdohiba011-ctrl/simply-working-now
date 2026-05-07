@@ -50,7 +50,7 @@ export const testimonials: Testimonial[] = [
       "J'avais besoin d'un scooter pour deux jours à Casablanca. Motonita m'a permis de comparer rapidement les options et de réserver sans perdre du temps.",
       "كنت بحاجة إلى سكوتر لمدة يومين في الدار البيضاء، وقد سهّلت موتونيتا الأمر كثيراً. قارنت بين الخيارات، تواصلت مع المؤجّر، وأتممت الحجز دون إضاعة الوقت."
     ),
-    avatarUrl: "https://i.pravatar.cc/120?img=12",
+    avatarUrl: "/testimonials/yassine.jpg",
     verified: true,
     date: "2026-03-12",
   },
