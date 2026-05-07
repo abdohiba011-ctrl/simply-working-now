@@ -69,6 +69,7 @@ const AdminBookingDetails = lazy(() => import("./pages/admin/AdminBookingDetails
 const AdminFleet = lazy(() => import("./pages/admin/AdminFleet"));
 
 const AdminAnalytics = lazy(() => import("./pages/admin/AdminAnalytics"));
+const AdminReferrals = lazy(() => import("./pages/admin/AdminReferrals"));
 const UserVerificationDetails = lazy(() => import("./pages/UserVerificationDetails"));
 const UserDetails = lazy(() => import("./pages/admin/UserDetails"));
 const AdminClientDetails = lazy(() => import("./pages/admin/AdminClientDetails"));
