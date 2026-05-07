@@ -23,7 +23,17 @@ import {
   Heart,
   SlidersHorizontal,
   X,
+  ChevronLeft,
+  ChevronRight,
+  ChevronDown,
+  Check,
 } from "lucide-react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { useRef } from "react";
 import {
   Sheet,
   SheetContent,
