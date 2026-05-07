@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Header } from "@/components/Header";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { format, isToday, isYesterday } from "date-fns";
 import { cn } from "@/lib/utils";
 import { ChatThread } from "@/components/chat/ChatThread";
@@ -16,6 +16,7 @@ interface Conv {
   booking_status: string | null;
   agency_user_id: string | null;
   agency_name: string;
+  agency_avatar_url: string | null;
   bike_name: string;
   unread: number;
   last_at: string | null;
@@ -84,14 +85,17 @@ const Inbox = () => {
         agencyIds.length
           ? supabase
               .from("booking_counterparty_profiles")
-              .select("user_id, business_name, full_name, name")
+              .select("user_id, business_name, full_name, name, avatar_url")
               .in("user_id", agencyIds)
           : Promise.resolve({ data: [] as any[] }),
       ]);
 
-      const agencyMap = new Map<string, string>();
+      const agencyMap = new Map<string, { name: string; avatar: string | null }>();
       ((agencies as any).data || []).forEach((a: any) => {
-        agencyMap.set(a.user_id, a.business_name || a.full_name || a.name || "Agency");
+        agencyMap.set(a.user_id, {
+          name: a.business_name || a.full_name || a.name || "Agency",
+          avatar: a.avatar_url || null,
+        });
       });
 
       const lastByBooking = new Map<string, any>();
@@ -105,15 +109,15 @@ const Inbox = () => {
 
       const enriched: Conv[] = list.map((b) => {
         const last = lastByBooking.get(b.id);
+        const ag = b.assigned_to_business ? agencyMap.get(b.assigned_to_business) : null;
         return {
           id: b.id,
           pickup_date: b.pickup_date,
           return_date: b.return_date,
           booking_status: b.booking_status,
           agency_user_id: b.assigned_to_business,
-          agency_name: b.assigned_to_business
-            ? agencyMap.get(b.assigned_to_business) || "Agency"
-            : "Agency",
+          agency_name: ag?.name || "Agency",
+          agency_avatar_url: ag?.avatar || null,
           bike_name: b.bikes?.bike_types?.name || "Motorbike",
           unread: unreadByBooking.get(b.id) || 0,
           last_at: last?.created_at ?? null,
@@ -201,6 +205,9 @@ const Inbox = () => {
                       )}
                     >
                       <Avatar className="h-10 w-10 shrink-0">
+                        {c.agency_avatar_url ? (
+                          <AvatarImage src={c.agency_avatar_url} alt={c.agency_name} />
+                        ) : null}
                         <AvatarFallback className="bg-primary/15 text-xs font-semibold text-foreground">
                           {initials(c.agency_name)}
                         </AvatarFallback>
@@ -252,6 +259,7 @@ const Inbox = () => {
                 bookingId={active.id}
                 viewerRole="renter"
                 counterpartyName={active.agency_name}
+                counterpartyAvatarUrl={active.agency_avatar_url}
                 counterpartySubtitle={`Booking #${active.id.slice(0, 8)} · ${active.bike_name}`}
                 onBack={isMobile ? () => setActiveId(null) : undefined}
                 onRead={() => {
