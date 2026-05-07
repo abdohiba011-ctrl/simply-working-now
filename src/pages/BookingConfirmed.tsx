@@ -205,6 +205,207 @@ const BookingConfirmed = () => {
 
   if (!booking) return null;
 
+  // Build a short, human-friendly reference for Cash Plus: 8 hex chars, uppercased.
+  const shortRef = booking.id.slice(0, 8).toUpperCase();
+  const cashplusAmount = 60; // platform fee + confirmation fee, paid upfront in cash
+  const cashplusShareText =
+    `Motonita booking — pay ${cashplusAmount} MAD at any Cash Plus agency in Morocco.\n` +
+    `Reference: ${shortRef}\n` +
+    `Find an agency: https://www.cashplus.ma/agences`;
+
+  const handleCopyRef = async () => {
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(shortRef);
+      } else {
+        const ta = document.createElement("textarea");
+        ta.value = shortRef;
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+      }
+      toast.success("Reference copied");
+    } catch {
+      toast.error("Could not copy — long-press to copy manually");
+    }
+  };
+
+  const handleShareWhatsApp = () => {
+    const url = `https://wa.me/?text=${encodeURIComponent(cashplusShareText)}`;
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
+
+  // ---------- Dedicated Cash Plus voucher screen ----------
+  if (isCashplus && phase === "waiting") {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="container mx-auto px-4 py-10 max-w-2xl space-y-6">
+          {/* Hero */}
+          <div className="text-center">
+            <div className="inline-flex items-center justify-center h-16 w-16 rounded-full bg-[#9FE870]/25 mb-4">
+              <Banknote className="h-9 w-9 text-[#163300]" />
+            </div>
+            <h1 className="text-3xl font-bold tracking-tight text-foreground">
+              Almost done — pay at Cash Plus
+            </h1>
+            <p className="text-muted-foreground mt-2 max-w-md mx-auto">
+              Your booking is held. Walk into any Cash Plus agency in Morocco,
+              hand over the reference and {cashplusAmount} MAD in cash, and
+              we'll confirm your bike automatically.
+            </p>
+          </div>
+
+          {/* Reference card */}
+          <Card className="border-2 border-[#9FE870]">
+            <CardContent className="p-6 space-y-5">
+              <div>
+                <p className="text-xs uppercase tracking-wider text-muted-foreground mb-2">
+                  Your reference
+                </p>
+                <div className="flex items-center justify-between gap-3 rounded-lg bg-muted/40 border border-border p-4">
+                  <span className="text-2xl sm:text-3xl font-mono font-bold tracking-widest text-foreground">
+                    {shortRef}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleCopyRef}
+                    className="shrink-0"
+                  >
+                    <Copy className="h-4 w-4 mr-1.5" />
+                    Copy
+                  </Button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div className="rounded-lg bg-muted/30 p-3">
+                  <p className="text-xs text-muted-foreground">Amount to pay</p>
+                  <p className="font-bold text-foreground text-lg">{cashplusAmount} MAD</p>
+                </div>
+                <div className="rounded-lg bg-muted/30 p-3">
+                  <p className="text-xs text-muted-foreground">Expires in</p>
+                  <p className="font-bold text-foreground text-lg">72 hours</p>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Button
+                  variant="outline"
+                  onClick={handleShareWhatsApp}
+                  className="flex-1"
+                >
+                  <Share2 className="h-4 w-4 mr-2" />
+                  Send to WhatsApp
+                </Button>
+                <Button variant="outline" asChild className="flex-1">
+                  <a
+                    href="https://www.cashplus.ma/agences"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <MapPin className="h-4 w-4 mr-2" />
+                    Find nearest agency
+                    <ExternalLink className="h-3 w-3 ml-1.5" />
+                  </a>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* How to pay */}
+          <Card>
+            <CardContent className="p-5 space-y-3">
+              <h3 className="font-semibold text-foreground">How to pay</h3>
+              <ol className="list-decimal list-inside text-sm text-muted-foreground space-y-1.5">
+                <li>Go to any Cash Plus agency in Morocco.</li>
+                <li>Show the reference <span className="font-mono font-semibold text-foreground">{shortRef}</span> to the agent.</li>
+                <li>Pay <span className="font-semibold text-foreground">{cashplusAmount} MAD</span> in cash.</li>
+                <li>Your booking confirms automatically — you don't need to come back here.</li>
+              </ol>
+            </CardContent>
+          </Card>
+
+          {/* Status pill */}
+          <div className="flex items-center justify-center gap-2 rounded-full border border-border bg-muted/30 px-4 py-2 text-sm text-muted-foreground mx-auto w-fit">
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            Waiting for payment at Cash Plus
+          </div>
+
+          {/* Booking summary (compact) */}
+          <Card>
+            <CardContent className="p-5 space-y-4">
+              <div className="flex gap-4">
+                <div className="w-16 h-16 rounded-lg overflow-hidden bg-muted flex-shrink-0">
+                  {booking.bike_image ? (
+                    <img
+                      src={booking.bike_image}
+                      alt={booking.bike_name ?? "Motorbike"}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <BikeIcon className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h2 className="font-semibold text-foreground truncate">
+                    {booking.bike_name ?? "Motorbike"}
+                  </h2>
+                  <p className="text-xs text-muted-foreground">
+                    {format(new Date(booking.pickup_date), "MMM d")} →{" "}
+                    {format(new Date(booking.return_date), "MMM d, yyyy")}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {booking.delivery_method === "delivery"
+                      ? "Delivery"
+                      : "Pickup at agency"}{" "}
+                    · {booking.pickup_location ?? "—"}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Button asChild variant="hero" className="flex-1">
+                  <Link to="/booking-history">View my bookings</Link>
+                </Button>
+                <Button asChild variant="outline" className="flex-1">
+                  <Link to="/inbox">
+                    <MessageCircle className="h-4 w-4 mr-2" />
+                    Message agency
+                  </Link>
+                </Button>
+              </div>
+
+              <p className="text-[11px] text-muted-foreground text-center">
+                You can safely close this page. We'll email you once Cash Plus
+                confirms your payment.
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Subtle escape hatch */}
+          <div className="text-center">
+            <button
+              type="button"
+              onClick={handleVerifyNow}
+              disabled={verifying}
+              className="text-xs text-muted-foreground hover:text-foreground underline disabled:opacity-50"
+            >
+              {verifying ? "Checking…" : "Already paid? Check now"}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
