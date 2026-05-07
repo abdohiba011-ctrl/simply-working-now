@@ -275,63 +275,196 @@ const Listings = () => {
       <Header />
 
       {/* Sticky filter bar */}
-      <div className="sticky top-16 z-40 bg-background/95 backdrop-blur-md border-b border-border">
-        <div className="container mx-auto px-4 py-3">
-          {/* Back + title row */}
-          <div className="flex items-center justify-between mb-3">
+      <div className="sticky top-[64px] z-[40] bg-background/95 backdrop-blur-md border-b border-border">
+        <div className="container mx-auto px-0 py-3">
+          {/* Mobile/Tablet: Compact filter row */}
+          <div className="flex lg:hidden items-center justify-between px-[16px]">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => navigate("/")}
-              className="gap-2 bg-muted text-foreground hover:bg-primary hover:text-primary-foreground"
+              className="gap-2 bg-muted text-foreground hover:bg-primary hover:text-primary-foreground rounded-full"
             >
               <ArrowLeft className={cn("h-4 w-4", isRTL && "rotate-180")} />
               <span className="hidden sm:inline">{t("listings.backToHomepage")}</span>
             </Button>
-            <div className="hidden md:flex items-center gap-2 text-sm text-muted-foreground">
-              <SlidersHorizontal className="h-4 w-4" />
-              <span>{t("listings.filtersTitle")}</span>
-            </div>
+
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2 rounded-full border-border bg-background hover:bg-muted"
+                >
+                  <SlidersHorizontal className="h-4 w-4" />
+                  <span>{t("listings.filtersTitle")}</span>
+                  {(selectedTab || dateRange) && (
+                    <Badge variant="secondary" className="h-4 w-4 p-0 flex items-center justify-center bg-primary text-primary-foreground border-0 text-[10px]">
+                      {[selectedTab, dateRange].filter(Boolean).length}
+                    </Badge>
+                  )}
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="bottom" className="h-[85dvh] rounded-t-[24px] p-0 border-t-0 bg-background transition-transform duration-300 ease-in-out">
+                <div className="flex flex-col h-full">
+                  <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+                    <SheetTitle className="text-xl font-bold">{t("listings.filtersTitle")}</SheetTitle>
+                    <SheetClose className="rounded-full p-2 bg-muted/50 hover:bg-muted transition-colors">
+                      <X className="h-5 w-5" />
+                    </SheetClose>
+                  </div>
+                  
+                  <div className="flex-1 overflow-y-auto p-6 space-y-8 scrollbar-hide">
+                    {/* Location Section */}
+                    <div className="space-y-4">
+                      <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
+                        <MapPinIcon className="h-4 w-4" />
+                        {t("home.where")}
+                      </h3>
+                      <div className="flex flex-wrap gap-2">
+                        {neighborhoods.map((n) => (
+                          <button
+                            key={n.id}
+                            onClick={() => handleTabChange(n.id)}
+                            className={cn(
+                              "px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 border",
+                              selectedTab === n.id
+                                ? "bg-foreground text-background border-foreground"
+                                : "bg-background text-foreground border-border hover:border-foreground/40"
+                            )}
+                          >
+                            {n.name}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Date Section */}
+                    <div className="space-y-4">
+                      <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
+                        <Calendar className="h-4 w-4" />
+                        {t("home.when")}
+                      </h3>
+                      <div className="bg-muted/30 p-1 rounded-2xl border border-border">
+                        <BookingDatePicker
+                          value={dateRange}
+                          onChange={handleDateChange}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Sort Section */}
+                    <div className="space-y-4 pb-4">
+                      <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
+                        <SlidersHorizontal className="h-4 w-4" />
+                        {t("listings.sortBy")}
+                      </h3>
+                      <div className="grid grid-cols-1 gap-2">
+                        {[
+                          { value: "recommended", label: t("listings.sortRecommended") },
+                          { value: "price-asc", label: t("listings.sortPriceLow") },
+                          { value: "price-desc", label: t("listings.sortPriceHigh") },
+                          { value: "rating", label: t("listings.sortRating") },
+                        ].map((opt) => (
+                          <button
+                            key={opt.value}
+                            onClick={() => setSortBy(opt.value as SortOption)}
+                            className={cn(
+                              "flex items-center justify-between px-4 py-3 rounded-xl border text-sm font-medium transition-all",
+                              sortBy === opt.value
+                                ? "bg-primary/10 border-primary text-foreground"
+                                : "bg-background border-border text-muted-foreground"
+                            )}
+                          >
+                            {opt.label}
+                            {sortBy === opt.value && <div className="h-2 w-2 rounded-full bg-primary" />}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-6 border-t border-border bg-background grid grid-cols-2 gap-4">
+                    <Button 
+                      variant="outline" 
+                      className="rounded-full h-12 font-semibold"
+                      onClick={() => {
+                        setSelectedTab(neighborhoods[0]?.id || "");
+                        setDateRange(undefined);
+                        setSortBy("recommended");
+                      }}
+                    >
+                      {t("listings.clearAll") || "Reset"}
+                    </Button>
+                    <SheetClose asChild>
+                      <Button className="rounded-full h-12 font-semibold bg-primary text-primary-foreground hover:bg-primary/90">
+                        {t("listings.applyFilters") || "Show results"}
+                      </Button>
+                    </SheetClose>
+                  </div>
+                </div>
+              </SheetContent>
+            </Sheet>
           </div>
 
-          {/* Location pills - horizontal scroll */}
-          <div className="flex items-center gap-2 mb-3 overflow-x-auto pb-1 scrollbar-hide -mx-4 px-4">
-            {neighborhoods.map((n) => (
-              <button
-                key={n.id}
-                onClick={() => handleTabChange(n.id)}
-                className={cn(
-                  "flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 border",
-                  selectedTab === n.id
-                    ? "bg-foreground text-background border-foreground"
-                    : "bg-background text-foreground border-border hover:border-foreground/40"
-                )}
+          {/* Desktop Filter Bar (lg and up) */}
+          <div className="hidden lg:block">
+            {/* Back + title row */}
+            <div className="flex items-center justify-between mb-3 px-[16px]">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate("/")}
+                className="gap-2 bg-muted text-foreground hover:bg-primary hover:text-primary-foreground rounded-full"
               >
-                <MapPinIcon className="inline h-3.5 w-3.5 mr-1.5 -mt-0.5" />
-                {n.name}
-              </button>
-            ))}
-          </div>
-
-          {/* Date + sort row */}
-          <div className="flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between">
-            <div className="flex-1 sm:max-w-md">
-              <BookingDatePicker
-                value={dateRange}
-                onChange={handleDateChange}
-              />
+                <ArrowLeft className={cn("h-4 w-4", isRTL && "rotate-180")} />
+                <span className="hidden sm:inline">{t("listings.backToHomepage")}</span>
+              </Button>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <SlidersHorizontal className="h-4 w-4" />
+                <span>{t("listings.filtersTitle")}</span>
+              </div>
             </div>
-            <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
-              <SelectTrigger className="w-full sm:w-[200px]">
-                <SelectValue placeholder={t("listings.sortBy")} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="recommended">{t("listings.sortRecommended")}</SelectItem>
-                <SelectItem value="price-asc">{t("listings.sortPriceLow")}</SelectItem>
-                <SelectItem value="price-desc">{t("listings.sortPriceHigh")}</SelectItem>
-                <SelectItem value="rating">{t("listings.sortRating")}</SelectItem>
-              </SelectContent>
-            </Select>
+
+            {/* Location pills - horizontal scroll */}
+            <div className="flex items-center gap-2 mb-3 overflow-x-auto pb-1 scrollbar-hide -mx-0 px-[16px]">
+              {neighborhoods.map((n) => (
+                <button
+                  key={n.id}
+                  onClick={() => handleTabChange(n.id)}
+                  className={cn(
+                    "flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 border",
+                    selectedTab === n.id
+                      ? "bg-foreground text-background border-foreground"
+                      : "bg-background text-foreground border-border hover:border-foreground/40"
+                  )}
+                >
+                  <MapPinIcon className="inline h-3.5 w-3.5 mr-1.5 -mt-0.5" />
+                  {n.name}
+                </button>
+              ))}
+            </div>
+
+            {/* Date + sort row */}
+            <div className="flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between px-[16px]">
+              <div className="flex-1 sm:max-w-md">
+                <BookingDatePicker
+                  value={dateRange}
+                  onChange={handleDateChange}
+                />
+              </div>
+              <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
+                <SelectTrigger className="w-full sm:w-[200px] rounded-full">
+                  <SelectValue placeholder={t("listings.sortBy")} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="recommended">{t("listings.sortRecommended")}</SelectItem>
+                  <SelectItem value="price-asc">{t("listings.sortPriceLow")}</SelectItem>
+                  <SelectItem value="price-desc">{t("listings.sortPriceHigh")}</SelectItem>
+                  <SelectItem value="rating">{t("listings.sortRating")}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
       </div>
