@@ -29,7 +29,7 @@ export const HeroSection = () => {
             Keep 100% of every rental.
           </h1>
           <p className="text-lg sm:text-xl text-white/90 mb-8 leading-relaxed">
-            Motonita is Morocco's first peer-to-peer motorbike rental
+            Motonita is Morocco's first motorbike rental
             marketplace. List your bikes for free. We send you tourists.
           </p>
           <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-8">
