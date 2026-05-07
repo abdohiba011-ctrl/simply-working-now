@@ -112,21 +112,43 @@ const Motorbikes = () => {
   return (
     <AgencyLayout>
       <div className="mx-auto max-w-7xl space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Motorbikes</h1>
-            <p className="text-sm text-muted-foreground">
-              {bikes.length} {tab === "archived" ? "archived" : "in your fleet"}
-            </p>
+        <div className="flex flex-wrap items-center gap-3 lg:flex-nowrap">
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl font-semibold tracking-tight">Motorbikes</h1>
+            <span className="rounded-full border border-border bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+              {bikes.length} {tab === "archived" ? "archived" : "in fleet"}
+            </span>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="relative w-64">
+
+          <div className="inline-flex rounded-md border border-border p-0.5">
+            <button
+              onClick={() => setTab("active")}
+              className={cn(
+                "rounded px-3 py-1.5 text-xs font-medium transition-colors",
+                tab === "active" ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              Active
+            </button>
+            <button
+              onClick={() => setTab("archived")}
+              className={cn(
+                "inline-flex items-center gap-1 rounded px-3 py-1.5 text-xs font-medium transition-colors",
+                tab === "archived" ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <Archive className="h-3 w-3" /> Archived
+            </button>
+          </div>
+
+          <div className="ml-auto flex flex-wrap items-center gap-2">
+            <div className="relative w-full sm:w-56">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder="Search…"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-9"
+                className="h-9 pl-9"
               />
             </div>
             <div className="inline-flex rounded-md border border-border p-0.5">
@@ -151,32 +173,10 @@ const Motorbikes = () => {
                 <Rows3 className="h-3.5 w-3.5" /> Table
               </button>
             </div>
-            <Button onClick={() => openWizard()}>
-              <Plus className="mr-2 h-4 w-4" /> Add motorbike
+            <Button onClick={() => openWizard()} size="sm" className="h-9">
+              <Plus className="mr-1.5 h-4 w-4" /> Add motorbike
             </Button>
           </div>
-        </div>
-
-        {/* Active / Archived tabs */}
-        <div className="inline-flex rounded-md border border-border p-0.5">
-          <button
-            onClick={() => setTab("active")}
-            className={cn(
-              "rounded px-3 py-1.5 text-xs font-medium transition-colors",
-              tab === "active" ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground"
-            )}
-          >
-            Active
-          </button>
-          <button
-            onClick={() => setTab("archived")}
-            className={cn(
-              "inline-flex items-center gap-1 rounded px-3 py-1.5 text-xs font-medium transition-colors",
-              tab === "archived" ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground"
-            )}
-          >
-            <Archive className="h-3 w-3" /> Archived
-          </button>
         </div>
 
         {loading ? (
