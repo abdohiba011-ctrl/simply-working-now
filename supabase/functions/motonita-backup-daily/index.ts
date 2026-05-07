@@ -190,10 +190,27 @@ Deno.serve(async (req) => {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           })
         }
+      } else {
+        // Daily/cron path: require a shared secret header so unauthenticated
+        // attackers cannot spam backup runs and trigger admin email floods.
+        const expectedSecret = Deno.env.get('BACKUP_CRON_SECRET')
+        const providedSecret = req.headers.get('x-backup-secret') || ''
+        if (!expectedSecret || providedSecret !== expectedSecret) {
+          return new Response(
+            JSON.stringify({ error: 'Forbidden' }),
+            { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+          )
+        }
       }
+    } else {
+      // Non-POST methods are not allowed.
+      return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+        status: 405,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
     }
   } catch (_e) {
-    // ignore body parse errors; treat as daily
+    // ignore body parse errors; treat as daily (still requires secret above)
   }
 
   // Create run row
