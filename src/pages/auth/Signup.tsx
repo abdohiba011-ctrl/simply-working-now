@@ -30,7 +30,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useAuthStore } from "@/stores/useAuthStore";
-import { COMMON_PASSWORDS } from "@/lib/mockAuth";
 import { cn } from "@/lib/utils";
 import { navigateAfterAuth } from "@/lib/routeAfterAuth";
 import { checkAccountMethod } from "@/lib/checkAccountMethod";
@@ -137,49 +136,6 @@ function buildSchema(role: "renter" | "agency") {
           message: "Passwords don't match",
         });
       }
-      const pw = data.password;
-      if (!/[A-Z]/.test(pw))
-        ctx.addIssue({
-          path: ["password"],
-          code: z.ZodIssueCode.custom,
-          message: "Must include 1 uppercase letter",
-        });
-      if (!/[a-z]/.test(pw))
-        ctx.addIssue({
-          path: ["password"],
-          code: z.ZodIssueCode.custom,
-          message: "Must include 1 lowercase letter",
-        });
-      if (!/\d/.test(pw))
-        ctx.addIssue({
-          path: ["password"],
-          code: z.ZodIssueCode.custom,
-          message: "Must include 1 number",
-        });
-      if (COMMON_PASSWORDS.has(pw.toLowerCase()))
-        ctx.addIssue({
-          path: ["password"],
-          code: z.ZodIssueCode.custom,
-          message: "This password is too common",
-        });
-      const emailLocal = data.email.split("@")[0]?.toLowerCase();
-      if (emailLocal && emailLocal.length >= 3 && pw.toLowerCase().includes(emailLocal))
-        ctx.addIssue({
-          path: ["password"],
-          code: z.ZodIssueCode.custom,
-          message: "Password can't contain parts of your email",
-        });
-      if (
-        data.name &&
-        data.name.trim().length >= 3 &&
-        pw.toLowerCase().includes(data.name.trim().toLowerCase().split(" ")[0])
-      )
-        ctx.addIssue({
-          path: ["password"],
-          code: z.ZodIssueCode.custom,
-          message: "Password can't contain your name",
-        });
-
       const phone = (data.phone ?? "").replace(/\s+/g, "");
       if (role === "agency" && !phone) {
         ctx.addIssue({
@@ -227,32 +183,9 @@ function buildSchema(role: "renter" | "agency") {
 
 type SignupValues = z.infer<ReturnType<typeof buildSchema>>;
 
-function passwordRules(pw: string) {
-  return [
-    { id: "length", label: "8+ characters", ok: pw.length >= 8 },
-    { id: "upper", label: "1 uppercase", ok: /[A-Z]/.test(pw) },
-    { id: "lower", label: "1 lowercase", ok: /[a-z]/.test(pw) },
-    { id: "number", label: "1 number", ok: /\d/.test(pw) },
-  ];
-}
-
-function passwordStrength(pw: string): { score: 0 | 1 | 2 | 3; label: string; color: string } {
-  if (!pw) return { score: 0, label: "", color: "transparent" };
-  const hasLen = pw.length >= 8;
-  const hasUpper = /[A-Z]/.test(pw);
-  const hasLower = /[a-z]/.test(pw);
-  const hasNumber = /\d/.test(pw);
-  const hasSymbol = /[^A-Za-z0-9]/.test(pw);
-  const isLong = pw.length >= 10;
-
-  if (!hasLen || (!hasUpper && !hasNumber)) {
-    return { score: 1, label: "Weak", color: "#dc2626" };
-  }
-  if (isLong && hasUpper && hasLower && hasNumber && hasSymbol) {
-    return { score: 3, label: "Strong", color: "#9FE870" };
-  }
-  return { score: 2, label: "Medium", color: "#f59e0b" };
-}
+// NOTE: Supabase HIBP (pwned password) check is configured at project level
+// in Authentication → Settings → Password requirements. To disable entirely,
+// turn off "Leaked password protection" in the Lovable Cloud auth settings.
 
 interface SignupProps {
   defaultRole?: "renter" | "agency";
