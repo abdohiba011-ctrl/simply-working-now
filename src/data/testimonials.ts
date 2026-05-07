@@ -111,9 +111,9 @@ export const testimonials: Testimonial[] = [
   },
   // ── Column 2 ──────────────────────────────────────────────────────────
   {
-    id: "amine-rabat",
+    id: "youssef-rabat",
     type: "text",
-    name: "Amine",
+    name: "Youssef",
     city: "Rabat",
     rentalType: t("Motorbike rental", "Location de moto", "تأجير دراجة نارية"),
     rating: 5,
@@ -122,7 +122,7 @@ export const testimonials: Testimonial[] = [
       "Ce qui m'a rassuré, c'est la clarté. Je pouvais voir les détails, choisir selon mon budget et mieux préparer mon trajet.",
       "أهمّ ما منحني الثقة هو الوضوح. تمكّنت من رؤية التفاصيل واختيار ما يناسب ميزانيتي والتخطيط لرحلتي قبل الانطلاق."
     ),
-    avatarUrl: "https://i.pravatar.cc/120?img=33",
+    avatarUrl: "/testimonials/youssef.jpg",
     verified: true,
     date: "2026-02-28",
   },
