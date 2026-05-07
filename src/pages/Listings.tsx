@@ -340,7 +340,7 @@ const Listings = () => {
                     </div>
 
                     {/* Date Section */}
-                    <div className="space-y-4">
+                    <div className="space-y-4 pt-4">
                       <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
                         <Calendar className="h-4 w-4" />
                         {t("home.when")}
@@ -354,7 +354,7 @@ const Listings = () => {
                     </div>
 
                     {/* Sort Section */}
-                    <div className="space-y-4 pb-4">
+                    <div className="space-y-4 pt-4 pb-4">
                       <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
                         <SlidersHorizontal className="h-4 w-4" />
                         {t("listings.sortBy")}
