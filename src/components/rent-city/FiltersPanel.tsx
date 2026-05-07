@@ -390,20 +390,22 @@ export const FiltersPanel = ({
 
       {/* Single-row sticky action bar */}
       <div
-        className="flex items-center gap-2 border-t border-border bg-background/95 backdrop-blur px-4 py-3 shrink-0"
+        className="@container flex items-center gap-2 border-t border-border bg-background/95 backdrop-blur px-4 py-3 shrink-0"
         style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom, 0px))" }}
       >
         <Button
           variant="ghost"
           size="sm"
           onClick={clearAll}
+          aria-label="Clear all filters"
           className={cn(
-            "h-9 rounded-full gap-1.5 px-3 bg-destructive/10 text-destructive hover:bg-destructive hover:text-destructive-foreground active:scale-95 transition-all duration-200",
+            "h-12 rounded-full gap-1.5 bg-destructive/10 text-destructive hover:bg-destructive hover:text-destructive-foreground active:scale-95 transition-all duration-200",
+            "px-3 @[280px]:px-4",
             activeFilterCount === 0 && "opacity-0 pointer-events-none -ml-1"
           )}
         >
-          <X className="h-4 w-4" />
-          Clear all
+          <X className="h-4 w-4 shrink-0" />
+          <span className="hidden @[260px]:inline">Clear all</span>
         </Button>
 
         <Button
