@@ -14,6 +14,10 @@ import {
   Loader2,
   AlertTriangle,
   LifeBuoy,
+  Banknote,
+  Copy,
+  ExternalLink,
+  Share2,
 } from "lucide-react";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
