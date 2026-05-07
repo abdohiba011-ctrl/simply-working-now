@@ -204,14 +204,13 @@ export const useAgencyIdentity = (): AgencyIdentity & { refresh: () => void } =>
   useEffect(() => {
     refresh();
     if (!userId) return;
-    const ch = supabase
-      .channel(`agency-identity-${userId}`)
-      .on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "profiles", filter: `user_id=eq.${userId}` },
-        () => refresh()
-      )
-      .subscribe();
+    const ch = supabase.channel(`agency-identity-${userId}-${Date.now()}`);
+    ch.on(
+      "postgres_changes" as any,
+      { event: "UPDATE", schema: "public", table: "profiles", filter: `user_id=eq.${userId}` },
+      () => refresh()
+    );
+    ch.subscribe();
     return () => {
       supabase.removeChannel(ch);
     };
