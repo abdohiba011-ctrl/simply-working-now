@@ -14,7 +14,12 @@ import {
   Check,
   X,
   ArrowLeft,
+  Sparkles,
+  ShieldCheck,
 } from "lucide-react";
+import { PasswordStrengthIndicator } from "@/components/PasswordStrengthIndicator";
+import { generateStrongPassword } from "@/lib/passwordGenerator";
+import { COMMON_PASSWORDS } from "@/lib/mockAuth";
 
 import { AgencyAuthLayout } from "@/components/auth/AgencyAuthLayout";
 import { RenterAuthLayout } from "@/components/auth/RenterAuthLayout";
@@ -117,7 +122,18 @@ function buildSchema(role: "renter" | "agency") {
         .max(100, "Name is too long"),
       email: z.string().email("Enter a valid email").max(255),
       phone: z.string().trim().optional().or(z.literal("")),
-      password: z.string().min(8, "Password must be at least 8 characters"),
+      password: role === "agency"
+        ? z
+            .string()
+            .min(8, "Password must be at least 8 characters")
+            .regex(/[A-Z]/, "Add an uppercase letter (A-Z)")
+            .regex(/[a-z]/, "Add a lowercase letter (a-z)")
+            .regex(/\d/, "Add a number (0-9)")
+            .regex(/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/, "Add a special character (e.g. !@#$)")
+            .refine((p) => !COMMON_PASSWORDS.has(p.toLowerCase()), {
+              message: "This password is too common. Pick something unique.",
+            })
+        : z.string().min(8, "Password must be at least 8 characters"),
       confirmPassword: z.string(),
       acceptTerms: z.literal(true, {
         errorMap: () => ({ message: "You must accept the terms to continue" }),
@@ -474,6 +490,19 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
                   />
                 </Field>
 
+                <div className="rounded-md border border-[#163300]/10 bg-[#9FE870]/10 p-3 text-xs text-[#163300] space-y-1.5">
+                  <div className="flex items-center gap-1.5 font-semibold">
+                    <ShieldCheck className="h-3.5 w-3.5" />
+                    {t("agencyAuth.pw_tips_title", { defaultValue: "How to pick a strong password" })}
+                  </div>
+                  <ol className="list-decimal ms-5 space-y-0.5 text-[#163300]/80">
+                    <li>{t("agencyAuth.pw_tip_1", { defaultValue: "At least 12 characters long" })}</li>
+                    <li>{t("agencyAuth.pw_tip_2", { defaultValue: "Mix uppercase, lowercase, numbers and symbols" })}</li>
+                    <li>{t("agencyAuth.pw_tip_3", { defaultValue: "Don't reuse passwords from other sites" })}</li>
+                    <li>{t("agencyAuth.pw_tip_4", { defaultValue: "Save it in a password manager (Google, 1Password, Bitwarden)" })}</li>
+                  </ol>
+                </div>
+
                 <PasswordField
                   id="password"
                   label={t("mockAuth.password", { defaultValue: "Password" })}
@@ -482,7 +511,36 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
                   onToggle={() => setShowPassword((v) => !v)}
                   register={form.register("password")}
                 />
-                {pwValue ? <SimplePwIndicator ok={pwOk} /> : null}
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={async () => {
+                    const pw = generateStrongPassword(16);
+                    form.setValue("password", pw, { shouldValidate: true });
+                    form.setValue("confirmPassword", pw, { shouldValidate: true });
+                    setShowPassword(true);
+                    setShowConfirm(true);
+                    try {
+                      await navigator.clipboard.writeText(pw);
+                      toast.success(
+                        t("agencyAuth.pw_copied", {
+                          defaultValue: "Strong password generated and copied. Save it in your password manager.",
+                        }),
+                      );
+                    } catch {
+                      toast.success(
+                        t("agencyAuth.pw_generated", {
+                          defaultValue: "Strong password generated. Copy it from the field and save it.",
+                        }),
+                      );
+                    }
+                  }}
+                  className="w-full h-9 rounded-md text-xs font-medium gap-1.5"
+                >
+                  <Sparkles className="h-3.5 w-3.5" />
+                  {t("agencyAuth.suggest_pw", { defaultValue: "Suggest a strong password" })}
+                </Button>
+                {pwValue ? <PasswordStrengthIndicator password={pwValue} /> : null}
 
                 <PasswordField
                   id="confirmPassword"
