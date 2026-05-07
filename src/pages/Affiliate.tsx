@@ -57,8 +57,17 @@ const Affiliate = () => {
   }>({ invited: 0, signedUp: 0, booked: 0, completed: 0, approvedBalanceMad: 0, paidTotalMad: 0 });
 
   const referralLinkAvailable = !!referralCode;
+  // Always build referral links from the production domain so users never see
+  // the lovable preview hostname. Falls back to current origin only for
+  // localhost development.
+  const APP_BASE_URL = (() => {
+    if (typeof window === "undefined") return "https://motonita.ma";
+    const host = window.location.hostname;
+    if (host === "localhost" || host === "127.0.0.1") return window.location.origin;
+    return "https://motonita.ma";
+  })();
   const referralLink = referralCode
-    ? `${window.location.origin}/signup?ref=${referralCode}`
+    ? `${APP_BASE_URL}/signup?ref=${referralCode}`
     : "";
 
   // Fetch (or create) the user's referral code + stats once authenticated.
@@ -208,7 +217,7 @@ const Affiliate = () => {
   };
 
   const shareMessage = referralLink
-    ? `Try Motonita — rent a scooter or motorbike in Morocco. Use my link and your first booking fee is free: ${referralLink}`
+    ? `Use my Motonita link and your first Motonita booking fee is free: ${referralLink}`
     : "";
 
   const handleWhatsApp = () => {
@@ -575,7 +584,7 @@ const Affiliate = () => {
                       {copied ? "Copied" : "Copy"}
                     </Button>
                   </div>
-                  <div className="mt-4 grid gap-2 sm:grid-cols-3">
+                  <div className="mt-4 grid gap-2 sm:grid-cols-2">
                     <Button
                       onClick={handleWhatsApp}
                       className="h-11 gap-2 font-semibold"
@@ -591,14 +600,6 @@ const Affiliate = () => {
                     >
                       <Share2 className="h-4 w-4" />
                       Share
-                    </Button>
-                    <Button
-                      onClick={handleCopy}
-                      variant="outline"
-                      className="h-11 gap-2"
-                    >
-                      <Copy className="h-4 w-4" />
-                      Copy link
                     </Button>
                   </div>
                   <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
