@@ -360,7 +360,7 @@ const Verification = () => {
           <div
             className={cn(
               "rounded-md p-1.5 shrink-0",
-              done ? "bg-success/15 text-success" : "bg-primary/10 text-primary",
+              done ? "bg-success/15 text-success" : "bg-slate-100 text-slate-700",
             )}
           >
             {done ? <FileCheck2 className="h-3.5 w-3.5" /> : icon}
