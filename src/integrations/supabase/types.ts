@@ -2066,6 +2066,81 @@ export type Database = {
         }
         Relationships: []
       }
+      referral_codes: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          is_active: boolean
+          user_id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          user_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
+      referrals: {
+        Row: {
+          approved_at: string | null
+          completed_at: string | null
+          created_at: string
+          first_booking_id: string | null
+          id: string
+          invited_email: string | null
+          invited_user_id: string | null
+          paid_at: string | null
+          referral_code: string
+          referrer_id: string
+          rejection_reason: string | null
+          reward_amount_mad: number
+          signed_up_at: string | null
+          status: string
+        }
+        Insert: {
+          approved_at?: string | null
+          completed_at?: string | null
+          created_at?: string
+          first_booking_id?: string | null
+          id?: string
+          invited_email?: string | null
+          invited_user_id?: string | null
+          paid_at?: string | null
+          referral_code: string
+          referrer_id: string
+          rejection_reason?: string | null
+          reward_amount_mad?: number
+          signed_up_at?: string | null
+          status?: string
+        }
+        Update: {
+          approved_at?: string | null
+          completed_at?: string | null
+          created_at?: string
+          first_booking_id?: string | null
+          id?: string
+          invited_email?: string | null
+          invited_user_id?: string | null
+          paid_at?: string | null
+          referral_code?: string
+          referrer_id?: string
+          rejection_reason?: string | null
+          reward_amount_mad?: number
+          signed_up_at?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
       renter_wallet_transactions: {
         Row: {
           amount: number
@@ -2658,6 +2733,7 @@ export type Database = {
       }
     }
     Functions: {
+      _gen_referral_code: { Args: never; Returns: string }
       add_agency_role_to_self: {
         Args: {
           _business_name: string
@@ -2692,6 +2768,7 @@ export type Database = {
         Returns: boolean
       }
       cancel_booking_by_renter: { Args: { _booking_id: string }; Returns: Json }
+      claim_referral: { Args: { _code: string }; Returns: Json }
       cleanup_old_draft_bookings: { Args: never; Returns: number }
       cleanup_stale_draft_bookings: { Args: never; Returns: number }
       compute_bike_type_slug: {
@@ -2787,6 +2864,7 @@ export type Database = {
           return_date: string
         }[]
       }
+      get_or_create_referral_code: { Args: never; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
