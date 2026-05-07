@@ -50,6 +50,7 @@ import { cn } from "@/lib/utils";
 import { DateRange } from "react-day-picker";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { DesktopFilterBar } from "@/components/listings/DesktopFilterBar";
 
 interface Neighborhood {
   id: string;
