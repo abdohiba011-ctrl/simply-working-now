@@ -1,12 +1,9 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
-/**
- * Listings page showing available motorbikes for a selected city and neighborhood.
- * Filters are displayed in a sticky bar on desktop and as a bottom sheet on mobile/tablet.
- */
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { BikeTypeSkeleton } from "@/components/ui/bike-skeleton";
 import { BookingDatePicker } from "@/components/BookingDatePicker";
@@ -41,7 +38,6 @@ import { getBikeImageUrl } from "@/lib/bikeImages";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { DateRange } from "react-day-picker";
-import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
