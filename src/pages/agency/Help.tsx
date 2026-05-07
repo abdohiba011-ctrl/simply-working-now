@@ -68,12 +68,12 @@ const Help = () => {
         </div>
 
         <Card className="p-5">
-          <h2 className="font-semibold">Frequently asked questions</h2>
+          <h2 className="text-base font-semibold">Frequently asked questions</h2>
           <Accordion type="single" collapsible className="mt-3">
             {filtered.map((f, i) => (
               <AccordionItem key={i} value={`f-${i}`}>
-                <AccordionTrigger className="text-left">
-                  <span><Badge variant="outline" className="mr-2">{f.cat}</Badge>{f.q}</span>
+                <AccordionTrigger className="text-left text-sm font-medium hover:no-underline">
+                  <span className="flex items-center gap-2"><Badge variant="outline" className="text-[10px]">{f.cat}</Badge>{f.q}</span>
                 </AccordionTrigger>
                 <AccordionContent className="text-sm text-muted-foreground">{f.a}</AccordionContent>
               </AccordionItem>
