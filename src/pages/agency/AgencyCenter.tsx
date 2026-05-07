@@ -35,7 +35,6 @@ const AgencyCenter = () => {
       <SegmentedTabs tabs={TABS} value={tab} onChange={change} />
       <Suspense fallback={<div className="py-10 text-center text-sm text-muted-foreground">Loading…</div>}>
         {tab === "profile" && <Profile />}
-        {tab === "team" && <Team />}
         {tab === "verification" && <Verification />}
         {tab === "analytics" && <Analytics />}
       </Suspense>
