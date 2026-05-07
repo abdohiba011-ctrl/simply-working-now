@@ -35,11 +35,18 @@ interface Props {
   onOpenChange: (open: boolean) => void;
 }
 
-export const MobileNav = ({ open, onOpenChange }: Props) => (
+export const MobileNav = ({ open, onOpenChange }: Props) => {
+  const { pendingBookings, unreadMessages } = useAgencyBadges();
+  const badgeFor = (label: string) =>
+    label === "Bookings" ? pendingBookings : label === "Messages" ? unreadMessages : 0;
+
+  return (
   <>
     {/* Floating bottom tab bar */}
     <nav className="fixed inset-x-3 bottom-3 z-40 flex items-center justify-around rounded-2xl border border-border bg-card/95 px-2 py-1.5 shadow-lg backdrop-blur lg:hidden">
-      {TABS.map((tab) => (
+      {TABS.map((tab) => {
+        const count = badgeFor(tab.label);
+        return (
         <NavLink
           key={tab.to}
           to={tab.to}
@@ -54,17 +61,23 @@ export const MobileNav = ({ open, onOpenChange }: Props) => (
             <>
               <span
                 className={cn(
-                  "flex h-9 w-9 items-center justify-center rounded-xl transition-colors",
+                  "relative flex h-9 w-9 items-center justify-center rounded-xl transition-colors",
                   isActive ? "bg-primary/25" : "bg-transparent",
                 )}
               >
                 <tab.icon className="h-[18px] w-[18px]" />
+                {count > 0 && (
+                  <span className="absolute -right-1 -top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[9px] font-bold text-destructive-foreground ring-2 ring-card">
+                    {count > 9 ? "9+" : count}
+                  </span>
+                )}
               </span>
               <span>{tab.label}</span>
             </>
           )}
         </NavLink>
-      ))}
+        );
+      })}
       <button
         onClick={() => onOpenChange(true)}
         className="flex flex-1 flex-col items-center gap-0.5 rounded-xl py-1.5 text-[10px] font-medium text-muted-foreground"
