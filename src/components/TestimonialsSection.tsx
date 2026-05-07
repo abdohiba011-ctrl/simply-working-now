@@ -1,50 +1,33 @@
-import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
-import { ShieldCheck } from "lucide-react";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
-import { useLanguage } from "@/contexts/LanguageContext";
-import { testimonials, type Testimonial, type TestimonialType } from "@/data/testimonials";
-import { TestimonialCard } from "@/components/testimonials/TestimonialCard";
-import { AudioTestimonialCard } from "@/components/testimonials/AudioTestimonialCard";
-import { VideoTestimonialCard } from "@/components/testimonials/VideoTestimonialCard";
-import { PortraitTestimonialCard } from "@/components/testimonials/PortraitTestimonialCard";
-import { VideoLightbox } from "@/components/testimonials/VideoLightbox";
+import { Star } from "lucide-react";
 
-type FilterKey = "all" | "text" | "audio" | "video";
+interface Testimonial {
+  quote: string;
+  name: string;
+  location: string;
+}
 
-const matches = (filter: FilterKey, type: TestimonialType) => {
-  if (filter === "all") return true;
-  if (filter === "text") return type === "text" || type === "portrait";
-  return type === filter;
-};
+const testimonials: Testimonial[] = [
+  {
+    quote:
+      "Renting through Motonita was not just about getting a motorbike. It gave me freedom. I could explore Casablanca at my own rhythm, stop where I wanted, and enjoy the city without feeling stuck. The process was simple, clear, and trustworthy.",
+    name: "Adam",
+    location: "Ain Diab, Casablanca",
+  },
+  {
+    quote:
+      "Casablanca traffic can destroy your whole day. With Motonita, I booked a scooter quickly and moved between Maarif, Ain Diab, and the city center without waiting for taxis. It felt like I finally had control over my time.",
+    name: "Youssef",
+    location: "Maarif, Casablanca",
+  },
+  {
+    quote:
+      "I was worried about renting a scooter in Casablanca because I didn't know which agency to trust. Motonita made the choice easier. I could see the bike, the price, the agency, and the booking details before confirming. It removed the stress and gave me confidence to book.",
+    name: "Sara",
+    location: "Casablanca",
+  },
+];
 
 export const TestimonialsSection = () => {
-  const { t } = useLanguage();
-  const [filter, setFilter] = useState<FilterKey>("all");
-  const [activeVideo, setActiveVideo] = useState<Testimonial | null>(null);
-
-  const visible = useMemo(
-    () => testimonials.filter((x) => matches(filter, x.type)),
-    [filter]
-  );
-
-  const renderCard = (item: Testimonial) => {
-    switch (item.type) {
-      case "audio":
-        return <AudioTestimonialCard key={item.id} testimonial={item} />;
-      case "video":
-        return (
-          <VideoTestimonialCard key={item.id} testimonial={item} onOpen={setActiveVideo} />
-        );
-      case "portrait":
-        return <PortraitTestimonialCard key={item.id} testimonial={item} />;
-      case "text":
-      default:
-        return <TestimonialCard key={item.id} testimonial={item} />;
-    }
-  };
-
   return (
     <section
       aria-labelledby="testimonials-heading"
@@ -52,68 +35,44 @@ export const TestimonialsSection = () => {
     >
       <div className="container mx-auto px-4">
         <header className="mx-auto max-w-2xl text-center">
-          <span className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground shadow-sm">
-            <ShieldCheck className="h-3.5 w-3.5 text-primary" />
-            {t("testimonials.trustBadge")}
-          </span>
           <h2
             id="testimonials-heading"
-            className="mt-4 text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-foreground"
+            className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-foreground"
           >
-            {t("testimonials.title")}
+            What early riders are saying
           </h2>
           <p className="mt-3 text-base sm:text-lg text-muted-foreground">
-            {t("testimonials.subtitle")}
+            Feedback from our first beta testers
           </p>
         </header>
 
-        <div className="mt-8 flex justify-center">
-          <Tabs value={filter} onValueChange={(v) => setFilter(v as FilterKey)}>
-            <TabsList className="h-11 rounded-full bg-card border border-border p-1 shadow-sm">
-              <TabsTrigger value="all" className="rounded-full px-4">{t("testimonials.tabs.all")}</TabsTrigger>
-              <TabsTrigger value="text" className="rounded-full px-4">{t("testimonials.tabs.text")}</TabsTrigger>
-              <TabsTrigger value="audio" className="rounded-full px-4">{t("testimonials.tabs.audio")}</TabsTrigger>
-              <TabsTrigger value="video" className="rounded-full px-4">{t("testimonials.tabs.video")}</TabsTrigger>
-            </TabsList>
-            {/*
-              Mount empty TabsContent panels for each trigger so the
-              auto-generated aria-controls IDs always resolve to a real
-              element in the DOM. The actual filtered cards are rendered
-              below; these panels stay empty and visually hidden.
-            */}
-            <TabsContent value="all" className="sr-only" />
-            <TabsContent value="text" className="sr-only" />
-            <TabsContent value="audio" className="sr-only" />
-            <TabsContent value="video" className="sr-only" />
-          </Tabs>
-
-        </div>
-
-        <div
-          role="list"
-          className="mt-10 columns-1 md:columns-2 lg:columns-3 gap-6 [&>*]:break-inside-avoid"
-        >
-          {visible.map(renderCard)}
-        </div>
-
-        {/* Final CTA */}
-        <div className="mt-14 mx-auto max-w-3xl rounded-3xl border border-border bg-card p-8 sm:p-10 text-center shadow-sm">
-          <h3 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-            {t("testimonials.cta.title")}
-          </h3>
-          <p className="mt-2 text-muted-foreground">{t("testimonials.cta.text")}</p>
-          <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
-            <Button asChild size="lg" className="rounded-full px-6">
-              <Link to="/listings">{t("testimonials.cta.primary")}</Link>
-            </Button>
-            <Button asChild size="lg" variant="outline" className="rounded-full px-6">
-              <Link to="/#how-it-works">{t("testimonials.cta.secondary")}</Link>
-            </Button>
-          </div>
+        <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-6">
+          {testimonials.map((tm, i) => (
+            <article
+              key={tm.name}
+              className="rounded-xl border bg-white p-6 shadow-sm transition-shadow hover:shadow-md animate-in fade-in slide-in-from-bottom-2 duration-500"
+              style={{
+                borderColor: "#E5E7EB",
+                animationDelay: `${i * 100}ms`,
+                animationFillMode: "backwards",
+              }}
+            >
+              <div className="flex items-center gap-0.5 mb-3" aria-label="5 out of 5 stars">
+                {Array.from({ length: 5 }).map((_, j) => (
+                  <Star key={j} className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                ))}
+              </div>
+              <p className="text-sm leading-relaxed text-gray-700">{tm.quote}</p>
+              <div className="mt-4">
+                <span className="font-bold" style={{ color: "#9FE870" }}>
+                  — {tm.name}
+                </span>
+                <span className="text-sm text-gray-500"> · {tm.location}</span>
+              </div>
+            </article>
+          ))}
         </div>
       </div>
-
-      <VideoLightbox testimonial={activeVideo} onClose={() => setActiveVideo(null)} />
     </section>
   );
 };

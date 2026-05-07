@@ -40,6 +40,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useBike, useBikeTypeImages } from "@/hooks/useBikes";
 import { getBikeImageUrl } from "@/lib/bikeImages";
 import { useAuth } from "@/hooks/useAuth";
+import { useAuthModal } from "@/contexts/AuthModalContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 // Phase 2: per-bike tiered pricing — currently using flat daily_price
@@ -84,7 +85,7 @@ const BikeDetails = () => {
   const [searchParams] = useSearchParams();
   const { t } = useLanguage();
   const { user } = useAuth();
-
+  const { openAuthModal } = useAuthModal();
   const { data: bike, isLoading: isLoadingBike } = useBike(id || "");
   const { data: detailImages, isLoading: isLoadingImages } = useBikeTypeImages(bike?.bike_type_id || "");
   
@@ -423,10 +424,15 @@ const BikeDetails = () => {
     const realBikeId = bike?.id;
     const { data: authData } = await supabase.auth.getUser();
 
-    // If not authenticated, send to login first. Draft is created after they return.
+    // If not authenticated, open the signup modal first.
     if (!authData?.user) {
-      const returnUrl = `/bike/${id}?from=${pickup}&to=${end}&autobook=1`;
-      navigate(`/auth?mode=login&returnUrl=${encodeURIComponent(returnUrl)}`);
+      const returnTo = `/bike/${id}?from=${pickup}&to=${end}&autobook=1`;
+      openAuthModal("signup", {
+        initialView: "signup",
+        bikeName: (bike?.bike_type as any)?.name,
+        returnTo,
+        preserveState: { from: pickup, to: end },
+      });
       return;
     }
 

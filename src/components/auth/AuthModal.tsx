@@ -133,8 +133,6 @@ export function AuthModal() {
     if (phone && !PHONE_REGEX.test(phone.replace(/\s+/g, "")))
       return setError("Enter a valid Moroccan phone number");
     if (signupPwd.length < 8) return setError("Password must be at least 8 characters");
-    if (!/[A-Z]/.test(signupPwd) || !/\d/.test(signupPwd))
-      return setError("Password needs 1 uppercase and 1 number");
     if (signupPwd !== confirmPwd) return setError("Passwords don't match");
     if (!acceptTerms) return setError("You must accept the Terms to continue");
 
@@ -188,18 +186,9 @@ export function AuthModal() {
     navigate(path);
   };
 
-  const passwordStrength = (() => {
-    const pw = signupPwd;
-    if (!pw) return { score: 0, color: "transparent", label: "" };
-    let score = 0;
-    if (pw.length >= 8) score++;
-    if (/[A-Z]/.test(pw) && /[a-z]/.test(pw)) score++;
-    if (/\d/.test(pw)) score++;
-    if (pw.length >= 12 && /[^A-Za-z0-9]/.test(pw)) score++;
-    if (score <= 1) return { score: 1, color: "#dc2626", label: "Weak" };
-    if (score === 2) return { score: 2, color: "#f59e0b", label: "Medium" };
-    return { score: 3, color: "#9FE870", label: "Strong" };
-  })();
+  const passwordOk = signupPwd.length >= 8;
+  // NOTE: Supabase HIBP (pwned password) check is configured at project level.
+  // To disable entirely, turn off "Leaked password protection" in Lovable Cloud auth settings.
 
   return (
     <div
@@ -457,27 +446,11 @@ export function AuthModal() {
                   </button>
                 </div>
                 {signupPwd ? (
-                  <div className="space-y-1">
-                    <div className="flex gap-1">
-                      {[1, 2, 3].map((i) => (
-                        <div
-                          key={i}
-                          className="h-1 flex-1 rounded-full bg-[#163300]/10 transition-colors"
-                          style={{
-                            backgroundColor:
-                              passwordStrength.score >= i ? passwordStrength.color : undefined,
-                          }}
-                        />
-                      ))}
-                    </div>
-                    <p className="text-xs text-[#163300]/60">
-                      {passwordStrength.label} · At least 8 characters, 1 uppercase, 1 number
-                    </p>
-                  </div>
-                ) : (
-                  <p className="text-xs text-[#163300]/50">
-                    At least 8 characters, 1 uppercase, 1 number
+                  <p className={cn("text-xs font-medium", passwordOk ? "text-green-600" : "text-red-600")}>
+                    {passwordOk ? "OK" : "Too short — minimum 8 characters"}
                   </p>
+                ) : (
+                  <p className="text-xs text-[#163300]/50">At least 8 characters</p>
                 )}
               </div>
               <div className="space-y-1.5">
@@ -537,6 +510,20 @@ export function AuthModal() {
                   className="font-medium text-[#163300] hover:underline"
                 >
                   Register as agency →
+                </button>
+              </p>
+              <p className="text-center text-sm text-[#163300]/70">
+                Already have an account?{" "}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setView("login");
+                    setTab("login");
+                    setError(null);
+                  }}
+                  className="font-semibold text-[#163300] hover:underline"
+                >
+                  Log in
                 </button>
               </p>
             </form>
