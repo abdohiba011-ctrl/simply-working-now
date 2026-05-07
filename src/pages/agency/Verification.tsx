@@ -557,7 +557,7 @@ const Verification = () => {
                     >
                       <UserIcon className="h-4 w-4" />
                       Auto-entrepreneur
-                      {entityType === "auto_entrepreneur" && <CheckCircle2 className="h-3.5 w-3.5 text-primary" />}
+                      {entityType === "auto_entrepreneur" && <CheckCircle2 className="h-3.5 w-3.5 text-slate-900" />}
                     </button>
                   </div>
                 </div>
