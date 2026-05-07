@@ -22,49 +22,6 @@ const Preferences = () => {
         </div>
 
         <Card className="space-y-5 p-6">
-          <Row label="Language">
-            <Select defaultValue="en">
-              <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="en">🇬🇧 English</SelectItem>
-                <SelectItem value="fr">🇫🇷 Français</SelectItem>
-                <SelectItem value="ar">🇲🇦 العربية</SelectItem>
-              </SelectContent>
-            </Select>
-          </Row>
-          <Row label="Currency display">
-            <Select defaultValue="MAD">
-              <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="MAD">MAD (default)</SelectItem>
-                <SelectItem value="USD">USD</SelectItem>
-                <SelectItem value="EUR">EUR</SelectItem>
-              </SelectContent>
-            </Select>
-          </Row>
-          <Row label="Timezone">
-            <Select defaultValue="casa">
-              <SelectTrigger className="w-[220px]"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="casa">Africa/Casablanca</SelectItem>
-                <SelectItem value="paris">Europe/Paris</SelectItem>
-                <SelectItem value="utc">UTC</SelectItem>
-              </SelectContent>
-            </Select>
-          </Row>
-          <Row label="Date format">
-            <Select defaultValue="dmy">
-              <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="dmy">DD/MM/YYYY</SelectItem>
-                <SelectItem value="mdy">MM/DD/YYYY</SelectItem>
-                <SelectItem value="ymd">YYYY-MM-DD</SelectItem>
-              </SelectContent>
-            </Select>
-          </Row>
-        </Card>
-
-        <Card className="space-y-5 p-6">
           <h2 className="font-semibold">Booking defaults</h2>
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1">
