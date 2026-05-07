@@ -311,6 +311,21 @@ export default function RentCity() {
 
   const isLoading = cityLoading || bikesLoading;
 
+  // Real available-bike counts per neighborhood for the current city.
+  // `bikes` is already filtered by the same public visibility rules used in
+  // listings (approved + active + verified agency + has available unit + correct
+  // city). So counts derived from it always match what the user will see.
+  const neighborhoodCounts = useMemo<Record<string, number>>(() => {
+    const counts: Record<string, number> = { [allCityLabel]: bikes.length };
+    for (const n of neighborhoodRows) counts[n.name] = 0;
+    for (const b of bikes) {
+      const key = b.neighborhood || "";
+      if (key && key in counts) counts[key] += 1;
+    }
+    return counts;
+  }, [bikes, neighborhoodRows, allCityLabel]);
+
+
   // Derive actual price bounds from the bikes available in this city
   const priceBounds = useMemo<[number, number]>(() => {
     if (!bikes.length) return [50, 1000];
