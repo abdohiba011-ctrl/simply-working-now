@@ -4,12 +4,9 @@ import { SegmentedTabs } from "@/components/agency/SegmentedTabs";
 
 const Wallet = lazy(() => import("./Wallet"));
 const Transactions = lazy(() => import("./Transactions"));
-const Invoices = lazy(() => import("./Invoices"));
-
 const TABS = [
   { key: "wallet", label: "Wallet" },
   { key: "transactions", label: "Transactions" },
-  { key: "invoices", label: "Invoices" },
 ];
 
 const Finance = () => {
