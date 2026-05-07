@@ -243,7 +243,7 @@ const MotorbikeDetail = () => {
     <AgencyLayout>
       <div className="mx-auto max-w-6xl space-y-3">
         {/* Sticky header */}
-        <div className="sticky top-0 z-20 -mx-4 flex items-center gap-2 border-b border-border bg-background/95 px-4 h-10 backdrop-blur sm:mx-0 sm:rounded-md sm:border sm:px-3">
+        <div className="sticky top-0 z-20 -mx-4 flex items-center gap-2 border-b border-border bg-background/95 h-10 backdrop-blur sm:mx-0 sm:rounded-md sm:border sm:px-3 my-0 py-[28px] px-[8px]">
           <button
             onClick={() => navigate("/agency/motorbikes")}
             className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
