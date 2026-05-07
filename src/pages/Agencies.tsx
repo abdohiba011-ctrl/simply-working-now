@@ -21,7 +21,7 @@ const Agencies = () => {
       })();
     meta.setAttribute(
       "content",
-      "Morocco's first peer-to-peer motorbike rental marketplace. List your fleet free during launch. No commission. Setup in 10 minutes."
+      "Morocco's first motorbike rental marketplace. List your fleet free during launch. No commission. Setup in 10 minutes."
     );
   }, []);
 

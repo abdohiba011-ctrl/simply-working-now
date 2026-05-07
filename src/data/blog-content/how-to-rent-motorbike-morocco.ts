@@ -63,7 +63,7 @@ const en = `
 </ul>
 
 <h2>How Motonita works (3 steps)</h2>
-<p>Motonita is Morocco's first peer-to-peer motorbike and scooter rental marketplace. We connect you directly with verified rental agencies across 16 cities. Here's how to book:</p>
+<p>Motonita is Morocco's first motorbike and scooter rental marketplace. We connect you directly with verified rental agencies across 16 cities. Here's how to book:</p>
 <p><strong>Step 1 — Search.</strong> Open motonita.ma. Pick your city. Pick your neighborhood. Choose your dates. Hit search.</p>
 <p><strong>Step 2 — Compare.</strong> Browse verified bikes. See real photos, exact specs, agency response time, and exact pickup location. Filter by bike type, fuel, license required, or price.</p>
 <p><strong>Step 3 — Book.</strong> Click "Book Now" on the bike you want. Confirm your details. Pay the small booking fee. The agency receives your booking and confirms within 24 hours. You chat directly with them inside the app to coordinate pickup.</p>
@@ -220,7 +220,7 @@ const fr = `
 </ul>
 
 <h2>Comment fonctionne Motonita (3 étapes)</h2>
-<p>Motonita est la première marketplace peer-to-peer de location de motos et scooters au Maroc. Nous vous connectons directement à des agences vérifiées dans 16 villes. Voici comment réserver :</p>
+<p>Motonita est la première marketplace de location de motos et scooters au Maroc. Nous vous connectons directement à des agences vérifiées dans 16 villes. Voici comment réserver :</p>
 <p><strong>Étape 1 — Recherche.</strong> Ouvrez motonita.ma. Choisissez votre ville. Votre quartier. Vos dates. Lancez la recherche.</p>
 <p><strong>Étape 2 — Comparez.</strong> Parcourez les motos vérifiées. Vraies photos, fiches techniques, temps de réponse, lieu exact de prise en charge. Filtrez par type, carburant, permis requis ou prix.</p>
 <p><strong>Étape 3 — Réservez.</strong> Cliquez "Réserver" sur la moto choisie. Confirmez vos infos. Payez les frais de réservation. L'agence reçoit votre demande et confirme sous 24h. Vous discutez directement avec elle dans l'app pour la prise en charge.</p>

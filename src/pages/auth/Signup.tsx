@@ -747,7 +747,7 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
           </h1>
           <p className="text-sm text-muted-foreground">
             {t("mockAuth.join_motonita", {
-              defaultValue: "Join Morocco's peer-to-peer motorbike marketplace",
+              defaultValue: "Join Morocco's motorbike rental marketplace",
             })}
           </p>
         </div>
