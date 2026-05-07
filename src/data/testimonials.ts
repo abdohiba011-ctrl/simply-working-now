@@ -38,19 +38,19 @@ const t = (en: string, fr: string, ar: string): LocalizedText => ({ en, fr, ar }
 export const testimonials: Testimonial[] = [
   // ── Column 1 ──────────────────────────────────────────────────────────
   {
-    id: "yassine-casa",
+    id: "adam-casa",
     type: "text",
-    name: "Yassine",
+    name: "Adam",
     city: "Casablanca",
     rentalType: t("Scooter rental", "Location de scooter", "تأجير سكوتر"),
-    tripDetail: t("Casablanca → Mohammedia", "Casablanca → Mohammedia", "الدار البيضاء → المحمدية"),
+    tripDetail: t("Aïn Diab, Casablanca", "Aïn Diab, Casablanca", "عين الذئاب، الدار البيضاء"),
     rating: 5,
     review: t(
       "I needed a scooter for two days in Casablanca and Motonita made it simple. I compared options, contacted the provider, and booked without wasting time.",
       "J'avais besoin d'un scooter pour deux jours à Casablanca. Motonita m'a permis de comparer rapidement les options et de réserver sans perdre du temps.",
       "كنت بحاجة إلى سكوتر لمدة يومين في الدار البيضاء، وقد سهّلت موتونيتا الأمر كثيراً. قارنت بين الخيارات، تواصلت مع المؤجّر، وأتممت الحجز دون إضاعة الوقت."
     ),
-    avatarUrl: "https://i.pravatar.cc/120?img=12",
+    avatarUrl: "/testimonials/adam.jpg",
     verified: true,
     date: "2026-03-12",
   },
