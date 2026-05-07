@@ -74,6 +74,8 @@ const Checkout = () => {
   const rentalSubtotal = days * dailyPrice;
   const effectivePlatformFee = referralDiscount ? 0 : PLATFORM_FEE_MAD;
   const upfrontTotal = effectivePlatformFee + CONFIRMATION_FEE_MAD;
+
+  const handlePay = async () => {
     if (!user || !bikeId || !pickup || !end) {
       toast.error(t('checkoutPage.missingInfo'));
       return;
