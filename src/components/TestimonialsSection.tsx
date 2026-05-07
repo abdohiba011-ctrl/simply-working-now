@@ -13,7 +13,7 @@ const testimonials: Testimonial[] = [
       "Renting through Motonita was not just about getting a motorbike. It gave me freedom. I could explore Casablanca at my own rhythm, stop where I wanted, and enjoy the city without feeling stuck. The process was simple, clear, and trustworthy.",
     name: "Adam",
     location: "Ain Diab, Casablanca",
-    image: "https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=400",
+    image: "/testimonials/adam_v2.png",
   },
   {
     quote:
