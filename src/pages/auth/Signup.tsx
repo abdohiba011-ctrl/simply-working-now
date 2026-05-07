@@ -14,7 +14,12 @@ import {
   Check,
   X,
   ArrowLeft,
+  Sparkles,
+  ShieldCheck,
 } from "lucide-react";
+import { PasswordStrengthIndicator } from "@/components/PasswordStrengthIndicator";
+import { generateStrongPassword } from "@/lib/passwordGenerator";
+import { COMMON_PASSWORDS } from "@/lib/mockAuth";
 
 import { AgencyAuthLayout } from "@/components/auth/AgencyAuthLayout";
 import { RenterAuthLayout } from "@/components/auth/RenterAuthLayout";
