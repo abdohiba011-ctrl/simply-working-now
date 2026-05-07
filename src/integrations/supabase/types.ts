@@ -2090,6 +2090,51 @@ export type Database = {
         }
         Relationships: []
       }
+      referral_payouts: {
+        Row: {
+          amount_mad: number
+          created_at: string
+          id: string
+          notes: string | null
+          paid_at: string | null
+          paid_by: string | null
+          payout_method: string | null
+          payout_reference: string | null
+          status: string
+          user_id: string
+          week_end: string
+          week_start: string
+        }
+        Insert: {
+          amount_mad: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          paid_at?: string | null
+          paid_by?: string | null
+          payout_method?: string | null
+          payout_reference?: string | null
+          status?: string
+          user_id: string
+          week_end: string
+          week_start: string
+        }
+        Update: {
+          amount_mad?: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          paid_at?: string | null
+          paid_by?: string | null
+          payout_method?: string | null
+          payout_reference?: string | null
+          status?: string
+          user_id?: string
+          week_end?: string
+          week_start?: string
+        }
+        Relationships: []
+      }
       referrals: {
         Row: {
           approved_at: string | null
@@ -2100,6 +2145,7 @@ export type Database = {
           invited_email: string | null
           invited_user_id: string | null
           paid_at: string | null
+          payout_id: string | null
           referral_code: string
           referrer_id: string
           rejection_reason: string | null
@@ -2116,6 +2162,7 @@ export type Database = {
           invited_email?: string | null
           invited_user_id?: string | null
           paid_at?: string | null
+          payout_id?: string | null
           referral_code: string
           referrer_id: string
           rejection_reason?: string | null
@@ -2132,6 +2179,7 @@ export type Database = {
           invited_email?: string | null
           invited_user_id?: string | null
           paid_at?: string | null
+          payout_id?: string | null
           referral_code?: string
           referrer_id?: string
           rejection_reason?: string | null
@@ -2139,7 +2187,15 @@ export type Database = {
           signed_up_at?: string | null
           status?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "referrals_payout_id_fkey"
+            columns: ["payout_id"]
+            isOneToOne: false
+            referencedRelation: "referral_payouts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       renter_wallet_transactions: {
         Row: {
@@ -2731,6 +2787,21 @@ export type Database = {
         }
         Relationships: []
       }
+      referral_balances: {
+        Row: {
+          approved_count: number | null
+          approved_unpaid_mad: number | null
+          booked_count: number | null
+          paid_count: number | null
+          paid_mad: number | null
+          pending_mad: number | null
+          rejected_count: number | null
+          signed_up_count: number | null
+          total_referrals: number | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       _gen_referral_code: { Args: never; Returns: string }
@@ -2743,6 +2814,28 @@ export type Database = {
           _phone?: string
         }
         Returns: Json
+      }
+      admin_cancel_referral_payout: {
+        Args: { _payout_id: string; _reason?: string }
+        Returns: undefined
+      }
+      admin_create_referral_payout: {
+        Args: {
+          _notes?: string
+          _user_id: string
+          _week_end?: string
+          _week_start?: string
+        }
+        Returns: string
+      }
+      admin_mark_referral_payout_paid: {
+        Args: {
+          _notes?: string
+          _payout_id: string
+          _payout_method: string
+          _payout_reference?: string
+        }
+        Returns: undefined
       }
       admin_role_sync_status: {
         Args: never
