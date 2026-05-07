@@ -143,7 +143,7 @@ const Messages = () => {
   return (
     <AgencyLayout>
       {/* Negate AgencyShell main padding for a full-bleed chat experience */}
-      <div className="-mx-4 -mt-2 -mb-24 h-[calc(100dvh-3.5rem)] lg:-mx-6 lg:-mb-8 lg:h-[calc(100dvh-3.5rem)]">
+      <div className="-mx-4 -mt-2 -mb-24 h-[calc(100dvh-4.5rem)] lg:-mx-6 lg:-mb-8 lg:h-[calc(100dvh-4.5rem)]">
         <div className="flex h-full overflow-hidden bg-background">
           {showList && (
             <aside
