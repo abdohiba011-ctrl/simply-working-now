@@ -1017,58 +1017,11 @@ function PasswordField({
   );
 }
 
-function StrengthMeter({
-  strength,
-  rules,
-}: {
-  strength: { score: 0 | 1 | 2 | 3; label: string; color: string };
-  rules: { id: string; label: string; ok: boolean }[];
-}) {
+function SimplePwIndicator({ ok }: { ok: boolean }) {
   return (
-    <div>
-      <div className="mt-1 flex items-center gap-2">
-        <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
-          <div
-            className="h-full transition-all duration-200"
-            style={{
-              width: `${(strength.score / 3) * 100}%`,
-              backgroundColor: strength.color,
-            }}
-          />
-        </div>
-        <span
-          className="text-xs font-medium text-foreground"
-          style={
-            strength.color === "#9FE870" || strength.color === "transparent"
-              ? undefined
-              : { color: strength.color }
-          }
-        >
-          {strength.label}
-        </span>
-      </div>
-      <ul className="mt-2 grid grid-cols-2 gap-1">
-        {rules.map((r) => (
-          <li
-            key={r.id}
-            className={cn(
-              "flex items-center gap-1.5 text-xs",
-              r.ok ? "text-foreground" : "text-muted-foreground",
-            )}
-          >
-            {r.ok ? (
-              <Check className="h-3 w-3" style={{ color: "#9FE870" }} />
-            ) : (
-              <X className="h-3 w-3 text-muted-foreground" />
-            )}
-            <span>{r.label}</span>
-          </li>
-        ))}
-      </ul>
-      <p className="mt-2 text-[11px] leading-snug text-muted-foreground">
-        Avoid common passwords like "Password123" or "TestPass2024". We check against known data breaches for your safety.
-      </p>
-    </div>
+    <p className={cn("mt-1 text-xs font-medium", ok ? "text-green-600" : "text-red-600")}>
+      {ok ? "OK" : "Too short — minimum 8 characters"}
+    </p>
   );
 }
 
