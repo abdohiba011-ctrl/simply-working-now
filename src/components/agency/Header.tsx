@@ -42,7 +42,6 @@ const CMD_TARGETS: { label: string; path: string }[] = [
   { label: "Wallet", path: "/agency/finance#wallet" },
   { label: "Transactions", path: "/agency/finance#transactions" },
   { label: "Profile", path: "/agency/agency-center#profile" },
-  { label: "Team", path: "/agency/agency-center#team" },
   { label: "Verification", path: "/agency/agency-center#verification" },
   { label: "Analytics", path: "/agency/agency-center#analytics" },
   { label: "Preferences", path: "/agency/settings#preferences" },
