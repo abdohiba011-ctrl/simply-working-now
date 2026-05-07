@@ -512,6 +512,20 @@ export function AuthModal() {
                   Register as agency →
                 </button>
               </p>
+              <p className="text-center text-sm text-[#163300]/70">
+                Already have an account?{" "}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setView("login");
+                    setTab("login");
+                    setError(null);
+                  }}
+                  className="font-semibold text-[#163300] hover:underline"
+                >
+                  Log in
+                </button>
+              </p>
             </form>
           )}
 
