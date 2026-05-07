@@ -83,7 +83,7 @@ const Help = () => {
 
         <div className="grid gap-4 md:grid-cols-2">
           <Card className="p-5">
-            <h2 className="flex items-center gap-2 font-semibold"><PlayCircle className="h-4 w-4 text-primary" /> Video tutorials</h2>
+            <h2 className="flex items-center gap-2 text-base font-semibold"><PlayCircle className="h-4 w-4 text-primary" /> Video tutorials</h2>
             <div className="mt-4 grid grid-cols-2 gap-3">
               {["Getting started", "Add your first bike", "Confirm a booking", "Manage wallet"].map((t) => (
                 <div key={t} className="aspect-video rounded-lg bg-gradient-to-br from-primary/15 to-muted p-3 text-xs font-medium">
@@ -95,13 +95,13 @@ const Help = () => {
           </Card>
 
           <Card className="p-5">
-            <h2 className="flex items-center gap-2 font-semibold"><Sparkles className="h-4 w-4 text-primary" /> What's new</h2>
+            <h2 className="flex items-center gap-2 text-base font-semibold"><Sparkles className="h-4 w-4 text-primary" /> What's new</h2>
             <ul className="mt-4 space-y-3 text-sm">
               {changelog.map((c, i) => (
                 <li key={i} className="flex items-start gap-3 border-b border-border/60 pb-3 last:border-0 last:pb-0">
-                  <Badge variant="outline" className="shrink-0">{c.tag}</Badge>
+                  <Badge variant="outline" className="shrink-0 text-[10px]">{c.tag}</Badge>
                   <div>
-                    <p className="font-medium">{c.title}</p>
+                    <p className="text-sm font-medium">{c.title}</p>
                     <p className="text-xs text-muted-foreground">{c.date}</p>
                   </div>
                 </li>
@@ -111,7 +111,7 @@ const Help = () => {
         </div>
 
         <Card className="p-5">
-          <h2 className="font-semibold">Send us a message</h2>
+          <h2 className="text-base font-semibold">Send us a message</h2>
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
             <div><Label>Subject</Label><Input placeholder="What's this about?" /></div>
             <div><Label>Category</Label><Input placeholder="Bookings / Wallet / …" /></div>
