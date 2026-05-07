@@ -336,15 +336,11 @@ const Verification = () => {
   const UploadTile = ({
     slot,
     title,
-    help,
     icon,
-    compact = false,
   }: {
     slot: SlotKey;
     title: string;
-    help?: string;
     icon: React.ReactNode;
-    compact?: boolean;
   }) => {
     const existing = docs.find((d) => d.key === slot);
     const isUploading = uploading === slot;
@@ -353,48 +349,45 @@ const Verification = () => {
     return (
       <div
         className={cn(
-          "relative rounded-lg border p-4 transition-colors",
-          done ? "border-success/40 bg-success/5" : "border-dashed border-border bg-background",
+          "relative rounded-lg border p-3.5 transition-colors",
+          done
+            ? "border-success/40 bg-success/5"
+            : "border-dashed border-input bg-muted/30 hover:bg-muted/50 hover:border-primary/50",
           locked && "opacity-90",
         )}
       >
-        <div className="flex items-start gap-3">
+        <div className="flex items-start gap-2.5">
           <div
             className={cn(
-              "rounded-md p-2 shrink-0",
+              "rounded-md p-1.5 shrink-0",
               done ? "bg-success/15 text-success" : "bg-primary/10 text-primary",
             )}
           >
-            {done ? <FileCheck2 className="h-4 w-4" /> : icon}
+            {done ? <FileCheck2 className="h-3.5 w-3.5" /> : icon}
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex items-center justify-between gap-2">
-              <Label className={cn("font-semibold", compact ? "text-xs uppercase tracking-wide text-muted-foreground" : "text-sm")}>
-                {title}
-              </Label>
-              {done && !compact && (
-                <Badge className="bg-success/15 text-success border border-success/30 shrink-0">
+              <Label className="text-sm font-medium">{title}</Label>
+              {done && (
+                <Badge className="bg-success/15 text-success border border-success/30 shrink-0 text-[10px] px-1.5 py-0">
                   Uploaded
                 </Badge>
               )}
             </div>
-            {help && <p className="mt-1 text-xs text-muted-foreground">{help}</p>}
-            {!compact && (
-              <p className="mt-1 text-[11px] text-muted-foreground">
-                PDF, JPG, PNG or WEBP · Max 5 MB
-              </p>
-            )}
 
-            {existing && (
-              <div className="mt-3 flex items-center gap-2 text-xs">
-                <FileCheck2 className="h-3.5 w-3.5 text-success shrink-0" />
+            {existing ? (
+              <div className="mt-1.5 flex items-center gap-1.5 text-xs">
                 <span className="truncate text-muted-foreground" title={existing.file_name}>
                   {existing.file_name.replace(/^(rc|ae_card|ice_cert|id_front|id_back)-/, "")}
                 </span>
               </div>
+            ) : (
+              <p className="mt-0.5 text-[11px] text-muted-foreground">
+                PDF, JPG, PNG · Max 5 MB
+              </p>
             )}
 
-            <div className="mt-3 flex flex-wrap items-center gap-2">
+            <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
               <label className="inline-flex">
                 <input
                   type="file"
@@ -411,28 +404,29 @@ const Verification = () => {
                   size="sm"
                   variant={done ? "outline" : "default"}
                   disabled={isUploading || locked}
+                  className="h-7 text-xs"
                 >
                   <span className="cursor-pointer">
                     {isUploading ? (
                       <>
-                        <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> Uploading…
+                        <Loader2 className="mr-1.5 h-3 w-3 animate-spin" /> Uploading…
                       </>
                     ) : done ? (
                       <>
-                        <RefreshCw className="mr-2 h-3.5 w-3.5" /> Replace
+                        <RefreshCw className="mr-1.5 h-3 w-3" /> Replace
                       </>
                     ) : (
                       <>
-                        <Upload className="mr-2 h-3.5 w-3.5" /> Upload file
+                        <Upload className="mr-1.5 h-3 w-3" /> Upload
                       </>
                     )}
                   </span>
                 </Button>
               </label>
               {existing && (
-                <Button asChild size="sm" variant="ghost">
+                <Button asChild size="sm" variant="ghost" className="h-7 text-xs">
                   <a href={existing.file_url} target="_blank" rel="noreferrer">
-                    <Eye className="mr-2 h-3.5 w-3.5" /> Preview
+                    <Eye className="mr-1.5 h-3 w-3" /> Preview
                   </a>
                 </Button>
               )}
@@ -442,6 +436,20 @@ const Verification = () => {
       </div>
     );
   };
+
+  const SectionTitle = ({ num, title, hint }: { num: string; title: string; hint?: string }) => (
+    <div className="mb-4">
+      <div className="flex items-center gap-2">
+        <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary/10 px-1.5 text-[10px] font-semibold text-primary">
+          {num}
+        </span>
+        <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          {title}
+        </h3>
+      </div>
+      {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
+    </div>
+  );
 
   return (
     <div className="space-y-5 pb-28">
