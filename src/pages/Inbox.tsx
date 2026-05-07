@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Header } from "@/components/Header";
+import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -7,7 +7,8 @@ import { format, isToday, isYesterday } from "date-fns";
 import { cn } from "@/lib/utils";
 import { ChatThread } from "@/components/chat/ChatThread";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { MessageCircle, Loader2 } from "lucide-react";
+import { MessageCircle, Loader2, ChevronLeft } from "lucide-react";
+import logo from "@/assets/motonita-logo.svg";
 
 interface Conv {
   id: string;
@@ -42,6 +43,7 @@ const timeLabel = (iso: string | null) => {
 
 const Inbox = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [convs, setConvs] = useState<Conv[]>([]);
   const [loading, setLoading] = useState(true);
@@ -164,123 +166,166 @@ const Inbox = () => {
   const showList = !isMobile || !activeId;
   const showChat = !isMobile || !!activeId;
 
+  const handleBack = () => {
+    if (window.history.length > 1) navigate(-1);
+    else navigate("/");
+  };
+
   return (
-    <div className="flex h-[100dvh] flex-col bg-background">
-      <Header />
-      <div className="flex flex-1 min-h-0 overflow-hidden bg-muted/20">
-        <div className="mx-auto flex h-full w-full max-w-[1200px] 2xl:max-w-[1360px] flex-1 min-h-0 overflow-hidden border-x border-border bg-background shadow-sm">
-        {showList && (
-          <aside
-            className={cn(
-              "flex flex-col border-r border-border bg-card",
-              isMobile ? "w-full" : "w-[320px] shrink-0 xl:w-[340px] 2xl:w-[360px]"
-            )}
-          >
-            <div className="border-b border-border px-4 py-3">
-              <h1 className="text-lg font-bold tracking-tight text-foreground">Messages</h1>
-            </div>
-            <div className="flex-1 overflow-y-auto">
-              {loading ? (
-                <div className="flex items-center justify-center py-10 text-sm text-muted-foreground">
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading…
-                </div>
-              ) : convs.length === 0 ? (
-                <div className="flex flex-col items-center justify-center px-6 py-16 text-center">
-                  <MessageCircle className="mb-3 h-10 w-10 text-muted-foreground/60" />
-                  <p className="text-sm font-medium text-foreground">No messages yet</p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Book a bike to start chatting with an agency.
-                  </p>
-                </div>
-              ) : (
-                convs.map((c) => {
-                  const isActive = activeId === c.id;
-                  return (
-                    <button
-                      key={c.id}
-                      onClick={() => setActiveId(c.id)}
-                      className={cn(
-                        "flex w-full items-start gap-3 border-b border-border px-3 py-3 text-left transition-colors hover:bg-muted/60",
-                        isActive && "bg-muted"
-                      )}
-                    >
-                      <Avatar className="h-10 w-10 shrink-0">
-                        {c.agency_avatar_url ? (
-                          <AvatarImage src={c.agency_avatar_url} alt={c.agency_name} />
-                        ) : null}
-                        <AvatarFallback className="bg-primary/15 text-xs font-semibold text-foreground">
-                          {initials(c.agency_name)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center justify-between gap-2">
-                          <span
-                            className={cn(
-                              "truncate text-sm",
-                              c.unread > 0 ? "font-bold text-foreground" : "font-medium text-foreground"
-                            )}
-                          >
-                            {c.agency_name}
-                          </span>
-                          <span className="shrink-0 text-[10px] text-muted-foreground">
-                            {timeLabel(c.last_at)}
-                          </span>
-                        </div>
-                        <p className="text-[10px] text-muted-foreground">
-                          Booking #{c.id.slice(0, 8)}
-                        </p>
-                        <div className="mt-0.5 flex items-center gap-2">
-                          <p
-                            className={cn(
-                              "truncate text-xs flex-1",
-                              c.unread > 0 ? "font-medium text-foreground" : "text-muted-foreground"
-                            )}
-                          >
-                            {c.last_preview || "No messages yet"}
-                          </p>
-                          {c.unread > 0 && (
-                            <span className="ml-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-[#9FE870] px-1.5 text-[10px] font-bold text-[#163300]">
-                              {c.unread}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </button>
-                  );
-                })
+    <div className="flex h-[100dvh] flex-col bg-muted/30">
+      {/* Slim top bar */}
+      <div className="shrink-0 bg-background/80 backdrop-blur border-b border-border/60">
+        <div className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between px-4">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleBack}
+              aria-label="Back"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-muted/70 text-foreground hover:bg-muted transition-colors"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </button>
+            <span className="text-sm font-semibold text-foreground sm:text-base">Messages</span>
+          </div>
+          <Link to="/" aria-label="Motonita home" className="flex items-center">
+            <img src={logo} alt="Motonita" className="h-6 w-auto opacity-90" />
+          </Link>
+        </div>
+      </div>
+
+      {/* Main shell */}
+      <div className="flex flex-1 min-h-0 overflow-hidden">
+        <div className="mx-auto flex h-full w-full max-w-6xl flex-1 min-h-0 overflow-hidden md:my-4 md:rounded-2xl md:border md:border-border/60 md:bg-background md:shadow-sm">
+          {showList && (
+            <aside
+              className={cn(
+                "flex flex-col bg-background",
+                isMobile
+                  ? "w-full"
+                  : "w-[320px] shrink-0 border-r border-border/60 xl:w-[360px]"
               )}
-            </div>
-          </aside>
-        )}
-        {showChat && (
-          <section className="flex-1 min-w-0">
-            {active ? (
-              <ChatThread
-                bookingId={active.id}
-                viewerRole="renter"
-                counterpartyName={active.agency_name}
-                counterpartyAvatarUrl={active.agency_avatar_url}
-                counterpartySubtitle={`Booking #${active.id.slice(0, 8)} · ${active.bike_name}`}
-                onBack={isMobile ? () => setActiveId(null) : undefined}
-                onRead={() => {
-                  setConvs((prev) =>
-                    prev.map((c) => (c.id === active.id ? { ...c, unread: 0 } : c))
-                  );
-                }}
-              />
-            ) : (
-              <div className="flex h-full items-center justify-center bg-[#FAFAFA] p-8">
-                <div className="text-center">
-                  <MessageCircle className="mx-auto mb-3 h-10 w-10 text-muted-foreground/60" />
-                  <p className="text-sm font-medium text-foreground">Select a conversation</p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Pick a booking on the left to view messages.
-                  </p>
-                </div>
+            >
+              <div className="border-b border-border/60 px-5 py-4">
+                <h1 className="text-xl font-semibold tracking-tight text-foreground">Messages</h1>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  Your booking conversations
+                </p>
               </div>
-            )}
-          </section>
-        )}
+              <div className="scrollbar-hide flex-1 overflow-y-auto p-2">
+                {loading ? (
+                  <div className="flex items-center justify-center py-10 text-sm text-muted-foreground">
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading…
+                  </div>
+                ) : convs.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center px-6 py-16 text-center">
+                    <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/15">
+                      <MessageCircle className="h-7 w-7 text-foreground/70" />
+                    </div>
+                    <p className="text-sm font-semibold text-foreground">No messages yet</p>
+                    <p className="mt-1 max-w-[220px] text-xs text-muted-foreground">
+                      Book a bike to start chatting with an agency.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-1">
+                    {convs.map((c) => {
+                      const isActive = activeId === c.id;
+                      return (
+                        <button
+                          key={c.id}
+                          onClick={() => setActiveId(c.id)}
+                          className={cn(
+                            "flex w-full items-start gap-3 rounded-xl px-3 py-3 text-left transition-colors",
+                            isActive
+                              ? "bg-primary/15 ring-1 ring-primary/30"
+                              : "hover:bg-muted/60"
+                          )}
+                        >
+                          <Avatar className="h-11 w-11 shrink-0">
+                            {c.agency_avatar_url ? (
+                              <AvatarImage src={c.agency_avatar_url} alt={c.agency_name} />
+                            ) : null}
+                            <AvatarFallback className="bg-primary/20 text-xs font-semibold text-foreground">
+                              {initials(c.agency_name)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center justify-between gap-2">
+                              <span
+                                className={cn(
+                                  "truncate text-sm",
+                                  c.unread > 0
+                                    ? "font-semibold text-foreground"
+                                    : "font-medium text-foreground"
+                                )}
+                              >
+                                {c.agency_name}
+                              </span>
+                              <span className="shrink-0 text-[11px] text-muted-foreground">
+                                {timeLabel(c.last_at)}
+                              </span>
+                            </div>
+                            <p className="text-[11px] text-muted-foreground/80">
+                              Booking #{c.id.slice(0, 8)}
+                            </p>
+                            <div className="mt-1 flex items-center gap-2">
+                              <p
+                                className={cn(
+                                  "truncate text-xs flex-1",
+                                  c.unread > 0
+                                    ? "font-medium text-foreground"
+                                    : "text-muted-foreground"
+                                )}
+                              >
+                                {c.last_preview || "No messages yet"}
+                              </p>
+                              {c.unread > 0 && (
+                                <span className="ml-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-[#9FE870] px-1.5 text-[11px] font-semibold text-[#163300]">
+                                  {c.unread}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </aside>
+          )}
+          {showChat && (
+            <section className="flex-1 min-w-0">
+              {active ? (
+                <ChatThread
+                  bookingId={active.id}
+                  viewerRole="renter"
+                  counterpartyName={active.agency_name}
+                  counterpartyAvatarUrl={active.agency_avatar_url}
+                  counterpartySubtitle={`Booking #${active.id.slice(0, 8)} · ${active.bike_name}`}
+                  onBack={isMobile ? () => setActiveId(null) : undefined}
+                  onRead={() => {
+                    setConvs((prev) =>
+                      prev.map((c) => (c.id === active.id ? { ...c, unread: 0 } : c))
+                    );
+                  }}
+                />
+              ) : (
+                <div className="flex h-full items-center justify-center bg-muted/30 p-8">
+                  <div className="text-center">
+                    <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-primary/15">
+                      <MessageCircle className="h-9 w-9 text-foreground/70" />
+                    </div>
+                    <p className="text-base font-semibold text-foreground">
+                      Select a conversation
+                    </p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Pick a booking on the left to view your messages.
+                    </p>
+                  </div>
+                </div>
+              )}
+            </section>
+          )}
         </div>
       </div>
     </div>

@@ -325,26 +325,26 @@ export const ChatThread = ({
   return (
     <div className={cn("flex h-full min-h-0 flex-col bg-background", className)}>
       {/* Header */}
-      <div className="flex shrink-0 items-center gap-3 border-b border-border bg-card px-3 py-3 sm:px-4">
+      <div className="flex shrink-0 items-center gap-3 border-b border-border/60 bg-card/95 backdrop-blur px-4 py-3.5">
         {onBack && (
           <button
             onClick={onBack}
-            className="rounded-md p-1 text-muted-foreground hover:bg-muted md:hidden"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-muted/70 text-foreground hover:bg-muted md:hidden"
             aria-label="Back"
           >
             <ChevronLeft className="h-5 w-5" />
           </button>
         )}
-        <Avatar className="h-9 w-9">
+        <Avatar className="h-10 w-10">
           {counterpartyAvatarUrl ? (
             <AvatarImage src={counterpartyAvatarUrl} alt={counterpartyName} />
           ) : null}
-          <AvatarFallback className="bg-primary/15 text-xs font-semibold text-foreground">
+          <AvatarFallback className="bg-primary/20 text-xs font-semibold text-foreground">
             {initials(counterpartyName)}
           </AvatarFallback>
         </Avatar>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-semibold text-foreground">{counterpartyName}</p>
+          <p className="truncate text-base font-semibold text-foreground">{counterpartyName}</p>
           {counterpartySubtitle && (
             <p className="truncate text-xs text-muted-foreground">{counterpartySubtitle}</p>
           )}
@@ -383,7 +383,7 @@ export const ChatThread = ({
       {/* Messages */}
       <div
         ref={scrollRef}
-        className="flex-1 min-h-0 overflow-y-auto bg-muted/30 px-3 py-4 sm:px-6"
+        className="scrollbar-hide flex-1 min-h-0 overflow-y-auto bg-muted/40 px-3 py-5 sm:px-6"
       >
         {loading ? (
           <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
@@ -394,7 +394,7 @@ export const ChatThread = ({
             No messages yet — say hi to get the conversation started.
           </div>
         ) : (
-          <div className="mx-auto flex max-w-3xl flex-col gap-1">
+          <div className="mx-auto flex max-w-3xl flex-col gap-1.5">
             {grouped.map((g) => {
               if (g.kind === "day") {
                 return (
@@ -439,10 +439,10 @@ export const ChatThread = ({
                   >
                     <div
                       className={cn(
-                        "flex flex-col gap-1 px-3 py-2 text-sm shadow-sm",
+                        "flex flex-col gap-1 px-3.5 py-2 text-sm",
                         mine
-                          ? "rounded-2xl rounded-br-sm bg-[#9FE870] text-[#163300]"
-                          : "rounded-2xl rounded-bl-sm bg-[#F0F0F0] text-[#163300]",
+                          ? "rounded-2xl rounded-br-md bg-[#9FE870] text-[#163300]"
+                          : "rounded-2xl rounded-bl-md bg-card text-[#163300] border border-border/60",
                         m.flagged && "ring-2 ring-destructive/60"
                       )}
                     >
