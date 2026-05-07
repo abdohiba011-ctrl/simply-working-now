@@ -640,7 +640,7 @@ const Affiliate = () => {
                         <div className="mt-4 rounded-lg border p-3 text-center text-sm" style={{ color: FOREST }}>
                           {stats.approvedBalanceMad >= 50
                             ? "You are eligible for the next weekly payout."
-                            : `You need ${50 - stats.approvedBalanceMad} MAD more to be eligible for weekly payout.`}
+                            : `You need ${Math.ceil(50 - stats.approvedBalanceMad)} MAD more to be eligible for weekly payout.`}
                         </div>
                       </>
                     )}
