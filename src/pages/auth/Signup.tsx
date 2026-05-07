@@ -481,9 +481,7 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
                   onToggle={() => setShowPassword((v) => !v)}
                   register={form.register("password")}
                 />
-                {pwValue ? (
-                  <StrengthMeter strength={strength} rules={rules} />
-                ) : null}
+                {pwValue ? <SimplePwIndicator ok={pwOk} /> : null}
 
                 <PasswordField
                   id="confirmPassword"
@@ -828,7 +826,7 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
             onToggle={() => setShowPassword((v) => !v)}
             register={form.register("password")}
           />
-          {pwValue ? <StrengthMeter strength={strength} rules={rules} /> : null}
+          {pwValue ? <SimplePwIndicator ok={pwOk} /> : null}
 
           <PasswordField
             id="confirmPassword"
