@@ -80,7 +80,7 @@ export function AgencyAuthLayout({ children }: AgencyAuthLayoutProps) {
           <p className="mt-3 text-sm text-white/80">
             {t("agencyAuth.tagline_sub", {
               defaultValue:
-                "Morocco's first peer-to-peer motorbike rental marketplace.",
+                "Morocco's first motorbike rental marketplace.",
             })}
           </p>
         </div>
