@@ -33,7 +33,6 @@ const Finance = () => {
       <Suspense fallback={<div className="py-10 text-center text-sm text-muted-foreground">Loading…</div>}>
         {tab === "wallet" && <Wallet />}
         {tab === "transactions" && <Transactions />}
-        {tab === "invoices" && <Invoices />}
       </Suspense>
     </div>
   );
