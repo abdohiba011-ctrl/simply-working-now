@@ -446,27 +446,11 @@ export function AuthModal() {
                   </button>
                 </div>
                 {signupPwd ? (
-                  <div className="space-y-1">
-                    <div className="flex gap-1">
-                      {[1, 2, 3].map((i) => (
-                        <div
-                          key={i}
-                          className="h-1 flex-1 rounded-full bg-[#163300]/10 transition-colors"
-                          style={{
-                            backgroundColor:
-                              passwordStrength.score >= i ? passwordStrength.color : undefined,
-                          }}
-                        />
-                      ))}
-                    </div>
-                    <p className="text-xs text-[#163300]/60">
-                      {passwordStrength.label} · At least 8 characters, 1 uppercase, 1 number
-                    </p>
-                  </div>
-                ) : (
-                  <p className="text-xs text-[#163300]/50">
-                    At least 8 characters, 1 uppercase, 1 number
+                  <p className={cn("text-xs font-medium", passwordOk ? "text-green-600" : "text-red-600")}>
+                    {passwordOk ? "OK" : "Too short — minimum 8 characters"}
                   </p>
+                ) : (
+                  <p className="text-xs text-[#163300]/50">At least 8 characters</p>
                 )}
               </div>
               <div className="space-y-1.5">
