@@ -376,7 +376,7 @@ const BookingConfirmed = () => {
 
             <div className="flex flex-col sm:flex-row gap-3 pt-1">
               <Button asChild variant="hero" size="lg" className="flex-1">
-                <Link to="/account/bookings">View my bookings</Link>
+                <Link to="/booking-history">View my bookings</Link>
               </Button>
               <Button asChild variant="outline" size="lg" className="flex-1">
                 <Link to="/inbox">
