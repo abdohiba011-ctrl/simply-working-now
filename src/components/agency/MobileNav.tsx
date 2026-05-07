@@ -3,7 +3,7 @@ import { Home, Calendar, Bike, MessageCircle, MoreHorizontal } from "lucide-reac
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import {
-  Wallet, Receipt, Sparkles, FileText, Building, Users, ShieldCheck,
+  Wallet, Receipt, FileText, Building, Users, ShieldCheck,
   BarChart, Settings, Bell, Plug, LifeBuoy, CalendarDays,
 } from "lucide-react";
 
@@ -18,7 +18,6 @@ const MORE_ITEMS = [
   { to: "/agency/calendar", label: "Calendar", icon: CalendarDays },
   { to: "/agency/wallet", label: "Wallet", icon: Wallet },
   { to: "/agency/transactions", label: "Transactions", icon: Receipt },
-  { to: "/agency/subscription", label: "Subscription", icon: Sparkles },
   { to: "/agency/invoices", label: "Invoices", icon: FileText },
   { to: "/agency/profile", label: "Profile", icon: Building },
   { to: "/agency/team", label: "Team", icon: Users },

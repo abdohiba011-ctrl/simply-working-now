@@ -9,7 +9,7 @@ const Team = () => {
         <EmptyState
           icon={Users}
           title="Team management coming soon"
-          description="Invite teammates and assign permissions. This feature will be enabled with the Pro and Business plans."
+          description="Invite teammates and assign permissions. Coming soon."
         />
       </div>
     </AgencyLayout>

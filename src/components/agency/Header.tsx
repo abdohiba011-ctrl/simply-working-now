@@ -38,7 +38,6 @@ const CMD_TARGETS: { label: string; path: string }[] = [
   { label: "Calendar", path: "/agency/calendar" },
   { label: "Wallet", path: "/agency/finance#wallet" },
   { label: "Transactions", path: "/agency/finance#transactions" },
-  { label: "Subscription", path: "/agency/finance#subscription" },
   { label: "Invoices", path: "/agency/finance#invoices" },
   { label: "Profile", path: "/agency/agency-center#profile" },
   { label: "Team", path: "/agency/agency-center#team" },

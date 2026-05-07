@@ -12,7 +12,7 @@ const events = [
   { key: "new_message", label: "New message" },
   { key: "low_wallet", label: "Low wallet balance" },
   { key: "verification", label: "Verification update" },
-  { key: "subscription", label: "Subscription renewal" },
+  
   { key: "payout", label: "Payout complete" },
   { key: "review", label: "Review received" },
 ];
@@ -27,7 +27,7 @@ const defaults: Record<string, Record<string, boolean>> = {
   new_message: { email: false, sms: false, push: true, inapp: true },
   low_wallet: { email: true, sms: true, push: true, inapp: true },
   verification: { email: true, sms: false, push: false, inapp: true },
-  subscription: { email: true, sms: false, push: false, inapp: true },
+  
   payout: { email: true, sms: false, push: true, inapp: true },
   review: { email: false, sms: false, push: true, inapp: true },
 };
