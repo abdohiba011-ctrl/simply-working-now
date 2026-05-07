@@ -494,7 +494,8 @@ export const ChatThread = ({
       </div>
 
       {/* Composer */}
-      <div className="shrink-0 border-t border-[#E0E0E0] bg-white px-3 py-2 sm:px-4 sm:py-3">
+      <div className="shrink-0 border-t border-border bg-card px-3 py-2 sm:px-6 sm:py-3">
+        <div className="mx-auto max-w-3xl">
         {pending.length > 0 && (
           <div className="mb-2 flex flex-wrap gap-2">
             {pending.map((p, i) => (
