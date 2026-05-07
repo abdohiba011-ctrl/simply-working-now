@@ -352,7 +352,7 @@ const Verification = () => {
           "relative rounded-lg border p-3.5 transition-colors",
           done
             ? "border-success/40 bg-success/5"
-            : "border-dashed border-input bg-muted/30 hover:bg-muted/50 hover:border-primary/50",
+            : "border-dashed border-input bg-muted/30 hover:bg-muted/50 hover:border-slate-400",
           locked && "opacity-90",
         )}
       >
