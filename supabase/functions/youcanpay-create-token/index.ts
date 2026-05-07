@@ -64,6 +64,28 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Server-side enforcement of expected minimum amounts per purpose.
+    // Prevents a renter from passing 0.01 MAD to bypass the 10 MAD platform fee
+    // (the webhook hardcodes _platform_fee_paid: 10 when promoting bookings).
+    const MIN_AMOUNTS: Record<string, number> = {
+      booking_payment: 10,    // platform booking fee
+      subscription: 50,       // agency confirmation fee
+      wallet_topup: 10,       // minimum agency wallet top-up
+      renter_topup: 10,       // minimum renter wallet top-up
+    };
+    const minRequired = MIN_AMOUNTS[body.purpose];
+    if (minRequired && amount < minRequired) {
+      return new Response(
+        JSON.stringify({
+          error: "Amount below required minimum",
+          purpose: body.purpose,
+          minimum: minRequired,
+          received: amount,
+        }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
     const admin = createClient(SUPABASE_URL, SERVICE_ROLE);
     const currency = body.currency || "MAD";
 
