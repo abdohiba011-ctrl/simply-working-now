@@ -274,7 +274,7 @@ const Verification = () => {
     if (isVerified) {
       return {
         tone: "success" as const,
-        icon: <CheckCircle2 className="h-5 w-5" />,
+        icon: <CheckCircle2 className="h-5 w-5 text-slate-950 bg-slate-50/0" />,
         title: "You're verified",
         text: "Your shop is live. Approved motorbikes are visible to renters in search results.",
       };
