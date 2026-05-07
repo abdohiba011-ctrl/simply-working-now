@@ -43,10 +43,10 @@ export const TestimonialsSection = () => {
             id="testimonials-heading"
             className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-foreground"
           >
-            What early riders are saying
+            What clients are saying about us
           </h2>
           <p className="mt-3 text-base sm:text-lg text-muted-foreground">
-            Feedback from our first beta testers
+            Feedback from our clients
           </p>
         </header>
 
@@ -61,18 +61,27 @@ export const TestimonialsSection = () => {
                 animationFillMode: "backwards",
               }}
             >
+              <div className="flex items-center gap-3 mb-4">
+                <img
+                  src={tm.image}
+                  alt={`${tm.name}, Motonita client in ${tm.location}`}
+                  loading="lazy"
+                  decoding="async"
+                  className="h-12 w-12 rounded-full object-cover ring-2 ring-[#9FE870]/40"
+                />
+                <div>
+                  <div className="font-bold text-sm" style={{ color: "#163300" }}>
+                    {tm.name}
+                  </div>
+                  <div className="text-xs text-gray-500">{tm.location}</div>
+                </div>
+              </div>
               <div className="flex items-center gap-0.5 mb-3" aria-label="5 out of 5 stars">
                 {Array.from({ length: 5 }).map((_, j) => (
                   <Star key={j} className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
                 ))}
               </div>
-              <p className="text-sm leading-relaxed text-gray-700">{tm.quote}</p>
-              <div className="mt-4">
-                <span className="font-bold" style={{ color: "#9FE870" }}>
-                  — {tm.name}
-                </span>
-                <span className="text-sm text-gray-500"> · {tm.location}</span>
-              </div>
+              <p className="text-sm leading-relaxed text-gray-700">"{tm.quote}"</p>
             </article>
           ))}
         </div>
