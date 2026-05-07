@@ -564,11 +564,17 @@ export default function RentCity() {
                   )}
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="w-[320px] flex flex-col">
-                <SheetHeader>
-                  <SheetTitle>Filters</SheetTitle>
+              <SheetContent
+                side="bottom"
+                className="h-[88dvh] rounded-t-[28px] p-0 border-t-0 bg-background flex flex-col [&>button]:hidden"
+              >
+                <div className="flex justify-center pt-2.5 pb-1 shrink-0">
+                  <span className="h-1.5 w-12 rounded-full bg-muted-foreground/25" />
+                </div>
+                <SheetHeader className="px-5 py-2 shrink-0">
+                  <SheetTitle className="text-lg font-semibold text-start">Filters</SheetTitle>
                 </SheetHeader>
-                <div className="mt-4 flex-1 min-h-0">{filterPanel}</div>
+                <div className="flex-1 min-h-0">{filterPanel}</div>
               </SheetContent>
             </Sheet>
 
