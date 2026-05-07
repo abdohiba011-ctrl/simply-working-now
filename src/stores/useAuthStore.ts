@@ -301,6 +301,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
               currentRole: mapped.last_active_role,
               isAuthenticated: true,
             });
+            // Best-effort: claim any pending ?ref=CODE the user landed with
+            // before signing up. Safe across reloads (sessionStorage) and
+            // idempotent (DB rejects duplicates / self-referrals).
+            try {
+              const { claimPendingReferral } = await import("@/lib/referral");
+              await claimPendingReferral();
+            } catch {
+              /* ignore */
+            }
           } catch (e) {
             console.error("[useAuthStore] Failed to map auth user", e);
           }
