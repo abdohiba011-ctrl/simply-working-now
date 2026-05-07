@@ -7,29 +7,15 @@ import { toast } from "sonner";
 
 const events = [
   { key: "new_booking", label: "New booking" },
-  { key: "booking_confirmed", label: "Booking confirmed" },
-  { key: "booking_cancelled", label: "Booking cancelled" },
   { key: "new_message", label: "New message" },
-  { key: "low_wallet", label: "Low wallet balance" },
-  { key: "verification", label: "Verification update" },
-  
-  { key: "payout", label: "Payout complete" },
-  { key: "review", label: "Review received" },
 ];
 
-const channels = ["email", "sms", "push", "inapp"] as const;
-const channelLabel = { email: "Email", sms: "SMS", push: "Push", inapp: "In-app" };
+const channels = ["email", "sms"] as const;
+const channelLabel = { email: "Email", sms: "SMS" };
 
 const defaults: Record<string, Record<string, boolean>> = {
-  new_booking: { email: true, sms: true, push: true, inapp: true },
-  booking_confirmed: { email: true, sms: false, push: true, inapp: true },
-  booking_cancelled: { email: true, sms: true, push: true, inapp: true },
-  new_message: { email: false, sms: false, push: true, inapp: true },
-  low_wallet: { email: true, sms: true, push: true, inapp: true },
-  verification: { email: true, sms: false, push: false, inapp: true },
-  
-  payout: { email: true, sms: false, push: true, inapp: true },
-  review: { email: false, sms: false, push: true, inapp: true },
+  new_booking: { email: true, sms: true },
+  new_message: { email: true, sms: false },
 };
 
 const NotificationSettings = () => {
