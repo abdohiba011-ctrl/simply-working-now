@@ -418,64 +418,23 @@ const Listings = () => {
           </div>
 
           {/* Desktop Filter Bar (lg and up) */}
-          <div className="hidden lg:block">
-            {/* Back + title row */}
-            <div className="flex items-center justify-between mb-3 px-[16px]">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate("/")}
-                className="gap-2 bg-muted text-foreground hover:bg-primary hover:text-primary-foreground rounded-full"
-              >
-                <ArrowLeft className={cn("h-4 w-4", isRTL && "rotate-180")} />
-                <span className="hidden sm:inline">{t("listings.backToHomepage")}</span>
-              </Button>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <SlidersHorizontal className="h-4 w-4" />
-                <span>{t("listings.filtersTitle")}</span>
-              </div>
-            </div>
-
-            {/* Location pills - horizontal scroll */}
-            <div className="flex items-center gap-2 mb-3 overflow-x-auto pb-1 scrollbar-hide -mx-0 px-[16px]">
-              {neighborhoods.map((n) => (
-                <button
-                  key={n.id}
-                  onClick={() => handleTabChange(n.id)}
-                  className={cn(
-                    "flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 border",
-                    selectedTab === n.id
-                      ? "bg-foreground text-background border-foreground"
-                      : "bg-background text-foreground border-border hover:border-foreground/40"
-                  )}
-                >
-                  <MapPinIcon className="inline h-3.5 w-3.5 mr-1.5 -mt-0.5" />
-                  {n.name}
-                </button>
-              ))}
-            </div>
-
-            {/* Date + sort row */}
-            <div className="flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between px-[16px]">
-              <div className="flex-1 sm:max-w-md">
-                <BookingDatePicker
-                  value={dateRange}
-                  onChange={handleDateChange}
-                />
-              </div>
-              <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
-                <SelectTrigger className="w-full sm:w-[200px] rounded-full">
-                  <SelectValue placeholder={t("listings.sortBy")} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="recommended">{t("listings.sortRecommended")}</SelectItem>
-                  <SelectItem value="price-asc">{t("listings.sortPriceLow")}</SelectItem>
-                  <SelectItem value="price-desc">{t("listings.sortPriceHigh")}</SelectItem>
-                  <SelectItem value="rating">{t("listings.sortRating")}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+          <DesktopFilterBar
+            isRTL={isRTL}
+            t={t}
+            navigate={navigate}
+            neighborhoods={neighborhoods}
+            selectedTab={selectedTab}
+            handleTabChange={handleTabChange}
+            dateRange={dateRange}
+            handleDateChange={handleDateChange}
+            sortBy={sortBy}
+            setSortBy={setSortBy}
+            onClearAll={() => {
+              setSelectedTab(neighborhoods[0]?.id || "");
+              setDateRange(undefined);
+              setSortBy("recommended");
+            }}
+          />
         </div>
       </div>
 
