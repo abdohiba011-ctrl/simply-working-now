@@ -578,6 +578,7 @@ export const ChatThread = ({
             )}
           </Button>
         </div>
+        </div>
       </div>
 
       {/* Lightbox */}
