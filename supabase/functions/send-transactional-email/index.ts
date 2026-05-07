@@ -29,6 +29,7 @@ Deno.serve(async (req) => {
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL')
   const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+  const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') || Deno.env.get('SUPABASE_PUBLISHABLE_KEY')
   const lovableApiKey = Deno.env.get('LOVABLE_API_KEY')
   const resendApiKey = Deno.env.get('RESEND_API_KEY')
 
@@ -43,6 +44,39 @@ Deno.serve(async (req) => {
       JSON.stringify({ error: 'Resend connector is not configured' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     )
+  }
+
+  // Authorization: only admins (or service-role callers) may invoke this.
+  // Without this check, any authenticated user could send phishing/spam emails
+  // from noreply@motonita.ma using any template (including admin-message).
+  const authHeader = req.headers.get('Authorization') || ''
+  const bearer = authHeader.replace(/^Bearer\s+/i, '').trim()
+  const isServiceRoleCall = !!bearer && bearer === supabaseServiceKey
+  if (!isServiceRoleCall) {
+    if (!bearer || !supabaseAnonKey) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+    const userClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: `Bearer ${bearer}` } },
+    })
+    const { data: userData } = await userClient.auth.getUser()
+    if (!userData?.user) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+    const adminClient = createClient(supabaseUrl, supabaseServiceKey)
+    const { data: isAdmin } = await adminClient.rpc('has_role', {
+      _user_id: userData.user.id,
+      _role: 'admin',
+    })
+    if (!isAdmin) {
+      return new Response(JSON.stringify({ error: 'Forbidden' }), {
+        status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
   }
 
   // Parse request
