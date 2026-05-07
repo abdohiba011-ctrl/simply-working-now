@@ -251,8 +251,7 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
   });
 
   const pwValue = form.watch("password");
-  const rules = passwordRules(pwValue ?? "");
-  const strength = passwordStrength(pwValue ?? "");
+  const pwOk = (pwValue ?? "").length >= 8;
   const cityValue = form.watch("city");
   const { cities: dbCities, locations: dbLocations } = useServiceCities();
   const availableCityCount = useMemo(
