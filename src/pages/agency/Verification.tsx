@@ -473,7 +473,7 @@ const Verification = () => {
         <div className={cn("mt-4 flex items-start gap-3 rounded-lg border px-4 py-3", bannerClasses)}>
           <div className="mt-0.5 shrink-0">{banner.icon}</div>
           <div className="min-w-0">
-            <div className="text-sm font-semibold">{banner.title}</div>
+            <div className="text-sm font-semibold text-slate-950">{banner.title}</div>
             <p className="mt-0.5 text-xs opacity-90 text-slate-800">{banner.text}</p>
           </div>
         </div>
