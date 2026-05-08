@@ -23,6 +23,7 @@ const Wallet = () => {
   const [iban, setIban] = useState("");
   const [accountLabel, setAccountLabel] = useState("");
   const [processing, setProcessing] = useState(false);
+  const [topupMethod, setTopupMethod] = useState<"card" | "cashplus">("card");
 
   // Auto-refresh after returning from a successful YouCan Pay redirect.
   useEffect(() => {
