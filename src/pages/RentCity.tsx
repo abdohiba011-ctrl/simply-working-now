@@ -768,7 +768,7 @@ function RentCityComingSoon({ city }: { city: CityRow }) {
             </h1>
             <div className="mt-3">
               <CitySwitcher
-                currentCitySlug={city.slug || cityToSlug(city.name)}
+                currentCitySlug={cityToSlug(city.name)}
                 currentCityName={`Switch from ${city.name}`}
                 variant="compact"
               />
