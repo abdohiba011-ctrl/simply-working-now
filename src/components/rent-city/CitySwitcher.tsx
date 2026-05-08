@@ -142,12 +142,12 @@ export const CitySwitcher = ({
     navigate(`/rent/${newSlug}${qs ? `?${qs}` : ""}`);
   };
 
-  const renderItem = (c: CityRow, opts: { recent?: boolean } = {}) => {
+  const renderItem = (c: CityRow) => {
     const slug = c.slug || cityToSlug(c.name);
     const isCurrent = slug === currentCitySlug;
     return (
       <CommandItem
-        key={`${opts.recent ? "r-" : ""}${c.id}`}
+        key={c.id}
         value={c.name}
         onSelect={() => handleSelect(c)}
         onMouseEnter={() => prefetchCity(c)}
@@ -155,11 +155,7 @@ export const CitySwitcher = ({
         className="flex items-center justify-between gap-3"
       >
         <span className="flex items-center gap-2">
-          {opts.recent ? (
-            <History className="h-3.5 w-3.5 text-muted-foreground" />
-          ) : (
-            <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
-          )}
+          <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
           {c.name}
         </span>
         {isCurrent && <Check className="h-4 w-4 text-[#163300]" />}
