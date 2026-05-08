@@ -38,8 +38,9 @@ import { toast } from "sonner";
  */
 
 const POLL_INTERVAL_MS = 10_000;
+const PAYMENT_WINDOW_MS = 10 * 60 * 1000; // 10 minutes to pay at CashPlus
 
-type Phase = "awaiting" | "paid" | "failed";
+type Phase = "awaiting" | "paid" | "failed" | "expired";
 
 export default function PaymentCashPlus() {
   const [params] = useSearchParams();
@@ -61,7 +62,19 @@ export default function PaymentCashPlus() {
     currency: string;
     transaction_id: string | null;
     status: string | null;
+    created_at: string | null;
   } | null>(null);
+  const [now, setNow] = useState(() => Date.now());
+
+  const deadlineMs = useMemo(() => {
+    const startIso = payment?.created_at;
+    const start = startIso ? new Date(startIso).getTime() : Date.now();
+    return start + PAYMENT_WINDOW_MS;
+  }, [payment?.created_at]);
+
+  const remainingMs = Math.max(0, deadlineMs - now);
+  const remainingMin = Math.floor(remainingMs / 60000);
+  const remainingSec = Math.floor((remainingMs % 60000) / 1000);
 
   const voucherRef = useMemo(
     () => payment?.transaction_id || transactionId || pid,
