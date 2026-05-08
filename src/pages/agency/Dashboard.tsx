@@ -112,33 +112,37 @@ const Dashboard = () => {
                       <li key={b.id}>
                         <button
                           onClick={() => navigate(`/agency/bookings/${b.id}`)}
-                          className="flex w-full items-center gap-4 rounded-xl px-3 py-3 text-left transition-colors hover:bg-muted/60"
+                          className="flex w-full items-start gap-3 rounded-xl px-3 py-3 text-left transition-colors hover:bg-muted/60 sm:items-center sm:gap-4"
                         >
-                          <div className="w-14 shrink-0 text-sm font-mono text-muted-foreground">
-                            {(isPickup ? b.pickup_time : b.return_time) || "—"}
-                          </div>
                           {b.bike?.main_image_url ? (
-                            <img src={b.bike.main_image_url} alt="" className="h-11 w-11 rounded-xl object-cover" />
+                            <img src={b.bike.main_image_url} alt="" className="h-11 w-11 shrink-0 rounded-xl object-cover" />
                           ) : (
-                            <div className="h-11 w-11 rounded-xl bg-muted" />
+                            <div className="h-11 w-11 shrink-0 rounded-xl bg-muted" />
                           )}
                           <div className="min-w-0 flex-1">
-                            <div className="truncate text-sm font-semibold text-foreground">
+                            <div className="flex items-center gap-2">
+                              <span className="font-mono text-xs text-muted-foreground">
+                                {(isPickup ? b.pickup_time : b.return_time) || "—"}
+                              </span>
+                              <span
+                                className={cn(
+                                  "rounded-full px-2 py-0.5 text-[10px] font-medium",
+                                  isPickup
+                                    ? "bg-primary/15 text-foreground"
+                                    : "bg-info/15 text-info",
+                                )}
+                              >
+                                {isPickup ? "Pickup" : "Return"}
+                              </span>
+                            </div>
+                            <div className="mt-0.5 truncate text-sm font-semibold text-foreground">
                               {b.customer_name || "Customer"}
                             </div>
                             <div className="truncate text-xs text-muted-foreground">{b.bike?.name || "—"}</div>
                           </div>
-                          <span
-                            className={cn(
-                              "rounded-full px-2.5 py-1 text-[11px] font-medium",
-                              isPickup
-                                ? "bg-primary/15 text-foreground"
-                                : "bg-info/15 text-info",
-                            )}
-                          >
-                            {isPickup ? "Pickup" : "Return"}
-                          </span>
-                          <StatusChip status={b.booking_status || b.status || "pending"} />
+                          <div className="shrink-0">
+                            <StatusChip status={b.booking_status || b.status || "pending"} />
+                          </div>
                         </button>
                       </li>
                     );

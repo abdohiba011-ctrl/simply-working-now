@@ -118,11 +118,11 @@ const Wallet = () => {
   return (
     <AgencyLayout>
       <div className="mx-auto max-w-4xl space-y-6">
-        <Card className="p-6">
+        <Card className="p-4 sm:p-6">
           <p className="text-xs uppercase tracking-wider text-muted-foreground">Current balance</p>
-          <p className="mt-2 text-5xl font-bold tracking-tight">
-            {loading ? "—" : balance.toLocaleString()}
-            <span className="ml-2 text-2xl text-muted-foreground">MAD</span>
+          <p className="mt-2 text-4xl font-bold tracking-tight sm:text-5xl">
+            <span className="break-all">{loading ? "—" : balance.toLocaleString()}</span>
+            <span className="ml-2 text-xl text-muted-foreground sm:text-2xl">MAD</span>
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
             <Button onClick={() => setTopupOpen(true)}>
