@@ -2553,6 +2553,7 @@ export type Database = {
           customer_email: string | null
           customer_name: string | null
           id: string
+          method: string | null
           paid_at: string | null
           purpose: string
           raw_response: Json | null
@@ -2572,6 +2573,7 @@ export type Database = {
           customer_email?: string | null
           customer_name?: string | null
           id?: string
+          method?: string | null
           paid_at?: string | null
           purpose: string
           raw_response?: Json | null
@@ -2591,6 +2593,7 @@ export type Database = {
           customer_email?: string | null
           customer_name?: string | null
           id?: string
+          method?: string | null
           paid_at?: string | null
           purpose?: string
           raw_response?: Json | null

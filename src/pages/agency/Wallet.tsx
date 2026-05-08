@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
-import { ArrowDownToLine, ArrowUpFromLine, AlertTriangle } from "lucide-react";
+import { ArrowDownToLine, ArrowUpFromLine, AlertTriangle, CreditCard, Banknote } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAgencyWallet } from "@/hooks/useAgencyData";
@@ -23,6 +23,7 @@ const Wallet = () => {
   const [iban, setIban] = useState("");
   const [accountLabel, setAccountLabel] = useState("");
   const [processing, setProcessing] = useState(false);
+  const [topupMethod, setTopupMethod] = useState<"card" | "cashplus">("card");
 
   // Auto-refresh after returning from a successful YouCan Pay redirect.
   useEffect(() => {
@@ -61,6 +62,7 @@ const Wallet = () => {
           purpose: "wallet_topup",
           amount,
           currency: "MAD",
+          method: topupMethod,
         },
       });
       if (error) throw error;
@@ -73,10 +75,13 @@ const Wallet = () => {
         currency: "MAD",
         successPath: "/agency/finance?yc=success#wallet",
         errorPath: "/agency/finance?yc=error#wallet",
-        title: "Top up wallet",
+        title: topupMethod === "cashplus" ? "Top up wallet with CashPlus" : "Top up wallet",
       });
+      // buildYouCanPayUrl doesn't yet append `method` — add it ourselves so
+      // PayYouCan renders the correct gateway and routes to the right page.
+      const urlWithMethod = `${url}${url.includes("?") ? "&" : "?"}method=${topupMethod}`;
       setTopupOpen(false);
-      navigate(url);
+      navigate(urlWithMethod);
     } catch (e: any) {
       toast.error(e.message || "Failed to start top up");
     } finally {
@@ -142,7 +147,7 @@ const Wallet = () => {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Top up wallet</DialogTitle>
-            <DialogDescription>You will be redirected to YouCanPay to complete the payment.</DialogDescription>
+            <DialogDescription>Choose how you'd like to pay.</DialogDescription>
           </DialogHeader>
           <div className="grid gap-3 py-2">
             <Label>Amount (MAD)</Label>
@@ -154,11 +159,41 @@ const Wallet = () => {
                 </Button>
               ))}
             </div>
+            <Label className="pt-2">Payment method</Label>
+            <div className="grid grid-cols-2 gap-2">
+              {([
+                { id: "card" as const, icon: CreditCard, label: "Card", hint: "Instant" },
+                { id: "cashplus" as const, icon: Banknote, label: "CashPlus", hint: "Pay at agent" },
+              ]).map((opt) => {
+                const Icon = opt.icon;
+                const selected = topupMethod === opt.id;
+                return (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => setTopupMethod(opt.id)}
+                    className={`rounded-lg border-2 p-3 text-left transition-colors ${
+                      selected ? "border-primary bg-primary/10" : "border-border hover:border-primary/50"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Icon className="h-4 w-4" />
+                      <span className="text-sm font-semibold">{opt.label}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-0.5">{opt.hint}</p>
+                  </button>
+                );
+              })}
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setTopupOpen(false)} disabled={processing}>Cancel</Button>
             <Button onClick={handleTopup} disabled={processing}>
-              {processing ? "Redirecting…" : `Pay ${amount} MAD`}
+              {processing
+                ? "Redirecting…"
+                : topupMethod === "cashplus"
+                ? `Get voucher · ${amount} MAD`
+                : `Pay ${amount} MAD`}
             </Button>
           </DialogFooter>
         </DialogContent>

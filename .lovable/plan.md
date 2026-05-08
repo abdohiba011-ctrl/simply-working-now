@@ -1,66 +1,90 @@
 ## Problem
 
-Anonymous (logged-out) visitors see **0 motorbikes** on `/listings`. Confirmed via the database:
+On the renter Checkout (and the agency Wallet top-up), we show one "Pay with card" CTA, but the embedded YouCan Pay form actually renders **both** Card and CashPlus gateways and we treat the result the same way:
 
-- The Listings page reads from the `bikes_public` view (defined `WITH (security_invoker=true)`).
-- A `security_invoker` view enforces the **base table's RLS** as the querying role.
-- The `bikes` table has **only three SELECT policies**, all restricted to `authenticated`:
-  - "Owners can view own bikes"
-  - "Admins can view all bikes"
-  - (no public/anon policy at all)
-- Result: anon → no matching policy → 0 rows from `bikes_public` → empty Listings.
+- `PayYouCan` calls `yc.renderAvailableGateways(...)` so the user can pick CashPlus.
+- After `yc.pay(token)` resolves, we always send the user to `/payment-status` which polls the webhook for ~30s.
 
-`bike_types` does have a proper public policy for anon, which is why some other surfaces (homepage carousels reading `bike_types` directly) still work — but Listings filters by `bikes` and breaks.
+That works for **Card** (3DS finishes in seconds, webhook fires `paid`, we auto-confirm).
+It is wrong for **CashPlus** — YouCan returns a voucher (transaction stays `pending` until the user physically pays at a CashPlus point hours or days later). The poller times out, the user sees a confusing "Still processing" screen, and the voucher reference is buried.
 
-This regresses periodically because nothing in the schema guarantees the public-read policy on `bikes` exists. Every time someone tightens RLS on `bikes`, it's silently lost.
+The two methods are fundamentally different and need their own UX.
 
-## Fix (single migration)
+## What we'll build
 
-Add a **permanent, idempotent** public SELECT policy on `public.bikes` that mirrors the one on `bike_types`, plus a regression safeguard.
+### 1. Choose method on Checkout (renter)
 
-```sql
--- 1. Public read on bikes for anon + authenticated
-DROP POLICY IF EXISTS "Public can view bikes of approved verified types" ON public.bikes;
+Replace the single "Pay with card" panel with two side-by-side selectable options:
 
-CREATE POLICY "Public can view bikes of approved verified types"
-ON public.bikes
-FOR SELECT
-TO anon, authenticated
-USING (
-  available = true
-  AND EXISTS (
-    SELECT 1 FROM public.bike_types bt
-    WHERE bt.id = bikes.bike_type_id
-      AND bt.approval_status = 'approved'
-      AND bt.business_status = 'active'
-      AND public.is_owner_verified_agency(bt.owner_id)
-  )
-);
-
-COMMENT ON POLICY "Public can view bikes of approved verified types" ON public.bikes IS
-  'CRITICAL: Required so anonymous visitors can see listings via bikes_public view. Do NOT drop without replacement.';
+```text
+┌──────────────────────┐  ┌──────────────────────┐
+│ 💳 Card              │  │ 🧾 CashPlus voucher  │
+│ Instant confirmation │  │ Pay at any CashPlus  │
+│ Visa / Mastercard    │  │ agent · 60 MAD       │
+└──────────────────────┘  └──────────────────────┘
+            [ Continue to payment ]
 ```
 
-The `bikes_public` view already excludes sensitive columns (`license_plate`, `notes`), so anon only ever reads safe fields.
+The selected method is forwarded to `/pay/youcanpay` via a new `method=card|cashplus` query param.
 
-## Regression guard
+### 2. Render only the chosen gateway
 
-Add a Vitest security test that hits the live Supabase project as the anon key and asserts `bikes_public` returns ≥ 1 row whenever `bike_types` has any approved+active+verified row. Place it next to the existing `src/test/security.bikes.test.ts`. If a future migration drops the policy, CI fails immediately.
+In `PayYouCan.tsx`, read `method` and call:
+- `yc.renderCreditCardForm("default")` when `method=card`
+- `yc.renderCashPlusForm("default")` (or the equivalent gateway-name call) when `method=cashplus`
 
-## What I will NOT change
+This stops the user from silently switching method inside the form.
 
-- No frontend changes — `useBikes` already targets `bikes_public` correctly.
-- No edits to `bike_types` policies (they're already correct for anon).
-- No change to the booking/checkout flow — anonymous visitors can already browse; auth is requested at the Book step (per project rules).
+### 3. Two outcome paths
 
-## Files touched
+When `yc.pay(token)` resolves:
 
-- `supabase/migrations/<new>.sql` — the policy + comment above
-- `src/test/security.bikes.test.ts` — add anon-visibility regression test
+- **Card** → unchanged. Navigate to `/payment-status` with current 30s poll → on `paid` continue to `/confirmation`.
+- **CashPlus** → navigate to a new **`/payment-cashplus`** page (not the generic status page) with the voucher details.
 
-## Verification after apply
+### 4. New `/payment-cashplus` voucher page
 
-1. Run the migration.
-2. As anon (no session) call `supabase.from('bikes_public').select('*')` → expect rows.
-3. Reload `/listings` logged out → bikes appear.
-4. Confirm the new vitest passes.
+Dedicated, calmer UI tailored to a "pay later" flow:
+
+- Big voucher reference number / barcode-ready string from the YouCan response.
+- Clear copy: "Take this code to any CashPlus agent in Morocco. Pay 60 MAD. Your booking is held while we wait — the agency will be notified the moment CashPlus confirms."
+- "Find a CashPlus agent" link.
+- Status badge: **Awaiting payment**. No countdown, no fake "Still processing" alarm.
+- Background poll of `youcanpay_payments.status` every ~10s with a longer/open-ended timeout, plus a **Verify now** button (reuses `youcanpay-verify-payment`).
+- Buttons: **Copy code**, **Email me the code**, **I've paid — verify now**, **Back to my bookings**.
+- When status flips to `paid`, auto-redirect to `/confirmation` (same `next` path Card uses).
+- Page is safe to leave; the booking row in `/bookings/:id` shows the same voucher and "Awaiting CashPlus payment" status so the user can return any time.
+
+### 5. Apply the same split to agency Wallet top-up
+
+`src/pages/agency/Wallet.tsx` uses the same `youcanpay-create-token` + `/pay/youcanpay` route. Mirror the change:
+- Pick method first (Card vs CashPlus).
+- CashPlus top-ups land on `/payment-cashplus` with `next` pointing back to `/agency/wallet`.
+- Wallet credit only happens when the webhook flips status to `paid` (already true today — no DB change needed).
+
+### 6. Backend — no schema change
+
+The webhook (`youcanpay-webhook`) and `youcanpay-verify-payment` already detect `cashplus` vs `card` from the gateway field and only credit / confirm on `paid`. We just need to:
+- Make sure `youcanpay-create-token` stores the chosen `method` on the `youcanpay_payments` row (column already exists per webhook code), so `/payment-cashplus` can render the right UI even on a refresh / return-later session.
+- Confirm `bookings` keeps its `pending` state until `paid` for CashPlus — no auto-cancel during the voucher wait window. (We'll review existing hold-expiry logic in `promote_hold_to_booking` and extend the booking hold for CashPlus selections; details in the technical section.)
+
+## Files to change
+
+- `src/pages/Checkout.tsx` — add method selector, pass `method` param.
+- `src/pages/PayYouCan.tsx` — render only the chosen gateway, route success per method.
+- `src/pages/PaymentCashPlus.tsx` — **new** voucher / waiting page.
+- `src/pages/PaymentStatus.tsx` — keep as Card-only (tighten copy: "Confirming your card payment…").
+- `src/pages/agency/Wallet.tsx` — same method selector for top-ups.
+- `src/App.tsx` — register `/payment-cashplus` route.
+- `supabase/functions/youcanpay-create-token/index.ts` — accept and persist `method` on insert.
+- `src/locales/en.json` / `fr.json` / `ar.json` — strings for the new selector and voucher page (RTL safe).
+
+## Out of scope
+
+- No change to the 60 MAD amount, the 10/50 split, or refund logic.
+- No new payment provider.
+- No change to how the agency receives the booking notification (webhook unchanged for Card; for CashPlus the agency is still only notified on `paid`, which matches the rule that nothing is "real" until money is in).
+
+## Open question (one)
+
+For CashPlus, should the renter's bike **hold** be extended past the current 5-minute window so the booking isn't cancelled while the voucher is unpaid? Recommended: extend to 24h for CashPlus selections, and surface that timer to both renter and agency. I'll confirm with you before changing `promote_hold_to_booking`.

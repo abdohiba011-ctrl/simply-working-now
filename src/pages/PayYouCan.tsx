@@ -68,6 +68,7 @@ export default function PayYouCan() {
   const successPath = params.get("success") || "/";
   const errorPath = params.get("error") || "/";
   const title = params.get("title") || "Complete payment";
+  const method = (params.get("method") || "card") as "card" | "cashplus";
 
   const [status, setStatus] = useState<"loading" | "ready" | "paying" | "error">(
     "loading",
@@ -93,12 +94,26 @@ export default function PayYouCan() {
           isSandbox,
           token,
         });
-        // Render both card and CashPlus when available; renderAvailableGateways
-        // falls back gracefully if only one gateway is enabled on the account.
+        // Render ONLY the gateway the user selected on Checkout. Mixing both
+        // here would let a renter who picked "Card" submit a CashPlus voucher
+        // (or vice-versa), and then we'd send them to the wrong wait page.
         try {
+          if (method === "cashplus") {
+            // YouCan exposes the CashPlus form via `renderCashPlusForm`
+            // (some SDK builds also accept a gateway-name on
+            // renderAvailableGateways). We try the dedicated method first.
+            if (typeof yc.renderCashPlusForm === "function") {
+              yc.renderCashPlusForm("default");
+            } else {
+              yc.renderAvailableGateways(["cashplus"], "default");
+            }
+          } else {
+            yc.renderCreditCardForm("default");
+          }
+        } catch (gatewayErr) {
+          // Last-resort fallback so the user is never blocked.
+          console.warn("YouCan gateway render fallback", gatewayErr);
           yc.renderAvailableGateways([], "default");
-        } catch {
-          yc.renderCreditCardForm("default");
         }
         ycRef.current = yc;
         setStatus("ready");
@@ -111,9 +126,12 @@ export default function PayYouCan() {
     return () => {
       cancelled = true;
     };
-  }, [token, pubKey, isSandbox]);
+  }, [token, pubKey, isSandbox, method]);
 
   const buildStatusUrl = (outcome: "success" | "error", transactionId?: string) => {
+    // CashPlus -> dedicated voucher waiting page (open-ended, friendly).
+    // Card     -> generic /payment-status page (30s poll, expects fast confirm).
+    const base = method === "cashplus" ? "/payment-cashplus" : "/payment-status";
     const qs = new URLSearchParams({
       pid,
       next: successPath,
@@ -122,7 +140,7 @@ export default function PayYouCan() {
       title,
     });
     if (transactionId) qs.set("transaction_id", transactionId);
-    return `/payment-status?${qs.toString()}`;
+    return `${base}?${qs.toString()}`;
   };
 
   const handlePay = () => {
@@ -131,9 +149,13 @@ export default function PayYouCan() {
     setStatus("paying");
     yc.pay(token)
       .then((response: any) => {
-        toast.success("Payment submitted");
+        if (method === "cashplus") {
+          toast.success("Voucher generated");
+        } else {
+          toast.success("Payment submitted");
+        }
         const transactionId = getYouCanTransactionId(response);
-        // Don't trust the client outcome — let PaymentStatus poll the webhook.
+        // Don't trust the client outcome — let the wait page poll the webhook.
         navigate(buildStatusUrl("success", transactionId), { replace: true });
       })
       .catch((err: any) => {
@@ -186,19 +208,39 @@ export default function PayYouCan() {
         <Card className="border-2 border-primary/30">
           <CardContent className="p-6 space-y-4">
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li className="flex items-start gap-2">
-                <Lock className="h-4 w-4 text-foreground mt-0.5 flex-shrink-0" />
-                <span>
-                  Card details are entered directly into YouCan Pay's secure
-                  form — Motonita never sees them.
-                </span>
-              </li>
-              <li className="flex items-start gap-2">
-                <ShieldCheck className="h-4 w-4 text-foreground mt-0.5 flex-shrink-0" />
-                <span>
-                  Payments are processed via 3D Secure where required.
-                </span>
-              </li>
+              {method === "cashplus" ? (
+                <>
+                  <li className="flex items-start gap-2">
+                    <Lock className="h-4 w-4 text-foreground mt-0.5 flex-shrink-0" />
+                    <span>
+                      Confirm to generate your CashPlus voucher. You'll then
+                      take it to any CashPlus agent in Morocco to pay {amount} {currency} in cash.
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <ShieldCheck className="h-4 w-4 text-foreground mt-0.5 flex-shrink-0" />
+                    <span>
+                      Your booking is held while we wait for CashPlus to confirm your cash payment.
+                    </span>
+                  </li>
+                </>
+              ) : (
+                <>
+                  <li className="flex items-start gap-2">
+                    <Lock className="h-4 w-4 text-foreground mt-0.5 flex-shrink-0" />
+                    <span>
+                      Card details are entered directly into YouCan Pay's secure
+                      form — Motonita never sees them.
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <ShieldCheck className="h-4 w-4 text-foreground mt-0.5 flex-shrink-0" />
+                    <span>
+                      Payments are processed via 3D Secure where required.
+                    </span>
+                  </li>
+                </>
+              )}
             </ul>
 
             <div id="ycpay-error" className="text-sm text-destructive" />
@@ -230,14 +272,16 @@ export default function PayYouCan() {
               {status === "paying" ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  Processing…
+                  {method === "cashplus" ? "Generating voucher…" : "Processing…"}
                 </>
+              ) : method === "cashplus" ? (
+                <>Generate CashPlus voucher</>
               ) : (
                 <>Pay {amount ? `${amount} ${currency}` : ""}</>
               )}
             </Button>
 
-            {isSandbox && (
+            {isSandbox && method === "card" && (
               <details className="text-xs text-muted-foreground">
                 <summary className="cursor-pointer font-medium">
                   Sandbox test cards

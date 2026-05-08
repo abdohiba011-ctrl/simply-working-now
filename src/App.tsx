@@ -50,6 +50,7 @@ const CheckoutDraft = lazy(() => import("./pages/CheckoutDraft"));
 const BookingConfirmed = lazy(() => import("./pages/BookingConfirmed"));
 const PayYouCan = lazy(() => import("./pages/PayYouCan"));
 const PaymentStatus = lazy(() => import("./pages/PaymentStatus"));
+const PaymentCashPlus = lazy(() => import("./pages/PaymentCashPlus"));
 const Confirmation = lazy(() => import("./pages/Confirmation"));
 const Settings = lazy(() => import("./pages/Settings"));
 const ChangePassword = lazy(() => import("./pages/ChangePassword"));
@@ -210,6 +211,7 @@ const App = () => (
                 <Route path="/checkout/:bookingId" element={<ProtectedRoute><CheckoutDraft /></ProtectedRoute>} />
                 <Route path="/pay/youcanpay" element={<ProtectedRoute><PayYouCan /></ProtectedRoute>} />
                 <Route path="/payment-status" element={<ProtectedRoute><PaymentStatus /></ProtectedRoute>} />
+                <Route path="/payment-cashplus" element={<ProtectedRoute><PaymentCashPlus /></ProtectedRoute>} />
                 <Route path="/confirmation" element={<ProtectedRoute><Confirmation /></ProtectedRoute>} />
                 <Route path="/booking/:bookingId/confirmed" element={<ProtectedRoute><BookingConfirmed /></ProtectedRoute>} />
 
