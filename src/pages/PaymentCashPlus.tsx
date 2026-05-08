@@ -76,10 +76,17 @@ export default function PaymentCashPlus() {
   const remainingMin = Math.floor(remainingMs / 60000);
   const remainingSec = Math.floor((remainingMs % 60000) / 1000);
 
+  // The real CashPlus voucher code (e.g. "cp203854361") — only show it once
+  // YouCan returns it. We never show the internal payment UUID to the user,
+  // because that's not what a CashPlus agent will accept.
   const voucherRef = useMemo(
-    () => payment?.transaction_id || transactionId || pid,
-    [payment, transactionId, pid],
+    () => payment?.transaction_id || transactionId || "",
+    [payment, transactionId],
   );
+  const isVoucherReady = !!voucherRef;
+
+  // Auto-redirect countdown after the user copies the code.
+  const [redirectIn, setRedirectIn] = useState<number | null>(null);
 
   const handleVerifyNow = async () => {
     if (!pid || verifying) return;
