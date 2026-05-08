@@ -134,7 +134,9 @@ const CheckoutDraft = () => {
           return;
         }
         if (data.booking_status !== "draft") {
-          navigate(`/booking/${data.id}/confirmed`);
+          const pm = (data as any).payment_method;
+          const q = pm === "card" || pm === "cashplus" ? `?payment=${pm}` : "";
+          navigate(`/booking/${data.id}/confirmed${q}`);
           return;
         }
 
