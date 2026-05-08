@@ -322,7 +322,7 @@ const CheckoutDraft = () => {
       if (error) throw error;
       if ((data as any)?.status === "paid") {
         toast.success("Payment received!");
-        navigate(`/booking/${booking.id}/confirmed`);
+        navigate(`/booking/${booking.id}/confirmed?payment=cashplus`);
       } else {
         toast.info("Payment not received yet. Please try again after paying at Cash Plus.");
       }
