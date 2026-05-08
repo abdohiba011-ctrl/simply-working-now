@@ -309,14 +309,35 @@ export default function PaymentCashPlus() {
                 </div>
 
                 <p className="text-xs text-muted-foreground text-center">
-                  It's safe to close this page. Your booking is held while we
-                  wait for CashPlus, and you'll find the voucher again under{" "}
+                  Pay within 10 minutes — after that the bike is released and you'll need to book again. The voucher stays available under{" "}
                   <Link to="/bookings" className="underline underline-offset-2">
                     My bookings
-                  </Link>
-                  .
+                  </Link>{" "}
+                  during this window.
                 </p>
               </>
+            )}
+
+            {phase === "expired" && (
+              <div className="text-center space-y-4 py-4">
+                <div className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-destructive/15">
+                  <XCircle className="h-7 w-7 text-destructive" />
+                </div>
+                <h2 className="text-xl font-bold text-foreground">
+                  Time's up — booking released
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  The 10-minute CashPlus payment window has expired. The bike has been released and your booking was cancelled. You can book again — no charge was taken.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-2 justify-center">
+                  <Button variant="hero" onClick={() => navigate(retry)}>
+                    Book again
+                  </Button>
+                  <Button variant="outline" asChild>
+                    <Link to="/">Back to home</Link>
+                  </Button>
+                </div>
+              </div>
             )}
 
             {phase === "paid" && (
