@@ -324,21 +324,43 @@ const BookingConfirmed = () => {
 
   if (!booking) return null;
 
-  // Build a short, human-friendly reference for Cash Plus: 8 hex chars, uppercased.
+  // Internal short handle (used for support tickets / WhatsApp share — NOT the
+  // CashPlus agent reference). The real CashPlus reference is `cashplusReference`
+  // (e.g. "cp203854361"), issued by YouCan Pay and the only code Cash Plus
+  // agents recognize.
   const shortRef = booking.id.slice(0, 8).toUpperCase();
   const cashplusAmount = 60; // platform fee + confirmation fee, paid upfront in cash
-  const cashplusShareText =
-    `Motonita booking — pay ${cashplusAmount} MAD at any Cash Plus agency in Morocco.\n` +
-    `Reference: ${shortRef}\n` +
-    `Find an agency: https://www.cashplus.ma/agences`;
+  const voucherCode = cashplusReference; // null until YouCan returns it
+  const hasVoucher = !!voucherCode;
+
+  // 10-minute countdown driven by the payment row's created_at (falls back to
+  // booking.created_at). After this elapses, the auto_cancel_unpaid_bookings
+  // cron releases the bike server-side.
+  const startMs = (() => {
+    const iso = cashplusStartedAt || (booking as any).created_at;
+    return iso ? new Date(iso).getTime() : Date.now();
+  })();
+  const deadlineMs = startMs + CASHPLUS_PAYMENT_WINDOW_MS;
+  const remainingMs = Math.max(0, deadlineMs - now);
+  const remainingMin = Math.floor(remainingMs / 60000);
+  const remainingSec = Math.floor((remainingMs % 60000) / 1000);
+  const countdownLabel = `${String(remainingMin).padStart(2, "0")}:${String(remainingSec).padStart(2, "0")}`;
+
+  const cashplusShareText = hasVoucher
+    ? `Motonita booking — pay ${cashplusAmount} MAD at any Cash Plus agency in Morocco.\n` +
+      `Reference: ${voucherCode}\n` +
+      `Find an agency: https://www.cashplus.ma/agences`
+    : `Motonita booking — pay ${cashplusAmount} MAD at any Cash Plus agency in Morocco.\n` +
+      `Find an agency: https://www.cashplus.ma/agences`;
 
   const handleCopyRef = async () => {
+    if (!voucherCode) return;
     try {
       if (navigator.clipboard && window.isSecureContext) {
-        await navigator.clipboard.writeText(shortRef);
+        await navigator.clipboard.writeText(voucherCode);
       } else {
         const ta = document.createElement("textarea");
-        ta.value = shortRef;
+        ta.value = voucherCode;
         ta.style.position = "fixed";
         ta.style.opacity = "0";
         document.body.appendChild(ta);
