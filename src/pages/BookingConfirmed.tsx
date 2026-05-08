@@ -379,6 +379,44 @@ const BookingConfirmed = () => {
     window.open(url, "_blank", "noopener,noreferrer");
   };
 
+  // ---------- Cash Plus voucher expired (10-min window elapsed) ----------
+  if (isCashplus && phase === "expired") {
+    const retryHref = bikeSlug ? `/bike/${bikeSlug}` : "/listings";
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="container mx-auto px-4 py-10 max-w-xl space-y-6">
+          <Card className="border-2 border-destructive/40">
+            <CardContent className="p-6 text-center space-y-4">
+              <div className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-destructive/15">
+                <XCircle className="h-7 w-7 text-destructive" />
+              </div>
+              <h1 className="text-2xl font-bold text-foreground">
+                Time's up — booking released
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                The 10-minute Cash Plus payment window has expired. The bike has
+                been released and your booking was cancelled. No charge was
+                taken — feel free to book again.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-2 justify-center pt-2">
+                <Button variant="hero" onClick={() => navigate(retryHref)}>
+                  Book again
+                </Button>
+                <Button variant="outline" onClick={() => navigate("/")}>
+                  Back to home
+                </Button>
+              </div>
+              <p className="text-[11px] text-muted-foreground/70 font-mono pt-2 border-t border-border/50">
+                Ref: {shortRef}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
   // ---------- Dedicated Cash Plus voucher screen ----------
   if (isCashplus && phase === "waiting") {
     const supportPhoneDisplay = "+212 710 564 476";
