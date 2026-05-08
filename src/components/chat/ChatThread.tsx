@@ -40,6 +40,10 @@ export interface ChatThreadProps {
   counterpartyName: string;
   counterpartySubtitle?: string;
   counterpartyAvatarUrl?: string | null;
+  bikeName?: string;
+  bikeImageUrl?: string | null;
+  bookingCreatedAt?: string;
+  bookingStatus?: string | null;
   onBack?: () => void;
   onRead?: () => void;
   className?: string;
@@ -78,6 +82,10 @@ export const ChatThread = ({
   counterpartyName,
   counterpartySubtitle,
   counterpartyAvatarUrl,
+  bikeName,
+  bikeImageUrl,
+  bookingCreatedAt,
+  bookingStatus,
   onBack,
   onRead,
   className,
@@ -91,6 +99,28 @@ export const ChatThread = ({
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // 24h agency response countdown (only meaningful for pending bookings)
+  const isPending = (bookingStatus || "").toLowerCase() === "pending";
+  const deadlineMs = useMemo(
+    () => (bookingCreatedAt ? new Date(bookingCreatedAt).getTime() + 24 * 60 * 60 * 1000 : null),
+    [bookingCreatedAt]
+  );
+  const [nowMs, setNowMs] = useState(() => Date.now());
+  useEffect(() => {
+    if (!isPending || !deadlineMs) return;
+    const id = setInterval(() => setNowMs(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [isPending, deadlineMs]);
+  const remainingMs = deadlineMs ? deadlineMs - nowMs : 0;
+  const expired = remainingMs <= 0;
+  const fmtRemaining = () => {
+    const s = Math.max(0, Math.floor(remainingMs / 1000));
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    const sec = s % 60;
+    return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
+  };
 
   // Renter verification gate state
   type VerifStatus = "verified" | "pending_review" | "not_started" | "rejected";
@@ -354,6 +384,48 @@ export const ChatThread = ({
           )}
         </div>
       </div>
+
+      {/* Booking / bike strip */}
+      {(bikeName || bikeImageUrl) && (
+        <div className="flex shrink-0 items-center gap-3 border-b border-border/60 bg-muted/30 px-4 py-2.5">
+          <div className="h-11 w-11 shrink-0 overflow-hidden rounded-lg bg-muted ring-1 ring-border/60">
+            {bikeImageUrl ? (
+              <img src={bikeImageUrl} alt={bikeName || "Motorbike"} className="h-full w-full object-cover" />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center text-[10px] text-muted-foreground">BIKE</div>
+            )}
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-medium text-foreground">{bikeName || "Motorbike"}</p>
+            <p className="truncate text-[11px] text-muted-foreground">Booking #{bookingId.slice(0, 8)}</p>
+          </div>
+        </div>
+      )}
+
+      {/* 24h agency response countdown */}
+      {isPending && deadlineMs && (
+        <div
+          className={cn(
+            "flex shrink-0 items-center justify-between gap-3 border-b px-4 py-2 text-xs",
+            expired
+              ? "border-destructive/30 bg-destructive/10 text-destructive"
+              : "border-border/60 bg-amber-500/10 text-foreground"
+          )}
+        >
+          {expired ? (
+            <span className="font-medium">
+              Agency did not respond within 24h — penalty applies.
+            </span>
+          ) : (
+            <>
+              <span className="text-muted-foreground">Agency to confirm in</span>
+              <span className="font-mono font-semibold tabular-nums text-foreground">
+                {fmtRemaining()}
+              </span>
+            </>
+          )}
+        </div>
+      )}
 
       {/* Renter verification gate handled at composer level */}
 

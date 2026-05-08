@@ -1,47 +1,47 @@
-## Problem
+## Goal
 
-When a renter pays the booking fee with debit/credit card, after the YouCan Pay form succeeds the app briefly shows the **CashPlus voucher flow** (10‑minute countdown, "pay at any agent", voucher code area) for ~3‑5 seconds before flipping to "Booking confirmed". CashPlus UI must only ever appear when the renter explicitly chose CashPlus.
+Make the renter inbox feel like a real per‑booking conversation:
 
-## Root cause
+1. Each conversation already shows the agency avatar + name in the left list, but the **chat header** doesn't show the bike. Surface the booked motorbike (thumbnail + name) inside the chat so the renter clearly sees which booking they're discussing.
+2. Add a **24‑hour confirmation countdown** at the top of the chat for `pending` bookings, with a clear "Agency did not respond — penalty applies" state once the window expires.
 
-`src/pages/BookingConfirmed.tsx` infers the payment method when `bookings.payment_method` is still `null`:
+No backend / business‑rule changes — this is presentation + a derived timer using existing data.
 
-```ts
-const inferredCashplus =
-  !data.payment_method &&
-  ((latestPayment?.method === "cashplus") ||
-    (Number(latestPayment?.amount) === 60 &&
-      latestPayment?.status === "pending" &&
-      !latestPayment?.transaction_id));
-```
+## What changes
 
-Right after a card payment, the webhook hasn't written `payment_method` yet, the latest `youcanpay_payments` row can momentarily look like `pending` with no `transaction_id`, so the inference resolves to `cashplus = true`. The page then renders the CashPlus waiting UI until the next poll updates `payment_status = paid`.
+### `src/pages/Inbox.tsx`
+- Extend the `bookings` query to also pull bike imagery and the booking timestamp:
+  - `bikes(bike_types(name, main_image_url))`
+  - `created_at` on the booking row.
+- Extend the `Conv` type with `bike_image_url: string | null` and `created_at: string`.
+- Pass two new props to `ChatThread`:
+  - `bikeImageUrl={active.bike_image_url}`
+  - `bookingCreatedAt={active.created_at}`
+  - `bookingStatus={active.booking_status}`
+- Keep `counterpartySubtitle` short ("Booking #abcd1234"); the bike line moves into a dedicated header row.
 
-The actual chosen method is already known on the client — `Checkout.tsx` forwards it through the URL as `?payment=card|cashplus` into the confirmation route — but `BookingConfirmed.tsx` ignores that param.
+### `src/components/chat/ChatThread.tsx`
+- Add optional props: `bikeImageUrl?: string | null`, `bikeName?: string`, `bookingCreatedAt?: string`, `bookingStatus?: string | null`.
+- Render a **booking strip** directly under the existing agency header:
+  - Square thumbnail (bike image or motorcycle icon fallback), bike name, "Booking #abcd1234".
+  - The row is non‑interactive (matches the rest of the header).
+- Render a **24h response countdown** band right under the booking strip, only when `bookingStatus === 'pending'` and `bookingCreatedAt` exists:
+  - Compute `deadline = bookingCreatedAt + 24h`.
+  - While `now < deadline`: show "Agency to confirm in HH:MM:SS" with a subtle muted background; updates every second via a small `useEffect` interval.
+  - When `now >= deadline`: switch to a destructive‑toned banner: "Agency did not respond within 24h — penalty applies." Stop the interval.
+  - Hide the band entirely for confirmed / cancelled / completed bookings.
+- No banner is shown for non‑pending statuses.
 
-## Fix
-
-Trust the explicit `payment` query param as the source of truth and only fall back to inference when it's missing.
-
-### 1. `src/pages/BookingConfirmed.tsx`
-- Read `payment` from `useSearchParams()` (values: `"card" | "cashplus"`).
-- When computing `inferredCashplus`:
-  - If URL `payment === "card"` → force `false` (never show CashPlus UI).
-  - If URL `payment === "cashplus"` → force `true`.
-  - If absent (e.g. user landed via a deep link) → keep the existing inference as a fallback.
-- Use the resolved value to set `row.payment_method` and `isCashplus`.
-
-### 2. Light hardening (same file)
-- Memoize `isCashplus` from the resolved value so later re‑renders/polling can't flip it.
-- No change to the polling logic, voucher sessionStorage, or CashPlus countdown — they only run when `isCashplus` is true.
-
-### 3. No backend / webhook changes
-The webhook continues to write `payment_method` correctly; we're only fixing the UI's premature inference window.
+### Out of scope (intentionally)
+- Awarding / recording the agency penalty (server‑side rule). The user asked for the *visible* countdown + "not responding" state; the actual penalty engine already lives elsewhere and is unchanged.
+- Editing the agency‑side inbox.
+- Schema / migration changes.
 
 ## Files touched
-- `src/pages/BookingConfirmed.tsx` (one effect + one derived value)
+- `src/pages/Inbox.tsx` (query + props)
+- `src/components/chat/ChatThread.tsx` (new header rows + countdown)
 
-## Out of scope
-- `PaymentStatus.tsx` (already generic, no CashPlus copy)
-- `PayYouCan.tsx` routing (already correct: card → `/payment-status`, cashplus → `/payment-cashplus`)
-- Checkout already passes `payment=method` — no change needed there.
+## Technical notes
+- Countdown uses `useEffect` + `setInterval(1000)`, cleared on unmount and when status leaves `pending`.
+- Time formatting is local (`Math.floor` of remaining seconds → HH:MM:SS). No new deps.
+- All copy uses existing tone; if i18n is required for these new strings later, keys can be added in a follow‑up — current chat header already mixes hard‑coded English ("Booking #…").

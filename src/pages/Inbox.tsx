@@ -21,6 +21,8 @@ interface Conv {
   agency_name: string;
   agency_avatar_url: string | null;
   bike_name: string;
+  bike_image_url: string | null;
+  created_at: string;
   unread: number;
   last_at: string | null;
   last_preview: string | null;
@@ -75,7 +77,7 @@ const Inbox = () => {
       const { data: bookings } = await supabase
         .from("bookings")
         .select(
-          "id, pickup_date, return_date, booking_status, assigned_to_business, bikes(bike_types(name))"
+          "id, pickup_date, return_date, booking_status, assigned_to_business, created_at, bikes(bike_types(name, main_image_url))"
         )
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
@@ -87,7 +89,8 @@ const Inbox = () => {
         return_date: string;
         booking_status: string | null;
         assigned_to_business: string | null;
-        bikes?: { bike_types?: { name: string | null } | null } | null;
+        created_at: string;
+        bikes?: { bike_types?: { name: string | null; main_image_url: string | null } | null } | null;
       }>;
       const ids = list.map((b) => b.id);
       const agencyIds = Array.from(
@@ -139,6 +142,8 @@ const Inbox = () => {
           agency_name: ag?.name || "Agency",
           agency_avatar_url: ag?.avatar || null,
           bike_name: b.bikes?.bike_types?.name || "Motorbike",
+          bike_image_url: b.bikes?.bike_types?.main_image_url || null,
+          created_at: b.created_at,
           unread: unreadByBooking.get(b.id) || 0,
           last_at: last?.created_at ?? null,
           last_preview: last
@@ -328,7 +333,11 @@ const Inbox = () => {
                   viewerRole="renter"
                   counterpartyName={active.agency_name}
                   counterpartyAvatarUrl={active.agency_avatar_url}
-                  counterpartySubtitle={`Booking #${active.id.slice(0, 8)} · ${active.bike_name}`}
+                  counterpartySubtitle={`Booking #${active.id.slice(0, 8)}`}
+                  bikeName={active.bike_name}
+                  bikeImageUrl={active.bike_image_url}
+                  bookingCreatedAt={active.created_at}
+                  bookingStatus={active.booking_status}
                   onBack={isMobile ? () => setActiveId(null) : undefined}
                   onRead={() => {
                     setConvs((prev) =>
