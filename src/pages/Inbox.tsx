@@ -77,7 +77,7 @@ const Inbox = () => {
       const { data: bookings } = await supabase
         .from("bookings")
         .select(
-          "id, pickup_date, return_date, booking_status, assigned_to_business, bikes(bike_types(name))"
+          "id, pickup_date, return_date, booking_status, assigned_to_business, created_at, bikes(bike_types(name, main_image_url))"
         )
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
@@ -89,7 +89,8 @@ const Inbox = () => {
         return_date: string;
         booking_status: string | null;
         assigned_to_business: string | null;
-        bikes?: { bike_types?: { name: string | null } | null } | null;
+        created_at: string;
+        bikes?: { bike_types?: { name: string | null; main_image_url: string | null } | null } | null;
       }>;
       const ids = list.map((b) => b.id);
       const agencyIds = Array.from(
