@@ -148,21 +148,20 @@ const BookingConfirmed = () => {
       if (data.bike_id) {
         const { data: bikeRow } = await supabase
           .from("bikes_public" as any)
-          .select("bike_type_id, slug")
+          .select("bike_type_id")
           .eq("id", data.bike_id)
           .maybeSingle() as any;
-        slug = bikeRow?.slug ?? null;
         if (bikeRow?.bike_type_id) {
           const { data: bt } = await supabase
             .from("bike_types")
-            .select("name, main_image_url")
+            .select("name, main_image_url, slug")
             .eq("id", bikeRow.bike_type_id)
             .maybeSingle();
           bikeName = bt?.name ?? null;
           bikeImage = bt?.main_image_url ?? null;
+          setBikeSlug((bt as any)?.slug ?? null);
         }
       }
-      setBikeSlug(slug);
       const { data: latestPayment } = await supabase
         .from("youcanpay_payments")
         .select("amount,status,transaction_id,created_at,method")
