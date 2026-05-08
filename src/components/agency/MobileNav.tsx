@@ -4,8 +4,8 @@ import { cn } from "@/lib/utils";
 import { useAgencyBadges } from "@/hooks/useAgencyBadges";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import {
-  Wallet, Receipt, FileText, Building, Users, ShieldCheck,
-  BarChart, Settings, Bell, Plug, LifeBuoy, CalendarDays,
+  Wallet, Receipt, Building, ShieldCheck,
+  BarChart, Settings, Bell, LifeBuoy, CalendarDays,
 } from "lucide-react";
 
 const TABS = [
