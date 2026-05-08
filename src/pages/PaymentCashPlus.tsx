@@ -123,7 +123,7 @@ export default function PaymentCashPlus() {
       if (cancelled) return;
       const { data } = await supabase
         .from("youcanpay_payments")
-        .select("status, transaction_id, amount, currency")
+        .select("status, transaction_id, amount, currency, created_at")
         .eq("id", pid)
         .maybeSingle();
       if (cancelled) return;
@@ -133,6 +133,7 @@ export default function PaymentCashPlus() {
           currency: (data.currency as string) || "MAD",
           transaction_id: (data.transaction_id as string) || null,
           status: (data.status as string) || null,
+          created_at: (data.created_at as string) || null,
         });
       }
       const status = (data?.status || "").toLowerCase();
@@ -153,6 +154,19 @@ export default function PaymentCashPlus() {
       if (timer) window.clearTimeout(timer);
     };
   }, [pid, phase]);
+
+  // 1-second tick to drive the countdown + auto-expire after 10 minutes.
+  useEffect(() => {
+    if (phase !== "awaiting") return;
+    const i = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(i);
+  }, [phase]);
+
+  useEffect(() => {
+    if (phase === "awaiting" && remainingMs <= 0 && payment?.created_at) {
+      setPhase("expired");
+    }
+  }, [phase, remainingMs, payment?.created_at]);
 
   // Auto-forward shortly after the cash is received.
   useEffect(() => {
