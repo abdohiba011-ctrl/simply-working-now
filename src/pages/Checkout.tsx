@@ -106,7 +106,7 @@ const Checkout = () => {
 
       if (bookingErr) {
         if ((bookingErr.message || "").includes("HOLD_EXPIRED")) {
-          toast.error("Your 5-minute reservation expired. Please start over.");
+          toast.error("Your 10-minute reservation expired. Please start over.");
           navigate(`/bike/${bikeId}`);
         } else {
           throw bookingErr;
