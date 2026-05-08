@@ -245,14 +245,7 @@ export const CitySwitcher = ({
               <>
                 <CommandEmpty>No city found.</CommandEmpty>
 
-                {recent.length > 0 && (
-                  <>
-                    <CommandGroup heading="Recently viewed">
-                      {recent.map((c) => renderItem(c, { recent: true }))}
-                    </CommandGroup>
-                    <CommandSeparator />
-                  </>
-                )}
+
 
                 {available.length > 0 && (
                   <CommandGroup heading="Available now">
