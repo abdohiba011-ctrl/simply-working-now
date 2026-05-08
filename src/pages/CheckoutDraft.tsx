@@ -530,10 +530,10 @@ const CheckoutDraft = () => {
 
         <div className="grid lg:grid-cols-5 gap-6 lg:gap-8 min-w-0">
           <div className="lg:col-span-3 space-y-6 min-w-0">
-            <Card>
-              <CardContent className="p-5">
-                <div className="flex gap-4">
-                  <div className="w-24 h-24 rounded-lg overflow-hidden bg-muted flex-shrink-0">
+            <Card className="min-w-0 overflow-hidden">
+              <CardContent className="p-4 sm:p-5">
+                <div className="flex gap-3 sm:gap-4 min-w-0">
+                  <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-lg overflow-hidden bg-muted flex-shrink-0">
                     {booking.bike?.image_url ? (
                       <img
                         src={booking.bike.image_url}
@@ -547,10 +547,10 @@ const CheckoutDraft = () => {
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h2 className="text-lg font-semibold text-foreground truncate">
+                    <h2 className="text-base sm:text-lg font-semibold text-foreground truncate">
                       {booking.bike?.name ?? "Motorbike"}
                     </h2>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-muted-foreground truncate">
                       {dailyPrice} MAD / day · {booking.bike?.city ?? "Morocco"}
                     </p>
                     <Link
