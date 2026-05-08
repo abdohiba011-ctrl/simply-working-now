@@ -47,11 +47,14 @@ interface BookingRow {
 }
 
 const POLL_INTERVAL_MS = 2000;
-const POLL_INTERVAL_CASHPLUS_MS = 10_000;
+const POLL_INTERVAL_CASHPLUS_MS = 5_000;
 const POLL_TIMEOUT_MS = 60_000;
-const POLL_TIMEOUT_CASHPLUS_MS = 72 * 60 * 60 * 1000; // effectively no client timeout
+// CashPlus must be paid within 10 minutes — same window enforced server-side
+// by the auto_cancel_unpaid_bookings cron. After that the bike is released.
+const CASHPLUS_PAYMENT_WINDOW_MS = 10 * 60 * 1000;
+const POLL_TIMEOUT_CASHPLUS_MS = CASHPLUS_PAYMENT_WINDOW_MS;
 
-type Phase = "waiting" | "confirmed" | "timeout";
+type Phase = "waiting" | "confirmed" | "timeout" | "expired";
 
 const BookingConfirmed = () => {
   const { bookingId } = useParams<{ bookingId: string }>();
