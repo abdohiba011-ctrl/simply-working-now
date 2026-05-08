@@ -367,14 +367,14 @@ export const Header = memo(() => {
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-6">
-            <Link to="/" className="text-foreground hover:text-primary transition-colors font-medium">
+          <nav className="hidden md:flex items-center gap-4 lg:gap-6 whitespace-nowrap">
+            <Link to="/" className="text-foreground hover:text-primary transition-colors font-medium whitespace-nowrap">
               {t('header.home')}
             </Link>
-            <Link to="/affiliate" className="text-foreground hover:text-primary transition-colors font-medium">
+            <Link to="/affiliate" className="text-foreground hover:text-primary transition-colors font-medium whitespace-nowrap">
               {t('header.affiliate')}
             </Link>
-            <Link to="/#faq" className="text-foreground hover:text-primary transition-colors font-medium">
+            <Link to="/#faq" className="text-foreground hover:text-primary transition-colors font-medium whitespace-nowrap">
               {t('header.faq')}
             </Link>
             <DropdownMenu>
