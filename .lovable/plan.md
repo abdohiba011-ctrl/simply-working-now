@@ -1,78 +1,60 @@
 ## Goal
 
-Make the agency side feel native on mobile. Bottom nav stays (it's good), hamburger goes away, the header is cleaned up, and every page (Motorbikes, Bookings, Messages, plus the rest) gets a real mobile layout instead of cramped desktop tables.
+Polish the agency mobile (responsive) experience across 5 screens and the bottom-nav "More" drawer.
 
-## Scope
+## 1. Motorbike Detail page header (`src/pages/agency/MotorbikeDetail.tsx`)
 
-### 1. Remove the hamburger / mobile sidebar drawer
-- `src/components/agency/AgencyShell.tsx`
-  - Drop the `mobileSidebar` state, the left `<Sheet>`, and the `onMobileMenu` prop wiring.
-- `src/components/agency/Header.tsx`
-  - Remove the `onMobileMenu` prop and the `<Menu>` button (lines 99–101). Header on mobile starts directly with content.
-- `src/components/agency/Sidebar.tsx` keeps its desktop‑only behavior (already `lg:` gated), no changes.
+The sticky header currently crowds Back · Title · Available switch · Preview · Edit · Archive into one row → overflow on mobile.
 
-### 2. Header polish on mobile (no crushing)
-- Bigger tap targets: bump icon buttons (`ThemeToggle`, `NotificationsPopover`, `Help`) to `h-10 w-10` on mobile, icons to `h-5 w-5`.
-- The page title / greeting chip stays hidden on mobile (the bottom nav already labels the route).
-- Search button stays desktop‑only (`md:flex`). Mobile users have a search field inside each list page.
-- Wallet pill: keep visible from `sm:` up; on mobile (<sm) replace with a compact icon‑only wallet button so nothing wraps. Tap → `/agency/finance#wallet`.
-- Language and User chip stay; user chip drops the name on small screens (already `lg:block`).
-- Header height stays `h-16`; horizontal padding goes from `px-4` to `px-3` on mobile to free space.
+Mobile layout (kept clean, desktop unchanged):
+- Row: `Back` (icon only) · Title · `Available` switch · `Edit` button · 3-dot menu (`MoreVertical`)
+- 3-dot menu (DropdownMenu) contains: **Preview** (opens `/bikes/:id` in new tab) and **Archive** (opens existing archive dialog)
+- "Live on Motonita" / current "Available" label → just **"Live"** on mobile
+- Desktop (sm+): keep all buttons inline as today
 
-### 3. Bottom nav: edge‑to‑edge, sticky, no rounded float
-- `src/components/agency/MobileNav.tsx`
-  - Change the outer `<nav>` from `fixed inset-x-3 bottom-3 ... rounded-2xl border ... shadow-lg` to a true bottom bar: `fixed inset-x-0 bottom-0 border-t border-border bg-card/95 backdrop-blur` with `pb-[env(safe-area-inset-bottom)]` so iPhone home‑indicator doesn't sit on the icons.
-  - Drop the outer rounded corners and the side margin.
-  - Adjust `AgencyShell` `<main>` bottom padding from `pb-24` to `pb-20 lg:pb-8` to match the new flush bar.
+## 2. Bookings page (`src/pages/agency/Bookings.tsx`)
 
-### 4. Motorbikes page (mobile = cards only)
-`src/pages/agency/Motorbikes.tsx`
-- On `< md`: hide the Grid/Table toggle entirely (toggle stays for `md:` and up).
-- Force the cards layout on `< md` regardless of the `?view=table` URL param.
-- Toolbar on mobile: a single row with the search input on the left and one primary button on the right reading **"+ Motorbike"** (use `sm:hidden` for the short label and `hidden sm:inline` for "Add motorbike"). Active/Archived tabs move to a second compact row.
-- Card size on mobile: full‑width single column, `aspect-[16/10]` image to take less vertical space; price + status row stays.
+- **Date picker crash** (laptop/tablet/mobile): the popover Calendar in range mode renders unconstrained and overflows. Fix by:
+  - Constrain `PopoverContent` width (`w-[min(92vw,340px)]`), add `pointer-events-auto`, ensure `align="start"` + `sideOffset` so it stays within viewport
+  - Use the existing flex-based `Calendar` component classes (already responsive). Keep `numberOfMonths={1}`.
+- **Status filters on mobile**: replace horizontal scroll with: 3 visible chips (`All`, `Pending`, `Confirmed`) + a **More** dropdown (3 dots) listing the rest (`Completed`, `No-show`, `Declined`, `Cancelled`, `Late cancel`). Selected "more" status shows as the active chip replacing the More label until cleared. Desktop: keep wrap as today.
 
-### 5. "Add / Edit motorbike" → bottom sheet on mobile, dialog on desktop
-`src/components/agency/MotorbikeWizardDialog.tsx` becomes responsive:
-- On `< md`: render with shadcn `<Sheet side="bottom">` styled as a near‑full‑height sheet (`h-[92dvh] rounded-t-2xl p-0`). The `MotorbikeWizardForm` keeps its existing step UI; only the container changes.
-- On `>= md`: keep the current centered `<Dialog>` exactly as today.
-- A small `useIsMobile()` switch picks the wrapper. Same props (`open`, `onOpenChange`, `bikeId`, `onSaved`) — no caller changes.
-- (We are *not* converting the wizard into a separate route; the user offered "dedicated page OR bottom sheet" — bottom sheet keeps the URL stable and is cheaper to ship.)
+## 3. Messages page (full-screen on mobile)
 
-### 6. Bookings page (mobile = cards)
-`src/pages/agency/Bookings.tsx`
-- On `< md`: hide the `<Table>` and render a card list instead — one card per booking with: customer name + contact, bike name, pickup → return dates, total in MAD, `<StatusChip>`, and a chevron `Open` affordance. Whole card is tappable.
-- The status filter chips become a horizontally scrollable row on mobile (`overflow-x-auto -mx-3 px-3 snap-x` with `whitespace-nowrap`) so they don't wrap into 3 lines.
-- Search + date‑range + Export collapse into a sticky toolbar that wraps cleanly: search on its own row, then date/Export side by side.
+Currently wrapped in `AgencyLayout` (header + bottom nav + padding) → cramped.
 
-### 7. Messages page polish
-`src/pages/agency/Messages.tsx` already swaps via `useIsMobile()`. We will:
-- Remove any horizontal overflow on the conversation list rows on small widths (currently fine, just verify).
-- Match the renter inbox: when a conversation is open on mobile, the list is hidden and the chat fills the screen above the bottom nav.
-- Add safe bottom padding (`pb-20`) so the composer isn't hidden behind the nav.
+- In `src/pages/agency/Messages.tsx`: when `useIsMobile()`, render WITHOUT `AgencyLayout` — full-viewport dedicated page with its own top bar containing a **back arrow** (→ `/agency/dashboard`) and "Messages" title. No bottom nav, no agency header.
+- Desktop unchanged.
+- When a conversation is open on mobile, the ChatThread already has its own back (already wired via `onBack`).
 
-### 8. Other agency pages — light responsive sweep
-For each of: Dashboard, Calendar, Finance, Wallet, Transactions, Invoices, Analytics, Profile, Verification, Subscription, Team, Preferences, NotificationSettings, Integrations, Help, AgencyCenter, BookingDetail, MotorbikeDetail.
-- Action: scan for `<Table>` usage and any `lg:`‑only layouts. Add a card fallback only where a real table exists; otherwise just verify spacing / wrapping.
-- Add `pb-20` to any page that has a sticky/fixed bottom CTA to avoid overlap with the new flush bottom bar.
-- This sweep is *fix‑only*; we won't redesign these pages.
+## 4. Calendar page (`src/pages/agency/Calendar.tsx`)
+
+Mobile fixes:
+- Header row stacks: title on top, month nav + Today below, full-width
+- Month label uses `flex-1 text-center`
+- Grid cells: reduce `min-h-24` → `min-h-16` on mobile (`min-h-16 sm:min-h-24`), shrink event chip text, reduce padding (`p-1`)
+- Wrap whole grid in `overflow-x-hidden`; ensure inner grid uses `gap-0.5 sm:gap-1`
+- Day-of-week header letters single char on mobile (`M T W T F S S`)
+
+## 5. Simplified More drawer (`src/components/agency/MobileNav.tsx`)
+
+Replace the flat 9-item list with **3 grouped sections**, each opening its hub page:
+
+- **Finance** → `/agency/finance` (tabs: Wallet, Transactions)
+- **Agency** → `/agency/agency-center` (tabs: Profile, Verification, Analytics)
+- **Settings** → `/agency/settings` (tabs: Preferences, Notifications, Help & Support)
+- Plus single item: **Calendar** → `/agency/calendar`
+
+Each row shows the section name + small subtitle listing what's inside. Tapping navigates to the hub page (which already has SegmentedTabs for sub-sections). Removes overload.
 
 ## Out of scope
-- Renter side (no changes).
-- Agency desktop sidebar — already fine, untouched.
-- New features (analytics widgets, calendar redesign, etc.).
-- Translating new strings — "+ Motorbike", "Add motorbike", page titles stay in their current language; i18n keys can be a follow‑up.
 
-## Files touched
-- `src/components/agency/AgencyShell.tsx`
-- `src/components/agency/Header.tsx`
-- `src/components/agency/MobileNav.tsx`
-- `src/components/agency/MotorbikeWizardDialog.tsx`
-- `src/pages/agency/Motorbikes.tsx`
-- `src/pages/agency/Bookings.tsx`
-- `src/pages/agency/Messages.tsx`
-- Other `src/pages/agency/*.tsx` only when the responsive sweep finds a concrete issue.
+- No backend / business-logic changes
+- Desktop layouts unchanged unless noted
+- No new routes added (uses existing hub pages with hash tabs)
 
-## Risks / notes
-- The bottom sheet variant of the motorbike wizard reuses the existing form unchanged; if any internal absolute positioning inside the form assumed Dialog dimensions, we'll patch it.
-- Removing the hamburger means tablet users in the 768–1023 range no longer have access to the desktop sidebar items that aren't in the bottom‑nav "More" sheet. The "More" sheet already lists Calendar, Wallet, Transactions, Profile, Verification, Analytics, Preferences, Notifications, Integrations, Help — i.e. parity with sidebar. So nothing is lost.
+## Technical notes
+
+- Use shadcn `DropdownMenu` for the 3-dot menus (already in project)
+- Reuse existing `MotorbikeWizardDialog` and archive dialog — only the trigger UI moves
+- Date picker: keep `react-day-picker` range mode; just constrain popover width
