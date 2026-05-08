@@ -41,7 +41,7 @@ export const MobileNav = ({ open, onOpenChange }: Props) => {
   return (
   <>
     {/* Floating bottom tab bar */}
-    <nav className="fixed inset-x-3 bottom-3 z-40 flex items-center justify-around rounded-2xl border border-border bg-card/95 px-2 py-1.5 shadow-lg backdrop-blur lg:hidden">
+    <nav className="fixed inset-x-0 bottom-0 z-40 flex items-center justify-around border-t border-border bg-card/95 px-1 pt-1 pb-[max(0.25rem,env(safe-area-inset-bottom))] backdrop-blur lg:hidden">
       {TABS.map((tab) => {
         const count = badgeFor(tab.label);
         return (
