@@ -1,47 +1,64 @@
-## Goal
+## QA pass — last 4 hours of changes
 
-Make the renter inbox feel like a real per‑booking conversation:
+I went through every change made today on the renter side. Here's what's good and what's actually broken.
 
-1. Each conversation already shows the agency avatar + name in the left list, but the **chat header** doesn't show the bike. Surface the booked motorbike (thumbnail + name) inside the chat so the renter clearly sees which booking they're discussing.
-2. Add a **24‑hour confirmation countdown** at the top of the chat for `pending` bookings, with a clear "Agency did not respond — penalty applies" state once the window expires.
+### ✅ Working as intended
+- **Header beta badge** — rendered next to the logo on mobile, tablet, desktop (no responsive hide). Tablet shows badge inline, FAQ hidden via `hidden lg:inline-block`. Matches the latest instruction.
+- **"More" dropdown centering** — `align="center"` + transparent rail + `mx-auto w-[min(540px,calc(100vw-2rem))]` card. Centers horizontally on the page, anchored under the button.
+- **Inbox bike strip + 24h countdown** — `Inbox.tsx` query now pulls `bikes(bike_types(name, main_image_url))` + `created_at`; `ChatThread` renders the bike thumb row and a live HH:MM:SS band that flips to a red "Agency did not respond within 24h — penalty applies" banner when expired. Verified the data flow end‑to‑end.
 
-No backend / business‑rule changes — this is presentation + a derived timer using existing data.
+### 🐞 Bug found — needs to be fixed
 
-## What changes
+**The CashPlus‑flicker fix on `BookingConfirmed.tsx` is non‑functional in production.**
 
-### `src/pages/Inbox.tsx`
-- Extend the `bookings` query to also pull bike imagery and the booking timestamp:
-  - `bikes(bike_types(name, main_image_url))`
-  - `created_at` on the booking row.
-- Extend the `Conv` type with `bike_image_url: string | null` and `created_at: string`.
-- Pass two new props to `ChatThread`:
-  - `bikeImageUrl={active.bike_image_url}`
-  - `bookingCreatedAt={active.created_at}`
-  - `bookingStatus={active.booking_status}`
-- Keep `counterpartySubtitle` short ("Booking #abcd1234"); the bike line moves into a dedicated header row.
+The fix relies on a `?payment=card|cashplus` query param being on the URL when the renter lands on `/booking/:id/confirmed`. But searching the codebase, **nothing actually adds that param to the redirect**:
+- `CheckoutDraft.tsx:472` (CashPlus path) → `navigate(/booking/${id}/confirmed)` — no param.
+- `CheckoutDraft.tsx:478` (`next` for card) → `next=/booking/${id}/confirmed` — no param. `PaymentStatus.tsx` then redirects to that exact `next` URL untouched.
+- `CheckoutDraft.tsx:137`, `:323` — same.
 
-### `src/components/chat/ChatThread.tsx`
-- Add optional props: `bikeImageUrl?: string | null`, `bikeName?: string`, `bookingCreatedAt?: string`, `bookingStatus?: string | null`.
-- Render a **booking strip** directly under the existing agency header:
-  - Square thumbnail (bike image or motorcycle icon fallback), bike name, "Booking #abcd1234".
-  - The row is non‑interactive (matches the rest of the header).
-- Render a **24h response countdown** band right under the booking strip, only when `bookingStatus === 'pending'` and `bookingCreatedAt` exists:
-  - Compute `deadline = bookingCreatedAt + 24h`.
-  - While `now < deadline`: show "Agency to confirm in HH:MM:SS" with a subtle muted background; updates every second via a small `useEffect` interval.
-  - When `now >= deadline`: switch to a destructive‑toned banner: "Agency did not respond within 24h — penalty applies." Stop the interval.
-  - Hide the band entirely for confirmed / cancelled / completed bookings.
-- No banner is shown for non‑pending statuses.
+So `explicitMethod` is always `null`, and the original inference path runs:
+```
+inferredCashplus =
+  latestPayment.method === "cashplus" ||
+  (amount === 60 && status === "pending" && !transaction_id)
+```
+For a card payment that hasn't had its webhook write `payment_method` yet, the latest YouCan row commonly looks like `pending / 60 MAD / no transaction_id` → the page flips into the CashPlus voucher UI for a few seconds, exactly the bug the user reported.
 
-### Out of scope (intentionally)
-- Awarding / recording the agency penalty (server‑side rule). The user asked for the *visible* countdown + "not responding" state; the actual penalty engine already lives elsewhere and is unchanged.
-- Editing the agency‑side inbox.
-- Schema / migration changes.
+### Fix (only file changes, no schema/business‑rule changes)
 
-## Files touched
-- `src/pages/Inbox.tsx` (query + props)
-- `src/components/chat/ChatThread.tsx` (new header rows + countdown)
+**`src/pages/CheckoutDraft.tsx`** — append the explicit method to every redirect into the confirmation page:
 
-## Technical notes
-- Countdown uses `useEffect` + `setInterval(1000)`, cleared on unmount and when status leaves `pending`.
-- Time formatting is local (`Math.floor` of remaining seconds → HH:MM:SS). No new deps.
-- All copy uses existing tone; if i18n is required for these new strings later, keys can be added in a follow‑up — current chat header already mixes hard‑coded English ("Booking #…").
+1. Line 137 (early bailout when booking already non‑draft):
+   ```ts
+   const pm = (data as any).payment_method;
+   const q = pm ? `?payment=${pm}` : "";
+   navigate(`/booking/${data.id}/confirmed${q}`);
+   ```
+2. Line 323 (CashPlus verify path):
+   ```ts
+   navigate(`/booking/${booking.id}/confirmed?payment=cashplus`);
+   ```
+3. Line 472 (CashPlus voucher just created):
+   ```ts
+   navigate(`/booking/${booking.id}/confirmed?payment=cashplus`, { replace: true });
+   ```
+4. Line 478 (card → PaymentStatus → confirmed): include the param in `next` so PaymentStatus forwards it untouched:
+   ```ts
+   next: `/booking/${booking.id}/confirmed?payment=card`,
+   ```
+
+No changes to `PaymentStatus.tsx` are needed — it already does `navigate(next)` verbatim, so the query string carries through.
+
+### 🧹 Polish (small, recommended while I'm here)
+
+- **`src/pages/Inbox.tsx:332`** — `counterpartySubtitle={Booking #${id.slice(0,8)}}` now duplicates the bike‑strip's "Booking #…" line. Drop the subtitle so the chat header shows just the agency name; the bike strip below carries the booking ref.
+- Hard‑coded English strings I added to `ChatThread.tsx` ("Agency to confirm in", "Agency did not respond within 24h — penalty applies.", "Motorbike", "Booking #") — leaving them in English for now since the rest of `ChatThread.tsx` is already English; flagging only. **Not** part of this fix unless you want it.
+
+### Out of scope
+- Penalty engine itself (server‑side rule for "agency didn't respond" — already exists separately).
+- Agency‑side inbox.
+- Header / dropdown — verified, no changes.
+
+### Files touched by this plan
+- `src/pages/CheckoutDraft.tsx` (4 small edits)
+- `src/pages/Inbox.tsx` (1 line — drop redundant subtitle)

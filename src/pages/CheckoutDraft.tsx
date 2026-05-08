@@ -134,7 +134,9 @@ const CheckoutDraft = () => {
           return;
         }
         if (data.booking_status !== "draft") {
-          navigate(`/booking/${data.id}/confirmed`);
+          const pm = (data as any).payment_method;
+          const q = pm === "card" || pm === "cashplus" ? `?payment=${pm}` : "";
+          navigate(`/booking/${data.id}/confirmed${q}`);
           return;
         }
 
@@ -320,7 +322,7 @@ const CheckoutDraft = () => {
       if (error) throw error;
       if ((data as any)?.status === "paid") {
         toast.success("Payment received!");
-        navigate(`/booking/${booking.id}/confirmed`);
+        navigate(`/booking/${booking.id}/confirmed?payment=cashplus`);
       } else {
         toast.info("Payment not received yet. Please try again after paying at Cash Plus.");
       }
@@ -469,13 +471,13 @@ const CheckoutDraft = () => {
         // jump straight to the confirmation page which has the proper
         // voucher UI + 72h background poll.
         if (usingCashplus) {
-          navigate(`/booking/${booking.id}/confirmed`, { replace: true });
+          navigate(`/booking/${booking.id}/confirmed?payment=cashplus`, { replace: true });
           return;
         }
 
         const qs = new URLSearchParams({
           pid,
-          next: `/booking/${booking.id}/confirmed`,
+          next: `/booking/${booking.id}/confirmed?payment=card`,
           retry: `/checkout/${booking.id}`,
           outcome: "success",
           title: "Pay booking fee",
