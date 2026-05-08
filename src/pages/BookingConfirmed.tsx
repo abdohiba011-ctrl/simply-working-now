@@ -200,7 +200,11 @@ const BookingConfirmed = () => {
         bike_image: bikeImage,
       };
       setBooking(row);
-      setCashplusReference((latestPayment?.transaction_id as string | null) || null);
+      // Only overwrite if the DB has a real code; otherwise keep the value
+      // we picked up from sessionStorage / URL hash so the renter never sees
+      // their freshly-copied code disappear.
+      const dbRef = (latestPayment?.transaction_id as string | null) || null;
+      if (dbRef) setCashplusReference(dbRef);
       setCashplusStartedAt((latestPayment?.created_at as string | null) || null);
       const isCancelled = (data as any).booking_status === "cancelled";
       setPhase(
