@@ -47,6 +47,8 @@ const Inbox = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const { i18n } = useTranslation();
+  const isRTL = i18n.dir() === "rtl";
   const [convs, setConvs] = useState<Conv[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeId, setActiveId] = useState<string | null>(null);
