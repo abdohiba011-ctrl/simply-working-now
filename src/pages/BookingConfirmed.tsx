@@ -21,6 +21,8 @@ import {
   Info,
   Phone,
   Mail,
+  XCircle,
+  RefreshCw,
 } from "lucide-react";
 import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
 import { format } from "date-fns";
@@ -47,11 +49,14 @@ interface BookingRow {
 }
 
 const POLL_INTERVAL_MS = 2000;
-const POLL_INTERVAL_CASHPLUS_MS = 10_000;
+const POLL_INTERVAL_CASHPLUS_MS = 5_000;
 const POLL_TIMEOUT_MS = 60_000;
-const POLL_TIMEOUT_CASHPLUS_MS = 72 * 60 * 60 * 1000; // effectively no client timeout
+// CashPlus must be paid within 10 minutes — same window enforced server-side
+// by the auto_cancel_unpaid_bookings cron. After that the bike is released.
+const CASHPLUS_PAYMENT_WINDOW_MS = 10 * 60 * 1000;
+const POLL_TIMEOUT_CASHPLUS_MS = CASHPLUS_PAYMENT_WINDOW_MS;
 
-type Phase = "waiting" | "confirmed" | "timeout";
+type Phase = "waiting" | "confirmed" | "timeout" | "expired";
 
 const BookingConfirmed = () => {
   const { bookingId } = useParams<{ bookingId: string }>();
@@ -62,6 +67,13 @@ const BookingConfirmed = () => {
   const [elapsed, setElapsed] = useState(0);
   const [verifying, setVerifying] = useState(false);
   const [isOpeningChat, setIsOpeningChat] = useState(false);
+  // YouCan Pay's actual CashPlus voucher code (e.g. "cp203854361") — this is
+  // the only reference Cash Plus agents recognize. Filled from
+  // youcanpay_payments.transaction_id once YouCan returns it.
+  const [cashplusReference, setCashplusReference] = useState<string | null>(null);
+  const [cashplusStartedAt, setCashplusStartedAt] = useState<string | null>(null);
+  const [bikeSlug, setBikeSlug] = useState<string | null>(null);
+  const [now, setNow] = useState(() => Date.now());
   const startedAt = useRef<number>(Date.now());
 
   const handleMessageAgency = async () => {
@@ -143,16 +155,17 @@ const BookingConfirmed = () => {
         if (bikeRow?.bike_type_id) {
           const { data: bt } = await supabase
             .from("bike_types")
-            .select("name, main_image_url")
+            .select("name, main_image_url, slug")
             .eq("id", bikeRow.bike_type_id)
             .maybeSingle();
           bikeName = bt?.name ?? null;
           bikeImage = bt?.main_image_url ?? null;
+          setBikeSlug((bt as any)?.slug ?? null);
         }
       }
       const { data: latestPayment } = await supabase
         .from("youcanpay_payments")
-        .select("amount,status,transaction_id")
+        .select("amount,status,transaction_id,created_at,method")
         .eq("related_booking_id", bookingId)
         .order("created_at", { ascending: false })
         .limit(1)
@@ -160,9 +173,10 @@ const BookingConfirmed = () => {
 
       const inferredCashplus =
         !data.payment_method &&
-        Number(latestPayment?.amount) === 60 &&
-        latestPayment?.status === "pending" &&
-        !latestPayment?.transaction_id;
+        ((latestPayment?.method === "cashplus") ||
+          (Number(latestPayment?.amount) === 60 &&
+            latestPayment?.status === "pending" &&
+            !latestPayment?.transaction_id));
 
       const row = {
         ...(data as any),
@@ -171,7 +185,16 @@ const BookingConfirmed = () => {
         bike_image: bikeImage,
       };
       setBooking(row);
-      setPhase(row.payment_status === "paid" ? "confirmed" : "waiting");
+      setCashplusReference((latestPayment?.transaction_id as string | null) || null);
+      setCashplusStartedAt((latestPayment?.created_at as string | null) || null);
+      const isCancelled = (data as any).booking_status === "cancelled";
+      setPhase(
+        row.payment_status === "paid"
+          ? "confirmed"
+          : isCancelled
+          ? "expired"
+          : "waiting",
+      );
       setLoading(false);
     };
     load();
@@ -179,7 +202,7 @@ const BookingConfirmed = () => {
 
   const isCashplus = booking?.payment_method === "cashplus";
 
-  // Poll for payment_status
+  // Poll for payment_status (and refresh CashPlus voucher reference)
   useEffect(() => {
     if (!bookingId || phase !== "waiting") return;
     let cancelled = false;
@@ -203,10 +226,28 @@ const BookingConfirmed = () => {
         toast.success("Payment confirmed!");
         return;
       }
+      if (data?.booking_status === "cancelled") {
+        setPhase("expired");
+        return;
+      }
+      // Refresh CashPlus voucher reference if YouCan has now returned it.
+      if (isCashplus) {
+        const { data: pay } = await supabase
+          .from("youcanpay_payments")
+          .select("transaction_id, created_at")
+          .eq("related_booking_id", bookingId)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (!cancelled && pay) {
+          if (pay.transaction_id) setCashplusReference(pay.transaction_id as string);
+          if (pay.created_at) setCashplusStartedAt(pay.created_at as string);
+        }
+      }
       const e = Date.now() - startedAt.current;
       setElapsed(e);
       if (e >= timeout) {
-        setPhase("timeout");
+        setPhase(isCashplus ? "expired" : "timeout");
         return;
       }
       timer = window.setTimeout(tick, interval);
@@ -218,6 +259,13 @@ const BookingConfirmed = () => {
       if (timer) window.clearTimeout(timer);
     };
   }, [bookingId, phase, isCashplus]);
+
+  // 1-second tick for the CashPlus countdown.
+  useEffect(() => {
+    if (!isCashplus || phase !== "waiting") return;
+    const i = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(i);
+  }, [isCashplus, phase]);
 
   const handleVerifyNow = async () => {
     if (!bookingId || verifying) return;
@@ -276,21 +324,43 @@ const BookingConfirmed = () => {
 
   if (!booking) return null;
 
-  // Build a short, human-friendly reference for Cash Plus: 8 hex chars, uppercased.
+  // Internal short handle (used for support tickets / WhatsApp share — NOT the
+  // CashPlus agent reference). The real CashPlus reference is `cashplusReference`
+  // (e.g. "cp203854361"), issued by YouCan Pay and the only code Cash Plus
+  // agents recognize.
   const shortRef = booking.id.slice(0, 8).toUpperCase();
   const cashplusAmount = 60; // platform fee + confirmation fee, paid upfront in cash
-  const cashplusShareText =
-    `Motonita booking — pay ${cashplusAmount} MAD at any Cash Plus agency in Morocco.\n` +
-    `Reference: ${shortRef}\n` +
-    `Find an agency: https://www.cashplus.ma/agences`;
+  const voucherCode = cashplusReference; // null until YouCan returns it
+  const hasVoucher = !!voucherCode;
+
+  // 10-minute countdown driven by the payment row's created_at (falls back to
+  // booking.created_at). After this elapses, the auto_cancel_unpaid_bookings
+  // cron releases the bike server-side.
+  const startMs = (() => {
+    const iso = cashplusStartedAt || (booking as any).created_at;
+    return iso ? new Date(iso).getTime() : Date.now();
+  })();
+  const deadlineMs = startMs + CASHPLUS_PAYMENT_WINDOW_MS;
+  const remainingMs = Math.max(0, deadlineMs - now);
+  const remainingMin = Math.floor(remainingMs / 60000);
+  const remainingSec = Math.floor((remainingMs % 60000) / 1000);
+  const countdownLabel = `${String(remainingMin).padStart(2, "0")}:${String(remainingSec).padStart(2, "0")}`;
+
+  const cashplusShareText = hasVoucher
+    ? `Motonita booking — pay ${cashplusAmount} MAD at any Cash Plus agency in Morocco.\n` +
+      `Reference: ${voucherCode}\n` +
+      `Find an agency: https://www.cashplus.ma/agences`
+    : `Motonita booking — pay ${cashplusAmount} MAD at any Cash Plus agency in Morocco.\n` +
+      `Find an agency: https://www.cashplus.ma/agences`;
 
   const handleCopyRef = async () => {
+    if (!voucherCode) return;
     try {
       if (navigator.clipboard && window.isSecureContext) {
-        await navigator.clipboard.writeText(shortRef);
+        await navigator.clipboard.writeText(voucherCode);
       } else {
         const ta = document.createElement("textarea");
-        ta.value = shortRef;
+        ta.value = voucherCode;
         ta.style.position = "fixed";
         ta.style.opacity = "0";
         document.body.appendChild(ta);
@@ -308,6 +378,44 @@ const BookingConfirmed = () => {
     const url = `https://wa.me/?text=${encodeURIComponent(cashplusShareText)}`;
     window.open(url, "_blank", "noopener,noreferrer");
   };
+
+  // ---------- Cash Plus voucher expired (10-min window elapsed) ----------
+  if (isCashplus && phase === "expired") {
+    const retryHref = bikeSlug ? `/bike/${bikeSlug}` : "/listings";
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="container mx-auto px-4 py-10 max-w-xl space-y-6">
+          <Card className="border-2 border-destructive/40">
+            <CardContent className="p-6 text-center space-y-4">
+              <div className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-destructive/15">
+                <XCircle className="h-7 w-7 text-destructive" />
+              </div>
+              <h1 className="text-2xl font-bold text-foreground">
+                Time's up — booking released
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                The 10-minute Cash Plus payment window has expired. The bike has
+                been released and your booking was cancelled. No charge was
+                taken — feel free to book again.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-2 justify-center pt-2">
+                <Button variant="hero" onClick={() => navigate(retryHref)}>
+                  Book again
+                </Button>
+                <Button variant="outline" onClick={() => navigate("/")}>
+                  Back to home
+                </Button>
+              </div>
+              <p className="text-[11px] text-muted-foreground/70 font-mono pt-2 border-t border-border/50">
+                Ref: {shortRef}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   // ---------- Dedicated Cash Plus voucher screen ----------
   if (isCashplus && phase === "waiting") {
@@ -346,22 +454,36 @@ const BookingConfirmed = () => {
             <CardContent className="p-6 space-y-5">
               <div>
                 <p className="text-xs uppercase tracking-wider text-muted-foreground mb-2">
-                  Your reference
+                  Your Cash Plus reference
                 </p>
-                <div className="flex items-center justify-between gap-3 rounded-lg bg-muted/40 border border-border p-4">
-                  <span className="text-2xl sm:text-3xl font-mono font-bold tracking-widest text-foreground">
-                    {shortRef}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleCopyRef}
-                    className="shrink-0"
-                  >
-                    <Copy className="h-4 w-4 mr-1.5" />
-                    Copy
-                  </Button>
-                </div>
+                {hasVoucher ? (
+                  <div className="flex items-center justify-between gap-3 rounded-lg bg-muted/40 border border-border p-4">
+                    <span className="text-2xl sm:text-3xl font-mono font-bold tracking-widest text-foreground break-all">
+                      {voucherCode}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleCopyRef}
+                      className="shrink-0"
+                    >
+                      <Copy className="h-4 w-4 mr-1.5" />
+                      Copy
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-3 rounded-lg bg-muted/40 border border-dashed border-border p-4">
+                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                    <div className="text-sm text-muted-foreground">
+                      Generating your Cash Plus reference… this usually takes a
+                      few seconds.
+                    </div>
+                  </div>
+                )}
+                <p className="mt-2 text-[11px] text-muted-foreground">
+                  This is the exact code the Cash Plus agent needs. Show it
+                  on your phone or write it down.
+                </p>
               </div>
 
               <div className="grid grid-cols-2 gap-3 text-sm">
@@ -370,8 +492,11 @@ const BookingConfirmed = () => {
                   <p className="font-bold text-foreground text-lg">{cashplusAmount} MAD</p>
                 </div>
                 <div className="rounded-lg bg-muted/30 p-3">
-                  <p className="text-xs text-muted-foreground">Expires in</p>
-                  <p className="font-bold text-foreground text-lg">72 hours</p>
+                  <p className="text-xs text-muted-foreground">Time left to pay</p>
+                  <p className="font-bold text-foreground text-lg flex items-center gap-2">
+                    <span className="inline-flex h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
+                    {countdownLabel}
+                  </p>
                 </div>
               </div>
 
@@ -380,6 +505,7 @@ const BookingConfirmed = () => {
                   variant="outline"
                   onClick={handleShareWhatsApp}
                   className="flex-1"
+                  disabled={!hasVoucher}
                 >
                   <Share2 className="h-4 w-4 mr-2" />
                   Send to WhatsApp
@@ -396,6 +522,18 @@ const BookingConfirmed = () => {
                   </a>
                 </Button>
               </div>
+
+              {!hasVoucher && (
+                <button
+                  type="button"
+                  onClick={handleVerifyNow}
+                  disabled={verifying}
+                  className="text-xs text-muted-foreground hover:text-foreground underline disabled:opacity-50 mx-auto flex items-center gap-1"
+                >
+                  <RefreshCw className="h-3 w-3" />
+                  {verifying ? "Refreshing…" : "I don't see my code — refresh"}
+                </button>
+              )}
             </CardContent>
           </Card>
 
@@ -407,17 +545,19 @@ const BookingConfirmed = () => {
                 <li>Walk into any Cash Plus agency (over 2,500 across Morocco).</li>
                 <li>
                   Show the reference{" "}
-                  <span className="font-mono font-semibold text-foreground">{shortRef}</span>{" "}
+                  <span className="font-mono font-semibold text-foreground">
+                    {voucherCode || "(generating…)"}
+                  </span>{" "}
                   to the agent and say it's for "Motonita / YouCan Pay".
                 </li>
                 <li>
-                  Pay <span className="font-semibold text-foreground">{cashplusAmount} MAD in cash</span>.
+                  Pay <span className="font-semibold text-foreground">{cashplusAmount} MAD in cash</span>{" "}
+                  within <span className="font-semibold text-foreground">10 minutes</span>.
                   Keep your receipt.
                 </li>
                 <li>
-                  Wait for our confirmation — usually{" "}
-                  <span className="font-semibold text-foreground">1 to 60 minutes</span>{" "}
-                  after the agent processes your payment.
+                  We confirm your bike automatically once Cash Plus reports the
+                  cash was received.
                 </li>
               </ol>
             </CardContent>
@@ -434,30 +574,25 @@ const BookingConfirmed = () => {
                 <li className="flex gap-2">
                   <span className="text-amber-600 mt-0.5">•</span>
                   <span>
+                    You have <span className="font-medium text-foreground">10 minutes</span> to pay
+                    this voucher at Cash Plus. After that, the booking is
+                    automatically cancelled and the bike is released — you'll
+                    need to book again.
+                  </span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-amber-600 mt-0.5">•</span>
+                  <span>
                     Cash Plus agencies are usually <span className="font-medium text-foreground">closed on Sundays</span>{" "}
-                    and may have reduced hours on public holidays. Plan accordingly.
+                    and may have reduced hours on public holidays — pick card
+                    payment instead if you can't reach an agent in time.
                   </span>
                 </li>
                 <li className="flex gap-2">
                   <span className="text-amber-600 mt-0.5">•</span>
                   <span>
-                    Your reference is valid for <span className="font-medium text-foreground">72 hours</span>.
-                    After that, the booking is automatically cancelled and you'll need to start over.
-                  </span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-amber-600 mt-0.5">•</span>
-                  <span>
-                    We confirm bookings <span className="font-medium text-foreground">automatically</span>.
-                    The delay between paying and seeing confirmation depends on Cash Plus's system —
-                    usually a few minutes, sometimes up to an hour.
-                  </span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-amber-600 mt-0.5">•</span>
-                  <span>
-                    Once paid, you can safely close this page. We'll email you the moment
-                    it's confirmed, and you'll be able to message the agency from your bookings.
+                    We confirm bookings <span className="font-medium text-foreground">automatically</span>{" "}
+                    — usually within a minute of the agent processing your payment.
                   </span>
                 </li>
               </ul>
