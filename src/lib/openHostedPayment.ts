@@ -21,10 +21,14 @@ export interface BuildPayUrlOptions {
   successPath: string;
   errorPath: string;
   title?: string;
+  /** Cardholder name to prefill in the YouCan Pay card form. */
+  holder?: string;
+  /** Email to prefill in the YouCan Pay card form. */
+  email?: string;
 }
 
 export function buildYouCanPayUrl(opts: BuildPayUrlOptions): string {
-  const { resp, amount, currency = "MAD", successPath, errorPath, title } = opts;
+  const { resp, amount, currency = "MAD", successPath, errorPath, title, holder, email } = opts;
   const qs = new URLSearchParams({
     token: resp.token_id,
     pubKey: resp.public_key,
@@ -36,5 +40,7 @@ export function buildYouCanPayUrl(opts: BuildPayUrlOptions): string {
     error: errorPath,
   });
   if (title) qs.set("title", title);
+  if (holder) qs.set("holder", holder);
+  if (email) qs.set("email", email);
   return `/pay/youcanpay?${qs.toString()}`;
 }
