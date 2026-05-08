@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
-import { ArrowDownToLine, ArrowUpFromLine, AlertTriangle } from "lucide-react";
+import { ArrowDownToLine, ArrowUpFromLine, AlertTriangle, CreditCard, Banknote } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAgencyWallet } from "@/hooks/useAgencyData";
