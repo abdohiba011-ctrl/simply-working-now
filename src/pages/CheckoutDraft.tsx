@@ -564,8 +564,8 @@ const CheckoutDraft = () => {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardContent className="p-5 space-y-4">
+            <Card className="min-w-0 overflow-hidden">
+              <CardContent className="p-4 sm:p-5 space-y-4 min-w-0">
                 <h3 className="font-semibold text-foreground">Trip details</h3>
                 <div className="grid sm:grid-cols-2 gap-4 text-sm">
                   <div className="flex items-start gap-3">
