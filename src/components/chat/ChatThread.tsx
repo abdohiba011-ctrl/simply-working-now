@@ -19,6 +19,7 @@ import {
   BadgeCheck,
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { VerificationDialog } from "@/components/verification/VerificationDialog";
 import { cn } from "@/lib/utils";
 import { format, isToday, isYesterday } from "date-fns";
 import { toast } from "sonner";
