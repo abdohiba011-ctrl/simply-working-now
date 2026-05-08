@@ -96,6 +96,15 @@ export const Header = (_: HeaderProps = {}) => {
   return (
     <>
       <header className="sticky top-0 z-30 flex h-16 items-center gap-2 bg-agency-canvas/80 px-3 backdrop-blur sm:gap-3 lg:px-6">
+        {/* Motonita logo — visible top-left on mobile */}
+        <button
+          onClick={() => navigate("/agency/dashboard")}
+          aria-label="Motonita"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/15 transition-colors hover:bg-primary/25 lg:hidden"
+        >
+          <img src="/favicon.svg" alt="Motonita" className="h-6 w-6" />
+        </button>
+
         {/* Greeting chip on dashboard, page title elsewhere */}
         {isDashboard ? (
           <div className="hidden items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 text-sm md:flex">
@@ -174,7 +183,7 @@ export const Header = (_: HeaderProps = {}) => {
         </Button>
 
         {/* User chip — avatar + name + role */}
-        <div className="flex items-center gap-2 rounded-full border border-border bg-card py-1 ps-1 pe-3">
+        <div className="flex items-center gap-2 rounded-full border border-border bg-card py-1 ps-1 pe-1 ring-2 ring-primary/30 lg:pe-3">
           <UserMenu avatarUrl={identity.logoUrl} />
           <div className="hidden text-left lg:block">
             <div className="text-xs font-semibold leading-tight text-foreground">

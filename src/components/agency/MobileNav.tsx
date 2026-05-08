@@ -4,8 +4,8 @@ import { cn } from "@/lib/utils";
 import { useAgencyBadges } from "@/hooks/useAgencyBadges";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import {
-  Wallet, Receipt, FileText, Building, Users, ShieldCheck,
-  BarChart, Settings, Bell, Plug, LifeBuoy, CalendarDays,
+  Wallet, Receipt, Building, ShieldCheck,
+  BarChart, Settings, Bell, LifeBuoy, CalendarDays,
 } from "lucide-react";
 
 const TABS = [
@@ -17,15 +17,14 @@ const TABS = [
 
 const MORE_ITEMS = [
   { to: "/agency/calendar", label: "Calendar", icon: CalendarDays },
-  { to: "/agency/wallet", label: "Wallet", icon: Wallet },
-  { to: "/agency/transactions", label: "Transactions", icon: Receipt },
-  { to: "/agency/profile", label: "Profile", icon: Building },
-  { to: "/agency/verification", label: "Verification", icon: ShieldCheck },
-  { to: "/agency/analytics", label: "Analytics", icon: BarChart },
-  { to: "/agency/preferences", label: "Preferences", icon: Settings },
-  { to: "/agency/notifications", label: "Notifications", icon: Bell },
-  { to: "/agency/integrations", label: "Integrations", icon: Plug },
-  { to: "/agency/help", label: "Help & Support", icon: LifeBuoy },
+  { to: "/agency/finance#wallet", label: "Wallet", icon: Wallet },
+  { to: "/agency/finance#transactions", label: "Transactions", icon: Receipt },
+  { to: "/agency/agency-center#profile", label: "Profile", icon: Building },
+  { to: "/agency/agency-center#verification", label: "Verification", icon: ShieldCheck },
+  { to: "/agency/agency-center#analytics", label: "Analytics", icon: BarChart },
+  { to: "/agency/settings#preferences", label: "Preferences", icon: Settings },
+  { to: "/agency/settings#notifications", label: "Notifications", icon: Bell },
+  { to: "/agency/settings#help", label: "Help & Support", icon: LifeBuoy },
 ];
 
 interface Props {
