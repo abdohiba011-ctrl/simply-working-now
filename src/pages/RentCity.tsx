@@ -115,6 +115,7 @@ type BikeRow = {
 };
 
 import { slugToDisplayName, cityToSlug, slugToCityNameVariants } from "@/lib/citySlug";
+import { CitySwitcher } from "@/components/rent-city/CitySwitcher";
 
 type CityRow = {
   id: string;
@@ -542,8 +543,9 @@ export default function RentCity() {
         {/* Header row */}
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground">
-              Motorbike Rental in {cityName}
+            <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground flex flex-wrap items-baseline gap-x-2">
+              <span>Motorbike Rental in</span>
+              <CitySwitcher currentCitySlug={citySlug} currentCityName={cityName} />
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
               {bikes.length} verified bike{bikes.length !== 1 ? "s" : ""} across {neighborhoodRows.length} neighborhood{neighborhoodRows.length === 1 ? "" : "s"}
@@ -761,9 +763,16 @@ function RentCityComingSoon({ city }: { city: CityRow }) {
             <Badge className="mb-3 bg-warning/10 text-warning border-warning/30">
               Coming Soon
             </Badge>
-            <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
-              Motorbike rental in {city.name} — Coming Soon
+            <h1 className="text-3xl md:text-4xl font-bold tracking-tight flex flex-wrap items-center gap-x-2 gap-y-2">
+              <span>Motorbike rental in {city.name} — Coming Soon</span>
             </h1>
+            <div className="mt-3">
+              <CitySwitcher
+                currentCitySlug={cityToSlug(city.name)}
+                currentCityName={`Switch from ${city.name}`}
+                variant="compact"
+              />
+            </div>
             <p className="text-muted-foreground mt-3">
               We're expanding to {city.name} soon. Sign up to be the first to
               know when verified agencies are live.
