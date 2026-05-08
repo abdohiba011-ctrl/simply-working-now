@@ -304,8 +304,8 @@ const Verification = () => {
   }, [isVerified, isPending, isRejected]);
 
   const bannerClasses = {
-    success: "border-success/30 bg-success/10 text-success-foreground",
-    info: "border-amber-300 bg-amber-50 text-amber-900 dark:bg-amber-950/30 dark:text-amber-200",
+    success: "border-success/30 bg-success/10 text-foreground",
+    info: "border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-500/40 dark:bg-amber-950/30 dark:text-amber-200",
     danger: "border-destructive/30 bg-destructive/10 text-destructive",
     neutral: "border-border bg-muted/40 text-foreground",
   }[banner.tone];
@@ -452,7 +452,7 @@ const Verification = () => {
   );
 
   return (
-    <div className="mx-auto max-w-4xl space-y-4 pb-28">
+    <div className="mx-auto max-w-4xl space-y-4 pb-40 md:pb-28">
       {/* Header */}
       <Card className="p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -473,8 +473,8 @@ const Verification = () => {
         <div className={cn("mt-4 flex items-start gap-3 rounded-lg border px-4 py-3", bannerClasses)}>
           <div className="mt-0.5 shrink-0">{banner.icon}</div>
           <div className="min-w-0">
-            <div className="text-sm font-semibold text-slate-950">{banner.title}</div>
-            <p className="mt-0.5 text-xs opacity-90 text-slate-800">{banner.text}</p>
+            <div className="text-sm font-semibold">{banner.title}</div>
+            <p className="mt-0.5 text-xs opacity-90">{banner.text}</p>
           </div>
         </div>
 
@@ -532,32 +532,32 @@ const Verification = () => {
                       onClick={() => persistEntityType("company")}
                       disabled={locked}
                       className={cn(
-                        "flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                        "flex items-center justify-center gap-1.5 rounded-md px-2 py-2 text-xs font-medium transition-colors sm:text-sm",
                         entityType === "company"
                           ? "bg-background text-foreground shadow-sm"
                           : "text-muted-foreground hover:text-foreground",
                         locked && "cursor-not-allowed opacity-60",
                       )}
                     >
-                      <Building2 className="h-4 w-4" />
-                      Company
-                      {entityType === "company" && <CheckCircle2 className="h-3.5 w-3.5 text-slate-900" />}
+                      <Building2 className="h-4 w-4 shrink-0" />
+                      <span className="truncate">Company</span>
+                      {entityType === "company" && <CheckCircle2 className="hidden h-3.5 w-3.5 text-foreground sm:inline" />}
                     </button>
                     <button
                       type="button"
                       onClick={() => persistEntityType("auto_entrepreneur")}
                       disabled={locked}
                       className={cn(
-                        "flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                        "flex items-center justify-center gap-1.5 rounded-md px-2 py-2 text-xs font-medium transition-colors sm:text-sm",
                         entityType === "auto_entrepreneur"
                           ? "bg-background text-foreground shadow-sm"
                           : "text-muted-foreground hover:text-foreground",
                         locked && "cursor-not-allowed opacity-60",
                       )}
                     >
-                      <UserIcon className="h-4 w-4" />
-                      Auto-entrepreneur
-                      {entityType === "auto_entrepreneur" && <CheckCircle2 className="h-3.5 w-3.5 text-slate-900" />}
+                      <UserIcon className="h-4 w-4 shrink-0" />
+                      <span className="truncate"><span className="sm:hidden">Auto-entr.</span><span className="hidden sm:inline">Auto-entrepreneur</span></span>
+                      {entityType === "auto_entrepreneur" && <CheckCircle2 className="hidden h-3.5 w-3.5 text-foreground sm:inline" />}
                     </button>
                   </div>
                 </div>
@@ -634,8 +634,8 @@ const Verification = () => {
             </div>
           </Card>
 
-          {/* Sticky submit bar */}
-          <div className="sticky bottom-4 z-10">
+          {/* Sticky submit bar — sits above the mobile bottom nav */}
+          <div className="sticky bottom-[calc(env(safe-area-inset-bottom)+5rem)] z-10 md:bottom-4">
             <Card className="flex flex-wrap items-center justify-between gap-3 border-2 px-4 py-3 shadow-lg">
               <div className="flex items-center gap-3">
                 <div
