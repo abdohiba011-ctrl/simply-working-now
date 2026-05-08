@@ -94,6 +94,9 @@ export const HeroSection = memo(() => {
   const [neighborhood, setNeighborhood] = useState<string>(ALL_NEIGHBORHOODS);
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [calendarOpen, setCalendarOpen] = useState(false);
+  const [citySheetOpen, setCitySheetOpen] = useState(false);
+  const [neighborhoodSheetOpen, setNeighborhoodSheetOpen] = useState(false);
+  const isMobile = useIsMobile();
 
   // Cities loaded from DB via React Query + realtime so the dropdown
   // reflects admin changes within ~2s without a reload.
