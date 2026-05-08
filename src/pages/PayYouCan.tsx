@@ -208,19 +208,39 @@ export default function PayYouCan() {
         <Card className="border-2 border-primary/30">
           <CardContent className="p-6 space-y-4">
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li className="flex items-start gap-2">
-                <Lock className="h-4 w-4 text-foreground mt-0.5 flex-shrink-0" />
-                <span>
-                  Card details are entered directly into YouCan Pay's secure
-                  form — Motonita never sees them.
-                </span>
-              </li>
-              <li className="flex items-start gap-2">
-                <ShieldCheck className="h-4 w-4 text-foreground mt-0.5 flex-shrink-0" />
-                <span>
-                  Payments are processed via 3D Secure where required.
-                </span>
-              </li>
+              {method === "cashplus" ? (
+                <>
+                  <li className="flex items-start gap-2">
+                    <Lock className="h-4 w-4 text-foreground mt-0.5 flex-shrink-0" />
+                    <span>
+                      Confirm to generate your CashPlus voucher. You'll then
+                      take it to any CashPlus agent in Morocco to pay {amount} {currency} in cash.
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <ShieldCheck className="h-4 w-4 text-foreground mt-0.5 flex-shrink-0" />
+                    <span>
+                      Your booking is held while we wait for CashPlus to confirm your cash payment.
+                    </span>
+                  </li>
+                </>
+              ) : (
+                <>
+                  <li className="flex items-start gap-2">
+                    <Lock className="h-4 w-4 text-foreground mt-0.5 flex-shrink-0" />
+                    <span>
+                      Card details are entered directly into YouCan Pay's secure
+                      form — Motonita never sees them.
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <ShieldCheck className="h-4 w-4 text-foreground mt-0.5 flex-shrink-0" />
+                    <span>
+                      Payments are processed via 3D Secure where required.
+                    </span>
+                  </li>
+                </>
+              )}
             </ul>
 
             <div id="ycpay-error" className="text-sm text-destructive" />
