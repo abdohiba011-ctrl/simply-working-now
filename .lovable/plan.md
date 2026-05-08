@@ -1,90 +1,46 @@
-## Problem
+## Goal
 
-On the renter Checkout (and the agency Wallet top-up), we show one "Pay with card" CTA, but the embedded YouCan Pay form actually renders **both** Card and CashPlus gateways and we treat the result the same way:
+Two small changes on the post-payment **booking-confirmed** flow:
 
-- `PayYouCan` calls `yc.renderAvailableGateways(...)` so the user can pick CashPlus.
-- After `yc.pay(token)` resolves, we always send the user to `/payment-status` which polls the webhook for ~30s.
+1. When the renter clicks **"Message agency"**, automatically open the agency thread **and** drop in a friendly first message on their behalf — so the agency immediately gets a chat to reply to.
+2. Update the **"What happens next"** step 2 copy to mention WhatsApp as a notification channel: "You'll be notified by email, in-app message, or WhatsApp."
 
-That works for **Card** (3DS finishes in seconds, webhook fires `paid`, we auto-confirm).
-It is wrong for **CashPlus** — YouCan returns a voucher (transaction stays `pending` until the user physically pays at a CashPlus point hours or days later). The poller times out, the user sees a confusing "Still processing" screen, and the voucher reference is buried.
+---
 
-The two methods are fundamentally different and need their own UX.
+## What changes
 
-## What we'll build
+### 1. `src/pages/BookingConfirmed.tsx`
+- Replace the `<Link to="/inbox">` "Message agency" button with a button that, on click:
+  1. Checks `booking_messages` for an existing message from this renter on this booking.
+  2. If none exists, inserts a starter message into `booking_messages` with `sender_id = auth.uid()`, `sender_role = 'renter'`, `message_type = 'text'`, and a localized body like:
+     > "Hi! I just booked the {bikeName} for {pickup} → {return}. Looking forward to picking it up — could you let me know the next steps and where to meet you? Thanks!"
+  3. Navigates to `/inbox?booking={booking.id}` so the right thread is opened.
+- The check prevents the bot-style message from being re-sent if the renter clicks the button twice or comes back later.
+- Update the "What happens next" list item from
+  `"You'll be notified by email and in-app message."`
+  to
+  `"You'll be notified by email, in-app message, or WhatsApp."`
 
-### 1. Choose method on Checkout (renter)
+### 2. `src/pages/Inbox.tsx`
+- Read the optional `?booking=<id>` query param on mount and, once the conversation list loads, auto-select that booking's thread (`setActiveId(bookingId)`). On mobile this also opens the chat panel directly.
 
-Replace the single "Pay with card" panel with two side-by-side selectable options:
+### 3. Localization (`src/locales/en.json`, `fr.json`, `ar.json`)
+- Add a new key `bookingConfirmed.autoMessageBody` with the templated greeting (placeholders for `{{bike}}`, `{{pickup}}`, `{{return}}`) in EN/FR/AR.
+- Update the existing "notified by email and in-app message" string to include WhatsApp in all three languages (FR: "par e-mail, message dans l'app ou WhatsApp"; AR equivalent).
 
-```text
-┌──────────────────────┐  ┌──────────────────────┐
-│ 💳 Card              │  │ 🧾 CashPlus voucher  │
-│ Instant confirmation │  │ Pay at any CashPlus  │
-│ Visa / Mastercard    │  │ agent · 60 MAD       │
-└──────────────────────┘  └──────────────────────┘
-            [ Continue to payment ]
-```
-
-The selected method is forwarded to `/pay/youcanpay` via a new `method=card|cashplus` query param.
-
-### 2. Render only the chosen gateway
-
-In `PayYouCan.tsx`, read `method` and call:
-- `yc.renderCreditCardForm("default")` when `method=card`
-- `yc.renderCashPlusForm("default")` (or the equivalent gateway-name call) when `method=cashplus`
-
-This stops the user from silently switching method inside the form.
-
-### 3. Two outcome paths
-
-When `yc.pay(token)` resolves:
-
-- **Card** → unchanged. Navigate to `/payment-status` with current 30s poll → on `paid` continue to `/confirmation`.
-- **CashPlus** → navigate to a new **`/payment-cashplus`** page (not the generic status page) with the voucher details.
-
-### 4. New `/payment-cashplus` voucher page
-
-Dedicated, calmer UI tailored to a "pay later" flow:
-
-- Big voucher reference number / barcode-ready string from the YouCan response.
-- Clear copy: "Take this code to any CashPlus agent in Morocco. Pay 60 MAD. Your booking is held while we wait — the agency will be notified the moment CashPlus confirms."
-- "Find a CashPlus agent" link.
-- Status badge: **Awaiting payment**. No countdown, no fake "Still processing" alarm.
-- Background poll of `youcanpay_payments.status` every ~10s with a longer/open-ended timeout, plus a **Verify now** button (reuses `youcanpay-verify-payment`).
-- Buttons: **Copy code**, **Email me the code**, **I've paid — verify now**, **Back to my bookings**.
-- When status flips to `paid`, auto-redirect to `/confirmation` (same `next` path Card uses).
-- Page is safe to leave; the booking row in `/bookings/:id` shows the same voucher and "Awaiting CashPlus payment" status so the user can return any time.
-
-### 5. Apply the same split to agency Wallet top-up
-
-`src/pages/agency/Wallet.tsx` uses the same `youcanpay-create-token` + `/pay/youcanpay` route. Mirror the change:
-- Pick method first (Card vs CashPlus).
-- CashPlus top-ups land on `/payment-cashplus` with `next` pointing back to `/agency/wallet`.
-- Wallet credit only happens when the webhook flips status to `paid` (already true today — no DB change needed).
-
-### 6. Backend — no schema change
-
-The webhook (`youcanpay-webhook`) and `youcanpay-verify-payment` already detect `cashplus` vs `card` from the gateway field and only credit / confirm on `paid`. We just need to:
-- Make sure `youcanpay-create-token` stores the chosen `method` on the `youcanpay_payments` row (column already exists per webhook code), so `/payment-cashplus` can render the right UI even on a refresh / return-later session.
-- Confirm `bookings` keeps its `pending` state until `paid` for CashPlus — no auto-cancel during the voucher wait window. (We'll review existing hold-expiry logic in `promote_hold_to_booking` and extend the booking hold for CashPlus selections; details in the technical section.)
-
-## Files to change
-
-- `src/pages/Checkout.tsx` — add method selector, pass `method` param.
-- `src/pages/PayYouCan.tsx` — render only the chosen gateway, route success per method.
-- `src/pages/PaymentCashPlus.tsx` — **new** voucher / waiting page.
-- `src/pages/PaymentStatus.tsx` — keep as Card-only (tighten copy: "Confirming your card payment…").
-- `src/pages/agency/Wallet.tsx` — same method selector for top-ups.
-- `src/App.tsx` — register `/payment-cashplus` route.
-- `supabase/functions/youcanpay-create-token/index.ts` — accept and persist `method` on insert.
-- `src/locales/en.json` / `fr.json` / `ar.json` — strings for the new selector and voucher page (RTL safe).
+---
 
 ## Out of scope
 
-- No change to the 60 MAD amount, the 10/50 split, or refund logic.
-- No new payment provider.
-- No change to how the agency receives the booking notification (webhook unchanged for Card; for CashPlus the agency is still only notified on `paid`, which matches the rule that nothing is "real" until money is in).
+- No new edge function, no real WhatsApp sending. WhatsApp is only added to the **copy** for now (we already collect the renter's WhatsApp number on the profile, so it's an honest promise of channels we can use).
+- No changes to the agency-side inbox — the existing Realtime subscription on `booking_messages` will surface the new message instantly in the agency's inbox and bump their unread count.
+- No schema or RLS changes — the existing `Booking parties can send messages` policy already permits this insert.
 
-## Open question (one)
+---
 
-For CashPlus, should the renter's bike **hold** be extended past the current 5-minute window so the booking isn't cancelled while the voucher is unpaid? Recommended: extend to 24h for CashPlus selections, and surface that timer to both renter and agency. I'll confirm with you before changing `promote_hold_to_booking`.
+## Technical details
+
+- Idempotency on the auto-message uses a `select count` on `booking_messages` filtered by `booking_id` + `sender_id = auth.uid()` before inserting. We do NOT rely on a unique constraint.
+- The "Message agency" button gets a brief loading state during the insert + navigation so a double-click can't fire two inserts.
+- Body is built client-side in the user's current `i18n` language using `t('bookingConfirmed.autoMessageBody', { bike, pickup, return })`. Dates are formatted with the existing `date-fns` locale-aware formatter already used on the page.
+- `Inbox.tsx` selection: after the conversations array is populated, if `searchParams.get('booking')` matches a row in `convs`, call `setActiveId(...)` once. Wrap in a `useEffect` that depends on `convs.length` and runs only when `activeId` is still `null` so we don't override later user navigation.
