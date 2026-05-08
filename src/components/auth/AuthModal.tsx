@@ -412,7 +412,7 @@ export function AuthModal() {
                 </div>
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="am-phone">Phone (optional)</Label>
+                <Label htmlFor="am-phone">Phone <span className="text-destructive">*</span></Label>
                 <div className="relative">
                   <PhoneIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#163300]/50" />
                   <Input
