@@ -471,13 +471,13 @@ const CheckoutDraft = () => {
         // jump straight to the confirmation page which has the proper
         // voucher UI + 72h background poll.
         if (usingCashplus) {
-          navigate(`/booking/${booking.id}/confirmed`, { replace: true });
+          navigate(`/booking/${booking.id}/confirmed?payment=cashplus`, { replace: true });
           return;
         }
 
         const qs = new URLSearchParams({
           pid,
-          next: `/booking/${booking.id}/confirmed`,
+          next: `/booking/${booking.id}/confirmed?payment=card`,
           retry: `/checkout/${booking.id}`,
           outcome: "success",
           title: "Pay booking fee",
