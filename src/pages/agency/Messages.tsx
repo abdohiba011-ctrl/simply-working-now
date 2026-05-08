@@ -142,7 +142,7 @@ const Messages = () => {
 
   return (
     <AgencyLayout>
-      <div className="-mx-4 -mt-2 -mb-24 h-[calc(100dvh-4.5rem)] px-2 pb-3 sm:px-3 lg:-mx-6 lg:-mb-8 lg:h-[calc(100dvh-4.5rem)] lg:px-4 lg:pb-4">
+      <div className="-mx-3 -mt-2 -mb-20 h-[calc(100dvh-4rem-5rem)] px-2 pb-2 sm:px-3 lg:-mx-6 lg:-mb-8 lg:h-[calc(100dvh-4.5rem)] lg:px-4 lg:pb-4">
         <div className="flex h-full overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
           {showList && (
             <aside
