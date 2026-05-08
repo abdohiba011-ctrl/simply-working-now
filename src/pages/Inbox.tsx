@@ -170,12 +170,7 @@ const Inbox = () => {
     else navigate("/");
   };
 
-  const { language, setLanguage } = useLanguageStore();
-  const LANGS = [
-    { code: "fr" as const, Icon: FrFlag, label: "Français" },
-    { code: "en" as const, Icon: GbFlag, label: "English" },
-    { code: "ar" as const, Icon: MaFlag, label: "العربية" },
-  ];
+
 
   return (
     <div className="flex min-h-[100dvh] flex-col bg-muted/30">
