@@ -1,64 +1,78 @@
-## QA pass — last 4 hours of changes
+## Goal
 
-I went through every change made today on the renter side. Here's what's good and what's actually broken.
+Make the agency side feel native on mobile. Bottom nav stays (it's good), hamburger goes away, the header is cleaned up, and every page (Motorbikes, Bookings, Messages, plus the rest) gets a real mobile layout instead of cramped desktop tables.
 
-### ✅ Working as intended
-- **Header beta badge** — rendered next to the logo on mobile, tablet, desktop (no responsive hide). Tablet shows badge inline, FAQ hidden via `hidden lg:inline-block`. Matches the latest instruction.
-- **"More" dropdown centering** — `align="center"` + transparent rail + `mx-auto w-[min(540px,calc(100vw-2rem))]` card. Centers horizontally on the page, anchored under the button.
-- **Inbox bike strip + 24h countdown** — `Inbox.tsx` query now pulls `bikes(bike_types(name, main_image_url))` + `created_at`; `ChatThread` renders the bike thumb row and a live HH:MM:SS band that flips to a red "Agency did not respond within 24h — penalty applies" banner when expired. Verified the data flow end‑to‑end.
+## Scope
 
-### 🐞 Bug found — needs to be fixed
+### 1. Remove the hamburger / mobile sidebar drawer
+- `src/components/agency/AgencyShell.tsx`
+  - Drop the `mobileSidebar` state, the left `<Sheet>`, and the `onMobileMenu` prop wiring.
+- `src/components/agency/Header.tsx`
+  - Remove the `onMobileMenu` prop and the `<Menu>` button (lines 99–101). Header on mobile starts directly with content.
+- `src/components/agency/Sidebar.tsx` keeps its desktop‑only behavior (already `lg:` gated), no changes.
 
-**The CashPlus‑flicker fix on `BookingConfirmed.tsx` is non‑functional in production.**
+### 2. Header polish on mobile (no crushing)
+- Bigger tap targets: bump icon buttons (`ThemeToggle`, `NotificationsPopover`, `Help`) to `h-10 w-10` on mobile, icons to `h-5 w-5`.
+- The page title / greeting chip stays hidden on mobile (the bottom nav already labels the route).
+- Search button stays desktop‑only (`md:flex`). Mobile users have a search field inside each list page.
+- Wallet pill: keep visible from `sm:` up; on mobile (<sm) replace with a compact icon‑only wallet button so nothing wraps. Tap → `/agency/finance#wallet`.
+- Language and User chip stay; user chip drops the name on small screens (already `lg:block`).
+- Header height stays `h-16`; horizontal padding goes from `px-4` to `px-3` on mobile to free space.
 
-The fix relies on a `?payment=card|cashplus` query param being on the URL when the renter lands on `/booking/:id/confirmed`. But searching the codebase, **nothing actually adds that param to the redirect**:
-- `CheckoutDraft.tsx:472` (CashPlus path) → `navigate(/booking/${id}/confirmed)` — no param.
-- `CheckoutDraft.tsx:478` (`next` for card) → `next=/booking/${id}/confirmed` — no param. `PaymentStatus.tsx` then redirects to that exact `next` URL untouched.
-- `CheckoutDraft.tsx:137`, `:323` — same.
+### 3. Bottom nav: edge‑to‑edge, sticky, no rounded float
+- `src/components/agency/MobileNav.tsx`
+  - Change the outer `<nav>` from `fixed inset-x-3 bottom-3 ... rounded-2xl border ... shadow-lg` to a true bottom bar: `fixed inset-x-0 bottom-0 border-t border-border bg-card/95 backdrop-blur` with `pb-[env(safe-area-inset-bottom)]` so iPhone home‑indicator doesn't sit on the icons.
+  - Drop the outer rounded corners and the side margin.
+  - Adjust `AgencyShell` `<main>` bottom padding from `pb-24` to `pb-20 lg:pb-8` to match the new flush bar.
 
-So `explicitMethod` is always `null`, and the original inference path runs:
-```
-inferredCashplus =
-  latestPayment.method === "cashplus" ||
-  (amount === 60 && status === "pending" && !transaction_id)
-```
-For a card payment that hasn't had its webhook write `payment_method` yet, the latest YouCan row commonly looks like `pending / 60 MAD / no transaction_id` → the page flips into the CashPlus voucher UI for a few seconds, exactly the bug the user reported.
+### 4. Motorbikes page (mobile = cards only)
+`src/pages/agency/Motorbikes.tsx`
+- On `< md`: hide the Grid/Table toggle entirely (toggle stays for `md:` and up).
+- Force the cards layout on `< md` regardless of the `?view=table` URL param.
+- Toolbar on mobile: a single row with the search input on the left and one primary button on the right reading **"+ Motorbike"** (use `sm:hidden` for the short label and `hidden sm:inline` for "Add motorbike"). Active/Archived tabs move to a second compact row.
+- Card size on mobile: full‑width single column, `aspect-[16/10]` image to take less vertical space; price + status row stays.
 
-### Fix (only file changes, no schema/business‑rule changes)
+### 5. "Add / Edit motorbike" → bottom sheet on mobile, dialog on desktop
+`src/components/agency/MotorbikeWizardDialog.tsx` becomes responsive:
+- On `< md`: render with shadcn `<Sheet side="bottom">` styled as a near‑full‑height sheet (`h-[92dvh] rounded-t-2xl p-0`). The `MotorbikeWizardForm` keeps its existing step UI; only the container changes.
+- On `>= md`: keep the current centered `<Dialog>` exactly as today.
+- A small `useIsMobile()` switch picks the wrapper. Same props (`open`, `onOpenChange`, `bikeId`, `onSaved`) — no caller changes.
+- (We are *not* converting the wizard into a separate route; the user offered "dedicated page OR bottom sheet" — bottom sheet keeps the URL stable and is cheaper to ship.)
 
-**`src/pages/CheckoutDraft.tsx`** — append the explicit method to every redirect into the confirmation page:
+### 6. Bookings page (mobile = cards)
+`src/pages/agency/Bookings.tsx`
+- On `< md`: hide the `<Table>` and render a card list instead — one card per booking with: customer name + contact, bike name, pickup → return dates, total in MAD, `<StatusChip>`, and a chevron `Open` affordance. Whole card is tappable.
+- The status filter chips become a horizontally scrollable row on mobile (`overflow-x-auto -mx-3 px-3 snap-x` with `whitespace-nowrap`) so they don't wrap into 3 lines.
+- Search + date‑range + Export collapse into a sticky toolbar that wraps cleanly: search on its own row, then date/Export side by side.
 
-1. Line 137 (early bailout when booking already non‑draft):
-   ```ts
-   const pm = (data as any).payment_method;
-   const q = pm ? `?payment=${pm}` : "";
-   navigate(`/booking/${data.id}/confirmed${q}`);
-   ```
-2. Line 323 (CashPlus verify path):
-   ```ts
-   navigate(`/booking/${booking.id}/confirmed?payment=cashplus`);
-   ```
-3. Line 472 (CashPlus voucher just created):
-   ```ts
-   navigate(`/booking/${booking.id}/confirmed?payment=cashplus`, { replace: true });
-   ```
-4. Line 478 (card → PaymentStatus → confirmed): include the param in `next` so PaymentStatus forwards it untouched:
-   ```ts
-   next: `/booking/${booking.id}/confirmed?payment=card`,
-   ```
+### 7. Messages page polish
+`src/pages/agency/Messages.tsx` already swaps via `useIsMobile()`. We will:
+- Remove any horizontal overflow on the conversation list rows on small widths (currently fine, just verify).
+- Match the renter inbox: when a conversation is open on mobile, the list is hidden and the chat fills the screen above the bottom nav.
+- Add safe bottom padding (`pb-20`) so the composer isn't hidden behind the nav.
 
-No changes to `PaymentStatus.tsx` are needed — it already does `navigate(next)` verbatim, so the query string carries through.
+### 8. Other agency pages — light responsive sweep
+For each of: Dashboard, Calendar, Finance, Wallet, Transactions, Invoices, Analytics, Profile, Verification, Subscription, Team, Preferences, NotificationSettings, Integrations, Help, AgencyCenter, BookingDetail, MotorbikeDetail.
+- Action: scan for `<Table>` usage and any `lg:`‑only layouts. Add a card fallback only where a real table exists; otherwise just verify spacing / wrapping.
+- Add `pb-20` to any page that has a sticky/fixed bottom CTA to avoid overlap with the new flush bottom bar.
+- This sweep is *fix‑only*; we won't redesign these pages.
 
-### 🧹 Polish (small, recommended while I'm here)
+## Out of scope
+- Renter side (no changes).
+- Agency desktop sidebar — already fine, untouched.
+- New features (analytics widgets, calendar redesign, etc.).
+- Translating new strings — "+ Motorbike", "Add motorbike", page titles stay in their current language; i18n keys can be a follow‑up.
 
-- **`src/pages/Inbox.tsx:332`** — `counterpartySubtitle={Booking #${id.slice(0,8)}}` now duplicates the bike‑strip's "Booking #…" line. Drop the subtitle so the chat header shows just the agency name; the bike strip below carries the booking ref.
-- Hard‑coded English strings I added to `ChatThread.tsx` ("Agency to confirm in", "Agency did not respond within 24h — penalty applies.", "Motorbike", "Booking #") — leaving them in English for now since the rest of `ChatThread.tsx` is already English; flagging only. **Not** part of this fix unless you want it.
+## Files touched
+- `src/components/agency/AgencyShell.tsx`
+- `src/components/agency/Header.tsx`
+- `src/components/agency/MobileNav.tsx`
+- `src/components/agency/MotorbikeWizardDialog.tsx`
+- `src/pages/agency/Motorbikes.tsx`
+- `src/pages/agency/Bookings.tsx`
+- `src/pages/agency/Messages.tsx`
+- Other `src/pages/agency/*.tsx` only when the responsive sweep finds a concrete issue.
 
-### Out of scope
-- Penalty engine itself (server‑side rule for "agency didn't respond" — already exists separately).
-- Agency‑side inbox.
-- Header / dropdown — verified, no changes.
-
-### Files touched by this plan
-- `src/pages/CheckoutDraft.tsx` (4 small edits)
-- `src/pages/Inbox.tsx` (1 line — drop redundant subtitle)
+## Risks / notes
+- The bottom sheet variant of the motorbike wizard reuses the existing form unchanged; if any internal absolute positioning inside the form assumed Dialog dimensions, we'll patch it.
+- Removing the hamburger means tablet users in the 768–1023 range no longer have access to the desktop sidebar items that aren't in the bottom‑nav "More" sheet. The "More" sheet already lists Calendar, Wallet, Transactions, Profile, Verification, Analytics, Preferences, Notifications, Integrations, Help — i.e. parity with sidebar. So nothing is lost.
