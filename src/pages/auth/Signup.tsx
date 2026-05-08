@@ -153,7 +153,7 @@ function buildSchema(role: "renter" | "agency") {
         });
       }
       const phone = (data.phone ?? "").replace(/\s+/g, "");
-      if (role === "agency" && !phone) {
+      if ((role === "agency" || role === "renter") && !phone) {
         ctx.addIssue({
           path: ["phone"],
           code: z.ZodIssueCode.custom,
