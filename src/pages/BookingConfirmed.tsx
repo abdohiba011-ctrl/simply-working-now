@@ -61,7 +61,55 @@ const BookingConfirmed = () => {
   const [phase, setPhase] = useState<Phase>("waiting");
   const [elapsed, setElapsed] = useState(0);
   const [verifying, setVerifying] = useState(false);
+  const [isOpeningChat, setIsOpeningChat] = useState(false);
   const startedAt = useRef<number>(Date.now());
+
+  const handleMessageAgency = async () => {
+    if (!booking?.id || isOpeningChat) return;
+    setIsOpeningChat(true);
+    try {
+      const { data: auth } = await supabase.auth.getUser();
+      const uid = auth?.user?.id;
+      if (!uid) {
+        navigate(`/inbox?booking=${booking.id}`);
+        return;
+      }
+
+      // Only seed the opener if this renter hasn't sent anything on this booking yet.
+      const { count } = await supabase
+        .from("booking_messages")
+        .select("id", { count: "exact", head: true })
+        .eq("booking_id", booking.id)
+        .eq("sender_id", uid);
+
+      if ((count ?? 0) === 0) {
+        const bikeLabel = booking.bike_name || "the bike";
+        const pickupLabel = booking.pickup_date
+          ? format(new Date(booking.pickup_date), "MMM d")
+          : "";
+        const returnLabel = booking.return_date
+          ? format(new Date(booking.return_date), "MMM d")
+          : "";
+        const dateRange =
+          pickupLabel && returnLabel ? ` for ${pickupLabel} → ${returnLabel}` : "";
+        const body =
+          `Hi! I just booked ${bikeLabel}${dateRange}. ` +
+          `Could you let me know the next steps and where I can pick it up? Thanks!`;
+
+        await supabase.from("booking_messages").insert({
+          booking_id: booking.id,
+          sender_id: uid,
+          sender_role: "renter",
+          message_type: "text",
+          body,
+        });
+      }
+    } catch (e) {
+      console.error("Failed to seed agency opener message", e);
+    } finally {
+      navigate(`/inbox?booking=${booking.id}`);
+    }
+  };
 
   // Initial load
   useEffect(() => {
