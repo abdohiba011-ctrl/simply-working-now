@@ -25,3 +25,19 @@ export function useIsMobile() {
 
   return !!isMobile;
 }
+
+const LG_BREAKPOINT = 1024;
+
+export function useIsBelowLg() {
+  const [isBelow, setIsBelow] = React.useState<boolean | undefined>(undefined);
+
+  React.useEffect(() => {
+    const mql = window.matchMedia(`(max-width: ${LG_BREAKPOINT - 1}px)`);
+    const onChange = () => setIsBelow(mql.matches);
+    mql.addEventListener("change", onChange);
+    requestAnimationFrame(() => setIsBelow(mql.matches));
+    return () => mql.removeEventListener("change", onChange);
+  }, []);
+
+  return !!isBelow;
+}
