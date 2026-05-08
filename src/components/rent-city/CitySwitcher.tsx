@@ -145,8 +145,9 @@ export const CitySwitcher = ({
       ? cn(
           "inline-flex items-center gap-1 align-baseline",
           "border-b-2 border-[#9FE870] hover:border-b-4 hover:bg-[#9FE870]/10",
-          "rounded-sm px-1 -mx-1 transition-all",
+          "rounded-sm -mx-1 transition-all",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#9FE870] focus-visible:ring-offset-2",
+          "px-[8px] pl-[12px]",
         )
       : cn(
           "inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-foreground",
