@@ -319,33 +319,62 @@ export default function PaymentCashPlus() {
                   <p className="text-xs uppercase tracking-wider text-muted-foreground">
                     Voucher reference
                   </p>
-                  <p
-                    className="font-mono text-lg sm:text-xl font-bold text-foreground break-all select-all"
-                    aria-label="Voucher code"
-                  >
-                    {voucherRef}
-                  </p>
-                  <div className="flex flex-wrap gap-2 justify-center pt-1">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={copyVoucher}
-                    >
-                      <Copy className="h-4 w-4 mr-1.5" />
-                      Copy code
-                    </Button>
-                    <Button type="button" variant="outline" size="sm" asChild>
-                      <a
-                        href="https://www.cashplus.ma/fr/agences"
-                        target="_blank"
-                        rel="noreferrer"
+                  {isVoucherReady ? (
+                    <>
+                      <p
+                        className="font-mono text-lg sm:text-xl font-bold text-foreground break-all select-all"
+                        aria-label="Voucher code"
                       >
-                        <ExternalLink className="h-4 w-4 mr-1.5" />
-                        Find a CashPlus agent
-                      </a>
-                    </Button>
-                  </div>
+                        {voucherRef}
+                      </p>
+                      <div className="flex flex-wrap gap-2 justify-center pt-1">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={copyVoucher}
+                        >
+                          <Copy className="h-4 w-4 mr-1.5" />
+                          Copy code
+                        </Button>
+                        <Button type="button" variant="outline" size="sm" asChild>
+                          <a
+                            href="https://www.cashplus.ma/fr/agences"
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            <ExternalLink className="h-4 w-4 mr-1.5" />
+                            Find a CashPlus agent
+                          </a>
+                        </Button>
+                      </div>
+                      {redirectIn !== null && (
+                        <div className="mt-3 rounded-md border border-primary/40 bg-primary/10 p-3 text-sm text-foreground space-y-2">
+                          <p className="font-semibold">
+                            Code copied — taking you to your booking in {redirectIn}s
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            The same code will be shown on the next page so you don't lose it.
+                          </p>
+                          <div className="flex flex-wrap gap-2 justify-center">
+                            <Button type="button" size="sm" variant="hero" onClick={goToBookingNow}>
+                              Go to my booking now
+                            </Button>
+                            <Button type="button" size="sm" variant="outline" onClick={cancelRedirect}>
+                              Stay here
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="flex flex-col items-center gap-2 py-2">
+                      <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                      <p className="text-sm text-muted-foreground">
+                        Generating your Cash Plus reference… this usually takes a few seconds.
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 <ol className="space-y-2 text-sm text-muted-foreground list-decimal pl-5">
