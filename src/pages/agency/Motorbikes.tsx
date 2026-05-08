@@ -115,14 +115,32 @@ const Motorbikes = () => {
   return (
     <AgencyLayout>
       <div className="mx-auto max-w-7xl space-y-4">
-        <div className="flex flex-wrap items-center gap-3 lg:flex-nowrap">
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl font-semibold tracking-tight">Motorbikes</h1>
-            <span className="rounded-full border border-border bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
-              {bikes.length} {tab === "archived" ? "archived" : "in fleet"}
-            </span>
-          </div>
+        {/* Title row */}
+        <div className="flex items-center gap-2">
+          <h1 className="text-xl font-semibold tracking-tight">Motorbikes</h1>
+          <span className="rounded-full border border-border bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+            {bikes.length} {tab === "archived" ? "archived" : "in fleet"}
+          </span>
+        </div>
 
+        {/* Mobile toolbar: search + add on one row */}
+        <div className="flex items-center gap-2 md:hidden">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Search…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="h-10 pl-9"
+            />
+          </div>
+          <Button onClick={() => openWizard()} size="sm" className="h-10 shrink-0 px-3">
+            <Plus className="mr-1 h-4 w-4" /> Motorbike
+          </Button>
+        </div>
+
+        {/* Tabs row (mobile + desktop) and desktop toolbar */}
+        <div className="flex flex-wrap items-center gap-3 lg:flex-nowrap">
           <div className="inline-flex rounded-md border border-border p-0.5">
             <button
               onClick={() => setTab("active")}
@@ -144,7 +162,8 @@ const Motorbikes = () => {
             </button>
           </div>
 
-          <div className="ml-auto flex flex-wrap items-center gap-2">
+          {/* Desktop-only search + view toggle + add button */}
+          <div className="ml-auto hidden flex-wrap items-center gap-2 md:flex">
             <div className="relative w-full sm:w-56">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
