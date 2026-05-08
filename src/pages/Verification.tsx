@@ -15,8 +15,6 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { toast } from "sonner";
 import { compressImage, validateImageFile, formatFileSize } from "@/lib/imageCompression";
 import { safeGetItem } from "@/lib/safeStorage";
-import { Header } from "@/components/Header";
-import { Footer } from "@/components/Footer";
 import idVerificationGuide from "@/assets/id-verification-guide.png";
 import { 
   Upload, 
