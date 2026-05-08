@@ -100,9 +100,18 @@ export const Header = (_: HeaderProps = {}) => {
         <button
           onClick={() => navigate("/agency/dashboard")}
           aria-label="Motonita"
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/15 transition-colors hover:bg-primary/25 lg:hidden"
+          className="flex h-10 shrink-0 items-center justify-center rounded-xl px-1 transition-opacity hover:opacity-80 lg:hidden"
         >
-          <img src="/favicon.svg" alt="Motonita" className="h-6 w-6" />
+          <img
+            src={iconDark}
+            alt="Motonita"
+            className="h-7 w-auto dark:hidden"
+          />
+          <img
+            src={iconWhite}
+            alt="Motonita"
+            className="hidden h-7 w-auto dark:block"
+          />
         </button>
 
         {/* Greeting chip on dashboard, page title elsewhere */}
