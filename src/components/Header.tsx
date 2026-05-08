@@ -549,18 +549,39 @@ export const Header = memo(() => {
             )}
           </div>
 
-          {/* Mobile Menu Button - Always shows Menu icon, X is inside panel */}
-          <button
-            className="md:hidden p-2 -mr-2 rounded-md hover:bg-muted transition-colors"
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsMenuOpen(!isMenuOpen);
-            }}
-            aria-label="Toggle menu"
-            type="button"
-          >
-            <Menu className="h-6 w-6" />
-          </button>
+          {/* Mobile right-side: messages + hamburger */}
+          <div className="md:hidden flex items-center gap-1">
+            {isAuthenticated && (
+              <button
+                className="relative p-2 rounded-md hover:bg-muted transition-colors"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate("/inbox");
+                }}
+                aria-label={t('header.messages')}
+                type="button"
+              >
+                <MessageCircle className="h-6 w-6" />
+                {unreadMessages > 0 && (
+                  <span className="absolute top-0.5 right-0.5 h-4 min-w-4 px-1 bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full flex items-center justify-center">
+                    {unreadMessages > 9 ? '9+' : unreadMessages}
+                  </span>
+                )}
+              </button>
+            )}
+            {/* Mobile Menu Button - Always shows Menu icon, X is inside panel */}
+            <button
+              className="p-2 -mr-2 rounded-md hover:bg-muted transition-colors"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsMenuOpen(!isMenuOpen);
+              }}
+              aria-label="Toggle menu"
+              type="button"
+            >
+              <Menu className="h-6 w-6" />
+            </button>
+          </div>
         </div>
         </div>
       </header>
