@@ -91,6 +91,7 @@ Deno.serve(async (req) => {
     const currency = body.currency || "MAD";
 
     // Insert pending payment record
+    const method = body.method === "cashplus" ? "cashplus" : body.method === "card" ? "card" : null;
     const { data: payment, error: payErr } = await admin
       .from("youcanpay_payments")
       .insert({
@@ -99,6 +100,7 @@ Deno.serve(async (req) => {
         amount,
         currency,
         status: "pending",
+        method,
         related_booking_id: body.related_booking_id || null,
         related_wallet_user_id:
           body.purpose === "wallet_topup" || body.purpose === "renter_topup" ? user.id : null,
