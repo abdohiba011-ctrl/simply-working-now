@@ -176,8 +176,8 @@ export const CitySwitcher = ({
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#9FE870] focus-visible:ring-offset-2",
         )
       : cn(
-          "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full",
-          "border border-border bg-background hover:bg-muted text-sm font-medium",
+          "inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-foreground",
+          "hover:bg-muted/50",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         );
 
@@ -190,17 +190,18 @@ export const CitySwitcher = ({
         >
           <span className={triggerClasses}>
             {variant === "compact" && (
-              <MapPin className="h-3.5 w-3.5" aria-hidden="true" />
+              <MapPin className="h-3.5 w-3.5 text-foreground/70" aria-hidden="true" />
             )}
             <span>{currentCityName}</span>
-            <ChevronDown
-              className={cn(
-                variant === "heading" ? "h-5 w-5 md:h-6 md:w-6" : "h-4 w-4",
-                "transition-transform",
-                open && "rotate-180",
-              )}
-              aria-hidden="true"
-            />
+            {variant === "heading" && (
+              <ChevronDown
+                className={cn(
+                  "h-5 w-5 md:h-6 md:w-6 transition-transform",
+                  open && "rotate-180",
+                )}
+                aria-hidden="true"
+              />
+            )}
           </span>
         </button>
       </PopoverTrigger>
