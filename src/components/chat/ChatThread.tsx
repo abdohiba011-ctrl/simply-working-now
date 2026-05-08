@@ -355,34 +355,7 @@ export const ChatThread = ({
         </div>
       </div>
 
-      {/* Renter verification banner */}
-      {showVerifyBanner && (
-        <div className="shrink-0 border-b border-amber-500/30 bg-amber-50 dark:bg-amber-900/20 px-3 py-3 sm:px-4">
-          <div className="mx-auto flex max-w-3xl flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-start gap-2 text-sm text-amber-900 dark:text-amber-100">
-              <BadgeCheck className="mt-0.5 h-4 w-4 shrink-0" />
-              <div>
-                <p className="font-semibold">Verify your identity</p>
-                <p className="text-xs opacity-90">
-                  Upload your ID and license to help the agency prepare for your pickup.
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button asChild size="sm" variant="hero">
-                <Link to="/verification">Upload ID</Link>
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={dismissVerifyBanner}
-              >
-                Later
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Renter verification gate handled at composer level */}
 
       {/* Messages */}
       <div
