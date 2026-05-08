@@ -569,16 +569,14 @@ const BookingConfirmed = () => {
                   <Share2 className="h-4 w-4 mr-2" />
                   Send to WhatsApp
                 </Button>
-                <Button variant="outline" asChild className="flex-1">
-                  <a
-                    href="https://www.cashplus.ma/agences"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <MapPin className="h-4 w-4 mr-2" />
-                    Find nearest agency
-                    <ExternalLink className="h-3 w-3 ml-1.5" />
-                  </a>
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={handleFindNearestAgency}
+                >
+                  <MapPin className="h-4 w-4 mr-2" />
+                  Find nearest agency
+                  <ExternalLink className="h-3 w-3 ml-1.5" />
                 </Button>
               </div>
 
