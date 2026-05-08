@@ -1,23 +1,40 @@
-# Fix: include tablets in the bottom-sheet behavior
+# Rent City header + Hero mobile pickers
 
-## What's wrong
+## 1. Header on tablet — single line
 
-The previous edit wired the `CitySwitcher` to a bottom sheet via `useIsMobile()`, but that hook only returns true below 768px. Tablets (768–1023px) still get the desktop popover, which contradicts the request: tablet and mobile must both open a bottom sheet, only desktop/laptop (≥1024px) keeps the popover.
+In `src/pages/RentCity.tsx` (line 542) the H1 uses `flex flex-wrap items-baseline gap-x-2`, which wraps "Motorbike Rental in" above "Casablanca" on tablet because the H1 is `text-3xl md:text-4xl`.
 
-The request also covers the date picker — `BookingDatePicker` uses the same `useIsMobile` hook, so it has the same gap on tablet today.
+- Remove `flex-wrap` so the title stays on one line on md+ (tablet/desktop). Keep wrap only on small mobile via responsive classes: `flex flex-wrap md:flex-nowrap items-baseline gap-x-2 whitespace-nowrap md:whitespace-normal`.
+- Reduce font size on the tablet breakpoint so it fits: `text-2xl sm:text-3xl md:text-[28px] lg:text-4xl` (tuned so "Motorbike Rental in Casablanca ⌄" fits at 768–1023px).
+- Ensure `CitySwitcher` trigger doesn't force a break (already inline-flex).
 
-## Change
+## 2. Equalize Filters and Sort buttons on tablet
 
-Switch both `CitySwitcher` and `BookingDatePicker` from `useIsMobile()` (768px breakpoint) to a slightly broader "is touch / not desktop" check at the `lg` breakpoint (1024px), matching the existing Filters sheet (which uses `lg:hidden`).
+In the same header row (lines 553–590):
+- Filters button uses `Button size="sm"` (h-9). The Sort `SelectTrigger` is default (h-10) with `w-[180px]`.
+- Change Filters trigger to remove `size="sm"` and give it `h-10` to match the Select trigger. Also align padding (`px-4`) so both have identical vertical/horizontal rhythm.
 
-Smallest-impact approach: introduce a tiny new hook `useIsBelowLg()` in `src/hooks/use-mobile.tsx` (matchMedia `(max-width: 1023px)`) and use it in both components. Keep `useIsMobile` untouched so other call sites are unaffected.
+Result: both controls have the same height and visual weight on tablet.
 
-## Files
+## 3. Mobile hero — bottom-sheet pickers for City and Neighborhood
 
-1. `src/hooks/use-mobile.tsx` — add `useIsBelowLg` hook (mirrors `useIsMobile` with breakpoint 1024).
-2. `src/components/rent-city/CitySwitcher.tsx` — replace `useIsMobile` import/usage with `useIsBelowLg`.
-3. `src/components/BookingDatePicker.tsx` — replace `useIsMobile` import/usage with `useIsBelowLg` so the date picker also opens as a bottom sheet on tablet.
+In `src/components/HeroSection.tsx` (lines 292–372), the City and Neighborhood inputs use shadcn `Select`, which on mobile opens a native-feeling dropdown anchored to the trigger. The Dates input already opens a bottom sheet via `BookingDatePicker` (because of `useIsBelowLg`).
 
-## Verification
+Plan:
+- Detect mobile only with `useIsMobile()` (existing hook, <768px). Tablet keeps current dropdown behavior since user only mentioned mobile.
+- On mobile, replace the City `Select` with a button trigger that opens a `Sheet` (`side="bottom"`, same styling as Filters sheet on RentCity: rounded-top, drag handle, header "Choose a city", scrollable list). Tapping a city sets it and closes the sheet.
+- Same for Neighborhood: button trigger → bottom Sheet titled "Choose a neighborhood", listing "All neighborhoods" + `neighborhoodOptions`. Disabled state preserved when no city selected.
+- Keep the existing `Select` for desktop/tablet (≥768px) — render conditionally based on `useIsMobile()`.
+- Dates picker already behaves correctly (bottom sheet on mobile/tablet); no change.
 
-After the edit, re-test in the browser at 390px (mobile — bottom sheet), 820px (tablet — bottom sheet), and 1366px (desktop — popover) for both the city pill and the dates pill.
+### UX details (mobile sheets)
+- Same visual language as the Filters sheet in `RentCity.tsx`: `h-[80dvh] rounded-t-[28px] p-0`, drag handle, sticky header.
+- Selected city/neighborhood shown in the trigger button with the same `MapPin`/`Building2` icon and label styling already used.
+- Coming-soon cities listed as disabled rows with the "Soon" badge, matching current Select behavior.
+
+## Files to edit
+
+- `src/pages/RentCity.tsx` — H1 wrap/size classes; Filters button height/padding.
+- `src/components/HeroSection.tsx` — wrap City and Neighborhood selects with mobile-only Sheet variants.
+
+No business logic, data, or routing changes.

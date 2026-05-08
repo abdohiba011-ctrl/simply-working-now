@@ -539,7 +539,7 @@ export default function RentCity() {
         {/* Header row */}
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground flex flex-wrap items-baseline gap-x-2">
+            <h1 className="text-2xl sm:text-3xl md:text-[26px] lg:text-4xl font-bold tracking-tight text-foreground flex flex-wrap md:flex-nowrap items-baseline gap-x-2 md:whitespace-nowrap">
               <span>Motorbike Rental in</span>
               <CitySwitcher currentCitySlug={citySlug} currentCityName={cityName} />
             </h1>
