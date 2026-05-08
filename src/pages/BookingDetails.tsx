@@ -402,7 +402,7 @@ const BookingDetails = () => {
 
           {/* Main Card */}
           <Card>
-            <CardContent className="p-6 md:p-8 space-y-6">
+            <CardContent className="p-6 md:p-8 space-y-6 px-[16px] py-[16px]">
               {/* Header with Bike Info */}
               <div>
                 <div className={`flex items-start justify-between mb-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
