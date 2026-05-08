@@ -7,7 +7,10 @@ import { format, isToday, isYesterday } from "date-fns";
 import { cn } from "@/lib/utils";
 import { ChatThread } from "@/components/chat/ChatThread";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { MessageCircle, Loader2, ChevronLeft } from "lucide-react";
+import { MessageCircle, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
+import motonitaIconForest from "@/assets/motonita-icon-forest.svg";
+import motonitaIconWhite from "@/assets/motonita-icon-white.svg";
+import { useTranslation } from "react-i18next";
 
 interface Conv {
   id: string;
@@ -44,6 +47,8 @@ const Inbox = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const { i18n } = useTranslation();
+  const isRTL = i18n.dir() === "rtl";
   const [convs, setConvs] = useState<Conv[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -192,7 +197,11 @@ const Inbox = () => {
                   aria-label="Back"
                   className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted/70 text-foreground hover:bg-muted transition-colors"
                 >
-                  <ChevronLeft className="h-5 w-5" />
+                  {isRTL ? (
+                    <ChevronRight className="h-5 w-5" />
+                  ) : (
+                    <ChevronLeft className="h-5 w-5" />
+                  )}
                 </button>
                 <h1 className="flex-1 text-base font-semibold tracking-tight text-foreground">
                   Messages
@@ -200,12 +209,17 @@ const Inbox = () => {
                 <a
                   href="/"
                   aria-label="Motonita home"
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-full hover:bg-muted/70 transition-colors"
+                  className="inline-flex h-11 w-11 items-center justify-center rounded-xl hover:bg-muted/70 transition-colors"
                 >
                   <img
-                    src="/favicon.svg"
+                    src={motonitaIconForest}
                     alt="Motonita"
-                    className="h-7 w-7 dark:brightness-0 dark:invert"
+                    className="h-8 w-auto block dark:hidden"
+                  />
+                  <img
+                    src={motonitaIconWhite}
+                    alt="Motonita"
+                    className="h-8 w-auto hidden dark:block"
                   />
                 </a>
               </div>
