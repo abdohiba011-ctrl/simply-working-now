@@ -305,41 +305,93 @@ export const HeroSection = memo(() => {
                 <MapPin className="h-4 w-4" aria-hidden="true" />
                 City
               </label>
-              <Select value={city} onValueChange={handleCityChange}>
-                <SelectTrigger
-                  id="hero-city"
-                  className="h-12 w-full border-2 bg-white"
-                  aria-label="Select a city"
-                >
-                  <SelectValue placeholder="Select a city" />
-                </SelectTrigger>
-                <SelectContent className="bg-white max-h-[320px]">
-                  {[...(availableCities.length ? availableCities : allCities)]
-                    .sort((a, b) => a.localeCompare(b))
-                    .map((c) => (
-                      <SelectItem key={c} value={c}>
-                        <span>{c}</span>
-                      </SelectItem>
-                    ))}
-                  {[...comingSoonCities]
-                    .sort((a, b) => a.localeCompare(b))
-                    .map((c) => (
-                      <SelectItem
-                        key={c}
-                        value={c}
-                        disabled
-                        className="opacity-60"
-                      >
-                        <span className="flex items-center justify-between gap-3 w-full">
+              {isMobile ? (
+                <Sheet open={citySheetOpen} onOpenChange={setCitySheetOpen}>
+                  <SheetTrigger asChild>
+                    <button
+                      type="button"
+                      id="hero-city"
+                      aria-label="Select a city"
+                      className="h-12 w-full border-2 bg-white rounded-md px-3 flex items-center justify-between text-sm"
+                      style={{ color: "#163300", borderColor: "hsl(var(--input))" }}
+                    >
+                      <span className={cn(!city && "text-muted-foreground")}>{city || "Select a city"}</span>
+                      <ChevronDown className="h-4 w-4 opacity-60" />
+                    </button>
+                  </SheetTrigger>
+                  <SheetContent side="bottom" className="h-[80dvh] rounded-t-[28px] p-0 border-t-0 bg-background flex flex-col [&>button]:hidden">
+                    <div className="flex justify-center pt-2.5 pb-1 shrink-0">
+                      <span className="h-1.5 w-12 rounded-full bg-muted-foreground/25" />
+                    </div>
+                    <SheetHeader className="px-5 py-2 shrink-0">
+                      <SheetTitle className="text-lg font-semibold text-start">Choose a city</SheetTitle>
+                    </SheetHeader>
+                    <div className="flex-1 min-h-0 overflow-y-auto px-3 pb-6">
+                      {[...(availableCities.length ? availableCities : allCities)]
+                        .sort((a, b) => a.localeCompare(b))
+                        .map((c) => (
+                          <button
+                            key={c}
+                            type="button"
+                            onClick={() => { handleCityChange(c); setCitySheetOpen(false); }}
+                            className={cn(
+                              "w-full text-start px-3 py-3 rounded-lg text-sm hover:bg-muted",
+                              city === c && "bg-muted font-semibold"
+                            )}
+                          >
+                            {c}
+                          </button>
+                        ))}
+                      {[...comingSoonCities]
+                        .sort((a, b) => a.localeCompare(b))
+                        .map((c) => (
+                          <div key={c} className="w-full px-3 py-3 rounded-lg text-sm opacity-60 flex items-center justify-between">
+                            <span>{c}</span>
+                            <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                              <Clock className="h-3 w-3" /> Soon
+                            </span>
+                          </div>
+                        ))}
+                    </div>
+                  </SheetContent>
+                </Sheet>
+              ) : (
+                <Select value={city} onValueChange={handleCityChange}>
+                  <SelectTrigger
+                    id="hero-city"
+                    className="h-12 w-full border-2 bg-white"
+                    aria-label="Select a city"
+                  >
+                    <SelectValue placeholder="Select a city" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white max-h-[320px]">
+                    {[...(availableCities.length ? availableCities : allCities)]
+                      .sort((a, b) => a.localeCompare(b))
+                      .map((c) => (
+                        <SelectItem key={c} value={c}>
                           <span>{c}</span>
-                          <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                            <Clock className="h-3 w-3" /> Soon
+                        </SelectItem>
+                      ))}
+                    {[...comingSoonCities]
+                      .sort((a, b) => a.localeCompare(b))
+                      .map((c) => (
+                        <SelectItem
+                          key={c}
+                          value={c}
+                          disabled
+                          className="opacity-60"
+                        >
+                          <span className="flex items-center justify-between gap-3 w-full">
+                            <span>{c}</span>
+                            <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                              <Clock className="h-3 w-3" /> Soon
+                            </span>
                           </span>
-                        </span>
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
 
             {/* Neighborhood */}
