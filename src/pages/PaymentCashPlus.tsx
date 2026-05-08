@@ -212,15 +212,58 @@ export default function PaymentCashPlus() {
     }
   }, [phase, next, navigate]);
 
+  // Pull the booking id out of `next` (e.g. "/booking/<uuid>/confirmed") so we
+  // can hand the copied voucher code to BookingConfirmed via sessionStorage.
+  const nextBookingId = useMemo(() => {
+    const m = (next || "").match(/\/booking\/([^/?#]+)/);
+    return m?.[1] || "";
+  }, [next]);
+
   const copyVoucher = async () => {
     if (!voucherRef) return;
     try {
       await navigator.clipboard.writeText(voucherRef);
       toast.success("Voucher code copied");
+      // Persist the exact code the user copied so the next page shows the same value.
+      try {
+        if (nextBookingId) {
+          sessionStorage.setItem(
+            `cashplus:ref:${nextBookingId}`,
+            voucherRef,
+          );
+        }
+      } catch {
+        /* sessionStorage may be unavailable (private mode) — non-fatal */
+      }
+      // Start a 10s countdown then navigate to the booking page.
+      setRedirectIn(10);
     } catch {
       toast.error("Could not copy. Long-press the code to copy manually.");
     }
   };
+
+  // Tick the post-copy countdown and navigate when it reaches 0.
+  useEffect(() => {
+    if (redirectIn === null) return;
+    if (redirectIn <= 0) {
+      const target = nextBookingId
+        ? `${next}#cpref=${encodeURIComponent(voucherRef)}`
+        : next;
+      navigate(target, { replace: true });
+      return;
+    }
+    const t = setTimeout(() => setRedirectIn((s) => (s === null ? null : s - 1)), 1000);
+    return () => clearTimeout(t);
+  }, [redirectIn, navigate, next, nextBookingId, voucherRef]);
+
+  const goToBookingNow = () => {
+    const target = nextBookingId
+      ? `${next}#cpref=${encodeURIComponent(voucherRef)}`
+      : next;
+    navigate(target, { replace: true });
+  };
+
+  const cancelRedirect = () => setRedirectIn(null);
 
   const isAgencyContext = (next || "").startsWith("/agency");
   const amountLabel = payment?.amount
