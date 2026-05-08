@@ -1,60 +1,102 @@
-## Goal
+## Audit method
 
-Polish the agency mobile (responsive) experience across 5 screens and the bottom-nav "More" drawer.
+Reviewed every file under `src/pages/agency/` and the agency chrome (`Header`, `MobileNav`, `AgencyShell`, `MotorbikeWizardForm/Dialog`, `SegmentedTabs`) at the 390×844 mobile viewport. Confirmed visually in the preview at `/agency/dashboard`, `/agency/finance#wallet`, `/agency/finance#transactions`, `/agency/agency-center#profile`, and `/agency/agency-center#verification`.
 
-## 1. Motorbike Detail page header (`src/pages/agency/MotorbikeDetail.tsx`)
+Pages are scored:
+- **OK** — clean on mobile
+- **Minor** — small overflow / cramped, not blocking
+- **Broken** — overflows the viewport, content cut off, or unusable on mobile
 
-The sticky header currently crowds Back · Title · Available switch · Preview · Edit · Archive into one row → overflow on mobile.
+---
 
-Mobile layout (kept clean, desktop unchanged):
-- Row: `Back` (icon only) · Title · `Available` switch · `Edit` button · 3-dot menu (`MoreVertical`)
-- 3-dot menu (DropdownMenu) contains: **Preview** (opens `/bikes/:id` in new tab) and **Archive** (opens existing archive dialog)
-- "Live on Motonita" / current "Available" label → just **"Live"** on mobile
-- Desktop (sm+): keep all buttons inline as today
+## Page-by-page status
 
-## 2. Bookings page (`src/pages/agency/Bookings.tsx`)
+| # | Page | Status | Issue |
+|---|------|--------|-------|
+| 1 | `Dashboard.tsx` | **Broken** | "Today's schedule" row crams thumb + name + bike + Pickup pill + StatusChip on one line — customer name truncates to "A P." |
+| 2 | `Motorbikes.tsx` (list) | OK | — |
+| 3 | `MotorbikeDetail.tsx` | **Minor** | Sticky header still cramped when bike name is long; switch + Edit + 3-dot push title to ~80px |
+| 4 | `Bookings.tsx` | OK | (already fixed last round) |
+| 5 | `BookingDetail.tsx` | **Minor** | `text-3xl` title + 4-action row on 390px wraps into 3 rows; cards use heavy `p-6`; no back arrow on mobile |
+| 6 | `Calendar.tsx` | OK | (already fixed) |
+| 7 | `Messages.tsx` | OK | (already fixed) |
+| 8 | `NotificationsInbox.tsx` | OK | — |
+| 9 | `Wallet.tsx` | **Minor** | `text-5xl` balance can wrap when amount is large (e.g. "1,234,567 MAD"); top-up dialog OK |
+| 10 | `Transactions.tsx` | **Broken** | `<Table>` not wrapped in horizontal-scroll container — last column "Balance after" is clipped; should switch to card list on mobile. Search `w-64` not responsive. |
+| 11 | `Invoices.tsx` | **Broken** | Same as Transactions — bare `<Table>` overflows on mobile |
+| 12 | `Subscription.tsx` | **Minor** | `text-3xl` title; "Popular" badge collides with card edge; otherwise fine |
+| 13 | `Finance.tsx` (hub) | OK | — |
+| 14 | `AgencyCenter.tsx` (hub) | OK | — |
+| 15 | `SettingsHub.tsx` (hub) | OK | — |
+| 16 | `Profile.tsx` | **Broken** | `grid-cols-2` for business email + phone on every viewport — inputs become unusably narrow on mobile |
+| 17 | `Verification.tsx` | **Broken** | (a) Entity-type buttons: "Auto-entrepreneur" label wraps to 2 lines; (b) sticky submit bar overlaps with bottom nav; (c) banner text uses fixed `text-slate-950` — illegible in dark mode |
+| 18 | `Analytics.tsx` | OK | empty state |
+| 19 | `Preferences.tsx` | OK | — |
+| 20 | `NotificationSettings.tsx` | OK | table already wrapped in `overflow-x-auto` |
+| 21 | `Help.tsx` | OK | — |
+| 22 | `Team.tsx` | OK | empty state |
+| 23 | `Integrations.tsx` | OK | empty state (also: route still exists but item removed from More menu) |
+| 24 | `MotorbikeWizard.tsx` (route) | OK | (now opened via dialog) |
+| 25 | `Placeholder.tsx` | OK | — |
+| — | `Header.tsx` (chrome) | **Minor** | At 360–390px the right cluster (lang + wallet + theme + bell + user chip) gets very tight; risks overflow with long balance values |
 
-- **Date picker crash** (laptop/tablet/mobile): the popover Calendar in range mode renders unconstrained and overflows. Fix by:
-  - Constrain `PopoverContent` width (`w-[min(92vw,340px)]`), add `pointer-events-auto`, ensure `align="start"` + `sideOffset` so it stays within viewport
-  - Use the existing flex-based `Calendar` component classes (already responsive). Keep `numberOfMonths={1}`.
-- **Status filters on mobile**: replace horizontal scroll with: 3 visible chips (`All`, `Pending`, `Confirmed`) + a **More** dropdown (3 dots) listing the rest (`Completed`, `No-show`, `Declined`, `Cancelled`, `Late cancel`). Selected "more" status shows as the active chip replacing the More label until cleared. Desktop: keep wrap as today.
+---
 
-## 3. Messages page (full-screen on mobile)
+## Confirmed visually
 
-Currently wrapped in `AgencyLayout` (header + bottom nav + padding) → cramped.
+- `/finance#transactions` — table scrolls horizontally inside the card; "Balance after" column cut off.
+- `/agency-center#verification` — "Auto-entrepreneur" wraps; sticky submit bar shows behind bottom nav.
+- `/agency-center#profile` — email/phone inputs squeezed into tiny half-columns.
+- `/dashboard` — "Today's schedule" row truncates customer to a single letter.
+- `/finance#wallet` — fine.
 
-- In `src/pages/agency/Messages.tsx`: when `useIsMobile()`, render WITHOUT `AgencyLayout` — full-viewport dedicated page with its own top bar containing a **back arrow** (→ `/agency/dashboard`) and "Messages" title. No bottom nav, no agency header.
-- Desktop unchanged.
-- When a conversation is open on mobile, the ChatThread already has its own back (already wired via `onBack`).
+---
 
-## 4. Calendar page (`src/pages/agency/Calendar.tsx`)
+## Fix plan (one PR, grouped)
 
-Mobile fixes:
-- Header row stacks: title on top, month nav + Today below, full-width
-- Month label uses `flex-1 text-center`
-- Grid cells: reduce `min-h-24` → `min-h-16` on mobile (`min-h-16 sm:min-h-24`), shrink event chip text, reduce padding (`p-1`)
-- Wrap whole grid in `overflow-x-hidden`; ensure inner grid uses `gap-0.5 sm:gap-1`
-- Day-of-week header letters single char on mobile (`M T W T F S S`)
+### Group A — table → card list on mobile (fixes "Broken")
 
-## 5. Simplified More drawer (`src/components/agency/MobileNav.tsx`)
+1. **Transactions** — render a stacked card list under `md:hidden`, keep the table for `md:block`. Each card: date · type chip · description · amount (colored) · running balance.
+2. **Invoices** — same pattern: card list on mobile, table from `md` up.
+3. Make the search input `w-full md:w-64` in Transactions header and let the row use `flex-wrap`.
 
-Replace the flat 9-item list with **3 grouped sections**, each opening its hub page:
+### Group B — Profile form
 
-- **Finance** → `/agency/finance` (tabs: Wallet, Transactions)
-- **Agency** → `/agency/agency-center` (tabs: Profile, Verification, Analytics)
-- **Settings** → `/agency/settings` (tabs: Preferences, Notifications, Help & Support)
-- Plus single item: **Calendar** → `/agency/calendar`
+4. Change the email/phone grid from `grid-cols-2` to `grid-cols-1 sm:grid-cols-2`.
+5. Reduce Card padding to `p-4 sm:p-6` for breathing room on mobile.
 
-Each row shows the section name + small subtitle listing what's inside. Tapping navigates to the hub page (which already has SegmentedTabs for sub-sections). Removes overload.
+### Group C — Verification page
 
-## Out of scope
+6. Entity-type segmented buttons: allow text wrap-friendly sizes (`text-xs sm:text-sm`, `gap-1.5`, `whitespace-nowrap` removed) and shorten label to "Auto-entr." under `sm:`.
+7. Replace the hard-coded slate colors in the status banner with semantic tokens (`text-foreground`, `bg-muted`, etc.) so it works in dark mode.
+8. Add `pb-32` to the outer container (currently `pb-28`) and give the sticky submit bar `bottom-[calc(env(safe-area-inset-bottom)+5rem)]` on mobile so it sits above the bottom nav.
 
-- No backend / business-logic changes
-- Desktop layouts unchanged unless noted
-- No new routes added (uses existing hub pages with hash tabs)
+### Group D — Dashboard "Today's schedule"
 
-## Technical notes
+9. On mobile, restructure each row to two lines: top = time + thumb + name + status chip; bottom = bike name + Pickup/Return pill aligned right. Hide the Pickup pill on `<sm` (status chip already conveys state).
 
-- Use shadcn `DropdownMenu` for the 3-dot menus (already in project)
-- Reuse existing `MotorbikeWizardDialog` and archive dialog — only the trigger UI moves
-- Date picker: keep `react-day-picker` range mode; just constrain popover width
+### Group E — small polish
+
+10. `BookingDetail`: title `text-2xl sm:text-3xl`; make Print button `sm:inline-flex` only; add a back chevron at top on mobile.
+11. `Wallet`: balance `text-4xl sm:text-5xl`, wrap MAD label below for very large amounts.
+12. `MotorbikeDetail` sticky header: hide the title text under `xs` when the switch is on (already badge implies bike); or use `text-[13px]` and `truncate flex-1 min-w-0`.
+13. `Header`: shrink right-cluster icon buttons to `h-9 w-9` on `<sm`; truncate wallet pill to "100" without the "MAD" suffix on `<sm` (already icon-only — verify).
+14. `Subscription`: title `text-2xl sm:text-3xl`; ensure plan card has `mt-3` for the Popular badge.
+
+### Out of scope
+
+- No business-logic / API changes.
+- No new routes.
+- Desktop layouts unchanged.
+
+---
+
+## Order of execution (when you approve)
+
+1. Group A (Transactions + Invoices) — biggest visual fix.
+2. Group B (Profile).
+3. Group C (Verification).
+4. Group D (Dashboard).
+5. Group E polish.
+
+Each group is a small, isolated edit (1–2 files). I'll verify each on mobile viewport after the change.

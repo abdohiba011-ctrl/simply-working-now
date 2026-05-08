@@ -185,13 +185,16 @@ const BookingDetail = () => {
       <div className="mx-auto max-w-5xl space-y-6">
         <div>
           <nav className="flex items-center gap-1 text-sm text-muted-foreground">
-            <Link to="/agency/bookings" className="hover:text-foreground">Bookings</Link>
+            <Link to="/agency/bookings" className="hover:text-foreground inline-flex items-center gap-1">
+              <ArrowLeft className="h-3.5 w-3.5 sm:hidden" />
+              Bookings
+            </Link>
             <ChevronRight className="h-3 w-3" />
             <span className="font-medium text-foreground">#{booking.id.slice(0, 8)}</span>
           </nav>
           <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <h1 className="text-3xl font-bold tracking-tight">Booking #{booking.id.slice(0, 8)}</h1>
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+              <h1 className="text-xl font-bold tracking-tight sm:text-3xl">Booking #{booking.id.slice(0, 8)}</h1>
               <StatusChip status={booking.booking_status || booking.status || "pending"} size="lg" />
             </div>
             <div className="flex flex-wrap gap-2">
@@ -215,7 +218,7 @@ const BookingDetail = () => {
                   Report no-show
                 </Button>
               )}
-              <Button variant="outline" size="sm" className="gap-2" onClick={() => window.print()}>
+              <Button variant="outline" size="sm" className="hidden gap-2 sm:inline-flex" onClick={() => window.print()}>
                 <Printer className="h-4 w-4" /> Print
               </Button>
             </div>
