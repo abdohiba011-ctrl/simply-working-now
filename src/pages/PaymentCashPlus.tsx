@@ -135,7 +135,7 @@ export default function PaymentCashPlus() {
       if (cancelled) return;
       const { data } = await supabase
         .from("youcanpay_payments")
-        .select("status, transaction_id, amount, currency, created_at")
+        .select("id, status, transaction_id, amount, currency, created_at")
         .eq("id", pid)
         .maybeSingle();
       if (cancelled) return;
