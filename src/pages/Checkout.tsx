@@ -192,15 +192,63 @@ const Checkout = () => {
           {/* Payment panel */}
           <div className="lg:col-span-2 space-y-6">
             <Card className="border-2 border-primary/30">
-              <CardContent className="p-6 space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-3 rounded-lg bg-primary/10">
-                    <CreditCard className="h-6 w-6 text-primary" />
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-semibold text-foreground">Pay with card</h2>
-                    <p className="text-sm text-muted-foreground">Secure payment via YouCan Pay</p>
-                  </div>
+              <CardContent className="p-6 space-y-5">
+                <div>
+                  <h2 className="text-xl font-semibold text-foreground">Choose how to pay</h2>
+                  <p className="text-sm text-muted-foreground">
+                    Both options charge the same {upfrontTotal} MAD upfront fee.
+                  </p>
+                </div>
+
+                <div className="grid sm:grid-cols-2 gap-3">
+                  {([
+                    {
+                      id: 'card' as const,
+                      icon: CreditCard,
+                      title: 'Credit / Debit card',
+                      tag: 'Instant',
+                      desc: 'Visa, Mastercard. Booking confirmed the moment payment goes through.',
+                    },
+                    {
+                      id: 'cashplus' as const,
+                      icon: Banknote,
+                      title: 'CashPlus voucher',
+                      tag: 'Pay in person',
+                      desc: 'Get a code, pay at any CashPlus agent in Morocco. Booking confirmed once they receive your cash.',
+                    },
+                  ]).map((opt) => {
+                    const Icon = opt.icon;
+                    const selected = method === opt.id;
+                    return (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        onClick={() => setMethod(opt.id)}
+                        aria-pressed={selected}
+                        className={`relative text-left rounded-xl border-2 p-4 transition-all ${
+                          selected
+                            ? 'border-primary bg-primary/10 shadow-sm'
+                            : 'border-border hover:border-primary/50 hover:bg-muted/30'
+                        }`}
+                      >
+                        {selected && (
+                          <span className="absolute top-3 right-3 inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                            <Check className="h-3 w-3" />
+                          </span>
+                        )}
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="p-2 rounded-lg bg-primary/15">
+                            <Icon className="h-5 w-5 text-foreground" />
+                          </div>
+                          <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                            {opt.tag}
+                          </span>
+                        </div>
+                        <h3 className="font-semibold text-foreground">{opt.title}</h3>
+                        <p className="mt-1 text-xs text-muted-foreground">{opt.desc}</p>
+                      </button>
+                    );
+                  })}
                 </div>
 
                 <div className="rounded-lg border border-border p-4 space-y-3 bg-muted/30">
@@ -231,20 +279,32 @@ const Checkout = () => {
                       <span>{CONFIRMATION_FEE_MAD} MAD</span>
                     </div>
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    Card payment only — cash is not accepted for the upfront fee.
-                  </p>
                 </div>
 
                 <ul className="space-y-2 text-sm text-muted-foreground">
-                  <li className="flex items-start gap-2">
-                    <Lock className="h-4 w-4 text-foreground mt-0.5 flex-shrink-0" />
-                    <span>You'll be redirected to YouCan Pay's secure page to enter your card.</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <ShieldCheck className="h-4 w-4 text-foreground mt-0.5 flex-shrink-0" />
-                    <span>The agency is notified instantly and will contact you within 24 hours to confirm pickup.</span>
-                  </li>
+                  {method === 'card' ? (
+                    <>
+                      <li className="flex items-start gap-2">
+                        <Lock className="h-4 w-4 text-foreground mt-0.5 flex-shrink-0" />
+                        <span>Card details are entered into YouCan Pay's secure form. We never see them.</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <ShieldCheck className="h-4 w-4 text-foreground mt-0.5 flex-shrink-0" />
+                        <span>Booking is confirmed automatically the second your bank approves the payment.</span>
+                      </li>
+                    </>
+                  ) : (
+                    <>
+                      <li className="flex items-start gap-2">
+                        <Banknote className="h-4 w-4 text-foreground mt-0.5 flex-shrink-0" />
+                        <span>You'll get a CashPlus voucher code. Take it to any CashPlus agent in Morocco and pay {upfrontTotal} MAD in cash.</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <ShieldCheck className="h-4 w-4 text-foreground mt-0.5 flex-shrink-0" />
+                        <span>The agency is notified the moment CashPlus confirms your cash payment.</span>
+                      </li>
+                    </>
+                  )}
                 </ul>
 
                 <Button
@@ -259,8 +319,10 @@ const Checkout = () => {
                       <Loader2 className="h-4 w-4 animate-spin mr-2" />
                       Redirecting to payment…
                     </>
-                  ) : (
+                  ) : method === 'card' ? (
                     <>Pay {upfrontTotal} MAD with card</>
+                  ) : (
+                    <>Get my CashPlus voucher</>
                   )}
                 </Button>
 
