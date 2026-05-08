@@ -5,7 +5,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { cityToSlug, slugToCityNameVariants } from "@/lib/citySlug";
 import { cn } from "@/lib/utils";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useIsBelowLg } from "@/hooks/use-mobile";
 import {
   Popover,
   PopoverContent,
@@ -46,7 +46,7 @@ export const CitySwitcher = ({
   const [searchParams] = useSearchParams();
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
-  const isMobile = useIsMobile();
+  const isMobile = useIsBelowLg();
 
   const { data: cityRows = [], isLoading, isError, refetch } = useQuery({
     queryKey: ["service-cities-public"],
