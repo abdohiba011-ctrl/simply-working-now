@@ -34,6 +34,7 @@ const Checkout = () => {
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [profile, setProfile] = useState<{ name: string; email: string; phone: string; is_verified: boolean } | null>(null);
   const [referralDiscount, setReferralDiscount] = useState(false);
+  const [method, setMethod] = useState<"card" | "cashplus">("card");
 
   useEffect(() => {
     const fetchUserProfile = async () => {
