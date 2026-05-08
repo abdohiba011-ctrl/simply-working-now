@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ChevronDown, Check, Clock, MapPin, History, AlertCircle } from "lucide-react";
+import { ChevronDown, Check, Clock, MapPin, AlertCircle } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { cityToSlug, slugToCityNameVariants } from "@/lib/citySlug";
