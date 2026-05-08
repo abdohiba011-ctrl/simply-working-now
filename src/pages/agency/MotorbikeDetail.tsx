@@ -11,7 +11,15 @@ import {
   Clock,
   AlertTriangle,
   Archive,
+  MoreVertical,
+  Eye,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useAgencyBike } from "@/hooks/useAgencyData";
 import { supabase } from "@/integrations/supabase/client";
 import {
