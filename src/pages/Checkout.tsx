@@ -4,7 +4,7 @@ import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { CreditCard, MapPin, Calendar, Bike, Loader2, ChevronLeft, Lock, ShieldCheck } from "lucide-react";
+import { CreditCard, MapPin, Calendar, Bike, Loader2, ChevronLeft, Lock, ShieldCheck, Banknote, Check } from "lucide-react";
 import { format } from "date-fns";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
