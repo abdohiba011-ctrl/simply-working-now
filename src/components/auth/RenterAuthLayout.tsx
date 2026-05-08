@@ -63,7 +63,7 @@ export function RenterAuthLayout({ children }: RenterAuthLayoutProps) {
         className="md:hidden flex items-center justify-center gap-2 py-3 px-4"
         style={{ backgroundColor: "#163300" }}
       >
-        <img src={logoWhite} alt="Motonita" className="h-6 w-auto" />
+        <img src={logoWhite} alt="Motonita" className="h-6 w-auto"  loading="eager" fetchPriority="high"/>
       </div>
 
       {/* LEFT — hero panel (md+) */}
@@ -87,7 +87,7 @@ export function RenterAuthLayout({ children }: RenterAuthLayoutProps) {
 
         {/* Brand logo top-left */}
         <div className="absolute top-6 start-6">
-          <img src={logoWhite} alt="Motonita" className="h-7 w-auto" />
+          <img src={logoWhite} alt="Motonita" className="h-7 w-auto"  loading="eager" fetchPriority="high"/>
         </div>
 
         {/* Title + subtitle */}
@@ -154,7 +154,7 @@ export function RenterAuthLayout({ children }: RenterAuthLayoutProps) {
               aria-label="Motonita home"
               className="md:hidden inline-flex"
             >
-              <img src={logoUrl} alt="Motonita" className="h-6 w-auto" />
+              <img src={logoUrl} alt="Motonita" className="h-6 w-auto"  loading="eager" fetchPriority="high"/>
             </Link>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

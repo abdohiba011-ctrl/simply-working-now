@@ -110,7 +110,7 @@ export function AgencyAuthLayout({ children }: AgencyAuthLayoutProps) {
 
           <div className="flex items-center gap-3">
             <Link to="/" aria-label="Motonita home" className="md:hidden inline-flex">
-              <img src={logoUrl} alt="Motonita" className="h-6 w-auto" />
+              <img src={logoUrl} alt="Motonita" className="h-6 w-auto"  loading="eager" fetchPriority="high"/>
             </Link>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

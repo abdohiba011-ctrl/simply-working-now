@@ -15,7 +15,7 @@ export const Footer = memo(() => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
           {/* Company Info */}
           <div>
-            <img src={logoDark} alt="Motonita Maroc" className="h-10 w-auto mb-4" translate="no" />
+            <img src={logoDark} alt="Motonita Maroc" className="h-10 w-auto mb-4" translate="no"  loading="eager" fetchPriority="high"/>
             <p className="text-background/80 mb-4 leading-relaxed">
               {t('footer.description')}
             </p>

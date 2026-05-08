@@ -48,7 +48,7 @@ export function AuthLayout({ children }: AuthLayoutProps) {
       {/* Top bar */}
       <header className="flex items-center justify-between px-6 py-4">
         <Link to="/" aria-label="Motonita home" className="inline-flex items-center">
-          <img src={logoUrl} alt="Motonita" className="h-7 w-auto" />
+          <img src={logoUrl} alt="Motonita" className="h-7 w-auto"  loading="eager" fetchPriority="high"/>
         </Link>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
