@@ -177,47 +177,80 @@ const Bookings = () => {
           </div>
         </div>
 
-        <Card className="overflow-hidden">
-          {loading ? (
-            <div className="py-16 text-center text-sm text-muted-foreground">Loading bookings…</div>
-          ) : filtered.length === 0 ? (
+        {loading ? (
+          <Card><div className="py-16 text-center text-sm text-muted-foreground">Loading bookings…</div></Card>
+        ) : filtered.length === 0 ? (
+          <Card>
             <EmptyState
               icon={Inbox}
               title={bookings.length === 0 ? "No bookings yet" : "No bookings match your filters"}
               description={bookings.length === 0 ? "Bookings assigned to your agency will appear here." : "Try adjusting search or filters."}
             />
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Customer</TableHead>
-                  <TableHead>Motorbike</TableHead>
-                  <TableHead>Pickup → Return</TableHead>
-                  <TableHead className="text-right">Total</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filtered.map((b) => (
-                  <TableRow key={b.id} className="cursor-pointer" onClick={() => navigate(`/agency/bookings/${b.id}`)}>
-                    <TableCell>
-                      <div className="font-medium">{b.customer_name || "—"}</div>
-                      <div className="text-xs text-muted-foreground">{b.customer_email || b.customer_phone || ""}</div>
-                    </TableCell>
-                    <TableCell>{b.bike?.name || "—"}</TableCell>
-                    <TableCell className="text-xs text-muted-foreground">
+          </Card>
+        ) : (
+          <>
+            {/* Mobile cards */}
+            <div className="space-y-2 md:hidden">
+              {filtered.map((b) => (
+                <Card
+                  key={b.id}
+                  onClick={() => navigate(`/agency/bookings/${b.id}`)}
+                  className="cursor-pointer p-3 active:scale-[0.99] transition-transform"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate font-medium">{b.customer_name || "—"}</div>
+                      <div className="truncate text-xs text-muted-foreground">{b.customer_email || b.customer_phone || ""}</div>
+                    </div>
+                    <StatusChip status={b.booking_status || b.status || "pending"} />
+                  </div>
+                  <div className="mt-2 truncate text-sm">{b.bike?.name || "—"}</div>
+                  <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
+                    <span>
                       {format(parseISO(b.pickup_date), "dd MMM")} → {format(parseISO(b.return_date), "dd MMM yyyy")}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums">{Number(b.total_price || 0).toLocaleString()} MAD</TableCell>
-                    <TableCell><StatusChip status={b.booking_status || b.status || "pending"} /></TableCell>
-                    <TableCell><Button size="sm" variant="ghost">Open</Button></TableCell>
+                    </span>
+                    <span className="font-semibold tabular-nums text-foreground">
+                      {Number(b.total_price || 0).toLocaleString()} MAD
+                    </span>
+                  </div>
+                </Card>
+              ))}
+            </div>
+
+            {/* Desktop table */}
+            <Card className="hidden overflow-hidden md:block">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Customer</TableHead>
+                    <TableHead>Motorbike</TableHead>
+                    <TableHead>Pickup → Return</TableHead>
+                    <TableHead className="text-right">Total</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead />
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </Card>
+                </TableHeader>
+                <TableBody>
+                  {filtered.map((b) => (
+                    <TableRow key={b.id} className="cursor-pointer" onClick={() => navigate(`/agency/bookings/${b.id}`)}>
+                      <TableCell>
+                        <div className="font-medium">{b.customer_name || "—"}</div>
+                        <div className="text-xs text-muted-foreground">{b.customer_email || b.customer_phone || ""}</div>
+                      </TableCell>
+                      <TableCell>{b.bike?.name || "—"}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {format(parseISO(b.pickup_date), "dd MMM")} → {format(parseISO(b.return_date), "dd MMM yyyy")}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums">{Number(b.total_price || 0).toLocaleString()} MAD</TableCell>
+                      <TableCell><StatusChip status={b.booking_status || b.status || "pending"} /></TableCell>
+                      <TableCell><Button size="sm" variant="ghost">Open</Button></TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </Card>
+          </>
+        )}
       </div>
     </AgencyLayout>
   );
