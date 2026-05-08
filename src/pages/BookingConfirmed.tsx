@@ -21,6 +21,8 @@ import {
   Info,
   Phone,
   Mail,
+  XCircle,
+  RefreshCw,
 } from "lucide-react";
 import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
 import { format } from "date-fns";
