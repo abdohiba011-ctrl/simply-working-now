@@ -17,6 +17,7 @@ interface Body {
   customer_name?: string;
   success_path?: string;
   error_path?: string;
+  method?: "card" | "cashplus";
 }
 
 const APP_URL =
