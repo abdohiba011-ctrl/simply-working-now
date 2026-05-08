@@ -605,7 +605,7 @@ export const Header = memo(() => {
                     theme === 'dark' ? 'opacity-0' : 'opacity-100'
                   )}
                   translate="no" 
-                />
+                 loading="eager" fetchPriority="high" />
                 {/* Dark mode logo */}
                 <img 
                   src={logoDark} 
@@ -615,7 +615,7 @@ export const Header = memo(() => {
                     theme === 'dark' ? 'opacity-100' : 'opacity-0'
                   )}
                   translate="no" 
-                />
+                 loading="eager" fetchPriority="high" />
               </div>
             </Link>
             <button 

@@ -117,7 +117,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
                 src={isDarkMode ? motonitaLogoDark : motonitaLogo} 
                 alt="Motonita.ma" 
                 className="h-10 w-auto"
-              />
+               loading="eager" fetchPriority="high" />
             </div>
 
             <div className="w-16 h-16 mx-auto bg-destructive/10 rounded-full flex items-center justify-center">
