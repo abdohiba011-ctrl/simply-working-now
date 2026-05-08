@@ -115,6 +115,7 @@ type BikeRow = {
 };
 
 import { slugToDisplayName, cityToSlug, slugToCityNameVariants } from "@/lib/citySlug";
+import { CitySwitcher } from "@/components/rent-city/CitySwitcher";
 
 type CityRow = {
   id: string;
@@ -767,7 +768,7 @@ function RentCityComingSoon({ city }: { city: CityRow }) {
             </h1>
             <div className="mt-3">
               <CitySwitcher
-                currentCitySlug={citySlug}
+                currentCitySlug={city.slug || cityToSlug(city.name)}
                 currentCityName={`Switch from ${city.name}`}
                 variant="compact"
               />
