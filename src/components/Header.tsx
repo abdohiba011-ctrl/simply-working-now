@@ -358,6 +358,12 @@ export const Header = memo(() => {
                 fetchPriority="high"
               />
             </div>
+            <span
+              className="ms-1 inline-flex items-center rounded-full bg-gradient-to-r from-orange-500 via-orange-600 to-red-600 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-md ring-1 ring-orange-400/40"
+              aria-label="Beta version"
+            >
+              Beta
+            </span>
           </Link>
 
           {/* Desktop Navigation */}
