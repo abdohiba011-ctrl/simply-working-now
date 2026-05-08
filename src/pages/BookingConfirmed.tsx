@@ -61,6 +61,10 @@ type Phase = "waiting" | "confirmed" | "timeout" | "expired";
 const BookingConfirmed = () => {
   const { bookingId } = useParams<{ bookingId: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const paymentParam = (searchParams.get("payment") || "").toLowerCase();
+  const explicitMethod: "card" | "cashplus" | null =
+    paymentParam === "card" ? "card" : paymentParam === "cashplus" ? "cashplus" : null;
   const [booking, setBooking] = useState<BookingRow | null>(null);
   const [loading, setLoading] = useState(true);
   const [phase, setPhase] = useState<Phase>("waiting");
