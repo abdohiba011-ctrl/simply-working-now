@@ -94,23 +94,28 @@ export const NotificationsPopover = () => {
     }
   };
 
+  const trigger = (
+    <Button
+      variant="ghost"
+      size="icon"
+      className="relative h-10 w-10 rounded-full"
+      aria-label="Notifications"
+      onClick={isMobile ? () => navigate("/agency/notifications-inbox") : undefined}
+    >
+      <Bell className="h-5 w-5" />
+      {unread > 0 && (
+        <span className="absolute right-1 top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
+          {unread > 9 ? "9+" : unread}
+        </span>
+      )}
+    </Button>
+  );
+
+  if (isMobile) return trigger;
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="relative"
-          aria-label="Notifications"
-        >
-          <Bell className="h-5 w-5" />
-          {unread > 0 && (
-            <span className="absolute right-1 top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
-              {unread > 9 ? "9+" : unread}
-            </span>
-          )}
-        </Button>
-      </PopoverTrigger>
+      <PopoverTrigger asChild>{trigger}</PopoverTrigger>
       <PopoverContent align="end" className="w-[360px] p-0">
         <div className="flex items-center justify-between border-b px-3 py-2">
           <span className="text-sm font-semibold">Notifications</span>
