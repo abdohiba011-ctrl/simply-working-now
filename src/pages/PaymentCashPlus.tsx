@@ -38,8 +38,9 @@ import { toast } from "sonner";
  */
 
 const POLL_INTERVAL_MS = 10_000;
+const PAYMENT_WINDOW_MS = 10 * 60 * 1000; // 10 minutes to pay at CashPlus
 
-type Phase = "awaiting" | "paid" | "failed";
+type Phase = "awaiting" | "paid" | "failed" | "expired";
 
 export default function PaymentCashPlus() {
   const [params] = useSearchParams();
@@ -61,7 +62,19 @@ export default function PaymentCashPlus() {
     currency: string;
     transaction_id: string | null;
     status: string | null;
+    created_at: string | null;
   } | null>(null);
+  const [now, setNow] = useState(() => Date.now());
+
+  const deadlineMs = useMemo(() => {
+    const startIso = payment?.created_at;
+    const start = startIso ? new Date(startIso).getTime() : Date.now();
+    return start + PAYMENT_WINDOW_MS;
+  }, [payment?.created_at]);
+
+  const remainingMs = Math.max(0, deadlineMs - now);
+  const remainingMin = Math.floor(remainingMs / 60000);
+  const remainingSec = Math.floor((remainingMs % 60000) / 1000);
 
   const voucherRef = useMemo(
     () => payment?.transaction_id || transactionId || pid,
@@ -110,7 +123,7 @@ export default function PaymentCashPlus() {
       if (cancelled) return;
       const { data } = await supabase
         .from("youcanpay_payments")
-        .select("status, transaction_id, amount, currency")
+        .select("status, transaction_id, amount, currency, created_at")
         .eq("id", pid)
         .maybeSingle();
       if (cancelled) return;
@@ -120,6 +133,7 @@ export default function PaymentCashPlus() {
           currency: (data.currency as string) || "MAD",
           transaction_id: (data.transaction_id as string) || null,
           status: (data.status as string) || null,
+          created_at: (data.created_at as string) || null,
         });
       }
       const status = (data?.status || "").toLowerCase();
@@ -140,6 +154,19 @@ export default function PaymentCashPlus() {
       if (timer) window.clearTimeout(timer);
     };
   }, [pid, phase]);
+
+  // 1-second tick to drive the countdown + auto-expire after 10 minutes.
+  useEffect(() => {
+    if (phase !== "awaiting") return;
+    const i = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(i);
+  }, [phase]);
+
+  useEffect(() => {
+    if (phase === "awaiting" && remainingMs <= 0 && payment?.created_at) {
+      setPhase("expired");
+    }
+  }, [phase, remainingMs, payment?.created_at]);
 
   // Auto-forward shortly after the cash is received.
   useEffect(() => {
@@ -184,10 +211,9 @@ export default function PaymentCashPlus() {
 
         {phase === "awaiting" && (
           <p className="text-muted-foreground mb-6">
-            Take this voucher to any{" "}
+            You have <span className="font-semibold text-foreground">10 minutes</span> to pay this voucher at any{" "}
             <span className="font-semibold text-foreground">CashPlus</span>{" "}
-            agent in Morocco{amountLabel ? ` and pay ${amountLabel}` : ""} in
-            cash. We'll confirm your booking the moment they receive it.
+            agent in Morocco{amountLabel ? ` (${amountLabel})` : ""}. After 10 minutes the booking is automatically cancelled and the bike is released.
           </p>
         )}
 
@@ -201,11 +227,11 @@ export default function PaymentCashPlus() {
                   </div>
                   <div className="flex-1">
                     <p className="text-xs uppercase tracking-wider text-muted-foreground">
-                      Status
+                      Time left to pay
                     </p>
                     <p className="text-base font-semibold text-foreground flex items-center gap-2">
                       <span className="inline-flex h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
-                      Awaiting cash payment at CashPlus
+                      {String(remainingMin).padStart(2, "0")}:{String(remainingSec).padStart(2, "0")} remaining
                     </p>
                   </div>
                 </div>
@@ -283,14 +309,35 @@ export default function PaymentCashPlus() {
                 </div>
 
                 <p className="text-xs text-muted-foreground text-center">
-                  It's safe to close this page. Your booking is held while we
-                  wait for CashPlus, and you'll find the voucher again under{" "}
+                  Pay within 10 minutes — after that the bike is released and you'll need to book again. The voucher stays available under{" "}
                   <Link to="/bookings" className="underline underline-offset-2">
                     My bookings
-                  </Link>
-                  .
+                  </Link>{" "}
+                  during this window.
                 </p>
               </>
+            )}
+
+            {phase === "expired" && (
+              <div className="text-center space-y-4 py-4">
+                <div className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-destructive/15">
+                  <XCircle className="h-7 w-7 text-destructive" />
+                </div>
+                <h2 className="text-xl font-bold text-foreground">
+                  Time's up — booking released
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  The 10-minute CashPlus payment window has expired. The bike has been released and your booking was cancelled. You can book again — no charge was taken.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-2 justify-center">
+                  <Button variant="hero" onClick={() => navigate(retry)}>
+                    Book again
+                  </Button>
+                  <Button variant="outline" asChild>
+                    <Link to="/">Back to home</Link>
+                  </Button>
+                </div>
+              </div>
             )}
 
             {phase === "paid" && (
