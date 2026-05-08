@@ -319,7 +319,7 @@ export const Header = memo(() => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo with crossfade transition */}
-          <Link to="/" className="flex items-center gap-2">
+          <Link to="/" className="relative flex items-center gap-2">
             <div className="relative h-10 w-[120px]">
               {/* Shimmer skeleton - visible while loading */}
               {!logoLoaded && (
