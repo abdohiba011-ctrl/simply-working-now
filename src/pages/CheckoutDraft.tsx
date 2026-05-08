@@ -504,11 +504,11 @@ const CheckoutDraft = () => {
   if (!booking) return null;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-x-hidden">
       <Header />
 
-      <div className="container mx-auto px-4 py-6 max-w-6xl">
-        <div className="flex items-center gap-3 mb-6">
+      <div className="container mx-auto px-3 sm:px-4 py-6 max-w-6xl min-w-0">
+        <div className="flex items-center gap-3 mb-6 min-w-0">
           <Button
             variant="ghost"
             size="icon"
@@ -518,8 +518,8 @@ const CheckoutDraft = () => {
           >
             <ChevronLeft className={`h-5 w-5 ${isRTL ? "rotate-180" : ""}`} />
           </Button>
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+          <div className="min-w-0 flex-1">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground break-words">
               Review and pay
             </h1>
             <p className="text-sm text-muted-foreground">
@@ -528,12 +528,12 @@ const CheckoutDraft = () => {
           </div>
         </div>
 
-        <div className="grid lg:grid-cols-5 gap-8">
-          <div className="lg:col-span-3 space-y-6">
-            <Card>
-              <CardContent className="p-5">
-                <div className="flex gap-4">
-                  <div className="w-24 h-24 rounded-lg overflow-hidden bg-muted flex-shrink-0">
+        <div className="grid lg:grid-cols-5 gap-6 lg:gap-8 min-w-0">
+          <div className="lg:col-span-3 space-y-6 min-w-0">
+            <Card className="min-w-0 overflow-hidden">
+              <CardContent className="p-4 sm:p-5">
+                <div className="flex gap-3 sm:gap-4 min-w-0">
+                  <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-lg overflow-hidden bg-muted flex-shrink-0">
                     {booking.bike?.image_url ? (
                       <img
                         src={booking.bike.image_url}
@@ -547,10 +547,10 @@ const CheckoutDraft = () => {
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h2 className="text-lg font-semibold text-foreground truncate">
+                    <h2 className="text-base sm:text-lg font-semibold text-foreground truncate">
                       {booking.bike?.name ?? "Motorbike"}
                     </h2>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-muted-foreground truncate">
                       {dailyPrice} MAD / day · {booking.bike?.city ?? "Morocco"}
                     </p>
                     <Link
@@ -564,8 +564,8 @@ const CheckoutDraft = () => {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardContent className="p-5 space-y-4">
+            <Card className="min-w-0 overflow-hidden">
+              <CardContent className="p-4 sm:p-5 space-y-4 min-w-0">
                 <h3 className="font-semibold text-foreground">Trip details</h3>
                 <div className="grid sm:grid-cols-2 gap-4 text-sm">
                   <div className="flex items-start gap-3">
@@ -604,8 +604,8 @@ const CheckoutDraft = () => {
             </Card>
 
             {/* Your info — read-only confirmation, with editable fallback when missing */}
-            <Card>
-              <CardContent className="p-5 space-y-4">
+            <Card className="min-w-0 overflow-hidden">
+              <CardContent className="p-4 sm:p-5 space-y-4 min-w-0">
                 <div>
                   <h3 className="font-semibold text-foreground inline-flex items-center gap-2">
                     Your info
@@ -704,8 +704,8 @@ const CheckoutDraft = () => {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardContent className="p-5 space-y-3">
+            <Card className="min-w-0 overflow-hidden">
+              <CardContent className="p-4 sm:p-5 space-y-3 min-w-0">
                 <h3 className="font-semibold text-foreground">Price breakdown</h3>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between text-muted-foreground">
@@ -748,7 +748,7 @@ const CheckoutDraft = () => {
 
           <div className="lg:col-span-2 min-w-0">
             <Card className="lg:sticky lg:top-24 min-w-0 overflow-hidden">
-              <CardContent className="p-5 space-y-5 min-w-0">
+              <CardContent className="p-4 sm:p-5 space-y-5 min-w-0">
                 <div>
                   <h2 className="text-lg font-semibold text-foreground">
                     Booking fee:{" "}
