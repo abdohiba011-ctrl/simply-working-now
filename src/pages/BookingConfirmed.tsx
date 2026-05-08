@@ -370,17 +370,12 @@ const BookingConfirmed = () => {
                 </div>
               </div>
 
-              <div className="flex flex-col sm:flex-row gap-2">
-                <Button asChild variant="hero" className="flex-1">
-                  <Link to="/booking-history">View my bookings</Link>
-                </Button>
-                <Button asChild variant="outline" className="flex-1">
-                  <Link to="/inbox">
-                    <MessageCircle className="h-4 w-4 mr-2" />
-                    Message agency
-                  </Link>
-                </Button>
-              </div>
+              <Button asChild variant="hero" size="lg" className="w-full h-12 text-base font-semibold">
+                <Link to="/inbox">
+                  <MessageCircle className="h-5 w-5 mr-2" />
+                  Message agency
+                </Link>
+              </Button>
 
               <p className="text-[11px] text-muted-foreground text-center">
                 You can safely close this page. We'll email you once Cash Plus
