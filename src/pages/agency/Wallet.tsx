@@ -62,6 +62,7 @@ const Wallet = () => {
           purpose: "wallet_topup",
           amount,
           currency: "MAD",
+          method: topupMethod,
         },
       });
       if (error) throw error;
@@ -74,10 +75,13 @@ const Wallet = () => {
         currency: "MAD",
         successPath: "/agency/finance?yc=success#wallet",
         errorPath: "/agency/finance?yc=error#wallet",
-        title: "Top up wallet",
+        title: topupMethod === "cashplus" ? "Top up wallet with CashPlus" : "Top up wallet",
       });
+      // buildYouCanPayUrl doesn't yet append `method` — add it ourselves so
+      // PayYouCan renders the correct gateway and routes to the right page.
+      const urlWithMethod = `${url}${url.includes("?") ? "&" : "?"}method=${topupMethod}`;
       setTopupOpen(false);
-      navigate(url);
+      navigate(urlWithMethod);
     } catch (e: any) {
       toast.error(e.message || "Failed to start top up");
     } finally {
