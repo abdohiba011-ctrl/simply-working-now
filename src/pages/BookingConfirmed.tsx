@@ -233,7 +233,12 @@ const BookingConfirmed = () => {
     load();
   }, [bookingId, navigate]);
 
-  const isCashplus = booking?.payment_method === "cashplus";
+  const isCashplus =
+    explicitMethod === "card"
+      ? false
+      : explicitMethod === "cashplus"
+        ? true
+        : booking?.payment_method === "cashplus";
 
   // Poll for payment_status (and refresh CashPlus voucher reference)
   useEffect(() => {
