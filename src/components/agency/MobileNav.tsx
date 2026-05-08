@@ -1,12 +1,11 @@
-import { NavLink } from "react-router-dom";
-import { Home, Calendar, Bike, MessageCircle, MoreHorizontal } from "lucide-react";
+import { NavLink, useNavigate } from "react-router-dom";
+import {
+  Home, Calendar, Bike, MessageCircle, MoreHorizontal,
+  Wallet, Building, Settings, CalendarDays, ChevronRight,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAgencyBadges } from "@/hooks/useAgencyBadges";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import {
-  Wallet, Receipt, Building, ShieldCheck,
-  BarChart, Settings, Bell, LifeBuoy, CalendarDays,
-} from "lucide-react";
 
 const TABS = [
   { to: "/agency/dashboard", label: "Home", icon: Home },
@@ -15,16 +14,31 @@ const TABS = [
   { to: "/agency/messages", label: "Messages", icon: MessageCircle },
 ];
 
-const MORE_ITEMS = [
-  { to: "/agency/calendar", label: "Calendar", icon: CalendarDays },
-  { to: "/agency/finance#wallet", label: "Wallet", icon: Wallet },
-  { to: "/agency/finance#transactions", label: "Transactions", icon: Receipt },
-  { to: "/agency/agency-center#profile", label: "Profile", icon: Building },
-  { to: "/agency/agency-center#verification", label: "Verification", icon: ShieldCheck },
-  { to: "/agency/agency-center#analytics", label: "Analytics", icon: BarChart },
-  { to: "/agency/settings#preferences", label: "Preferences", icon: Settings },
-  { to: "/agency/settings#notifications", label: "Notifications", icon: Bell },
-  { to: "/agency/settings#help", label: "Help & Support", icon: LifeBuoy },
+const MORE_GROUPS = [
+  {
+    to: "/agency/calendar",
+    label: "Calendar",
+    subtitle: "View your booking schedule",
+    icon: CalendarDays,
+  },
+  {
+    to: "/agency/finance#wallet",
+    label: "Finance",
+    subtitle: "Wallet · Transactions",
+    icon: Wallet,
+  },
+  {
+    to: "/agency/agency-center#profile",
+    label: "Agency",
+    subtitle: "Profile · Verification · Analytics",
+    icon: Building,
+  },
+  {
+    to: "/agency/settings#preferences",
+    label: "Settings",
+    subtitle: "Preferences · Notifications · Help & Support",
+    icon: Settings,
+  },
 ];
 
 interface Props {
@@ -34,12 +48,12 @@ interface Props {
 
 export const MobileNav = ({ open, onOpenChange }: Props) => {
   const { pendingBookings, unreadMessages } = useAgencyBadges();
+  const navigate = useNavigate();
   const badgeFor = (label: string) =>
     label === "Bookings" ? pendingBookings : label === "Messages" ? unreadMessages : 0;
 
   return (
   <>
-    {/* Floating bottom tab bar */}
     <nav className="fixed inset-x-0 bottom-0 z-40 flex items-center justify-around border-t border-border bg-card/95 px-1 pt-1 pb-[max(0.25rem,env(safe-area-inset-bottom))] backdrop-blur lg:hidden">
       {TABS.map((tab) => {
         const count = badgeFor(tab.label);
@@ -86,35 +100,30 @@ export const MobileNav = ({ open, onOpenChange }: Props) => {
       </button>
     </nav>
 
-    {/* More drawer */}
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-72 overflow-y-auto">
+      <SheetContent side="right" className="w-80 overflow-y-auto">
         <SheetHeader>
           <SheetTitle>More</SheetTitle>
         </SheetHeader>
-        <div className="mt-4 grid gap-1">
-          {MORE_ITEMS.map((item) => (
-            <NavLink
+        <div className="mt-4 grid gap-2">
+          {MORE_GROUPS.map((item) => (
+            <button
               key={item.to}
-              to={item.to}
-              onClick={() => onOpenChange(false)}
-              className={({ isActive }) =>
-                cn(
-                  "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
-                  isActive ? "bg-primary/15 text-foreground" : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
-                )
-              }
+              onClick={() => {
+                onOpenChange(false);
+                navigate(item.to);
+              }}
+              className="flex items-center gap-3 rounded-xl border border-border bg-card px-3 py-3 text-left transition-colors hover:bg-muted/60"
             >
-              <span
-                className={cn(
-                  "flex h-8 w-8 items-center justify-center rounded-xl",
-                  "bg-muted text-muted-foreground",
-                )}
-              >
-                <item.icon className="h-4 w-4" />
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-foreground">
+                <item.icon className="h-5 w-5" />
               </span>
-              {item.label}
-            </NavLink>
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-semibold text-foreground">{item.label}</span>
+                <span className="block truncate text-xs text-muted-foreground">{item.subtitle}</span>
+              </span>
+              <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+            </button>
           ))}
         </div>
       </SheetContent>
