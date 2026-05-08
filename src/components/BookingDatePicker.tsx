@@ -5,7 +5,7 @@ import { format, differenceInDays, isBefore, startOfDay, eachDayOfInterval } fro
 import { Calendar as CalendarIcon, RotateCcw, X } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useIsBelowLg } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 
 interface BookingDatePickerProps {
@@ -227,7 +227,7 @@ export const BookingDatePicker = ({
   disabledRanges,
   closedWeekdays,
 }: BookingDatePickerProps) => {
-  const isMobile = useIsMobile();
+  const isMobile = useIsBelowLg();
   const [open, setOpen] = useState(false);
   const [tempRange, setTempRange] = useState<DateRange | undefined>(value);
   const [focus, setFocus] = useState<"from" | "to">("from");
