@@ -2857,6 +2857,7 @@ export type Database = {
       approve_bike_type: { Args: { p_bike_type_id: string }; Returns: Json }
       archive_bike_type: { Args: { p_bike_type_id: string }; Returns: Json }
       auto_cancel_stale_pending_bookings: { Args: never; Returns: number }
+      auto_cancel_unpaid_bookings: { Args: never; Returns: number }
       bike_has_conflict: {
         Args: {
           _bike_id: string
