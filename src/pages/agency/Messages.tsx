@@ -44,6 +44,7 @@ const timeLabel = (iso: string | null) => {
 const Messages = () => {
   const { user } = useAuth();
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
   const [convs, setConvs] = useState<Conv[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeId, setActiveId] = useState<string | null>(null);
