@@ -748,7 +748,7 @@ const CheckoutDraft = () => {
 
           <div className="lg:col-span-2 min-w-0">
             <Card className="lg:sticky lg:top-24 min-w-0 overflow-hidden">
-              <CardContent className="p-5 space-y-5 min-w-0">
+              <CardContent className="p-4 sm:p-5 space-y-5 min-w-0">
                 <div>
                   <h2 className="text-lg font-semibold text-foreground">
                     Booking fee:{" "}
