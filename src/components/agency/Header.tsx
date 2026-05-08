@@ -17,6 +17,8 @@ import { NotificationsPopover } from "@/components/agency/NotificationsPopover";
 import { FrFlag } from "@/components/icons/flags/FrFlag";
 import { GbFlag } from "@/components/icons/flags/GbFlag";
 import { MaFlag } from "@/components/icons/flags/MaFlag";
+import iconDark from "@/assets/motonita-icon-dark-new.svg";
+import iconWhite from "@/assets/motonita-icon-white-new.svg";
 
 interface HeaderProps {
   onMobileMenu?: () => void;
