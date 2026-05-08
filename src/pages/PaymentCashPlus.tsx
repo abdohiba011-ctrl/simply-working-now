@@ -91,12 +91,24 @@ export default function PaymentCashPlus() {
       );
       if (error) throw error;
       const status = (data as any)?.status;
+      const verifiedPayment = (data as any)?.payment;
+      if (verifiedPayment) {
+        setPayment({
+          amount: verifiedPayment.amount as number | null,
+          currency: (verifiedPayment.currency as string) || "MAD",
+          transaction_id: (verifiedPayment.transaction_id as string) || null,
+          status: (verifiedPayment.status as string) || null,
+          created_at: (verifiedPayment.created_at as string) || null,
+        });
+      }
       if (status === "paid") {
         toast.success("CashPlus payment confirmed!");
         setPhase("paid");
       } else if (status === "failed") {
         toast.error("Voucher was cancelled or refused");
         setPhase("failed");
+      } else if (verifiedPayment?.transaction_id) {
+        toast.success("CashPlus voucher code ready");
       } else {
         toast.info("Still waiting for CashPlus to confirm your cash payment");
       }
@@ -145,6 +157,23 @@ export default function PaymentCashPlus() {
         setPhase("failed");
         return;
       }
+      if (!data?.transaction_id && data?.id) {
+        const { data: verifyData } = await supabase.functions.invoke(
+          "youcanpay-verify-payment",
+          { body: { payment_id: data.id } },
+        );
+        const verifiedPayment = (verifyData as any)?.payment;
+        if (!cancelled && verifiedPayment?.transaction_id) {
+          setPayment({
+            amount: verifiedPayment.amount as number | null,
+            currency: (verifiedPayment.currency as string) || "MAD",
+            transaction_id: (verifiedPayment.transaction_id as string) || null,
+            status: (verifiedPayment.status as string) || null,
+            created_at: (verifiedPayment.created_at as string) || null,
+          });
+        }
+      }
+
       timer = window.setTimeout(tick, POLL_INTERVAL_MS);
     };
 
