@@ -70,7 +70,22 @@ const BookingConfirmed = () => {
   // YouCan Pay's actual CashPlus voucher code (e.g. "cp203854361") — this is
   // the only reference Cash Plus agents recognize. Filled from
   // youcanpay_payments.transaction_id once YouCan returns it.
-  const [cashplusReference, setCashplusReference] = useState<string | null>(null);
+  const [cashplusReference, setCashplusReference] = useState<string | null>(() => {
+    // Pick up the code the renter just copied on PaymentCashPlus so the
+    // reference shown here matches what's on their clipboard, even before the
+    // DB row catches up.
+    if (typeof window === "undefined") return null;
+    try {
+      const id = window.location.pathname.match(/\/booking\/([^/?#]+)/)?.[1];
+      if (id) {
+        const stored = sessionStorage.getItem(`cashplus:ref:${id}`);
+        if (stored) return stored;
+      }
+    } catch { /* ignore */ }
+    const hash = typeof window !== "undefined" ? window.location.hash : "";
+    const m = hash.match(/cpref=([^&]+)/);
+    return m ? decodeURIComponent(m[1]) : null;
+  });
   const [cashplusStartedAt, setCashplusStartedAt] = useState<string | null>(null);
   const [bikeSlug, setBikeSlug] = useState<string | null>(null);
   const [now, setNow] = useState(() => Date.now());
@@ -185,7 +200,11 @@ const BookingConfirmed = () => {
         bike_image: bikeImage,
       };
       setBooking(row);
-      setCashplusReference((latestPayment?.transaction_id as string | null) || null);
+      // Only overwrite if the DB has a real code; otherwise keep the value
+      // we picked up from sessionStorage / URL hash so the renter never sees
+      // their freshly-copied code disappear.
+      const dbRef = (latestPayment?.transaction_id as string | null) || null;
+      if (dbRef) setCashplusReference(dbRef);
       setCashplusStartedAt((latestPayment?.created_at as string | null) || null);
       const isCancelled = (data as any).booking_status === "cancelled";
       setPhase(

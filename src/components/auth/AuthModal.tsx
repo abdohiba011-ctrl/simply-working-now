@@ -130,7 +130,8 @@ export function AuthModal() {
     setError(null);
     if (name.trim().length < 2) return setError("Please enter your full name");
     if (!EMAIL_REGEX.test(email.trim())) return setError("Enter a valid email");
-    if (phone && !PHONE_REGEX.test(phone.replace(/\s+/g, "")))
+    if (!phone.trim()) return setError("Phone is required");
+    if (!PHONE_REGEX.test(phone.replace(/\s+/g, "")))
       return setError("Enter a valid Moroccan phone number");
     if (signupPwd.length < 8) return setError("Password must be at least 8 characters");
     if (signupPwd !== confirmPwd) return setError("Passwords don't match");
@@ -411,7 +412,7 @@ export function AuthModal() {
                 </div>
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="am-phone">Phone (optional)</Label>
+                <Label htmlFor="am-phone">Phone <span className="text-destructive">*</span></Label>
                 <div className="relative">
                   <PhoneIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#163300]/50" />
                   <Input

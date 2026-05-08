@@ -153,7 +153,7 @@ function buildSchema(role: "renter" | "agency") {
         });
       }
       const phone = (data.phone ?? "").replace(/\s+/g, "");
-      if (role === "agency" && !phone) {
+      if ((role === "agency" || role === "renter") && !phone) {
         ctx.addIssue({
           path: ["phone"],
           code: z.ZodIssueCode.custom,
@@ -854,9 +854,7 @@ export default function Signup({ defaultRole }: SignupProps = {}) {
             label={
               <>
                 {t("mockAuth.phone", { defaultValue: "Phone" })}{" "}
-                <span className="text-xs font-normal text-muted-foreground/80">
-                  {t("mockAuth.optional", { defaultValue: "(optional)" })}
-                </span>
+                <span className="text-xs font-normal text-destructive">*</span>
               </>
             }
             error={form.formState.errors.phone?.message}
