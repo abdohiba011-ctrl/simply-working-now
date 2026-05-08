@@ -261,6 +261,7 @@ const App = () => (
                   <Route path="motorbikes/:id/edit" element={<AgencyMotorbikeWizard />} />
                   <Route path="motorbikes/:id" element={<AgencyMotorbikeDetail />} />
                   <Route path="messages" element={<AgencyMessages />} />
+                  <Route path="notifications-inbox" element={<AgencyNotificationsInbox />} />
                   <Route path="calendar" element={<AgencyCalendar />} />
 
                   {/* New consolidated hub pages */}
