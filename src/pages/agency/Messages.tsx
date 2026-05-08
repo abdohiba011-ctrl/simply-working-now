@@ -160,17 +160,27 @@ const Messages = () => {
                 isMobile ? "w-full" : "w-[340px] shrink-0 border-r lg:w-[360px]"
               )}
             >
-              <div className="flex items-center gap-2 border-b border-border px-2 py-3 sm:px-4 sm:py-4">
+              <div
+                className="flex items-center gap-2 border-b border-border px-2 sm:px-4 sm:py-4"
+                style={isMobile ? { paddingTop: "calc(env(safe-area-inset-top) + 0.75rem)", paddingBottom: "0.75rem" } : undefined}
+              >
                 {isMobile && (
                   <button
-                    onClick={() => navigate("/agency/dashboard")}
-                    className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-muted"
+                    onClick={() => {
+                      // Prefer going back to where the user came from; fall back to dashboard
+                      if (window.history.length > 1 && document.referrer) {
+                        navigate(-1);
+                      } else {
+                        navigate("/agency/dashboard");
+                      }
+                    }}
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full hover:bg-muted active:bg-muted/80"
                     aria-label="Back"
                   >
                     <ChevronLeft className="h-5 w-5" />
                   </button>
                 )}
-                <h1 className="flex-1 text-lg font-semibold tracking-tight text-foreground">Messages</h1>
+                <h1 className="min-w-0 flex-1 truncate text-lg font-semibold tracking-tight text-foreground">Messages</h1>
               </div>
               <div className="space-y-2.5 border-b border-border px-4 py-3">
                 <div className="relative">

@@ -76,8 +76,15 @@ const Bookings = () => {
 
   const updateStatus = (s: string) => {
     setStatus(s);
-    if (s === "all") setSearchParams({});
-    else setSearchParams({ status: s });
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        if (s === "all") next.delete("status");
+        else next.set("status", s);
+        return next;
+      },
+      { replace: true },
+    );
   };
 
   const exportCsv = () => {
@@ -149,14 +156,21 @@ const Bookings = () => {
                   )}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-[min(92vw,340px)] p-0" align="start" sideOffset={8}>
+              <PopoverContent
+                className="w-[min(94vw,320px)] max-w-[94vw] overflow-hidden p-0"
+                align="start"
+                side="bottom"
+                sideOffset={8}
+                collisionPadding={12}
+                avoidCollisions
+              >
                 <Calendar
                   mode="range"
                   selected={dateRange}
                   onSelect={setDateRange}
                   numberOfMonths={1}
                   initialFocus
-                  className={cn("p-3 pointer-events-auto")}
+                  className={cn("p-2 pointer-events-auto sm:p-3")}
                 />
               </PopoverContent>
             </Popover>
