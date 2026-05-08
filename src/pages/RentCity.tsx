@@ -511,15 +511,11 @@ export default function RentCity() {
 
         {/* Editable dates pill: city portion → home, dates portion → opens picker inline */}
         <div className="mb-4 inline-flex items-stretch rounded-full border border-[#163300]/15 bg-card overflow-hidden hover:border-[#9FE870] transition-colors">
-          <button
-            type="button"
-            onClick={() => navigate("/")}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm text-foreground hover:bg-muted/50"
-            aria-label="Edit city / neighborhood"
-          >
-            <MapPin className="w-3.5 h-3.5 text-foreground/70" />
-            <span className="font-medium">{cityName}{neighborhood !== allCityLabel ? `, ${neighborhood}` : ""}</span>
-          </button>
+          <CitySwitcher
+            currentCitySlug={citySlug}
+            currentCityName={`${cityName}${neighborhood !== allCityLabel ? `, ${neighborhood}` : ""}`}
+            variant="compact"
+          />
           <div className="w-px bg-[#163300]/15" />
           <BookingDatePicker
             value={hasDates ? { from: fromDate!, to: toDate! } : undefined}
