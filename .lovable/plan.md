@@ -1,40 +1,55 @@
-# Rent City header + Hero mobile pickers
+## Cash Plus Waiting Room — Improved UX
 
-## 1. Header on tablet — single line
+Rewrite the Cash Plus waiting screen in `src/pages/BookingConfirmed.tsx` (the `if (isCashplus && phase === "waiting")` block, lines ~242–410) to give users full clarity on what to do, what to expect, and how to get help. Polling, auto-confirm, and the success/messages flow already work — we are only improving the waiting screen content and adding a support block. No backend changes.
 
-In `src/pages/RentCity.tsx` (line 542) the H1 uses `flex flex-wrap items-baseline gap-x-2`, which wraps "Motorbike Rental in" above "Casablanca" on tablet because the H1 is `text-3xl md:text-4xl`.
+### What the new screen will contain (top → bottom)
 
-- Remove `flex-wrap` so the title stays on one line on md+ (tablet/desktop). Keep wrap only on small mobile via responsive classes: `flex flex-wrap md:flex-nowrap items-baseline gap-x-2 whitespace-nowrap md:whitespace-normal`.
-- Reduce font size on the tablet breakpoint so it fits: `text-2xl sm:text-3xl md:text-[28px] lg:text-4xl` (tuned so "Motorbike Rental in Casablanca ⌄" fits at 768–1023px).
-- Ensure `CitySwitcher` trigger doesn't force a break (already inline-flex).
+1. **Hero** — keep the green icon + headline, but rewrite subcopy:
+   "Your booking is reserved. To confirm it, take the reference below to any **Cash Plus** agency in Morocco and pay **60 MAD in cash**. As soon as Cash Plus reports the payment to us, we'll confirm your bike automatically — you don't need to come back to this page."
 
-## 2. Equalize Filters and Sort buttons on tablet
+2. **Reference card** (kept) — big code, Copy button, 60 MAD amount, "Expires in 72 hours" *(see note below on 24h vs 72h)*, WhatsApp share, "Find nearest agency" button.
 
-In the same header row (lines 553–590):
-- Filters button uses `Button size="sm"` (h-9). The Sort `SelectTrigger` is default (h-10) with `w-[180px]`.
-- Change Filters trigger to remove `size="sm"` and give it `h-10` to match the Select trigger. Also align padding (`px-4`) so both have identical vertical/horizontal rhythm.
+3. **NEW — How to pay (4 steps, clearer wording)**
+   1. Walk into any Cash Plus agency (over 2,500 across Morocco).
+   2. Show the reference `XXXXXXXX` to the agent and say it's for "Motonita / YouCan Pay".
+   3. Pay **60 MAD in cash**. Keep your receipt.
+   4. Wait for our confirmation — usually **1 to 60 minutes** after the agent processes your payment.
 
-Result: both controls have the same height and visual weight on tablet.
+4. **NEW — Important to know (callout card, amber/info style)**
+   - Cash Plus agencies are usually **closed on Sundays** and may have reduced hours on public holidays. Plan accordingly.
+   - Your reference is valid for **72 hours**. After that, the booking is automatically cancelled and you'll need to start over.
+   - We confirm bookings **automatically**. The delay between paying at the agency and seeing confirmation depends on Cash Plus's system — usually a few minutes, sometimes up to an hour.
+   - Once paid, you can safely close this page. We'll email you the moment it's confirmed, and you'll be able to message the agency from your bookings.
 
-## 3. Mobile hero — bottom-sheet pickers for City and Neighborhood
+5. **Status pill** (kept) — "Waiting for payment at Cash Plus" with spinner.
 
-In `src/components/HeroSection.tsx` (lines 292–372), the City and Neighborhood inputs use shadcn `Select`, which on mobile opens a native-feeling dropdown anchored to the trigger. The Dates input already opens a bottom sheet via `BookingDatePicker` (because of `useIsBelowLg`).
+6. **NEW — Support card (only show after payment, not before)**
+   Heading: **"Already paid? Need help?"**
+   Subcopy: *"If you've paid at Cash Plus and nothing happened after 1 hour, contact us. Please don't call before paying — it slows us down for users who actually need help."*
+   Three actions side-by-side (stack on mobile):
+   - **WhatsApp** button → `https://wa.me/212710564476` (uses existing `WhatsAppIcon`)
+   - **Call us** button → `tel:+212710564476`, label shows the number `+212 710 564 476`
+   - **Email** button → `mailto:support@motonita.ma?subject=Cash Plus payment — <REF>&body=…` (prefills the booking ref)
 
-Plan:
-- Detect mobile only with `useIsMobile()` (existing hook, <768px). Tablet keeps current dropdown behavior since user only mentioned mobile.
-- On mobile, replace the City `Select` with a button trigger that opens a `Sheet` (`side="bottom"`, same styling as Filters sheet on RentCity: rounded-top, drag handle, header "Choose a city", scrollable list). Tapping a city sets it and closes the sheet.
-- Same for Neighborhood: button trigger → bottom Sheet titled "Choose a neighborhood", listing "All neighborhoods" + `neighborhoodOptions`. Disabled state preserved when no city selected.
-- Keep the existing `Select` for desktop/tablet (≥768px) — render conditionally based on `useIsMobile()`.
-- Dates picker already behaves correctly (bottom sheet on mobile/tablet); no change.
+7. **Booking summary** (kept, compact, at the bottom).
 
-### UX details (mobile sheets)
-- Same visual language as the Filters sheet in `RentCity.tsx`: `h-[80dvh] rounded-t-[28px] p-0`, drag handle, sticky header.
-- Selected city/neighborhood shown in the trigger button with the same `MapPin`/`Building2` icon and label styling already used.
-- Coming-soon cities listed as disabled rows with the "Soon" badge, matching current Select behavior.
+### What does NOT change
 
-## Files to edit
+- The polling loop, `payment_status` checks, and the auto-transition from `waiting` → `confirmed` are already wired. Once Cash Plus reports the payment via the YouCan Pay webhook, the page swaps to the existing confirmed view and the "Message agency" button appears — exactly the same flow as card payments.
+- No edge function, RLS, or database changes.
+- No translation work — file is currently English-only and the rest of the screen matches.
 
-- `src/pages/RentCity.tsx` — H1 wrap/size classes; Filters button height/padding.
-- `src/components/HeroSection.tsx` — wrap City and Neighborhood selects with mobile-only Sheet variants.
+### Open question — expiry window
 
-No business logic, data, or routing changes.
+The current backend keeps Cash Plus drafts alive for **72 hours** (matches `BookingHistory` 72h draft expiry). You mentioned "I think 24 hours is the maximum." Two options:
+
+- **A (recommended, no backend change):** keep showing "72 hours" — matches how the system actually behaves today.
+- **B:** change copy to "24 hours" and later reduce the backend expiry to 24h in a follow-up.
+
+I'll go with **A** unless you say otherwise when approving.
+
+### Files to edit
+
+- `src/pages/BookingConfirmed.tsx` — replace the Cash Plus waiting JSX block (~lines 242–410) and add `Phone`, `Mail` imports from `lucide-react` plus `WhatsAppIcon` import.
+
+That's it — single file, presentation-only change.
