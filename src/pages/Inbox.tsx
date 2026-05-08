@@ -333,7 +333,6 @@ const Inbox = () => {
                   viewerRole="renter"
                   counterpartyName={active.agency_name}
                   counterpartyAvatarUrl={active.agency_avatar_url}
-                  counterpartySubtitle={`Booking #${active.id.slice(0, 8)}`}
                   bikeName={active.bike_name}
                   bikeImageUrl={active.bike_image_url}
                   bookingCreatedAt={active.created_at}
