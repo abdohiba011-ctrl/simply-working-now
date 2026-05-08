@@ -18,7 +18,11 @@ import {
   Copy,
   ExternalLink,
   Share2,
+  Info,
+  Phone,
+  Mail,
 } from "lucide-react";
+import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
