@@ -205,7 +205,7 @@ const Inbox = () => {
                   <img
                     src="/favicon.svg"
                     alt="Motonita"
-                    className="h-[22px] w-[22px]"
+                    className="h-[22px] w-[22px] dark:brightness-0 dark:invert"
                   />
                 </a>
               </div>
