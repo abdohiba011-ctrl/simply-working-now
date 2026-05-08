@@ -93,6 +93,7 @@ const AgencyVerification = lazy(() => import("./pages/agency/Verification"));
 const AgencyAnalytics = lazy(() => import("./pages/agency/Analytics"));
 const AgencyPreferences = lazy(() => import("./pages/agency/Preferences"));
 const AgencyNotificationSettings = lazy(() => import("./pages/agency/NotificationSettings"));
+const AgencyNotificationsInbox = lazy(() => import("./pages/agency/NotificationsInbox"));
 const AgencyIntegrations = lazy(() => import("./pages/agency/Integrations"));
 const AgencyHelp = lazy(() => import("./pages/agency/Help"));
 const AgencyFinance = lazy(() => import("./pages/agency/Finance"));
@@ -260,6 +261,7 @@ const App = () => (
                   <Route path="motorbikes/:id/edit" element={<AgencyMotorbikeWizard />} />
                   <Route path="motorbikes/:id" element={<AgencyMotorbikeDetail />} />
                   <Route path="messages" element={<AgencyMessages />} />
+                  <Route path="notifications-inbox" element={<AgencyNotificationsInbox />} />
                   <Route path="calendar" element={<AgencyCalendar />} />
 
                   {/* New consolidated hub pages */}
