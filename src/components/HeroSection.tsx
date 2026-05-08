@@ -14,6 +14,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { ChevronDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { useServiceCitiesRealtime } from "@/hooks/useServiceCitiesRealtime";
@@ -91,6 +94,9 @@ export const HeroSection = memo(() => {
   const [neighborhood, setNeighborhood] = useState<string>(ALL_NEIGHBORHOODS);
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [calendarOpen, setCalendarOpen] = useState(false);
+  const [citySheetOpen, setCitySheetOpen] = useState(false);
+  const [neighborhoodSheetOpen, setNeighborhoodSheetOpen] = useState(false);
+  const isMobile = useIsMobile();
 
   // Cities loaded from DB via React Query + realtime so the dropdown
   // reflects admin changes within ~2s without a reload.
@@ -299,41 +305,93 @@ export const HeroSection = memo(() => {
                 <MapPin className="h-4 w-4" aria-hidden="true" />
                 City
               </label>
-              <Select value={city} onValueChange={handleCityChange}>
-                <SelectTrigger
-                  id="hero-city"
-                  className="h-12 w-full border-2 bg-white"
-                  aria-label="Select a city"
-                >
-                  <SelectValue placeholder="Select a city" />
-                </SelectTrigger>
-                <SelectContent className="bg-white max-h-[320px]">
-                  {[...(availableCities.length ? availableCities : allCities)]
-                    .sort((a, b) => a.localeCompare(b))
-                    .map((c) => (
-                      <SelectItem key={c} value={c}>
-                        <span>{c}</span>
-                      </SelectItem>
-                    ))}
-                  {[...comingSoonCities]
-                    .sort((a, b) => a.localeCompare(b))
-                    .map((c) => (
-                      <SelectItem
-                        key={c}
-                        value={c}
-                        disabled
-                        className="opacity-60"
-                      >
-                        <span className="flex items-center justify-between gap-3 w-full">
+              {isMobile ? (
+                <Sheet open={citySheetOpen} onOpenChange={setCitySheetOpen}>
+                  <SheetTrigger asChild>
+                    <button
+                      type="button"
+                      id="hero-city"
+                      aria-label="Select a city"
+                      className="h-12 w-full border-2 bg-white rounded-md px-3 flex items-center justify-between text-sm"
+                      style={{ color: "#163300", borderColor: "hsl(var(--input))" }}
+                    >
+                      <span className={cn(!city && "text-muted-foreground")}>{city || "Select a city"}</span>
+                      <ChevronDown className="h-4 w-4 opacity-60" />
+                    </button>
+                  </SheetTrigger>
+                  <SheetContent side="bottom" className="h-[80dvh] rounded-t-[28px] p-0 border-t-0 bg-background flex flex-col [&>button]:hidden">
+                    <div className="flex justify-center pt-2.5 pb-1 shrink-0">
+                      <span className="h-1.5 w-12 rounded-full bg-muted-foreground/25" />
+                    </div>
+                    <SheetHeader className="px-5 py-2 shrink-0">
+                      <SheetTitle className="text-lg font-semibold text-start">Choose a city</SheetTitle>
+                    </SheetHeader>
+                    <div className="flex-1 min-h-0 overflow-y-auto px-3 pb-6">
+                      {[...(availableCities.length ? availableCities : allCities)]
+                        .sort((a, b) => a.localeCompare(b))
+                        .map((c) => (
+                          <button
+                            key={c}
+                            type="button"
+                            onClick={() => { handleCityChange(c); setCitySheetOpen(false); }}
+                            className={cn(
+                              "w-full text-start px-3 py-3 rounded-lg text-sm hover:bg-muted",
+                              city === c && "bg-muted font-semibold"
+                            )}
+                          >
+                            {c}
+                          </button>
+                        ))}
+                      {[...comingSoonCities]
+                        .sort((a, b) => a.localeCompare(b))
+                        .map((c) => (
+                          <div key={c} className="w-full px-3 py-3 rounded-lg text-sm opacity-60 flex items-center justify-between">
+                            <span>{c}</span>
+                            <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                              <Clock className="h-3 w-3" /> Soon
+                            </span>
+                          </div>
+                        ))}
+                    </div>
+                  </SheetContent>
+                </Sheet>
+              ) : (
+                <Select value={city} onValueChange={handleCityChange}>
+                  <SelectTrigger
+                    id="hero-city"
+                    className="h-12 w-full border-2 bg-white"
+                    aria-label="Select a city"
+                  >
+                    <SelectValue placeholder="Select a city" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white max-h-[320px]">
+                    {[...(availableCities.length ? availableCities : allCities)]
+                      .sort((a, b) => a.localeCompare(b))
+                      .map((c) => (
+                        <SelectItem key={c} value={c}>
                           <span>{c}</span>
-                          <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                            <Clock className="h-3 w-3" /> Soon
+                        </SelectItem>
+                      ))}
+                    {[...comingSoonCities]
+                      .sort((a, b) => a.localeCompare(b))
+                      .map((c) => (
+                        <SelectItem
+                          key={c}
+                          value={c}
+                          disabled
+                          className="opacity-60"
+                        >
+                          <span className="flex items-center justify-between gap-3 w-full">
+                            <span>{c}</span>
+                            <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                              <Clock className="h-3 w-3" /> Soon
+                            </span>
                           </span>
-                        </span>
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
 
             {/* Neighborhood */}
@@ -346,29 +404,82 @@ export const HeroSection = memo(() => {
                 <Building2 className="h-4 w-4" aria-hidden="true" />
                 Neighborhood
               </label>
-              <Select
-                value={neighborhood}
-                onValueChange={setNeighborhood}
-                disabled={!city}
-              >
-                <SelectTrigger
-                  id="hero-neighborhood"
-                  className="h-12 w-full border-2 bg-white disabled:opacity-60"
-                  aria-label="Select a neighborhood"
+              {isMobile ? (
+                <Sheet open={neighborhoodSheetOpen} onOpenChange={(o) => { if (city) setNeighborhoodSheetOpen(o); }}>
+                  <SheetTrigger asChild>
+                    <button
+                      type="button"
+                      id="hero-neighborhood"
+                      aria-label="Select a neighborhood"
+                      disabled={!city}
+                      className="h-12 w-full border-2 bg-white rounded-md px-3 flex items-center justify-between text-sm disabled:opacity-60"
+                      style={{ color: "#163300", borderColor: "hsl(var(--input))" }}
+                    >
+                      <span className={cn(neighborhood === ALL_NEIGHBORHOODS && "text-muted-foreground")}>
+                        {!city ? "Select city first" : neighborhood === ALL_NEIGHBORHOODS ? "All neighborhoods" : neighborhood}
+                      </span>
+                      <ChevronDown className="h-4 w-4 opacity-60" />
+                    </button>
+                  </SheetTrigger>
+                  <SheetContent side="bottom" className="h-[70dvh] rounded-t-[28px] p-0 border-t-0 bg-background flex flex-col [&>button]:hidden">
+                    <div className="flex justify-center pt-2.5 pb-1 shrink-0">
+                      <span className="h-1.5 w-12 rounded-full bg-muted-foreground/25" />
+                    </div>
+                    <SheetHeader className="px-5 py-2 shrink-0">
+                      <SheetTitle className="text-lg font-semibold text-start">Choose a neighborhood</SheetTitle>
+                    </SheetHeader>
+                    <div className="flex-1 min-h-0 overflow-y-auto px-3 pb-6">
+                      <button
+                        type="button"
+                        onClick={() => { setNeighborhood(ALL_NEIGHBORHOODS); setNeighborhoodSheetOpen(false); }}
+                        className={cn(
+                          "w-full text-start px-3 py-3 rounded-lg text-sm hover:bg-muted",
+                          neighborhood === ALL_NEIGHBORHOODS && "bg-muted font-semibold"
+                        )}
+                      >
+                        All neighborhoods
+                      </button>
+                      {neighborhoodOptions.map((n) => (
+                        <button
+                          key={n}
+                          type="button"
+                          onClick={() => { setNeighborhood(n); setNeighborhoodSheetOpen(false); }}
+                          className={cn(
+                            "w-full text-start px-3 py-3 rounded-lg text-sm hover:bg-muted",
+                            neighborhood === n && "bg-muted font-semibold"
+                          )}
+                        >
+                          {n}
+                        </button>
+                      ))}
+                    </div>
+                  </SheetContent>
+                </Sheet>
+              ) : (
+                <Select
+                  value={neighborhood}
+                  onValueChange={setNeighborhood}
+                  disabled={!city}
                 >
-                  <SelectValue
-                    placeholder={city ? "All neighborhoods" : "Select city first"}
-                  />
-                </SelectTrigger>
-                <SelectContent className="bg-white max-h-[300px]">
-                  <SelectItem value={ALL_NEIGHBORHOODS}>All neighborhoods</SelectItem>
-                  {neighborhoodOptions.map((n) => (
-                    <SelectItem key={n} value={n}>
-                      {n}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                  <SelectTrigger
+                    id="hero-neighborhood"
+                    className="h-12 w-full border-2 bg-white disabled:opacity-60"
+                    aria-label="Select a neighborhood"
+                  >
+                    <SelectValue
+                      placeholder={city ? "All neighborhoods" : "Select city first"}
+                    />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white max-h-[300px]">
+                    <SelectItem value={ALL_NEIGHBORHOODS}>All neighborhoods</SelectItem>
+                    {neighborhoodOptions.map((n) => (
+                      <SelectItem key={n} value={n}>
+                        {n}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
 
             {/* Dates */}
