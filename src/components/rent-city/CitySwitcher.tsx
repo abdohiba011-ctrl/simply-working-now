@@ -5,12 +5,13 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { cityToSlug, slugToCityNameVariants } from "@/lib/citySlug";
 import { cn } from "@/lib/utils";
-import { safeGetItem, safeSetItem } from "@/lib/safeStorage";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import {
   Command,
   CommandEmpty,
@@ -36,19 +37,6 @@ type CityRow = {
   is_coming_soon: boolean;
 };
 
-const RECENT_KEY = "motonita:recent-cities";
-const RECENT_MAX = 3;
-
-function getRecentSlugs(): string[] {
-  return safeGetItem<string[]>(RECENT_KEY, []);
-}
-
-function pushRecentSlug(slug: string) {
-  const current = getRecentSlugs().filter((s) => s !== slug);
-  current.unshift(slug);
-  safeSetItem(RECENT_KEY, current.slice(0, RECENT_MAX));
-}
-
 export const CitySwitcher = ({
   currentCitySlug,
   currentCityName,
@@ -58,6 +46,7 @@ export const CitySwitcher = ({
   const [searchParams] = useSearchParams();
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
+  const isMobile = useIsMobile();
 
   const { data: cityRows = [], isLoading, isError, refetch } = useQuery({
     queryKey: ["service-cities-public"],
@@ -72,29 +61,16 @@ export const CitySwitcher = ({
     },
   });
 
-  const recentSlugs = useMemo(() => getRecentSlugs(), [open]);
-
-  const { available, comingSoon, recent } = useMemo(() => {
+  const { available, comingSoon } = useMemo(() => {
     const available = cityRows
       .filter((c) => c.is_available && !c.is_coming_soon)
       .sort((a, b) => a.name.localeCompare(b.name));
     const comingSoon = cityRows
       .filter((c) => c.is_coming_soon)
       .sort((a, b) => a.name.localeCompare(b.name));
+    return { available, comingSoon };
+  }, [cityRows]);
 
-    const bySlug = new Map<string, CityRow>();
-    for (const c of available) {
-      bySlug.set(c.slug || cityToSlug(c.name), c);
-    }
-    const recent = recentSlugs
-      .map((s) => bySlug.get(s))
-      .filter((c): c is CityRow => !!c && (c.slug || cityToSlug(c.name)) !== currentCitySlug);
-
-    return { available, comingSoon, recent };
-  }, [cityRows, recentSlugs, currentCitySlug]);
-
-  // Warm the React Query cache for the destination city so RentCity renders
-  // its hero/listings instantly after navigation.
   const prefetchCity = useCallback(
     (city: CityRow) => {
       const slug = city.slug || cityToSlug(city.name);
@@ -134,7 +110,6 @@ export const CitySwitcher = ({
       setOpen(false);
       return;
     }
-    pushRecentSlug(newSlug);
     const params = new URLSearchParams(searchParams);
     params.delete("neighborhood");
     const qs = params.toString();
@@ -177,105 +152,134 @@ export const CitySwitcher = ({
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         );
 
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <button
-          type="button"
-          aria-label={`Change city. Current city: ${currentCityName}`}
-        >
-          <span className={triggerClasses}>
-            {variant === "compact" && (
-              <MapPin className="h-3.5 w-3.5 text-foreground/70" aria-hidden="true" />
+  const trigger = (
+    <button
+      type="button"
+      aria-label={`Change city. Current city: ${currentCityName}`}
+      onClick={isMobile ? () => setOpen(true) : undefined}
+    >
+      <span className={triggerClasses}>
+        {variant === "compact" && (
+          <MapPin className="h-3.5 w-3.5 text-foreground/70" aria-hidden="true" />
+        )}
+        <span>{currentCityName}</span>
+        {variant === "heading" && (
+          <ChevronDown
+            className={cn(
+              "h-5 w-5 md:h-6 md:w-6 transition-transform",
+              open && "rotate-180",
             )}
-            <span>{currentCityName}</span>
-            {variant === "heading" && (
-              <ChevronDown
-                className={cn(
-                  "h-5 w-5 md:h-6 md:w-6 transition-transform",
-                  open && "rotate-180",
-                )}
-                aria-hidden="true"
-              />
+            aria-hidden="true"
+          />
+        )}
+      </span>
+    </button>
+  );
+
+  const panel = (
+    <Command
+      onValueChange={(value) => {
+        const match =
+          available.find((c) => c.name.toLowerCase() === value.toLowerCase()) ||
+          available.find((c) => c.name.toLowerCase().startsWith(value.toLowerCase()));
+        if (match) prefetchCity(match);
+      }}
+    >
+      <CommandInput placeholder="Search city..." />
+      <CommandList
+        className={cn(
+          "[&::-webkit-scrollbar]:hidden [scrollbar-width:none] [-ms-overflow-style:none]",
+          isMobile ? "max-h-[60vh]" : "max-h-[340px]",
+        )}
+      >
+        {isLoading ? (
+          <div className="p-2 space-y-2" role="status" aria-label="Loading cities">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-2 px-2 py-1.5">
+                <Skeleton className="h-3.5 w-3.5 rounded-full" />
+                <Skeleton className="h-4 flex-1" />
+              </div>
+            ))}
+          </div>
+        ) : isError ? (
+          <div className="p-4 text-center text-sm">
+            <AlertCircle className="h-5 w-5 mx-auto mb-2 text-destructive" />
+            <p className="text-foreground font-medium">Couldn't load cities</p>
+            <p className="text-muted-foreground text-xs mt-1">
+              Check your connection and try again.
+            </p>
+            <button
+              type="button"
+              onClick={() => refetch()}
+              className="mt-3 inline-flex items-center justify-center px-3 py-1.5 rounded-md bg-[#9FE870] text-[#163300] text-xs font-semibold hover:bg-[#9FE870]/90"
+            >
+              Retry
+            </button>
+          </div>
+        ) : (
+          <>
+            <CommandEmpty>No city found.</CommandEmpty>
+
+            {available.length > 0 && (
+              <CommandGroup heading="Available now">
+                {available.map((c) => renderItem(c))}
+              </CommandGroup>
             )}
-          </span>
-        </button>
-      </PopoverTrigger>
-      <PopoverContent align="start" className="w-[min(92vw,320px)] p-0 bg-popover">
-        <Command
-          // Prefetch as the user types/highlights — feels instant on Enter.
-          onValueChange={(value) => {
-            const match =
-              available.find((c) => c.name.toLowerCase() === value.toLowerCase()) ||
-              available.find((c) => c.name.toLowerCase().startsWith(value.toLowerCase()));
-            if (match) prefetchCity(match);
-          }}
-        >
-          <CommandInput placeholder="Search city..." />
-          <CommandList className="max-h-[340px] [&::-webkit-scrollbar]:hidden [scrollbar-width:none] [-ms-overflow-style:none]">
-            {isLoading ? (
-              <div className="p-2 space-y-2" role="status" aria-label="Loading cities">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className="flex items-center gap-2 px-2 py-1.5">
-                    <Skeleton className="h-3.5 w-3.5 rounded-full" />
-                    <Skeleton className="h-4 flex-1" />
-                  </div>
-                ))}
-              </div>
-            ) : isError ? (
-              <div className="p-4 text-center text-sm">
-                <AlertCircle className="h-5 w-5 mx-auto mb-2 text-destructive" />
-                <p className="text-foreground font-medium">Couldn't load cities</p>
-                <p className="text-muted-foreground text-xs mt-1">
-                  Check your connection and try again.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => refetch()}
-                  className="mt-3 inline-flex items-center justify-center px-3 py-1.5 rounded-md bg-[#9FE870] text-[#163300] text-xs font-semibold hover:bg-[#9FE870]/90"
-                >
-                  Retry
-                </button>
-              </div>
-            ) : (
+
+            {comingSoon.length > 0 && (
               <>
-                <CommandEmpty>No city found.</CommandEmpty>
-
-
-
-                {available.length > 0 && (
-                  <CommandGroup heading="Available now">
-                    {available.map((c) => renderItem(c))}
-                  </CommandGroup>
-                )}
-
-                {comingSoon.length > 0 && (
-                  <>
-                    <CommandSeparator />
-                    <CommandGroup heading="Coming soon">
-                      {comingSoon.map((c) => (
-                        <CommandItem
-                          key={c.id}
-                          value={c.name}
-                          disabled
-                          className="flex items-center justify-between gap-3 opacity-60"
-                        >
-                          <span className="flex items-center gap-2">
-                            <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
-                            {c.name}
-                          </span>
-                          <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                            <Clock className="h-3 w-3" /> Soon
-                          </span>
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  </>
-                )}
+                <CommandSeparator />
+                <CommandGroup heading="Coming soon">
+                  {comingSoon.map((c) => (
+                    <CommandItem
+                      key={c.id}
+                      value={c.name}
+                      disabled
+                      className="flex items-center justify-between gap-3 opacity-60"
+                    >
+                      <span className="flex items-center gap-2">
+                        <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
+                        {c.name}
+                      </span>
+                      <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                        <Clock className="h-3 w-3" /> Soon
+                      </span>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
               </>
             )}
-          </CommandList>
-        </Command>
+          </>
+        )}
+      </CommandList>
+    </Command>
+  );
+
+  if (isMobile) {
+    return (
+      <>
+        {trigger}
+        <Sheet open={open} onOpenChange={setOpen}>
+          <SheetContent
+            side="bottom"
+            className="p-0 rounded-t-2xl max-h-[85vh] flex flex-col"
+          >
+            <div className="px-4 pt-4 pb-2">
+              <div className="mx-auto h-1 w-10 rounded-full bg-muted-foreground/30 mb-3" />
+              <h2 className="text-base font-semibold text-foreground">Choose a city</h2>
+            </div>
+            <div className="flex-1 overflow-hidden">{panel}</div>
+          </SheetContent>
+        </Sheet>
+      </>
+    );
+  }
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>{trigger}</PopoverTrigger>
+      <PopoverContent align="start" className="w-[min(92vw,320px)] p-0 bg-popover">
+        {panel}
       </PopoverContent>
     </Popover>
   );

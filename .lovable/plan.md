@@ -1,33 +1,39 @@
+# Responsive CitySwitcher: popover on desktop, bottom sheet on mobile/tablet
+
 ## Goal
-Polish the City Switcher popover so the whole pill (map icon + city name + chevron) is one clickable trigger, and hide the visible scrollbar in the cities list while keeping it scrollable.
 
-## Changes (single file: `src/components/rent-city/CitySwitcher.tsx`)
+When the user taps the city pill (the "Casablanca, Mediouna" pill next to "Pick dates", and the heading "Casablanca" with the chevron):
 
-1. **Unified clickable trigger**
-   - The trigger is already a single `<button>` wrapping the map pin icon, city name, and chevron — so clicking the map icon, the city text, or the chevron all open the popover. Confirm this stays true for both `compact` and `heading` variants by ensuring the icon/text/chevron live inside the same `<PopoverTrigger asChild>` button (no nested buttons or stopPropagation).
-   - Add a subtle hover state on the whole pill so it visually reads as one clickable unit.
+- **Desktop / laptop (≥768px)**: keep the current Radix Popover anchored under the trigger.
+- **Mobile / tablet (<768px)**: open a Sheet that slides up from the bottom of the screen (same pattern as the Filters sheet and BookingDatePicker mobile mode), with the same Search input + "Available now" + "Coming soon" content. Scrollbar stays hidden.
 
-2. **Hide scrollbar but keep scrollable**
-   - Add a utility class `scrollbar-hide` to the `CommandList` so the cities list scrolls vertically but the scrollbar is invisible across browsers:
-     - `scrollbar-width: none` (Firefox)
-     - `-ms-overflow-style: none` (IE/old Edge)
-     - `&::-webkit-scrollbar { display: none }` (Chrome/Safari)
-   - Apply via Tailwind arbitrary variants inline on `CommandList`, e.g. `[&::-webkit-scrollbar]:hidden [scrollbar-width:none] [-ms-overflow-style:none]` — no global CSS edit needed.
+This applies to **both** uses of `CitySwitcher`:
+1. `variant="compact"` — the pill in the breadcrumb row of `RentCity`.
+2. `variant="heading"` — the inline city name in the H1.
 
-3. **No behavior changes** to:
-   - Search input, recent cities, available list, coming soon list
-   - Prefetch on hover/focus
-   - Loading skeleton, error/retry state
-   - Routing on select
+Tablet uses the same bottom-sheet treatment as mobile (anything below the `md` / 768px breakpoint).
+
+## Scope
+
+Only one file changes: `src/components/rent-city/CitySwitcher.tsx`.
+
+No business logic changes. No styling tokens added. No changes to `BookingDatePicker` (already responsive) or to `RentCity.tsx`.
+
+## Implementation outline (technical)
+
+In `src/components/rent-city/CitySwitcher.tsx`:
+
+1. Add `const isMobile = useIsMobile()` (hook already exists at `src/hooks/use-mobile.tsx`, breakpoint 768px — covers phones and small tablets, matching the existing Filters sheet which uses `lg:hidden`; we'll align with the existing `useIsMobile` hook for consistency with `BookingDatePicker`).
+2. Extract the inner content (the `<Command>` block with search, Available now, Coming soon, loading + error states) into a small `CityListPanel` sub-component so it can be rendered inside either `PopoverContent` or `SheetContent` without duplication.
+3. Render conditionally:
+   - If `isMobile`: render a plain `<button>` trigger that toggles `open`, plus a `<Sheet open={open} onOpenChange={setOpen}>` with `<SheetContent side="bottom" className="p-0 rounded-t-xl max-h-[80vh]">` containing a small header ("Choose a city") and the `CityListPanel`. Hide the close button styling-wise as needed; rely on overlay tap + selection to close.
+   - Else: keep the existing `Popover` / `PopoverTrigger` / `PopoverContent` exactly as today.
+4. `handleSelect` already calls `setOpen(false)` before navigating, so it works for both Popover and Sheet without changes.
+5. Keep the trigger markup (MapPin for compact, ChevronDown for heading, hover styles) identical between mobile and desktop so the pill looks the same.
+6. Keep the existing `[&::-webkit-scrollbar]:hidden [scrollbar-width:none] [-ms-overflow-style:none]` classes on the list so the scrollbar stays invisible in both modes.
 
 ## Out of scope
-- No backend / SQL / RLS changes
-- No design token changes
-- No new dependencies
 
-## QA checklist
-- Click map icon → popover opens
-- Click city name → popover opens
-- Click chevron → popover opens
-- Scroll inside cities list → works, no visible scrollbar (test Chrome + Firefox)
-- Coming-soon cities still appear disabled with "Soon" badge
+- No changes to the date picker (already a bottom sheet on mobile).
+- No changes to recent-cities behavior (already removed previously).
+- No new translations; the popover currently uses English literals ("Search city...", "Available now", "Coming soon") and we'll keep them as-is.
