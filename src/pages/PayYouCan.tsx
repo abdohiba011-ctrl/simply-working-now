@@ -281,7 +281,7 @@ export default function PayYouCan() {
               )}
             </Button>
 
-            {isSandbox && (
+            {isSandbox && method === "card" && (
               <details className="text-xs text-muted-foreground">
                 <summary className="cursor-pointer font-medium">
                   Sandbox test cards
