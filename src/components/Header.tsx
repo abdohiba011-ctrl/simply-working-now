@@ -384,36 +384,44 @@ export const Header = memo(() => {
                   {t('header.more')}
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="center" sideOffset={10} collisionPadding={16} className="!fixed !left-1/2 !top-20 !-translate-x-1/2 !translate-y-0 w-[min(540px,calc(100vw-2rem))] bg-popover/95 backdrop-blur-sm border shadow-lg z-[200] p-4">
-                <div className="grid grid-cols-3 gap-3">
-                  <Link to="/agencies" className="flex flex-col items-center gap-2 p-3 rounded-lg hover:bg-muted transition-colors group">
-                    <Building2 className="h-6 w-6 text-foreground group-hover:scale-110 transition-transform" />
-                    <span className="text-sm font-medium text-center">{t('header.agencies')}</span>
-                  </Link>
-                  <Link to="/about" className="flex flex-col items-center gap-2 p-3 rounded-lg hover:bg-muted transition-colors group">
-                    <Users className="h-6 w-6 text-foreground group-hover:scale-110 transition-transform" />
-                    <span className="text-sm font-medium text-center">{t('header.aboutUs')}</span>
-                  </Link>
-                  <Link to="/contact" className="flex flex-col items-center gap-2 p-3 rounded-lg hover:bg-muted transition-colors group">
-                    <Phone className="h-6 w-6 text-foreground group-hover:scale-110 transition-transform" />
-                    <span className="text-sm font-medium text-center">{t('header.contactUs')}</span>
-                  </Link>
-                  <Link to="/booking-fee" className="flex flex-col items-center gap-2 p-3 rounded-lg hover:bg-muted transition-colors group">
-                    <Receipt className="h-6 w-6 text-foreground group-hover:scale-110 transition-transform" />
-                    <span className="text-sm font-medium text-center">{t('header.bookingFee')}</span>
-                  </Link>
-                  {/* Mechanics — Coming Soon. To re-enable: replace with <Link to="/fixers"> using Wrench icon. */}
-                  <div className="flex flex-col items-center gap-2 p-3 rounded-lg opacity-60 cursor-not-allowed">
-                    <Wrench className="h-6 w-6 text-muted-foreground" />
-                    <span className="text-xs font-medium text-center text-muted-foreground">{t('header.fixers')}<br/><span className="text-red-500 font-semibold">{t('header.comingSoon')}</span></span>
-                  </div>
-                  <div className="flex flex-col items-center gap-2 p-3 rounded-lg opacity-60 cursor-not-allowed">
-                    <ShoppingBag className="h-6 w-6 text-muted-foreground" />
-                    <span className="text-xs font-medium text-center text-muted-foreground">{t('header.marketplace')}<br/><span className="text-red-500 font-semibold">{t('header.comingSoon')}</span></span>
-                  </div>
-                  <div className="flex flex-col items-center gap-2 p-3 rounded-lg opacity-60 cursor-not-allowed">
-                    <MapPin className="h-6 w-6 text-muted-foreground" />
-                    <span className="text-xs font-medium text-center text-muted-foreground">{t('header.gpsTracking')}<br/><span className="text-red-500 font-semibold">{t('header.comingSoon')}</span></span>
+              <DropdownMenuContent
+                align="center"
+                sideOffset={10}
+                collisionPadding={0}
+                avoidCollisions
+                className="w-screen max-w-[100vw] bg-transparent border-0 shadow-none p-0 z-[200]"
+              >
+                <div className="mx-auto w-[min(540px,calc(100vw-2rem))] rounded-md bg-popover/95 backdrop-blur-sm border shadow-lg p-4">
+                  <div className="grid grid-cols-3 gap-3">
+                    <Link to="/agencies" className="flex flex-col items-center gap-2 p-3 rounded-lg hover:bg-muted transition-colors group">
+                      <Building2 className="h-6 w-6 text-foreground group-hover:scale-110 transition-transform" />
+                      <span className="text-sm font-medium text-center">{t('header.agencies')}</span>
+                    </Link>
+                    <Link to="/about" className="flex flex-col items-center gap-2 p-3 rounded-lg hover:bg-muted transition-colors group">
+                      <Users className="h-6 w-6 text-foreground group-hover:scale-110 transition-transform" />
+                      <span className="text-sm font-medium text-center">{t('header.aboutUs')}</span>
+                    </Link>
+                    <Link to="/contact" className="flex flex-col items-center gap-2 p-3 rounded-lg hover:bg-muted transition-colors group">
+                      <Phone className="h-6 w-6 text-foreground group-hover:scale-110 transition-transform" />
+                      <span className="text-sm font-medium text-center">{t('header.contactUs')}</span>
+                    </Link>
+                    <Link to="/booking-fee" className="flex flex-col items-center gap-2 p-3 rounded-lg hover:bg-muted transition-colors group">
+                      <Receipt className="h-6 w-6 text-foreground group-hover:scale-110 transition-transform" />
+                      <span className="text-sm font-medium text-center">{t('header.bookingFee')}</span>
+                    </Link>
+                    {/* Mechanics — Coming Soon. To re-enable: replace with <Link to="/fixers"> using Wrench icon. */}
+                    <div className="flex flex-col items-center gap-2 p-3 rounded-lg opacity-60 cursor-not-allowed">
+                      <Wrench className="h-6 w-6 text-muted-foreground" />
+                      <span className="text-xs font-medium text-center text-muted-foreground">{t('header.fixers')}<br/><span className="text-red-500 font-semibold">{t('header.comingSoon')}</span></span>
+                    </div>
+                    <div className="flex flex-col items-center gap-2 p-3 rounded-lg opacity-60 cursor-not-allowed">
+                      <ShoppingBag className="h-6 w-6 text-muted-foreground" />
+                      <span className="text-xs font-medium text-center text-muted-foreground">{t('header.marketplace')}<br/><span className="text-red-500 font-semibold">{t('header.comingSoon')}</span></span>
+                    </div>
+                    <div className="flex flex-col items-center gap-2 p-3 rounded-lg opacity-60 cursor-not-allowed">
+                      <MapPin className="h-6 w-6 text-muted-foreground" />
+                      <span className="text-xs font-medium text-center text-muted-foreground">{t('header.gpsTracking')}<br/><span className="text-red-500 font-semibold">{t('header.comingSoon')}</span></span>
+                    </div>
                   </div>
                 </div>
               </DropdownMenuContent>
