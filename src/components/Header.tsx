@@ -374,7 +374,7 @@ export const Header = memo(() => {
             <Link to="/affiliate" className="text-foreground hover:text-primary transition-colors font-medium whitespace-nowrap">
               {t('header.affiliate')}
             </Link>
-            <Link to="/#faq" className="text-foreground hover:text-primary transition-colors font-medium whitespace-nowrap">
+            <Link to="/#faq" className="hidden lg:inline-block text-foreground hover:text-primary transition-colors font-medium whitespace-nowrap">
               {t('header.faq')}
             </Link>
             <DropdownMenu>
