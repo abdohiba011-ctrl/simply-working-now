@@ -1,11 +1,22 @@
-## Change
+## 1. Booking Confirmed page (`src/pages/BookingConfirmed.tsx`)
 
-In `src/components/rent-city/FiltersPanel.tsx` action bar (~lines 391–425), make the bar adaptive based on the panel width (using the existing `@container` already on the bar):
+Two action blocks currently exist (lines ~375 and ~566) showing both "View my bookings" and "Message agency" side by side.
 
-- **Mobile / tablet (panel width < ~640px, used in the bottom Sheet):** keep current bar exactly as-is — Clear all (X) on the left + green "Apply N filter" CTA on the right.
-- **Desktop / laptop (panel width ≥ ~640px, used in the sidebar):** hide the green Apply button entirely. Filters already apply live. Show instead a compact strip:
-  - On the left: "**N** filter active" / "**N** filters active" pill (white circular badge with the number, same look as the badge currently inside the Apply button).
-  - On the right: the Clear all button (X icon + "Clear all" text, same red destructive styling as today, full-width-friendly height).
-  - When `activeFilterCount === 0`: hide the whole bar (no border, no padding) so the desktop sidebar stays clean.
+- Remove the "View my bookings" link/button in both blocks.
+- Promote "Message agency" to the primary CTA:
+  - Full width on mobile, large size (`size="lg"`), uses primary/hero variant.
+  - Stays prominent on desktop (large, full-width within its container, not crammed beside another button).
+  - Keeps the `MessageCircle` icon.
+  - Links to the existing chat thread for this booking (same target it already uses).
 
-No logic changes, no new props, no other files touched.
+## 2. Verification page (`src/pages/Verification.tsx`)
+
+Three render branches each include `<Header />` and/or `<Footer />` (lines 648/652, 660/704, 711/...).
+
+- Remove all `<Header />` and `<Footer />` usages from this page.
+- Remove the now-unused imports.
+- Keep page background and main content padding so it still looks framed without the chrome.
+
+## Out of scope
+
+- No changes to routing, business logic, payment flow, or other pages.
