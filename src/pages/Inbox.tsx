@@ -200,12 +200,12 @@ const Inbox = () => {
                 <a
                   href="/"
                   aria-label="Motonita home"
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-full hover:bg-muted/70 transition-colors"
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-full hover:bg-muted/70 transition-colors"
                 >
                   <img
                     src="/favicon.svg"
                     alt="Motonita"
-                    className="h-[22px] w-[22px] dark:brightness-0 dark:invert"
+                    className="h-7 w-7 dark:brightness-0 dark:invert"
                   />
                 </a>
               </div>
