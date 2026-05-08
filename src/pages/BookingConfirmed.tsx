@@ -144,12 +144,14 @@ const BookingConfirmed = () => {
       }
       let bikeName: string | null = null;
       let bikeImage: string | null = null;
+      let slug: string | null = null;
       if (data.bike_id) {
         const { data: bikeRow } = await supabase
           .from("bikes_public" as any)
-          .select("bike_type_id")
+          .select("bike_type_id, slug")
           .eq("id", data.bike_id)
           .maybeSingle() as any;
+        slug = bikeRow?.slug ?? null;
         if (bikeRow?.bike_type_id) {
           const { data: bt } = await supabase
             .from("bike_types")
@@ -160,9 +162,10 @@ const BookingConfirmed = () => {
           bikeImage = bt?.main_image_url ?? null;
         }
       }
+      setBikeSlug(slug);
       const { data: latestPayment } = await supabase
         .from("youcanpay_payments")
-        .select("amount,status,transaction_id")
+        .select("amount,status,transaction_id,created_at,method")
         .eq("related_booking_id", bookingId)
         .order("created_at", { ascending: false })
         .limit(1)
@@ -170,9 +173,10 @@ const BookingConfirmed = () => {
 
       const inferredCashplus =
         !data.payment_method &&
-        Number(latestPayment?.amount) === 60 &&
-        latestPayment?.status === "pending" &&
-        !latestPayment?.transaction_id;
+        ((latestPayment?.method === "cashplus") ||
+          (Number(latestPayment?.amount) === 60 &&
+            latestPayment?.status === "pending" &&
+            !latestPayment?.transaction_id));
 
       const row = {
         ...(data as any),
@@ -181,7 +185,16 @@ const BookingConfirmed = () => {
         bike_image: bikeImage,
       };
       setBooking(row);
-      setPhase(row.payment_status === "paid" ? "confirmed" : "waiting");
+      setCashplusReference((latestPayment?.transaction_id as string | null) || null);
+      setCashplusStartedAt((latestPayment?.created_at as string | null) || null);
+      const isCancelled = (data as any).booking_status === "cancelled";
+      setPhase(
+        row.payment_status === "paid"
+          ? "confirmed"
+          : isCancelled
+          ? "expired"
+          : "waiting",
+      );
       setLoading(false);
     };
     load();
@@ -189,7 +202,7 @@ const BookingConfirmed = () => {
 
   const isCashplus = booking?.payment_method === "cashplus";
 
-  // Poll for payment_status
+  // Poll for payment_status (and refresh CashPlus voucher reference)
   useEffect(() => {
     if (!bookingId || phase !== "waiting") return;
     let cancelled = false;
@@ -213,10 +226,28 @@ const BookingConfirmed = () => {
         toast.success("Payment confirmed!");
         return;
       }
+      if (data?.booking_status === "cancelled") {
+        setPhase("expired");
+        return;
+      }
+      // Refresh CashPlus voucher reference if YouCan has now returned it.
+      if (isCashplus) {
+        const { data: pay } = await supabase
+          .from("youcanpay_payments")
+          .select("transaction_id, created_at")
+          .eq("related_booking_id", bookingId)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (!cancelled && pay) {
+          if (pay.transaction_id) setCashplusReference(pay.transaction_id as string);
+          if (pay.created_at) setCashplusStartedAt(pay.created_at as string);
+        }
+      }
       const e = Date.now() - startedAt.current;
       setElapsed(e);
       if (e >= timeout) {
-        setPhase("timeout");
+        setPhase(isCashplus ? "expired" : "timeout");
         return;
       }
       timer = window.setTimeout(tick, interval);
@@ -228,6 +259,13 @@ const BookingConfirmed = () => {
       if (timer) window.clearTimeout(timer);
     };
   }, [bookingId, phase, isCashplus]);
+
+  // 1-second tick for the CashPlus countdown.
+  useEffect(() => {
+    if (!isCashplus || phase !== "waiting") return;
+    const i = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(i);
+  }, [isCashplus, phase]);
 
   const handleVerifyNow = async () => {
     if (!bookingId || verifying) return;
