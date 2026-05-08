@@ -428,7 +428,7 @@ const CheckoutDraft = () => {
 
     setYcStatus("paying");
     const { token, pid } = tokenRef.current;
-    const usingCashplus = cashplusActive;
+    let usingCashplus = cashplusActive;
 
     // If user picked Cash Plus inside the YouCan widget, lock that on the
     // booking server-side BEFORE redirecting so the confirmation page knows
@@ -443,13 +443,26 @@ const CheckoutDraft = () => {
 
     ycRef.current
       .pay(token)
-      .then((response: any) => {
-        toast.success(usingCashplus ? "Cash Plus voucher created" : "Payment submitted");
+      .then(async (response: any) => {
         const transactionId =
           response?.transaction_id ||
           response?.transactionId ||
           response?.transaction?.id ||
           response?.id;
+
+        // Cash Plus voucher creation resolves without an online transaction id.
+        // The gateway UI can be rendered inside its own DOM, so our visual
+        // detector is not always reliable on all devices/browsers.
+        if (!transactionId) {
+          usingCashplus = true;
+          await supabase
+            .from("bookings")
+            .update({ payment_method: "cashplus" })
+            .eq("id", booking.id)
+            .eq("booking_status", "draft");
+        }
+
+        toast.success(usingCashplus ? "Cash Plus voucher created" : "Payment submitted");
 
         // Cash Plus = no online charge yet; the user must walk to an agency.
         // Skip the 60s /payment-status polling page (built for cards) and

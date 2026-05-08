@@ -102,7 +102,26 @@ const BookingConfirmed = () => {
           bikeImage = bt?.main_image_url ?? null;
         }
       }
-      const row = { ...(data as any), bike_name: bikeName, bike_image: bikeImage };
+      const { data: latestPayment } = await supabase
+        .from("youcanpay_payments")
+        .select("amount,status,transaction_id")
+        .eq("related_booking_id", bookingId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      const inferredCashplus =
+        !data.payment_method &&
+        Number(latestPayment?.amount) === 60 &&
+        latestPayment?.status === "pending" &&
+        !latestPayment?.transaction_id;
+
+      const row = {
+        ...(data as any),
+        payment_method: inferredCashplus ? "cashplus" : data.payment_method,
+        bike_name: bikeName,
+        bike_image: bikeImage,
+      };
       setBooking(row);
       setPhase(row.payment_status === "paid" ? "confirmed" : "waiting");
       setLoading(false);
