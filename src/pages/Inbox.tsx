@@ -7,7 +7,10 @@ import { format, isToday, isYesterday } from "date-fns";
 import { cn } from "@/lib/utils";
 import { ChatThread } from "@/components/chat/ChatThread";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { MessageCircle, Loader2, ChevronLeft } from "lucide-react";
+import { MessageCircle, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
+import motonitaIconForest from "@/assets/motonita-icon-forest.svg";
+import motonitaIconWhite from "@/assets/motonita-icon-white.svg";
+import { useTranslation } from "react-i18next";
 
 interface Conv {
   id: string;
