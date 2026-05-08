@@ -167,6 +167,8 @@ const Checkout = () => {
         error: errorPath,
         title: method === 'cashplus' ? 'Pay booking fee with CashPlus' : 'Pay booking fee',
         method,
+        holder: profile.name || '',
+        email: profile.email || '',
       });
       navigate(`/pay/youcanpay?${qs.toString()}`);
     } catch (error: unknown) {
