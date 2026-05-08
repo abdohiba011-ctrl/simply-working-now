@@ -1,55 +1,66 @@
-## Cash Plus Waiting Room — Improved UX
+## Problem
 
-Rewrite the Cash Plus waiting screen in `src/pages/BookingConfirmed.tsx` (the `if (isCashplus && phase === "waiting")` block, lines ~242–410) to give users full clarity on what to do, what to expect, and how to get help. Polling, auto-confirm, and the success/messages flow already work — we are only improving the waiting screen content and adding a support block. No backend changes.
+Anonymous (logged-out) visitors see **0 motorbikes** on `/listings`. Confirmed via the database:
 
-### What the new screen will contain (top → bottom)
+- The Listings page reads from the `bikes_public` view (defined `WITH (security_invoker=true)`).
+- A `security_invoker` view enforces the **base table's RLS** as the querying role.
+- The `bikes` table has **only three SELECT policies**, all restricted to `authenticated`:
+  - "Owners can view own bikes"
+  - "Admins can view all bikes"
+  - (no public/anon policy at all)
+- Result: anon → no matching policy → 0 rows from `bikes_public` → empty Listings.
 
-1. **Hero** — keep the green icon + headline, but rewrite subcopy:
-   "Your booking is reserved. To confirm it, take the reference below to any **Cash Plus** agency in Morocco and pay **60 MAD in cash**. As soon as Cash Plus reports the payment to us, we'll confirm your bike automatically — you don't need to come back to this page."
+`bike_types` does have a proper public policy for anon, which is why some other surfaces (homepage carousels reading `bike_types` directly) still work — but Listings filters by `bikes` and breaks.
 
-2. **Reference card** (kept) — big code, Copy button, 60 MAD amount, "Expires in 72 hours" *(see note below on 24h vs 72h)*, WhatsApp share, "Find nearest agency" button.
+This regresses periodically because nothing in the schema guarantees the public-read policy on `bikes` exists. Every time someone tightens RLS on `bikes`, it's silently lost.
 
-3. **NEW — How to pay (4 steps, clearer wording)**
-   1. Walk into any Cash Plus agency (over 2,500 across Morocco).
-   2. Show the reference `XXXXXXXX` to the agent and say it's for "Motonita / YouCan Pay".
-   3. Pay **60 MAD in cash**. Keep your receipt.
-   4. Wait for our confirmation — usually **1 to 60 minutes** after the agent processes your payment.
+## Fix (single migration)
 
-4. **NEW — Important to know (callout card, amber/info style)**
-   - Cash Plus agencies are usually **closed on Sundays** and may have reduced hours on public holidays. Plan accordingly.
-   - Your reference is valid for **72 hours**. After that, the booking is automatically cancelled and you'll need to start over.
-   - We confirm bookings **automatically**. The delay between paying at the agency and seeing confirmation depends on Cash Plus's system — usually a few minutes, sometimes up to an hour.
-   - Once paid, you can safely close this page. We'll email you the moment it's confirmed, and you'll be able to message the agency from your bookings.
+Add a **permanent, idempotent** public SELECT policy on `public.bikes` that mirrors the one on `bike_types`, plus a regression safeguard.
 
-5. **Status pill** (kept) — "Waiting for payment at Cash Plus" with spinner.
+```sql
+-- 1. Public read on bikes for anon + authenticated
+DROP POLICY IF EXISTS "Public can view bikes of approved verified types" ON public.bikes;
 
-6. **NEW — Support card (only show after payment, not before)**
-   Heading: **"Already paid? Need help?"**
-   Subcopy: *"If you've paid at Cash Plus and nothing happened after 1 hour, contact us. Please don't call before paying — it slows us down for users who actually need help."*
-   Three actions side-by-side (stack on mobile):
-   - **WhatsApp** button → `https://wa.me/212710564476` (uses existing `WhatsAppIcon`)
-   - **Call us** button → `tel:+212710564476`, label shows the number `+212 710 564 476`
-   - **Email** button → `mailto:support@motonita.ma?subject=Cash Plus payment — <REF>&body=…` (prefills the booking ref)
+CREATE POLICY "Public can view bikes of approved verified types"
+ON public.bikes
+FOR SELECT
+TO anon, authenticated
+USING (
+  available = true
+  AND EXISTS (
+    SELECT 1 FROM public.bike_types bt
+    WHERE bt.id = bikes.bike_type_id
+      AND bt.approval_status = 'approved'
+      AND bt.business_status = 'active'
+      AND public.is_owner_verified_agency(bt.owner_id)
+  )
+);
 
-7. **Booking summary** (kept, compact, at the bottom).
+COMMENT ON POLICY "Public can view bikes of approved verified types" ON public.bikes IS
+  'CRITICAL: Required so anonymous visitors can see listings via bikes_public view. Do NOT drop without replacement.';
+```
 
-### What does NOT change
+The `bikes_public` view already excludes sensitive columns (`license_plate`, `notes`), so anon only ever reads safe fields.
 
-- The polling loop, `payment_status` checks, and the auto-transition from `waiting` → `confirmed` are already wired. Once Cash Plus reports the payment via the YouCan Pay webhook, the page swaps to the existing confirmed view and the "Message agency" button appears — exactly the same flow as card payments.
-- No edge function, RLS, or database changes.
-- No translation work — file is currently English-only and the rest of the screen matches.
+## Regression guard
 
-### Open question — expiry window
+Add a Vitest security test that hits the live Supabase project as the anon key and asserts `bikes_public` returns ≥ 1 row whenever `bike_types` has any approved+active+verified row. Place it next to the existing `src/test/security.bikes.test.ts`. If a future migration drops the policy, CI fails immediately.
 
-The current backend keeps Cash Plus drafts alive for **72 hours** (matches `BookingHistory` 72h draft expiry). You mentioned "I think 24 hours is the maximum." Two options:
+## What I will NOT change
 
-- **A (recommended, no backend change):** keep showing "72 hours" — matches how the system actually behaves today.
-- **B:** change copy to "24 hours" and later reduce the backend expiry to 24h in a follow-up.
+- No frontend changes — `useBikes` already targets `bikes_public` correctly.
+- No edits to `bike_types` policies (they're already correct for anon).
+- No change to the booking/checkout flow — anonymous visitors can already browse; auth is requested at the Book step (per project rules).
 
-I'll go with **A** unless you say otherwise when approving.
+## Files touched
 
-### Files to edit
+- `supabase/migrations/<new>.sql` — the policy + comment above
+- `src/test/security.bikes.test.ts` — add anon-visibility regression test
 
-- `src/pages/BookingConfirmed.tsx` — replace the Cash Plus waiting JSX block (~lines 242–410) and add `Phone`, `Mail` imports from `lucide-react` plus `WhatsAppIcon` import.
+## Verification after apply
 
-That's it — single file, presentation-only change.
+1. Run the migration.
+2. As anon (no session) call `supabase.from('bikes_public').select('*')` → expect rows.
+3. Reload `/listings` logged out → bikes appear.
+4. Confirm the new vitest passes.

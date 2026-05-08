@@ -62,6 +62,30 @@ describe("RLS: bikes table", () => {
   );
 
   it.skipIf(skip)(
+    "anon sees public bikes whenever approved+active+verified bike_types exist (regression for empty Listings bug)",
+    async () => {
+      // If the catalog has any publicly-visible bike type, anon must see at
+      // least one row through bikes_public. Otherwise the public listings
+      // page silently shows zero motorbikes to logged-out visitors.
+      const bt = await anon!
+        .from("bike_types")
+        .select("id")
+        .eq("approval_status", "approved")
+        .eq("business_status", "active")
+        .limit(1);
+      expect(bt.error).toBeNull();
+      if (!bt.data || bt.data.length === 0) return; // nothing public to test against
+
+      const { data, error } = await anon!
+        .from("bikes_public" as any)
+        .select("id")
+        .limit(1);
+      expect(error).toBeNull();
+      expect((data ?? []).length).toBeGreaterThan(0);
+    },
+  );
+
+  it.skipIf(skip)(
     "bikes_public view does not expose license_plate or notes",
     async () => {
       const { data, error } = await anon!
