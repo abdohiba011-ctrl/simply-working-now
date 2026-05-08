@@ -111,105 +111,146 @@ const Bookings = () => {
   return (
     <AgencyLayout>
       <div className="mx-auto max-w-7xl space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="space-y-3">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Bookings</h1>
             <p className="text-sm text-muted-foreground">{bookings.length} total · {filtered.length} shown</p>
           </div>
+
+          {/* Search full-width on mobile */}
+          <div className="relative w-full md:max-w-xs">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Search by name, email, bike…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="h-10 pl-9"
+            />
+          </div>
+
+          {/* Date + Export */}
           <div className="flex items-center gap-2">
-            <div className="relative w-full max-w-xs">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Search by name, email, bike…"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-9"
-              />
-            </div>
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" size="sm" className={cn(!dateRange?.from && "text-muted-foreground")}>
+                <Button variant="outline" size="sm" className={cn("flex-1 md:flex-none", !dateRange?.from && "text-muted-foreground")}>
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {dateLabel}
+                  <span className="truncate">{dateLabel}</span>
                   {dateRange?.from && (
                     <X
-                      className="ml-2 h-3.5 w-3.5 opacity-60 hover:opacity-100"
+                      className="ml-2 h-3.5 w-3.5 shrink-0 opacity-60 hover:opacity-100"
                       onClick={(e) => { e.stopPropagation(); setDateRange(undefined); }}
                     />
                   )}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="end">
+              <PopoverContent className="w-auto p-0" align="start">
                 <Calendar
                   mode="range"
                   selected={dateRange}
                   onSelect={setDateRange}
-                  numberOfMonths={2}
+                  numberOfMonths={1}
                   initialFocus
                   className={cn("p-3 pointer-events-auto")}
                 />
               </PopoverContent>
             </Popover>
-            <Button size="sm" variant="outline" onClick={exportCsv}>
-              <Download className="mr-2 h-4 w-4" /> Export CSV
+            <Button size="sm" variant="outline" onClick={exportCsv} className="shrink-0">
+              <Download className="mr-2 h-4 w-4" /> <span className="hidden sm:inline">Export</span> CSV
             </Button>
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-2">
-          {STATUS_FILTERS.map((f) => (
-            <Button
-              key={f.key}
-              size="sm"
-              variant={status === f.key ? "default" : "outline"}
-              onClick={() => updateStatus(f.key)}
-            >
-              {f.label}
-            </Button>
-          ))}
+        {/* Status filters — scroll horizontally on mobile */}
+        <div className="-mx-3 overflow-x-auto px-3 md:mx-0 md:px-0">
+          <div className="flex gap-2 md:flex-wrap">
+            {STATUS_FILTERS.map((f) => (
+              <Button
+                key={f.key}
+                size="sm"
+                variant={status === f.key ? "default" : "outline"}
+                onClick={() => updateStatus(f.key)}
+                className="shrink-0 whitespace-nowrap"
+              >
+                {f.label}
+              </Button>
+            ))}
+          </div>
         </div>
 
-        <Card className="overflow-hidden">
-          {loading ? (
-            <div className="py-16 text-center text-sm text-muted-foreground">Loading bookings…</div>
-          ) : filtered.length === 0 ? (
+        {loading ? (
+          <Card><div className="py-16 text-center text-sm text-muted-foreground">Loading bookings…</div></Card>
+        ) : filtered.length === 0 ? (
+          <Card>
             <EmptyState
               icon={Inbox}
               title={bookings.length === 0 ? "No bookings yet" : "No bookings match your filters"}
               description={bookings.length === 0 ? "Bookings assigned to your agency will appear here." : "Try adjusting search or filters."}
             />
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Customer</TableHead>
-                  <TableHead>Motorbike</TableHead>
-                  <TableHead>Pickup → Return</TableHead>
-                  <TableHead className="text-right">Total</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filtered.map((b) => (
-                  <TableRow key={b.id} className="cursor-pointer" onClick={() => navigate(`/agency/bookings/${b.id}`)}>
-                    <TableCell>
-                      <div className="font-medium">{b.customer_name || "—"}</div>
-                      <div className="text-xs text-muted-foreground">{b.customer_email || b.customer_phone || ""}</div>
-                    </TableCell>
-                    <TableCell>{b.bike?.name || "—"}</TableCell>
-                    <TableCell className="text-xs text-muted-foreground">
+          </Card>
+        ) : (
+          <>
+            {/* Mobile cards */}
+            <div className="space-y-2 md:hidden">
+              {filtered.map((b) => (
+                <Card
+                  key={b.id}
+                  onClick={() => navigate(`/agency/bookings/${b.id}`)}
+                  className="cursor-pointer p-3 active:scale-[0.99] transition-transform"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate font-medium">{b.customer_name || "—"}</div>
+                      <div className="truncate text-xs text-muted-foreground">{b.customer_email || b.customer_phone || ""}</div>
+                    </div>
+                    <StatusChip status={b.booking_status || b.status || "pending"} />
+                  </div>
+                  <div className="mt-2 truncate text-sm">{b.bike?.name || "—"}</div>
+                  <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
+                    <span>
                       {format(parseISO(b.pickup_date), "dd MMM")} → {format(parseISO(b.return_date), "dd MMM yyyy")}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums">{Number(b.total_price || 0).toLocaleString()} MAD</TableCell>
-                    <TableCell><StatusChip status={b.booking_status || b.status || "pending"} /></TableCell>
-                    <TableCell><Button size="sm" variant="ghost">Open</Button></TableCell>
+                    </span>
+                    <span className="font-semibold tabular-nums text-foreground">
+                      {Number(b.total_price || 0).toLocaleString()} MAD
+                    </span>
+                  </div>
+                </Card>
+              ))}
+            </div>
+
+            {/* Desktop table */}
+            <Card className="hidden overflow-hidden md:block">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Customer</TableHead>
+                    <TableHead>Motorbike</TableHead>
+                    <TableHead>Pickup → Return</TableHead>
+                    <TableHead className="text-right">Total</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead />
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </Card>
+                </TableHeader>
+                <TableBody>
+                  {filtered.map((b) => (
+                    <TableRow key={b.id} className="cursor-pointer" onClick={() => navigate(`/agency/bookings/${b.id}`)}>
+                      <TableCell>
+                        <div className="font-medium">{b.customer_name || "—"}</div>
+                        <div className="text-xs text-muted-foreground">{b.customer_email || b.customer_phone || ""}</div>
+                      </TableCell>
+                      <TableCell>{b.bike?.name || "—"}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {format(parseISO(b.pickup_date), "dd MMM")} → {format(parseISO(b.return_date), "dd MMM yyyy")}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums">{Number(b.total_price || 0).toLocaleString()} MAD</TableCell>
+                      <TableCell><StatusChip status={b.booking_status || b.status || "pending"} /></TableCell>
+                      <TableCell><Button size="sm" variant="ghost">Open</Button></TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </Card>
+          </>
+        )}
       </div>
     </AgencyLayout>
   );

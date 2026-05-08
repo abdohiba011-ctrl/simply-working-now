@@ -1,6 +1,6 @@
 import { ComponentType, SVGProps, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Search, HelpCircle, Wallet, Menu } from "lucide-react";
+import { Search, HelpCircle, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAgencyWallet, useAgencyIdentity } from "@/hooks/useAgencyData";
 import { useAuthStore } from "@/stores/useAuthStore";
@@ -19,7 +19,7 @@ import { GbFlag } from "@/components/icons/flags/GbFlag";
 import { MaFlag } from "@/components/icons/flags/MaFlag";
 
 interface HeaderProps {
-  onMobileMenu: () => void;
+  onMobileMenu?: () => void;
 }
 
 const ROUTE_NAMES: Record<string, string> = {
@@ -57,7 +57,7 @@ const LANGS: { code: Language; Icon: FlagIcon; label: string }[] = [
   { code: "ar", Icon: MaFlag, label: "العربية" },
 ];
 
-export const Header = ({ onMobileMenu }: HeaderProps) => {
+export const Header = (_: HeaderProps = {}) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { wallet } = useAgencyWallet();
@@ -95,11 +95,7 @@ export const Header = ({ onMobileMenu }: HeaderProps) => {
 
   return (
     <>
-      <header className="sticky top-0 z-30 flex h-16 items-center gap-3 bg-agency-canvas/80 px-4 backdrop-blur lg:px-6">
-        <Button variant="ghost" size="icon" className="rounded-xl lg:hidden" onClick={onMobileMenu} aria-label="Open menu">
-          <Menu className="h-5 w-5" />
-        </Button>
-
+      <header className="sticky top-0 z-30 flex h-16 items-center gap-2 bg-agency-canvas/80 px-3 backdrop-blur sm:gap-3 lg:px-6">
         {/* Greeting chip on dashboard, page title elsewhere */}
         {isDashboard ? (
           <div className="hidden items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 text-sm md:flex">
@@ -111,7 +107,7 @@ export const Header = ({ onMobileMenu }: HeaderProps) => {
           <h1 className="hidden text-base font-semibold text-foreground md:block">{pageTitle}</h1>
         )}
 
-        {/* Search */}
+        {/* Search (desktop) */}
         <button
           onClick={() => setCmdOpen(true)}
           className="ml-auto hidden items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted/60 md:flex md:w-72 lg:w-80"
@@ -121,10 +117,13 @@ export const Header = ({ onMobileMenu }: HeaderProps) => {
           <kbd className="rounded-md border border-border bg-muted/50 px-1.5 py-0.5 font-mono text-[10px]">⌘K</kbd>
         </button>
 
+        {/* Spacer to push the right cluster on mobile */}
+        <div className="ml-auto md:hidden" />
+
         {/* Language */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="gap-1.5 rounded-full px-3">
+            <Button variant="ghost" size="sm" className="gap-1.5 rounded-full px-2.5 sm:px-3">
               <currentLang.Icon />
               <span className="hidden text-xs font-medium uppercase sm:inline">{currentLang.code}</span>
             </Button>
@@ -139,7 +138,7 @@ export const Header = ({ onMobileMenu }: HeaderProps) => {
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {/* Wallet pill */}
+        {/* Wallet pill — full from sm up */}
         <button
           onClick={() => navigate("/agency/finance#wallet")}
           className="hidden items-center gap-2 rounded-full border border-border bg-card py-1 ps-1 pe-3 text-sm transition-colors hover:bg-muted/60 sm:flex"
@@ -150,6 +149,17 @@ export const Header = ({ onMobileMenu }: HeaderProps) => {
           <span className="font-semibold text-foreground">{balance.toLocaleString()} MAD</span>
         </button>
 
+        {/* Wallet icon-only — mobile */}
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label="Wallet"
+          onClick={() => navigate("/agency/finance#wallet")}
+          className="h-10 w-10 rounded-full sm:hidden"
+        >
+          <Wallet className="h-5 w-5" />
+        </Button>
+
         {/* Theme + Notifications + Help */}
         <ThemeToggle />
         <NotificationsPopover />
@@ -158,7 +168,7 @@ export const Header = ({ onMobileMenu }: HeaderProps) => {
           size="icon"
           aria-label="Help"
           onClick={() => navigate("/agency/settings#help")}
-          className="rounded-full"
+          className="hidden h-10 w-10 rounded-full sm:inline-flex"
         >
           <HelpCircle className="h-5 w-5" />
         </Button>
