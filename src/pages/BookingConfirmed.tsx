@@ -454,22 +454,36 @@ const BookingConfirmed = () => {
             <CardContent className="p-6 space-y-5">
               <div>
                 <p className="text-xs uppercase tracking-wider text-muted-foreground mb-2">
-                  Your reference
+                  Your Cash Plus reference
                 </p>
-                <div className="flex items-center justify-between gap-3 rounded-lg bg-muted/40 border border-border p-4">
-                  <span className="text-2xl sm:text-3xl font-mono font-bold tracking-widest text-foreground">
-                    {shortRef}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleCopyRef}
-                    className="shrink-0"
-                  >
-                    <Copy className="h-4 w-4 mr-1.5" />
-                    Copy
-                  </Button>
-                </div>
+                {hasVoucher ? (
+                  <div className="flex items-center justify-between gap-3 rounded-lg bg-muted/40 border border-border p-4">
+                    <span className="text-2xl sm:text-3xl font-mono font-bold tracking-widest text-foreground break-all">
+                      {voucherCode}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleCopyRef}
+                      className="shrink-0"
+                    >
+                      <Copy className="h-4 w-4 mr-1.5" />
+                      Copy
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-3 rounded-lg bg-muted/40 border border-dashed border-border p-4">
+                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                    <div className="text-sm text-muted-foreground">
+                      Generating your Cash Plus reference… this usually takes a
+                      few seconds.
+                    </div>
+                  </div>
+                )}
+                <p className="mt-2 text-[11px] text-muted-foreground">
+                  This is the exact code the Cash Plus agent needs. Show it
+                  on your phone or write it down.
+                </p>
               </div>
 
               <div className="grid grid-cols-2 gap-3 text-sm">
@@ -478,8 +492,11 @@ const BookingConfirmed = () => {
                   <p className="font-bold text-foreground text-lg">{cashplusAmount} MAD</p>
                 </div>
                 <div className="rounded-lg bg-muted/30 p-3">
-                  <p className="text-xs text-muted-foreground">Expires in</p>
-                  <p className="font-bold text-foreground text-lg">72 hours</p>
+                  <p className="text-xs text-muted-foreground">Time left to pay</p>
+                  <p className="font-bold text-foreground text-lg flex items-center gap-2">
+                    <span className="inline-flex h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
+                    {countdownLabel}
+                  </p>
                 </div>
               </div>
 
@@ -488,6 +505,7 @@ const BookingConfirmed = () => {
                   variant="outline"
                   onClick={handleShareWhatsApp}
                   className="flex-1"
+                  disabled={!hasVoucher}
                 >
                   <Share2 className="h-4 w-4 mr-2" />
                   Send to WhatsApp
@@ -504,6 +522,18 @@ const BookingConfirmed = () => {
                   </a>
                 </Button>
               </div>
+
+              {!hasVoucher && (
+                <button
+                  type="button"
+                  onClick={handleVerifyNow}
+                  disabled={verifying}
+                  className="text-xs text-muted-foreground hover:text-foreground underline disabled:opacity-50 mx-auto flex items-center gap-1"
+                >
+                  <RefreshCw className="h-3 w-3" />
+                  {verifying ? "Refreshing…" : "I don't see my code — refresh"}
+                </button>
+              )}
             </CardContent>
           </Card>
 
