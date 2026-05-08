@@ -359,7 +359,7 @@ export const Header = memo(() => {
               />
             </div>
             <span
-              className="ms-1 inline-flex items-center rounded-full bg-gradient-to-r from-red-500 via-orange-500 to-yellow-400 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-md ring-1 ring-orange-400/40 md:absolute md:top-full md:left-0 md:ms-0 md:mt-0.5 lg:static lg:ms-1 lg:mt-0"
+              className="ms-1 inline-flex items-center rounded-full bg-gradient-to-r from-red-500 via-orange-500 to-yellow-400 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-md ring-1 ring-orange-400/40"
               aria-label="Beta version"
             >
               Beta
@@ -374,7 +374,7 @@ export const Header = memo(() => {
             <Link to="/affiliate" className="text-foreground hover:text-primary transition-colors font-medium whitespace-nowrap">
               {t('header.affiliate')}
             </Link>
-            <Link to="/#faq" className="text-foreground hover:text-primary transition-colors font-medium whitespace-nowrap">
+            <Link to="/#faq" className="hidden lg:inline-block text-foreground hover:text-primary transition-colors font-medium whitespace-nowrap">
               {t('header.faq')}
             </Link>
             <DropdownMenu>
