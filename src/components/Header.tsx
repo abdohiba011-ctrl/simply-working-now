@@ -384,7 +384,7 @@ export const Header = memo(() => {
                   {t('header.more')}
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-[540px] bg-popover/95 backdrop-blur-sm border shadow-lg z-[200] p-4">
+              <DropdownMenuContent align="center" sideOffset={10} collisionPadding={16} className="relative w-[min(540px,calc(100vw-2rem))] bg-popover/95 backdrop-blur-sm border shadow-lg z-[200] p-4 data-[side=bottom]:before:absolute data-[side=bottom]:before:-top-2 data-[side=bottom]:before:left-1/2 data-[side=bottom]:before:-translate-x-1/2 data-[side=bottom]:before:h-3 data-[side=bottom]:before:w-3 data-[side=bottom]:before:rotate-45 data-[side=bottom]:before:bg-popover/95 data-[side=bottom]:before:border-l data-[side=bottom]:before:border-t data-[side=bottom]:before:border-border">
                 <div className="grid grid-cols-3 gap-3">
                   <Link to="/agencies" className="flex flex-col items-center gap-2 p-3 rounded-lg hover:bg-muted transition-colors group">
                     <Building2 className="h-6 w-6 text-foreground group-hover:scale-110 transition-transform" />
