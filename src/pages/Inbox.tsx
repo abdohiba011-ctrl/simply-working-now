@@ -142,6 +142,8 @@ const Inbox = () => {
           agency_name: ag?.name || "Agency",
           agency_avatar_url: ag?.avatar || null,
           bike_name: b.bikes?.bike_types?.name || "Motorbike",
+          bike_image_url: b.bikes?.bike_types?.main_image_url || null,
+          created_at: b.created_at,
           unread: unreadByBooking.get(b.id) || 0,
           last_at: last?.created_at ?? null,
           last_preview: last
