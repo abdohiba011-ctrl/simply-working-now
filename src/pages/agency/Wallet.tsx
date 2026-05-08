@@ -147,7 +147,7 @@ const Wallet = () => {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Top up wallet</DialogTitle>
-            <DialogDescription>You will be redirected to YouCanPay to complete the payment.</DialogDescription>
+            <DialogDescription>Choose how you'd like to pay.</DialogDescription>
           </DialogHeader>
           <div className="grid gap-3 py-2">
             <Label>Amount (MAD)</Label>
@@ -159,11 +159,41 @@ const Wallet = () => {
                 </Button>
               ))}
             </div>
+            <Label className="pt-2">Payment method</Label>
+            <div className="grid grid-cols-2 gap-2">
+              {([
+                { id: "card" as const, icon: CreditCard, label: "Card", hint: "Instant" },
+                { id: "cashplus" as const, icon: Banknote, label: "CashPlus", hint: "Pay at agent" },
+              ]).map((opt) => {
+                const Icon = opt.icon;
+                const selected = topupMethod === opt.id;
+                return (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => setTopupMethod(opt.id)}
+                    className={`rounded-lg border-2 p-3 text-left transition-colors ${
+                      selected ? "border-primary bg-primary/10" : "border-border hover:border-primary/50"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Icon className="h-4 w-4" />
+                      <span className="text-sm font-semibold">{opt.label}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-0.5">{opt.hint}</p>
+                  </button>
+                );
+              })}
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setTopupOpen(false)} disabled={processing}>Cancel</Button>
             <Button onClick={handleTopup} disabled={processing}>
-              {processing ? "Redirecting…" : `Pay ${amount} MAD`}
+              {processing
+                ? "Redirecting…"
+                : topupMethod === "cashplus"
+                ? `Get voucher · ${amount} MAD`
+                : `Pay ${amount} MAD`}
             </Button>
           </DialogFooter>
         </DialogContent>
