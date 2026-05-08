@@ -669,7 +669,7 @@ const BookingConfirmed = () => {
                 </p>
                 <ol className="list-decimal list-inside text-muted-foreground space-y-1">
                   <li>The agency receives your booking and has 24h to confirm.</li>
-                  <li>You'll be notified by email and in-app message.</li>
+                  <li>You'll be notified by email, in-app message, or WhatsApp.</li>
                   <li>Coordinate pickup details directly with the agency.</li>
                   <li>Pay the rental balance to the agency at pickup.</li>
                 </ol>
@@ -677,11 +677,19 @@ const BookingConfirmed = () => {
             )}
 
             <div className="pt-1">
-              <Button asChild variant="hero" size="lg" className="w-full h-12 text-base font-semibold">
-                <Link to="/inbox">
+              <Button
+                onClick={handleMessageAgency}
+                disabled={isOpeningChat}
+                variant="hero"
+                size="lg"
+                className="w-full h-12 text-base font-semibold"
+              >
+                {isOpeningChat ? (
+                  <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                ) : (
                   <MessageCircle className="h-5 w-5 mr-2" />
-                  Message agency
-                </Link>
+                )}
+                Message agency
               </Button>
             </div>
           </CardContent>
