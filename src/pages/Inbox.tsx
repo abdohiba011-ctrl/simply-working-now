@@ -197,7 +197,11 @@ const Inbox = () => {
                   aria-label="Back"
                   className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted/70 text-foreground hover:bg-muted transition-colors"
                 >
-                  <ChevronLeft className="h-5 w-5" />
+                  {isRTL ? (
+                    <ChevronRight className="h-5 w-5" />
+                  ) : (
+                    <ChevronLeft className="h-5 w-5" />
+                  )}
                 </button>
                 <h1 className="flex-1 text-base font-semibold tracking-tight text-foreground">
                   Messages
@@ -205,12 +209,17 @@ const Inbox = () => {
                 <a
                   href="/"
                   aria-label="Motonita home"
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-full hover:bg-muted/70 transition-colors"
+                  className="inline-flex h-11 w-11 items-center justify-center rounded-xl hover:bg-muted/70 transition-colors"
                 >
                   <img
-                    src="/favicon.svg"
+                    src={motonitaIconForest}
                     alt="Motonita"
-                    className="h-7 w-7 dark:brightness-0 dark:invert"
+                    className="h-8 w-auto block dark:hidden"
+                  />
+                  <img
+                    src={motonitaIconWhite}
+                    alt="Motonita"
+                    className="h-8 w-auto hidden dark:block"
                   />
                 </a>
               </div>
