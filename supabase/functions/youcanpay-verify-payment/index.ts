@@ -254,7 +254,36 @@ Deno.serve(async (req) => {
       providerStatus || "",
     );
 
+    // CashPlus voucher generation can return a provider reference before the
+    // customer has paid in cash. Persist that reference immediately so the UI
+    // can show the exact code the Cash Plus agent needs instead of spinning
+    // until the webhook marks the payment paid.
     if (!isPaid && !isFailed) {
+      if (providerTxn && providerTxn !== payment.transaction_id) {
+        await admin
+          .from("youcanpay_payments")
+          .update({
+            transaction_id: providerTxn,
+            raw_response: providerRaw || payment.raw_response,
+          })
+          .eq("id", payment.id);
+
+        const { data: updated } = await admin
+          .from("youcanpay_payments")
+          .select("*")
+          .eq("id", payment.id)
+          .maybeSingle();
+
+        return new Response(
+          JSON.stringify({
+            status: "pending",
+            provider_status: providerStatus,
+            payment: updated || payment,
+          }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+
       return new Response(
         JSON.stringify({
           status: "pending",
