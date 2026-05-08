@@ -423,9 +423,9 @@ export const Header = memo(() => {
           {/* Right Side Actions */}
           <div className="hidden md:flex items-center gap-4">
             <Select value={language} onValueChange={(value: 'en' | 'fr' | 'ar') => setLanguage(value)}>
-              <SelectTrigger className="w-[120px]" aria-label="Select language">
-                <Globe className="h-4 w-4 ltr:mr-2 rtl:ml-2" aria-hidden="true" />
-                <SelectValue />
+              <SelectTrigger className="w-auto gap-1 px-2" aria-label="Select language">
+                <Globe className="h-4 w-4 ltr:mr-1 rtl:ml-1" aria-hidden="true" />
+                <span className="text-sm font-medium uppercase">{language}</span>
               </SelectTrigger>
               <SelectContent className="bg-popover/95 backdrop-blur-sm border shadow-lg z-[200]">
                 <SelectItem value="en">English</SelectItem>
