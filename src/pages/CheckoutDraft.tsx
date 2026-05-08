@@ -504,11 +504,11 @@ const CheckoutDraft = () => {
   if (!booking) return null;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-x-hidden">
       <Header />
 
-      <div className="container mx-auto px-4 py-6 max-w-6xl">
-        <div className="flex items-center gap-3 mb-6">
+      <div className="container mx-auto px-3 sm:px-4 py-6 max-w-6xl min-w-0">
+        <div className="flex items-center gap-3 mb-6 min-w-0">
           <Button
             variant="ghost"
             size="icon"
@@ -518,8 +518,8 @@ const CheckoutDraft = () => {
           >
             <ChevronLeft className={`h-5 w-5 ${isRTL ? "rotate-180" : ""}`} />
           </Button>
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+          <div className="min-w-0 flex-1">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground break-words">
               Review and pay
             </h1>
             <p className="text-sm text-muted-foreground">
@@ -528,8 +528,8 @@ const CheckoutDraft = () => {
           </div>
         </div>
 
-        <div className="grid lg:grid-cols-5 gap-8">
-          <div className="lg:col-span-3 space-y-6">
+        <div className="grid lg:grid-cols-5 gap-6 lg:gap-8 min-w-0">
+          <div className="lg:col-span-3 space-y-6 min-w-0">
             <Card>
               <CardContent className="p-5">
                 <div className="flex gap-4">
