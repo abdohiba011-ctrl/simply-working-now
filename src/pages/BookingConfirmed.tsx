@@ -545,17 +545,19 @@ const BookingConfirmed = () => {
                 <li>Walk into any Cash Plus agency (over 2,500 across Morocco).</li>
                 <li>
                   Show the reference{" "}
-                  <span className="font-mono font-semibold text-foreground">{shortRef}</span>{" "}
+                  <span className="font-mono font-semibold text-foreground">
+                    {voucherCode || "(generating…)"}
+                  </span>{" "}
                   to the agent and say it's for "Motonita / YouCan Pay".
                 </li>
                 <li>
-                  Pay <span className="font-semibold text-foreground">{cashplusAmount} MAD in cash</span>.
+                  Pay <span className="font-semibold text-foreground">{cashplusAmount} MAD in cash</span>{" "}
+                  within <span className="font-semibold text-foreground">10 minutes</span>.
                   Keep your receipt.
                 </li>
                 <li>
-                  Wait for our confirmation — usually{" "}
-                  <span className="font-semibold text-foreground">1 to 60 minutes</span>{" "}
-                  after the agent processes your payment.
+                  We confirm your bike automatically once Cash Plus reports the
+                  cash was received.
                 </li>
               </ol>
             </CardContent>
@@ -572,30 +574,25 @@ const BookingConfirmed = () => {
                 <li className="flex gap-2">
                   <span className="text-amber-600 mt-0.5">•</span>
                   <span>
+                    You have <span className="font-medium text-foreground">10 minutes</span> to pay
+                    this voucher at Cash Plus. After that, the booking is
+                    automatically cancelled and the bike is released — you'll
+                    need to book again.
+                  </span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-amber-600 mt-0.5">•</span>
+                  <span>
                     Cash Plus agencies are usually <span className="font-medium text-foreground">closed on Sundays</span>{" "}
-                    and may have reduced hours on public holidays. Plan accordingly.
+                    and may have reduced hours on public holidays — pick card
+                    payment instead if you can't reach an agent in time.
                   </span>
                 </li>
                 <li className="flex gap-2">
                   <span className="text-amber-600 mt-0.5">•</span>
                   <span>
-                    Your reference is valid for <span className="font-medium text-foreground">72 hours</span>.
-                    After that, the booking is automatically cancelled and you'll need to start over.
-                  </span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-amber-600 mt-0.5">•</span>
-                  <span>
-                    We confirm bookings <span className="font-medium text-foreground">automatically</span>.
-                    The delay between paying and seeing confirmation depends on Cash Plus's system —
-                    usually a few minutes, sometimes up to an hour.
-                  </span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-amber-600 mt-0.5">•</span>
-                  <span>
-                    Once paid, you can safely close this page. We'll email you the moment
-                    it's confirmed, and you'll be able to message the agency from your bookings.
+                    We confirm bookings <span className="font-medium text-foreground">automatically</span>{" "}
+                    — usually within a minute of the agent processing your payment.
                   </span>
                 </li>
               </ul>
