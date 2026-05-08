@@ -211,10 +211,9 @@ export default function PaymentCashPlus() {
 
         {phase === "awaiting" && (
           <p className="text-muted-foreground mb-6">
-            Take this voucher to any{" "}
+            You have <span className="font-semibold text-foreground">10 minutes</span> to pay this voucher at any{" "}
             <span className="font-semibold text-foreground">CashPlus</span>{" "}
-            agent in Morocco{amountLabel ? ` and pay ${amountLabel}` : ""} in
-            cash. We'll confirm your booking the moment they receive it.
+            agent in Morocco{amountLabel ? ` (${amountLabel})` : ""}. After 10 minutes the booking is automatically cancelled and the bike is released.
           </p>
         )}
 
@@ -228,11 +227,11 @@ export default function PaymentCashPlus() {
                   </div>
                   <div className="flex-1">
                     <p className="text-xs uppercase tracking-wider text-muted-foreground">
-                      Status
+                      Time left to pay
                     </p>
                     <p className="text-base font-semibold text-foreground flex items-center gap-2">
                       <span className="inline-flex h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
-                      Awaiting cash payment at CashPlus
+                      {String(remainingMin).padStart(2, "0")}:{String(remainingSec).padStart(2, "0")} remaining
                     </p>
                   </div>
                 </div>
