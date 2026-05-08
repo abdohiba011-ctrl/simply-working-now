@@ -604,8 +604,8 @@ const CheckoutDraft = () => {
             </Card>
 
             {/* Your info — read-only confirmation, with editable fallback when missing */}
-            <Card>
-              <CardContent className="p-5 space-y-4">
+            <Card className="min-w-0 overflow-hidden">
+              <CardContent className="p-4 sm:p-5 space-y-4 min-w-0">
                 <div>
                   <h3 className="font-semibold text-foreground inline-flex items-center gap-2">
                     Your info
