@@ -359,7 +359,7 @@ export const Header = memo(() => {
               />
             </div>
             <span
-              className="ms-1 inline-flex items-center rounded-full bg-gradient-to-r from-orange-500 via-orange-600 to-red-600 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-md ring-1 ring-orange-400/40"
+              className="ms-1 hidden lg:inline-flex items-center rounded-full bg-gradient-to-r from-orange-500 via-orange-600 to-red-600 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-md ring-1 ring-orange-400/40"
               aria-label="Beta version"
             >
               Beta
@@ -367,14 +367,14 @@ export const Header = memo(() => {
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-6">
-            <Link to="/" className="text-foreground hover:text-primary transition-colors font-medium">
+          <nav className="hidden md:flex items-center gap-4 lg:gap-6 whitespace-nowrap">
+            <Link to="/" className="text-foreground hover:text-primary transition-colors font-medium whitespace-nowrap">
               {t('header.home')}
             </Link>
-            <Link to="/affiliate" className="text-foreground hover:text-primary transition-colors font-medium">
+            <Link to="/affiliate" className="text-foreground hover:text-primary transition-colors font-medium whitespace-nowrap">
               {t('header.affiliate')}
             </Link>
-            <Link to="/#faq" className="text-foreground hover:text-primary transition-colors font-medium">
+            <Link to="/#faq" className="text-foreground hover:text-primary transition-colors font-medium whitespace-nowrap">
               {t('header.faq')}
             </Link>
             <DropdownMenu>
