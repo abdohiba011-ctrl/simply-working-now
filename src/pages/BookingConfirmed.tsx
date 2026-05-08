@@ -190,16 +190,26 @@ const BookingConfirmed = () => {
         .limit(1)
         .maybeSingle();
 
-      const inferredCashplus =
-        !data.payment_method &&
-        ((latestPayment?.method === "cashplus") ||
-          (Number(latestPayment?.amount) === 60 &&
-            latestPayment?.status === "pending" &&
-            !latestPayment?.transaction_id));
+      // Trust the explicit ?payment=card|cashplus param from Checkout. Only
+      // fall back to inference when the renter landed via a deep link with no
+      // payment hint and the bookings row hasn't been written yet.
+      let resolvedMethod: string | null = data.payment_method ?? null;
+      if (!resolvedMethod) {
+        if (explicitMethod) {
+          resolvedMethod = explicitMethod;
+        } else {
+          const inferredCashplus =
+            (latestPayment?.method === "cashplus") ||
+            (Number(latestPayment?.amount) === 60 &&
+              latestPayment?.status === "pending" &&
+              !latestPayment?.transaction_id);
+          if (inferredCashplus) resolvedMethod = "cashplus";
+        }
+      }
 
       const row = {
         ...(data as any),
-        payment_method: inferredCashplus ? "cashplus" : data.payment_method,
+        payment_method: resolvedMethod,
         bike_name: bikeName,
         bike_image: bikeImage,
       };
