@@ -76,8 +76,15 @@ const Bookings = () => {
 
   const updateStatus = (s: string) => {
     setStatus(s);
-    if (s === "all") setSearchParams({});
-    else setSearchParams({ status: s });
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        if (s === "all") next.delete("status");
+        else next.set("status", s);
+        return next;
+      },
+      { replace: true },
+    );
   };
 
   const exportCsv = () => {
