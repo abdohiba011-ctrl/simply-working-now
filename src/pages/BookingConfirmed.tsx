@@ -230,11 +230,13 @@ const BookingConfirmed = () => {
         setPhase("expired");
         return;
       }
-      // Refresh CashPlus voucher reference if YouCan has now returned it.
+      // Refresh CashPlus voucher reference if YouCan has now returned it. If it
+      // is still missing, ask the verify function to look it up and persist it
+      // so the renter is not stuck on "Generating…".
       if (isCashplus) {
         const { data: pay } = await supabase
           .from("youcanpay_payments")
-          .select("transaction_id, created_at")
+          .select("id, transaction_id, created_at")
           .eq("related_booking_id", bookingId)
           .order("created_at", { ascending: false })
           .limit(1)
@@ -242,6 +244,16 @@ const BookingConfirmed = () => {
         if (!cancelled && pay) {
           if (pay.transaction_id) setCashplusReference(pay.transaction_id as string);
           if (pay.created_at) setCashplusStartedAt(pay.created_at as string);
+          if (!pay.transaction_id && pay.id) {
+            const { data: verifyData } = await supabase.functions.invoke(
+              "youcanpay-verify-payment",
+              { body: { payment_id: pay.id } },
+            );
+            const verifiedPayment = (verifyData as any)?.payment;
+            if (!cancelled && verifiedPayment?.transaction_id) {
+              setCashplusReference(verifiedPayment.transaction_id as string);
+            }
+          }
         }
       }
       const e = Date.now() - startedAt.current;
@@ -274,7 +286,7 @@ const BookingConfirmed = () => {
       // Find the latest payment for this booking
       const { data: pay } = await supabase
         .from("youcanpay_payments")
-        .select("id, transaction_id")
+        .select("id, transaction_id, created_at")
         .eq("related_booking_id", bookingId)
         .order("created_at", { ascending: false })
         .limit(1)
@@ -298,7 +310,18 @@ const BookingConfirmed = () => {
         setPhase("confirmed");
         toast.success("Payment confirmed!");
       } else {
-        toast.info("Still pending. Try again in a moment.");
+        const verifiedPayment = (data as any)?.payment;
+        if (verifiedPayment?.transaction_id) {
+          setCashplusReference(verifiedPayment.transaction_id as string);
+          if (verifiedPayment.created_at) setCashplusStartedAt(verifiedPayment.created_at as string);
+          toast.success("Cash Plus reference ready.");
+        } else if (pay.transaction_id) {
+          setCashplusReference(pay.transaction_id as string);
+          if (pay.created_at) setCashplusStartedAt(pay.created_at as string);
+          toast.success("Cash Plus reference ready.");
+        } else {
+          toast.info("Still pending. Try again in a moment.");
+        }
         startedAt.current = Date.now();
         setElapsed(0);
         setPhase("waiting");
