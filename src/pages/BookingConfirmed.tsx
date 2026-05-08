@@ -65,6 +65,13 @@ const BookingConfirmed = () => {
   const [elapsed, setElapsed] = useState(0);
   const [verifying, setVerifying] = useState(false);
   const [isOpeningChat, setIsOpeningChat] = useState(false);
+  // YouCan Pay's actual CashPlus voucher code (e.g. "cp203854361") — this is
+  // the only reference Cash Plus agents recognize. Filled from
+  // youcanpay_payments.transaction_id once YouCan returns it.
+  const [cashplusReference, setCashplusReference] = useState<string | null>(null);
+  const [cashplusStartedAt, setCashplusStartedAt] = useState<string | null>(null);
+  const [bikeSlug, setBikeSlug] = useState<string | null>(null);
+  const [now, setNow] = useState(() => Date.now());
   const startedAt = useRef<number>(Date.now());
 
   const handleMessageAgency = async () => {
