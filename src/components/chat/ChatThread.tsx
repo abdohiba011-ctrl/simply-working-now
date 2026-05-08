@@ -40,6 +40,10 @@ export interface ChatThreadProps {
   counterpartyName: string;
   counterpartySubtitle?: string;
   counterpartyAvatarUrl?: string | null;
+  bikeName?: string;
+  bikeImageUrl?: string | null;
+  bookingCreatedAt?: string;
+  bookingStatus?: string | null;
   onBack?: () => void;
   onRead?: () => void;
   className?: string;
