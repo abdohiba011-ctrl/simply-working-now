@@ -46,12 +46,26 @@ const timeLabel = (iso: string | null) => {
 const Inbox = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const isMobile = useIsMobile();
   const { i18n } = useTranslation();
   const isRTL = i18n.dir() === "rtl";
   const [convs, setConvs] = useState<Conv[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeId, setActiveId] = useState<string | null>(null);
+
+  // Honor ?booking=<id> deep-link from the booking-confirmed page.
+  useEffect(() => {
+    const wanted = searchParams.get("booking");
+    if (!wanted || activeId) return;
+    if (convs.some((c) => c.id === wanted)) {
+      setActiveId(wanted);
+      // Clean the param so back/forward doesn't keep re-selecting it.
+      const next = new URLSearchParams(searchParams);
+      next.delete("booking");
+      setSearchParams(next, { replace: true });
+    }
+  }, [convs, searchParams, activeId, setSearchParams]);
 
   useEffect(() => {
     if (!user) return;
