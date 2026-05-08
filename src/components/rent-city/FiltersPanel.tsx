@@ -390,9 +390,23 @@ export const FiltersPanel = ({
 
       {/* Single-row sticky action bar */}
       <div
-        className="@container flex items-center gap-2 border-t border-border bg-background/95 backdrop-blur px-4 py-3 shrink-0"
+        className={cn(
+          "@container flex items-center gap-2 border-t border-border bg-background/95 backdrop-blur px-4 py-3 shrink-0 transition-all",
+          // On desktop, hide the bar entirely when no filters are active
+          activeFilterCount === 0 && "lg:hidden"
+        )}
         style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom, 0px))" }}
       >
+        {/* Desktop-only: active filter count pill (filters apply live, no Apply button needed) */}
+        <div className="hidden lg:flex items-center gap-2 text-sm font-medium text-foreground">
+          <span className="inline-flex items-center justify-center min-w-7 h-7 px-2 rounded-full bg-primary text-primary-foreground text-xs font-bold">
+            {activeFilterCount}
+          </span>
+          <span className="text-muted-foreground">
+            {activeFilterCount === 1 ? "filter active" : "filters active"}
+          </span>
+        </div>
+
         <Button
           variant="ghost"
           size="sm"
@@ -401,16 +415,18 @@ export const FiltersPanel = ({
           className={cn(
             "h-12 rounded-full gap-1.5 bg-destructive/10 text-destructive hover:bg-destructive hover:text-destructive-foreground active:scale-95 transition-all duration-200",
             "w-12 p-0 justify-center @[260px]:w-auto @[260px]:px-4",
-            activeFilterCount === 0 && "opacity-0 pointer-events-none -ml-1"
+            "lg:ml-auto lg:w-auto lg:px-4",
+            activeFilterCount === 0 && "opacity-0 pointer-events-none -ml-1 lg:hidden"
           )}
         >
           <X className="h-4 w-4 shrink-0" />
-          <span className="hidden @[260px]:inline">Clear all</span>
+          <span className="hidden @[260px]:inline lg:inline">Clear all</span>
         </Button>
 
+        {/* Mobile/tablet Apply CTA — hidden on desktop where filters apply live */}
         <Button
           onClick={onApply}
-          className="ml-auto h-12 px-5 rounded-full font-semibold bg-primary text-primary-foreground hover:bg-primary/90 gap-2 shadow-sm"
+          className="ml-auto h-12 px-5 rounded-full font-semibold bg-primary text-primary-foreground hover:bg-primary/90 gap-2 shadow-sm lg:hidden"
         >
           {activeFilterCount > 0 ? (
             <>
