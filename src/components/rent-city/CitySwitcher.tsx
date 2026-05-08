@@ -7,10 +7,12 @@ import { cityToSlug, slugToCityNameVariants } from "@/lib/citySlug";
 import { cn } from "@/lib/utils";
 import { useIsBelowLg } from "@/hooks/use-mobile";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import {
   Command,
@@ -276,12 +278,15 @@ export const CitySwitcher = ({
   }
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>{trigger}</PopoverTrigger>
-      <PopoverContent align="start" className="w-[min(92vw,320px)] p-0 bg-popover">
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>{trigger}</DialogTrigger>
+      <DialogContent className="w-[min(92vw,420px)] max-h-[85vh] gap-0 overflow-hidden rounded-2xl p-0 bg-popover text-popover-foreground">
+        <DialogHeader className="px-4 pt-4 pb-2 text-left">
+          <DialogTitle className="text-base font-semibold text-foreground">Choose a city</DialogTitle>
+        </DialogHeader>
         {panel}
-      </PopoverContent>
-    </Popover>
+      </DialogContent>
+    </Dialog>
   );
 };
 
