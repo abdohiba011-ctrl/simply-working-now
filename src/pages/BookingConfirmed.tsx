@@ -556,13 +556,10 @@ const BookingConfirmed = () => {
               </div>
             )}
 
-            <div className="flex flex-col sm:flex-row gap-3 pt-1">
-              <Button asChild variant="hero" size="lg" className="flex-1">
-                <Link to="/booking-history">View my bookings</Link>
-              </Button>
-              <Button asChild variant="outline" size="lg" className="flex-1">
+            <div className="pt-1">
+              <Button asChild variant="hero" size="lg" className="w-full h-12 text-base font-semibold">
                 <Link to="/inbox">
-                  <MessageCircle className="h-4 w-4 mr-2" />
+                  <MessageCircle className="h-5 w-5 mr-2" />
                   Message agency
                 </Link>
               </Button>
