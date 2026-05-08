@@ -73,13 +73,13 @@ export const Sidebar = ({ collapsed, onToggle, hideCollapseToggle }: SidebarProp
       <div className="flex h-16 items-center justify-between px-4">
         {!collapsed ? (
           <div className="flex items-center gap-2 min-w-0">
-            <img src={logoLight} alt="Motonita" className="h-6 w-auto dark:hidden" />
-            <img src={logoDark} alt="Motonita" className="hidden h-6 w-auto dark:block" />
+            <img src={logoLight} alt="Motonita" className="h-6 w-auto dark:hidden"  loading="eager" fetchPriority="high"/>
+            <img src={logoDark} alt="Motonita" className="hidden h-6 w-auto dark:block"  loading="eager" fetchPriority="high"/>
           </div>
         ) : (
           <div className="flex w-full items-center justify-center">
-            <img src={markLight} alt="Motonita" className="h-6 w-auto dark:hidden" />
-            <img src={markDark} alt="Motonita" className="hidden h-6 w-auto dark:block" />
+            <img src={markLight} alt="Motonita" className="h-6 w-auto dark:hidden"  loading="eager" fetchPriority="high"/>
+            <img src={markDark} alt="Motonita" className="hidden h-6 w-auto dark:block"  loading="eager" fetchPriority="high"/>
           </div>
         )}
       </div>
