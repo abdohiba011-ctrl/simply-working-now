@@ -215,7 +215,7 @@ export const CitySwitcher = ({
           }}
         >
           <CommandInput placeholder="Search city..." />
-          <CommandList className="max-h-[340px]">
+          <CommandList className="max-h-[340px] [&::-webkit-scrollbar]:hidden [scrollbar-width:none] [-ms-overflow-style:none]">
             {isLoading ? (
               <div className="p-2 space-y-2" role="status" aria-label="Loading cities">
                 {Array.from({ length: 5 }).map((_, i) => (
