@@ -319,7 +319,7 @@ export const Header = memo(() => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo with crossfade transition */}
-          <Link to="/" className="flex items-center gap-2">
+          <Link to="/" className="relative flex items-center gap-2">
             <div className="relative h-10 w-[120px]">
               {/* Shimmer skeleton - visible while loading */}
               {!logoLoaded && (
@@ -359,7 +359,7 @@ export const Header = memo(() => {
               />
             </div>
             <span
-              className="ms-1 hidden lg:inline-flex items-center rounded-full bg-gradient-to-r from-red-500 via-orange-500 to-yellow-400 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-md ring-1 ring-orange-400/40"
+              className="ms-1 inline-flex items-center rounded-full bg-gradient-to-r from-red-500 via-orange-500 to-yellow-400 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-md ring-1 ring-orange-400/40 md:absolute md:top-full md:left-0 md:ms-0 md:mt-0.5 lg:static lg:ms-1 lg:mt-0"
               aria-label="Beta version"
             >
               Beta
