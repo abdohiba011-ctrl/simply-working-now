@@ -272,8 +272,10 @@ export default function PayYouCan() {
               {status === "paying" ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  Processing…
+                  {method === "cashplus" ? "Generating voucher…" : "Processing…"}
                 </>
+              ) : method === "cashplus" ? (
+                <>Generate CashPlus voucher</>
               ) : (
                 <>Pay {amount ? `${amount} ${currency}` : ""}</>
               )}
