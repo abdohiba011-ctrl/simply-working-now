@@ -57,7 +57,7 @@ const LANGS: { code: Language; Icon: FlagIcon; label: string }[] = [
   { code: "ar", Icon: MaFlag, label: "العربية" },
 ];
 
-export const Header = ({ onMobileMenu }: HeaderProps) => {
+export const Header = (_: HeaderProps = {}) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { wallet } = useAgencyWallet();
