@@ -337,7 +337,9 @@ export const Header = memo(() => {
                   logoLoaded ? '' : 'opacity-0'
                 )}
                 onLoad={() => setLogoLoaded(true)}
-                translate="no" 
+                translate="no"
+                loading="eager"
+                fetchPriority="high"
               />
               {/* Dark mode logo */}
               <img 
@@ -351,7 +353,9 @@ export const Header = memo(() => {
                   logoLoaded ? '' : 'opacity-0'
                 )}
                 onLoad={() => setLogoLoaded(true)}
-                translate="no" 
+                translate="no"
+                loading="eager"
+                fetchPriority="high"
               />
             </div>
           </Link>
