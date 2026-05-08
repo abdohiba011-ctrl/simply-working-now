@@ -369,12 +369,48 @@ const BookingConfirmed = () => {
   const remainingSec = Math.floor((remainingMs % 60000) / 1000);
   const countdownLabel = `${String(remainingMin).padStart(2, "0")}:${String(remainingSec).padStart(2, "0")}`;
 
+  const cashplusMapsUrl = "https://www.google.com/maps/search/cashplus";
   const cashplusShareText = hasVoucher
     ? `Motonita booking — pay ${cashplusAmount} MAD at any Cash Plus agency in Morocco.\n` +
       `Reference: ${voucherCode}\n` +
-      `Find an agency: https://www.cashplus.ma/agences`
+      `Find nearest agency: ${cashplusMapsUrl}`
     : `Motonita booking — pay ${cashplusAmount} MAD at any Cash Plus agency in Morocco.\n` +
-      `Find an agency: https://www.cashplus.ma/agences`;
+      `Find nearest agency: ${cashplusMapsUrl}`;
+
+  const handleFindNearestAgency = () => {
+    const fallback = () =>
+      window.open(cashplusMapsUrl, "_blank", "noopener,noreferrer");
+    if (!("geolocation" in navigator)) {
+      fallback();
+      return;
+    }
+    let done = false;
+    const timer = setTimeout(() => {
+      if (done) return;
+      done = true;
+      fallback();
+    }, 4000);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        if (done) return;
+        done = true;
+        clearTimeout(timer);
+        const { latitude, longitude } = pos.coords;
+        window.open(
+          `https://www.google.com/maps/search/cashplus/@${latitude},${longitude},14z`,
+          "_blank",
+          "noopener,noreferrer"
+        );
+      },
+      () => {
+        if (done) return;
+        done = true;
+        clearTimeout(timer);
+        fallback();
+      },
+      { timeout: 4000, maximumAge: 60_000 }
+    );
+  };
 
   const handleCopyRef = async () => {
     if (!voucherCode) return;
