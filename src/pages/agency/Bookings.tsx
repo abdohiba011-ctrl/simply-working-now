@@ -111,62 +111,70 @@ const Bookings = () => {
   return (
     <AgencyLayout>
       <div className="mx-auto max-w-7xl space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="space-y-3">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Bookings</h1>
             <p className="text-sm text-muted-foreground">{bookings.length} total · {filtered.length} shown</p>
           </div>
+
+          {/* Search full-width on mobile */}
+          <div className="relative w-full md:max-w-xs">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Search by name, email, bike…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="h-10 pl-9"
+            />
+          </div>
+
+          {/* Date + Export */}
           <div className="flex items-center gap-2">
-            <div className="relative w-full max-w-xs">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Search by name, email, bike…"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-9"
-              />
-            </div>
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" size="sm" className={cn(!dateRange?.from && "text-muted-foreground")}>
+                <Button variant="outline" size="sm" className={cn("flex-1 md:flex-none", !dateRange?.from && "text-muted-foreground")}>
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {dateLabel}
+                  <span className="truncate">{dateLabel}</span>
                   {dateRange?.from && (
                     <X
-                      className="ml-2 h-3.5 w-3.5 opacity-60 hover:opacity-100"
+                      className="ml-2 h-3.5 w-3.5 shrink-0 opacity-60 hover:opacity-100"
                       onClick={(e) => { e.stopPropagation(); setDateRange(undefined); }}
                     />
                   )}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="end">
+              <PopoverContent className="w-auto p-0" align="start">
                 <Calendar
                   mode="range"
                   selected={dateRange}
                   onSelect={setDateRange}
-                  numberOfMonths={2}
+                  numberOfMonths={1}
                   initialFocus
                   className={cn("p-3 pointer-events-auto")}
                 />
               </PopoverContent>
             </Popover>
-            <Button size="sm" variant="outline" onClick={exportCsv}>
-              <Download className="mr-2 h-4 w-4" /> Export CSV
+            <Button size="sm" variant="outline" onClick={exportCsv} className="shrink-0">
+              <Download className="mr-2 h-4 w-4" /> <span className="hidden sm:inline">Export</span> CSV
             </Button>
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-2">
-          {STATUS_FILTERS.map((f) => (
-            <Button
-              key={f.key}
-              size="sm"
-              variant={status === f.key ? "default" : "outline"}
-              onClick={() => updateStatus(f.key)}
-            >
-              {f.label}
-            </Button>
-          ))}
+        {/* Status filters — scroll horizontally on mobile */}
+        <div className="-mx-3 overflow-x-auto px-3 md:mx-0 md:px-0">
+          <div className="flex gap-2 md:flex-wrap">
+            {STATUS_FILTERS.map((f) => (
+              <Button
+                key={f.key}
+                size="sm"
+                variant={status === f.key ? "default" : "outline"}
+                onClick={() => updateStatus(f.key)}
+                className="shrink-0 whitespace-nowrap"
+              >
+                {f.label}
+              </Button>
+            ))}
+          </div>
         </div>
 
         <Card className="overflow-hidden">
