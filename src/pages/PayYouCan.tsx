@@ -1,9 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, ShieldCheck, Lock, ChevronLeft } from "lucide-react";
+import { Loader2, ShieldCheck, Lock, ChevronLeft, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 
 /**
@@ -23,6 +23,8 @@ import { toast } from "sonner";
  *   success     — path to navigate to on success (relative)
  *   error       — path to navigate to on error (relative)
  *   title       — heading shown above the form
+ *   holder      — cardholder name to prefill in the embedded form
+ *   email       — email to prefill in the embedded form
  */
 
 declare global {
@@ -55,6 +57,84 @@ function loadYcPayScript(): Promise<void> {
   });
 }
 
+/**
+ * After YouCan paints its credit-card form into our div, look for the
+ * cardholder-name and email inputs and seed them with the renter's profile
+ * info so they don't have to retype what we already know. We dispatch native
+ * `input` + `change` events so the SDK's internal state picks the value up.
+ *
+ * Polls for up to ~1.5 s because the SDK paints the form async.
+ */
+function prefillCardForm(holder: string, email: string) {
+  if (!holder && !email) return () => {};
+  const root = document.getElementById("ycpay-form");
+  if (!root) return () => {};
+
+  let done = false;
+  let cancelled = false;
+  const start = Date.now();
+
+  const findInput = (selectors: string[]): HTMLInputElement | null => {
+    for (const sel of selectors) {
+      const el = root.querySelector<HTMLInputElement>(sel);
+      if (el) return el;
+    }
+    return null;
+  };
+
+  const setValue = (input: HTMLInputElement, value: string) => {
+    if (!value) return;
+    // React-style native setter so SDKs that listen on input events update too.
+    const proto = Object.getPrototypeOf(input);
+    const setter = Object.getOwnPropertyDescriptor(proto, "value")?.set;
+    if (setter) setter.call(input, value);
+    else input.value = value;
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+  };
+
+  const tick = () => {
+    if (cancelled || done) return;
+    const nameInput = findInput([
+      'input[name="card_holder_name"]',
+      'input[name="cardholder"]',
+      'input[name="holder_name"]',
+      'input[name*="holder" i]',
+      'input[autocomplete="cc-name"]',
+    ]);
+    const emailInput = findInput([
+      'input[name="card_holder_email"]',
+      'input[name="email"]',
+      'input[type="email"]',
+      'input[autocomplete="email"]',
+    ]);
+
+    if (nameInput && holder) {
+      setValue(nameInput, holder);
+      nameInput.classList.add("bg-muted/50");
+      nameInput.title = "Pre-filled from your Motonita account";
+    }
+    if (emailInput && email) {
+      setValue(emailInput, email);
+      emailInput.classList.add("bg-muted/50");
+      emailInput.title = "Pre-filled from your Motonita account";
+    }
+
+    if ((nameInput || !holder) && (emailInput || !email)) {
+      done = true;
+      return;
+    }
+    if (Date.now() - start < 1500) {
+      setTimeout(tick, 100);
+    }
+  };
+  tick();
+
+  return () => {
+    cancelled = true;
+  };
+}
+
 export default function PayYouCan() {
   const [params] = useSearchParams();
   const navigate = useNavigate();
@@ -69,68 +149,104 @@ export default function PayYouCan() {
   const errorPath = params.get("error") || "/";
   const title = params.get("title") || "Complete payment";
   const method = (params.get("method") || "card") as "card" | "cashplus";
+  const holder = params.get("holder") || "";
+  const email = params.get("email") || "";
 
   const [status, setStatus] = useState<"loading" | "ready" | "paying" | "error">(
     "loading",
   );
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [initNonce, setInitNonce] = useState(0);
   const ycRef = useRef<any>(null);
+  const initStartedRef = useRef(false);
+  const payingRef = useRef(false);
 
-  useEffect(() => {
+  const initForm = useCallback(async () => {
+    if (initStartedRef.current) return;
+    initStartedRef.current = true;
     let cancelled = false;
-    (async () => {
+
+    const cleanupContainer = () => {
+      const node = document.getElementById("ycpay-form");
+      if (node) node.innerHTML = "";
+    };
+
+    try {
       if (!token || !pubKey) {
         setStatus("error");
         setErrorMsg("Missing payment token. Please try again.");
         return;
       }
+      // Always start from a clean container — guards against StrictMode
+      // double-mount and React Router quick re-navigation duplicating the form.
+      cleanupContainer();
+
+      await loadYcPayScript();
+      if (cancelled) return;
+
+      const yc = new window.YCPay(pubKey, {
+        formContainer: "#ycpay-form",
+        errorContainer: "#ycpay-error",
+        locale: "en",
+        isSandbox,
+        token,
+        // Honored by some SDK builds; ignored otherwise.
+        customer: { name: holder || undefined, email: email || undefined },
+      });
+
       try {
-        await loadYcPayScript();
-        if (cancelled) return;
-        const yc = new window.YCPay(pubKey, {
-          formContainer: "#ycpay-form",
-          errorContainer: "#ycpay-error",
-          locale: "en",
-          isSandbox,
-          token,
-        });
-        // Render ONLY the gateway the user selected on Checkout. Mixing both
-        // here would let a renter who picked "Card" submit a CashPlus voucher
-        // (or vice-versa), and then we'd send them to the wrong wait page.
-        try {
-          if (method === "cashplus") {
-            // YouCan exposes the CashPlus form via `renderCashPlusForm`
-            // (some SDK builds also accept a gateway-name on
-            // renderAvailableGateways). We try the dedicated method first.
-            if (typeof yc.renderCashPlusForm === "function") {
-              yc.renderCashPlusForm("default");
-            } else {
-              yc.renderAvailableGateways(["cashplus"], "default");
-            }
+        if (method === "cashplus") {
+          if (typeof yc.renderCashPlusForm === "function") {
+            yc.renderCashPlusForm("default");
           } else {
-            yc.renderCreditCardForm("default");
+            yc.renderAvailableGateways(["cashplus"], "default");
           }
-        } catch (gatewayErr) {
-          // Last-resort fallback so the user is never blocked.
-          console.warn("YouCan gateway render fallback", gatewayErr);
-          yc.renderAvailableGateways([], "default");
+        } else {
+          yc.renderCreditCardForm("default");
         }
-        ycRef.current = yc;
-        setStatus("ready");
-      } catch (e: any) {
-        console.error("YouCan Pay init failed", e);
-        setStatus("error");
-        setErrorMsg(e?.message || "Could not load the payment form.");
+      } catch (gatewayErr) {
+        console.warn("YouCan gateway render fallback", gatewayErr);
+        yc.renderAvailableGateways([], "default");
       }
-    })();
+
+      ycRef.current = yc;
+      setStatus("ready");
+
+      if (method === "card") {
+        // Fire-and-forget; safe even if no inputs are found.
+        prefillCardForm(holder, email);
+      }
+    } catch (e: any) {
+      console.error("YouCan Pay init failed", e);
+      setStatus("error");
+      setErrorMsg(e?.message || "We couldn't load the payment form.");
+    }
+
     return () => {
       cancelled = true;
     };
-  }, [token, pubKey, isSandbox, method]);
+  }, [token, pubKey, isSandbox, method, holder, email]);
+
+  useEffect(() => {
+    initForm();
+    return () => {
+      // Tear down so a remount (StrictMode, hot reload, route change) starts
+      // from a clean slate — no duplicate cardholder/expiry/CVV blocks.
+      initStartedRef.current = false;
+      try {
+        ycRef.current?.destroy?.();
+      } catch {
+        /* ignore */
+      }
+      ycRef.current = null;
+      const node = document.getElementById("ycpay-form");
+      if (node) node.innerHTML = "";
+    };
+    // initNonce lets the Retry button re-run init.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token, pubKey, isSandbox, method, initNonce]);
 
   const buildStatusUrl = (outcome: "success" | "error", transactionId?: string) => {
-    // CashPlus -> dedicated voucher waiting page (open-ended, friendly).
-    // Card     -> generic /payment-status page (30s poll, expects fast confirm).
     const base = method === "cashplus" ? "/payment-cashplus" : "/payment-status";
     const qs = new URLSearchParams({
       pid,
@@ -146,6 +262,10 @@ export default function PayYouCan() {
   const handlePay = () => {
     const yc = ycRef.current;
     if (!yc) return;
+    // Synchronous double-click guard. setStatus is async, so a fast double
+    // click could fire two yc.pay() calls before React repaints "paying".
+    if (payingRef.current || status !== "ready") return;
+    payingRef.current = true;
     setStatus("paying");
     yc.pay(token)
       .then((response: any) => {
@@ -155,7 +275,6 @@ export default function PayYouCan() {
           toast.success("Payment submitted");
         }
         const transactionId = getYouCanTransactionId(response);
-        // Don't trust the client outcome — let the wait page poll the webhook.
         navigate(buildStatusUrl("success", transactionId), { replace: true });
       })
       .catch((err: any) => {
@@ -166,12 +285,19 @@ export default function PayYouCan() {
             : err?.message || "Payment failed. Please try again.";
         toast.error(message);
         navigate(buildStatusUrl("error"), { replace: true });
+      })
+      .finally(() => {
+        payingRef.current = false;
       });
   };
 
-  // Hide the renter Header when this payment was initiated from the agency
-  // dashboard (success path lives under /agency/...). This keeps agencies
-  // visually inside the agency context during top-up.
+  const handleRetryInit = () => {
+    setStatus("loading");
+    setErrorMsg(null);
+    initStartedRef.current = false;
+    setInitNonce((n) => n + 1);
+  };
+
   const isAgencyContext = (successPath || "").startsWith("/agency");
 
   return (
@@ -239,6 +365,14 @@ export default function PayYouCan() {
                       Payments are processed via 3D Secure where required.
                     </span>
                   </li>
+                  {(holder || email) && (
+                    <li className="flex items-start gap-2">
+                      <ShieldCheck className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                      <span>
+                        Cardholder name and email are pre-filled from your Motonita account. You only need to enter your card number, expiry date and CVV.
+                      </span>
+                    </li>
+                  )}
                 </>
               )}
             </ul>
@@ -246,6 +380,7 @@ export default function PayYouCan() {
             <div id="ycpay-error" className="text-sm text-destructive" />
             <div
               id="ycpay-form"
+              key={`ycform-${initNonce}`}
               className="min-h-[220px] rounded-lg border border-border p-3 bg-muted/30"
             />
 
@@ -257,8 +392,12 @@ export default function PayYouCan() {
             )}
 
             {status === "error" && (
-              <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">
-                {errorMsg}
+              <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive space-y-2">
+                <p>{errorMsg}</p>
+                <Button size="sm" variant="outline" onClick={handleRetryInit}>
+                  <RefreshCw className="h-4 w-4 mr-1.5" />
+                  Retry
+                </Button>
               </div>
             )}
 
