@@ -40,14 +40,17 @@ import {
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { MotorbikeWizardDialog } from "@/components/agency/MotorbikeWizardDialog";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 type View = "grid" | "table";
 type Tab = "active" | "archived";
 
 const Motorbikes = () => {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [searchParams, setSearchParams] = useSearchParams();
-  const view = (searchParams.get("view") as View) || "grid";
+  const viewParam = (searchParams.get("view") as View) || "grid";
+  const view: View = isMobile ? "grid" : viewParam;
   const tab = (searchParams.get("tab") as Tab) || "active";
   const [search, setSearch] = useState("");
   const { bikes, loading, refresh } = useAgencyBikes({ archived: tab === "archived" });
