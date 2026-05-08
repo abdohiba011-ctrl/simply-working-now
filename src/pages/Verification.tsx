@@ -15,8 +15,6 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { toast } from "sonner";
 import { compressImage, validateImageFile, formatFileSize } from "@/lib/imageCompression";
 import { safeGetItem } from "@/lib/safeStorage";
-import { Header } from "@/components/Header";
-import { Footer } from "@/components/Footer";
 import idVerificationGuide from "@/assets/id-verification-guide.png";
 import { 
   Upload, 
@@ -645,11 +643,9 @@ const Verification = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
-        <Header />
         <main className="container max-w-lg mx-auto px-4 py-8">
           <VerificationSkeleton />
         </main>
-        <Footer />
       </div>
     );
   }
@@ -657,7 +653,6 @@ const Verification = () => {
   if (verificationStatus === 'pending_review') {
     return (
       <div className="min-h-screen bg-background">
-        <Header />
         <main className="container max-w-lg mx-auto px-4 py-12">
           <Card className="bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800">
             <CardHeader className="text-center">
@@ -701,14 +696,12 @@ const Verification = () => {
             </CardContent>
           </Card>
         </main>
-        <Footer />
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
       <main className="container max-w-lg mx-auto px-4 py-8">
         <Card>
           <CardHeader className="text-center">
@@ -924,7 +917,6 @@ const Verification = () => {
           </CardContent>
         </Card>
       </main>
-      <Footer />
     </div>
   );
 };
