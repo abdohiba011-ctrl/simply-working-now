@@ -144,7 +144,6 @@ const BookingConfirmed = () => {
       }
       let bikeName: string | null = null;
       let bikeImage: string | null = null;
-      let slug: string | null = null;
       if (data.bike_id) {
         const { data: bikeRow } = await supabase
           .from("bikes_public" as any)
