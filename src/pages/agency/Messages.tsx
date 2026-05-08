@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { AgencyLayout } from "@/components/agency/AgencyLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -8,7 +9,7 @@ import { ChatThread } from "@/components/chat/ChatThread";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { format, isToday, isYesterday } from "date-fns";
 import { cn } from "@/lib/utils";
-import { Loader2, MessageCircle, Search } from "lucide-react";
+import { Loader2, MessageCircle, Search, ChevronLeft } from "lucide-react";
 
 interface Conv {
   id: string;
@@ -43,6 +44,7 @@ const timeLabel = (iso: string | null) => {
 const Messages = () => {
   const { user } = useAuth();
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
   const [convs, setConvs] = useState<Conv[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -142,8 +144,15 @@ const Messages = () => {
 
   return (
     <AgencyLayout>
-      <div className="-mx-3 -mt-2 -mb-20 h-[calc(100dvh-4rem-5rem)] px-2 pb-2 sm:px-3 lg:-mx-6 lg:-mb-8 lg:h-[calc(100dvh-4.5rem)] lg:px-4 lg:pb-4">
-        <div className="flex h-full overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+      <div className={cn(
+        isMobile
+          ? "fixed inset-0 z-50 flex flex-col bg-background"
+          : "-mx-3 -mt-2 -mb-20 h-[calc(100dvh-4rem-5rem)] px-2 pb-2 sm:px-3 lg:-mx-6 lg:-mb-8 lg:h-[calc(100dvh-4.5rem)] lg:px-4 lg:pb-4",
+      )}>
+        <div className={cn(
+          "flex overflow-hidden bg-card",
+          isMobile ? "h-full w-full" : "h-full rounded-2xl border border-border shadow-sm",
+        )}>
           {showList && (
             <aside
               className={cn(
@@ -151,8 +160,19 @@ const Messages = () => {
                 isMobile ? "w-full" : "w-[340px] shrink-0 border-r lg:w-[360px]"
               )}
             >
-              <div className="space-y-2.5 border-b border-border px-4 py-4">
-                <h1 className="text-lg font-semibold tracking-tight text-foreground">Messages</h1>
+              <div className="flex items-center gap-2 border-b border-border px-2 py-3 sm:px-4 sm:py-4">
+                {isMobile && (
+                  <button
+                    onClick={() => navigate("/agency/dashboard")}
+                    className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-muted"
+                    aria-label="Back"
+                  >
+                    <ChevronLeft className="h-5 w-5" />
+                  </button>
+                )}
+                <h1 className="flex-1 text-lg font-semibold tracking-tight text-foreground">Messages</h1>
+              </div>
+              <div className="space-y-2.5 border-b border-border px-4 py-3">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
                   <Input

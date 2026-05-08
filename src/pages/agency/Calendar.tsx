@@ -35,14 +35,14 @@ const Calendar = () => {
 
   return (
     <AgencyLayout>
-      <div className="mx-auto max-w-7xl space-y-4">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold tracking-tight">Calendar</h1>
+      <div className="mx-auto max-w-7xl space-y-3 overflow-x-hidden">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <h1 className="text-xl font-bold tracking-tight sm:text-2xl">Calendar</h1>
           <div className="flex items-center gap-2">
             <Button size="icon" variant="outline" onClick={() => setMonth((m) => subMonths(m, 1))}>
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <span className="min-w-32 text-center font-medium">{format(month, "MMMM yyyy")}</span>
+            <span className="flex-1 min-w-28 text-center text-sm font-medium sm:min-w-32 sm:text-base">{format(month, "MMMM yyyy")}</span>
             <Button size="icon" variant="outline" onClick={() => setMonth((m) => addMonths(m, 1))}>
               <ChevronRight className="h-4 w-4" />
             </Button>
@@ -50,15 +50,20 @@ const Calendar = () => {
           </div>
         </div>
 
-        <Card className="overflow-hidden p-4">
+        <Card className="overflow-hidden p-2 sm:p-4">
           {loading ? (
             <div className="py-16 text-center text-sm text-muted-foreground">Loading…</div>
           ) : (
             <>
-              <div className="mb-2 grid grid-cols-7 gap-1 text-center text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => <div key={d}>{d}</div>)}
+              <div className="mb-1.5 grid grid-cols-7 gap-0.5 text-center text-[10px] font-medium uppercase tracking-wider text-muted-foreground sm:gap-1 sm:text-xs">
+                {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => (
+                  <div key={d}>
+                    <span className="sm:hidden">{d[0]}</span>
+                    <span className="hidden sm:inline">{d}</span>
+                  </div>
+                ))}
               </div>
-              <div className="grid grid-cols-7 gap-1">
+              <div className="grid grid-cols-7 gap-0.5 sm:gap-1">
                 {days.map((d) => {
                   const key = format(d, "yyyy-MM-dd");
                   const events = eventsByDay[key] || [];
@@ -67,24 +72,24 @@ const Calendar = () => {
                     <div
                       key={key}
                       className={cn(
-                        "min-h-24 rounded-lg border border-border p-1.5 text-xs",
+                        "min-h-14 rounded-md border border-border p-1 text-[10px] sm:min-h-24 sm:rounded-lg sm:p-1.5 sm:text-xs",
                         !inMonth && "opacity-40",
                         isSameDay(d, new Date()) && "border-primary bg-primary/5",
                       )}
                     >
                       <div className="font-medium">{format(d, "d")}</div>
-                      <div className="mt-1 space-y-0.5">
+                      <div className="mt-0.5 space-y-0.5 sm:mt-1">
                         {events.slice(0, 2).map((e, i) => (
                           <button
                             key={i}
                             onClick={() => navigate(`/agency/bookings/${e.id}`)}
-                            className="block w-full truncate rounded bg-primary/15 px-1 text-left text-[10px] text-foreground hover:bg-primary/25"
+                            className="block w-full truncate rounded bg-primary/15 px-1 text-left text-[9px] text-foreground hover:bg-primary/25 sm:text-[10px]"
                           >
                             {e.customer_name || "Booking"}
                           </button>
                         ))}
                         {events.length > 2 && (
-                          <div className="text-[10px] text-muted-foreground">+{events.length - 2} more</div>
+                          <div className="text-[9px] text-muted-foreground sm:text-[10px]">+{events.length - 2}</div>
                         )}
                       </div>
                     </div>

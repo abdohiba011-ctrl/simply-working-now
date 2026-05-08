@@ -11,7 +11,15 @@ import {
   Clock,
   AlertTriangle,
   Archive,
+  MoreVertical,
+  Eye,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useAgencyBike } from "@/hooks/useAgencyData";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -243,21 +251,26 @@ const MotorbikeDetail = () => {
     <AgencyLayout>
       <div className="mx-auto max-w-6xl space-y-3">
         {/* Sticky header */}
-        <div className="sticky top-0 z-20 -mx-4 flex items-center gap-2 border-b border-border bg-background/95 h-10 backdrop-blur sm:mx-0 sm:rounded-md sm:border sm:px-3 my-0 py-[28px] px-[8px]">
+        <div className="sticky top-0 z-20 -mx-4 flex items-center gap-1.5 border-b border-border bg-background/95 h-10 backdrop-blur sm:mx-0 sm:gap-2 sm:rounded-md sm:border sm:px-3 my-0 py-[28px] px-[8px]">
           <button
             onClick={() => navigate("/agency/motorbikes")}
-            className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+            className="inline-flex shrink-0 items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+            aria-label="Back"
           >
-            <ChevronLeft className="h-4 w-4" /> Back
+            <ChevronLeft className="h-4 w-4" />
+            <span className="hidden sm:inline">Back</span>
           </button>
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
               <h1 className="truncate text-sm font-bold sm:text-base">{bike.name}</h1>
-              <BikeApprovalBadge bike={bike} />
+              <span className="hidden sm:inline-flex"><BikeApprovalBadge bike={bike} /></span>
             </div>
           </div>
-          <div className="flex items-center gap-1.5 mr-2">
-            <span className="text-[11px] text-muted-foreground">Available</span>
+          <div className="flex shrink-0 items-center gap-1.5">
+            <span className="text-[11px] text-muted-foreground">
+              <span className="sm:hidden">Live</span>
+              <span className="hidden sm:inline">Available</span>
+            </span>
             <Switch
               checked={available}
               onCheckedChange={toggleAvailability}
@@ -265,19 +278,40 @@ const MotorbikeDetail = () => {
               aria-label="Toggle availability"
             />
           </div>
-          <Button variant="outline" size="sm" className="gap-1" onClick={() => window.open(`/bikes/${bike.id}`, "_blank")}>
+          {/* Desktop: Preview + Edit + Archive inline */}
+          <Button variant="outline" size="sm" className="hidden gap-1 sm:inline-flex" onClick={() => window.open(`/bikes/${bike.id}`, "_blank")}>
             <ExternalLink className="h-4 w-4" />
           </Button>
           <Button size="sm" onClick={() => setEditOpen(true)}>Edit</Button>
           <Button
             variant="outline"
             size="sm"
-            className="gap-1 border-destructive/40 text-destructive hover:bg-destructive/10"
+            className="hidden gap-1 border-destructive/40 text-destructive hover:bg-destructive/10 sm:inline-flex"
             onClick={() => setArchiveOpen(true)}
             disabled={busy}
           >
             <Archive className="h-4 w-4" />
           </Button>
+          {/* Mobile: 3-dot menu */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="shrink-0 px-2 sm:hidden" aria-label="More actions">
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-44">
+              <DropdownMenuItem onClick={() => window.open(`/bikes/${bike.id}`, "_blank")}>
+                <Eye className="mr-2 h-4 w-4" /> Preview
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="text-destructive focus:text-destructive"
+                onClick={() => setArchiveOpen(true)}
+                disabled={busy}
+              >
+                <Archive className="mr-2 h-4 w-4" /> Archive
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         {/* Status banners (compact) */}

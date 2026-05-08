@@ -1,13 +1,19 @@
 import { useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { format, parseISO, isWithinInterval, startOfDay, endOfDay } from "date-fns";
-import { Search, Inbox, Download, CalendarIcon, X } from "lucide-react";
+import { Search, Inbox, Download, CalendarIcon, X, MoreHorizontal } from "lucide-react";
 import { AgencyLayout } from "@/components/agency/AgencyLayout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
@@ -143,7 +149,7 @@ const Bookings = () => {
                   )}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
+              <PopoverContent className="w-[min(92vw,340px)] p-0" align="start" sideOffset={8}>
                 <Calendar
                   mode="range"
                   selected={dateRange}
@@ -160,22 +166,68 @@ const Bookings = () => {
           </div>
         </div>
 
-        {/* Status filters — scroll horizontally on mobile */}
-        <div className="-mx-3 overflow-x-auto px-3 md:mx-0 md:px-0">
-          <div className="flex gap-2 md:flex-wrap">
-            {STATUS_FILTERS.map((f) => (
-              <Button
-                key={f.key}
-                size="sm"
-                variant={status === f.key ? "default" : "outline"}
-                onClick={() => updateStatus(f.key)}
-                className="shrink-0 whitespace-nowrap"
-              >
-                {f.label}
-              </Button>
-            ))}
-          </div>
-        </div>
+        {/* Status filters: mobile = 3 chips + More dropdown; desktop = wrap */}
+        {(() => {
+          const PRIMARY_KEYS = ["all", "pending", "confirmed"];
+          const primary = STATUS_FILTERS.filter((f) => PRIMARY_KEYS.includes(f.key));
+          const overflow = STATUS_FILTERS.filter((f) => !PRIMARY_KEYS.includes(f.key));
+          const overflowActive = overflow.find((f) => f.key === status);
+          return (
+            <>
+              {/* Mobile */}
+              <div className="flex flex-wrap items-center gap-2 md:hidden">
+                {primary.map((f) => (
+                  <Button
+                    key={f.key}
+                    size="sm"
+                    variant={status === f.key ? "default" : "outline"}
+                    onClick={() => updateStatus(f.key)}
+                    className="shrink-0 whitespace-nowrap"
+                  >
+                    {f.label}
+                  </Button>
+                ))}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      size="sm"
+                      variant={overflowActive ? "default" : "outline"}
+                      className="shrink-0 gap-1"
+                    >
+                      {overflowActive ? overflowActive.label : "More"}
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-44">
+                    {overflow.map((f) => (
+                      <DropdownMenuItem
+                        key={f.key}
+                        onClick={() => updateStatus(f.key)}
+                        className={cn(status === f.key && "bg-muted font-semibold")}
+                      >
+                        {f.label}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+              {/* Desktop */}
+              <div className="hidden md:flex md:flex-wrap md:gap-2">
+                {STATUS_FILTERS.map((f) => (
+                  <Button
+                    key={f.key}
+                    size="sm"
+                    variant={status === f.key ? "default" : "outline"}
+                    onClick={() => updateStatus(f.key)}
+                    className="shrink-0 whitespace-nowrap"
+                  >
+                    {f.label}
+                  </Button>
+                ))}
+              </div>
+            </>
+          );
+        })()}
 
         {loading ? (
           <Card><div className="py-16 text-center text-sm text-muted-foreground">Loading bookings…</div></Card>
