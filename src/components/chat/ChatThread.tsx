@@ -100,6 +100,28 @@ export const ChatThread = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  // 24h agency response countdown (only meaningful for pending bookings)
+  const isPending = (bookingStatus || "").toLowerCase() === "pending";
+  const deadlineMs = useMemo(
+    () => (bookingCreatedAt ? new Date(bookingCreatedAt).getTime() + 24 * 60 * 60 * 1000 : null),
+    [bookingCreatedAt]
+  );
+  const [nowMs, setNowMs] = useState(() => Date.now());
+  useEffect(() => {
+    if (!isPending || !deadlineMs) return;
+    const id = setInterval(() => setNowMs(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [isPending, deadlineMs]);
+  const remainingMs = deadlineMs ? deadlineMs - nowMs : 0;
+  const expired = remainingMs <= 0;
+  const fmtRemaining = () => {
+    const s = Math.max(0, Math.floor(remainingMs / 1000));
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    const sec = s % 60;
+    return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
+  };
+
   // Renter verification gate state
   type VerifStatus = "verified" | "pending_review" | "not_started" | "rejected";
   const [verifStatus, setVerifStatus] = useState<VerifStatus | null>(null);
