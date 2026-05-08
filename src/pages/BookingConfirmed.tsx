@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -61,6 +61,10 @@ type Phase = "waiting" | "confirmed" | "timeout" | "expired";
 const BookingConfirmed = () => {
   const { bookingId } = useParams<{ bookingId: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const paymentParam = (searchParams.get("payment") || "").toLowerCase();
+  const explicitMethod: "card" | "cashplus" | null =
+    paymentParam === "card" ? "card" : paymentParam === "cashplus" ? "cashplus" : null;
   const [booking, setBooking] = useState<BookingRow | null>(null);
   const [loading, setLoading] = useState(true);
   const [phase, setPhase] = useState<Phase>("waiting");
@@ -186,16 +190,26 @@ const BookingConfirmed = () => {
         .limit(1)
         .maybeSingle();
 
-      const inferredCashplus =
-        !data.payment_method &&
-        ((latestPayment?.method === "cashplus") ||
-          (Number(latestPayment?.amount) === 60 &&
-            latestPayment?.status === "pending" &&
-            !latestPayment?.transaction_id));
+      // Trust the explicit ?payment=card|cashplus param from Checkout. Only
+      // fall back to inference when the renter landed via a deep link with no
+      // payment hint and the bookings row hasn't been written yet.
+      let resolvedMethod: string | null = data.payment_method ?? null;
+      if (!resolvedMethod) {
+        if (explicitMethod) {
+          resolvedMethod = explicitMethod;
+        } else {
+          const inferredCashplus =
+            (latestPayment?.method === "cashplus") ||
+            (Number(latestPayment?.amount) === 60 &&
+              latestPayment?.status === "pending" &&
+              !latestPayment?.transaction_id);
+          if (inferredCashplus) resolvedMethod = "cashplus";
+        }
+      }
 
       const row = {
         ...(data as any),
-        payment_method: inferredCashplus ? "cashplus" : data.payment_method,
+        payment_method: resolvedMethod,
         bike_name: bikeName,
         bike_image: bikeImage,
       };
@@ -219,7 +233,12 @@ const BookingConfirmed = () => {
     load();
   }, [bookingId, navigate]);
 
-  const isCashplus = booking?.payment_method === "cashplus";
+  const isCashplus =
+    explicitMethod === "card"
+      ? false
+      : explicitMethod === "cashplus"
+        ? true
+        : booking?.payment_method === "cashplus";
 
   // Poll for payment_status (and refresh CashPlus voucher reference)
   useEffect(() => {
