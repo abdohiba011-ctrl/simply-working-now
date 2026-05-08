@@ -312,13 +312,7 @@ export const HeroSection = memo(() => {
                     .sort((a, b) => a.localeCompare(b))
                     .map((c) => (
                       <SelectItem key={c} value={c}>
-                        <span className="flex items-center justify-between gap-3 w-full">
-                          <span>{c}</span>
-                          <span className="inline-flex items-center gap-1 rounded-full bg-[#9FE870]/30 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#163300]">
-                            <span className="h-1.5 w-1.5 rounded-full bg-[#163300]" />
-                            Available
-                          </span>
-                        </span>
+                        <span>{c}</span>
                       </SelectItem>
                     ))}
                   {[...comingSoonCities]

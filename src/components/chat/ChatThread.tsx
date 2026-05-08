@@ -19,6 +19,7 @@ import {
   BadgeCheck,
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { VerificationDialog } from "@/components/verification/VerificationDialog";
 import { cn } from "@/lib/utils";
 import { format, isToday, isYesterday } from "date-fns";
 import { toast } from "sonner";
@@ -91,49 +92,52 @@ export const ChatThread = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Renter verification banner state
-  const [isVerified, setIsVerified] = useState<boolean | null>(null);
-  const [verifyDismissed, setVerifyDismissed] = useState<boolean>(() => {
-    try {
-      return sessionStorage.getItem(`verifyBannerDismissed:${bookingId}`) === "1";
-    } catch {
-      return false;
-    }
-  });
+  // Renter verification gate state
+  type VerifStatus = "verified" | "pending_review" | "not_started" | "rejected";
+  const [verifStatus, setVerifStatus] = useState<VerifStatus | null>(null);
+  const [verifyDialogOpen, setVerifyDialogOpen] = useState(false);
 
   useEffect(() => {
     if (viewerRole !== "renter" || !user) {
-      setIsVerified(true);
+      setVerifStatus("verified");
       return;
     }
     let cancelled = false;
-    (async () => {
+    const load = async () => {
       const { data } = await supabase
         .from("profiles")
         .select("is_verified, verification_status")
         .eq("user_id", user.id)
         .maybeSingle();
       if (cancelled) return;
-      const verified =
-        !!data?.is_verified ||
-        ["verified", "approved"].includes(String(data?.verification_status || ""));
-      setIsVerified(verified);
-    })();
+      const raw = String(data?.verification_status || "not_started");
+      const isApproved =
+        !!data?.is_verified || raw === "verified" || raw === "approved";
+      if (isApproved) setVerifStatus("verified");
+      else if (raw === "pending_review") setVerifStatus("pending_review");
+      else if (raw === "rejected") setVerifStatus("rejected");
+      else setVerifStatus("not_started");
+    };
+    load();
+
+    // Realtime: auto-unblock once admin verifies
+    const channel = supabase
+      .channel(`profile-verif-${user.id}`)
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "profiles", filter: `user_id=eq.${user.id}` },
+        () => load(),
+      )
+      .subscribe();
+
     return () => {
       cancelled = true;
+      supabase.removeChannel(channel);
     };
   }, [user, viewerRole]);
 
-  const dismissVerifyBanner = () => {
-    try {
-      sessionStorage.setItem(`verifyBannerDismissed:${bookingId}`, "1");
-    } catch {
-      /* ignore */
-    }
-    setVerifyDismissed(true);
-  };
-  const showVerifyBanner =
-    viewerRole === "renter" && isVerified === false && !verifyDismissed;
+  const isRenterBlocked =
+    viewerRole === "renter" && verifStatus !== null && verifStatus !== "verified";
 
   // Auto-scroll to bottom on new messages
   useEffect(() => {
@@ -351,34 +355,7 @@ export const ChatThread = ({
         </div>
       </div>
 
-      {/* Renter verification banner */}
-      {showVerifyBanner && (
-        <div className="shrink-0 border-b border-amber-500/30 bg-amber-50 dark:bg-amber-900/20 px-3 py-3 sm:px-4">
-          <div className="mx-auto flex max-w-3xl flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-start gap-2 text-sm text-amber-900 dark:text-amber-100">
-              <BadgeCheck className="mt-0.5 h-4 w-4 shrink-0" />
-              <div>
-                <p className="font-semibold">Verify your identity</p>
-                <p className="text-xs opacity-90">
-                  Upload your ID and license to help the agency prepare for your pickup.
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button asChild size="sm" variant="hero">
-                <Link to="/verification">Upload ID</Link>
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={dismissVerifyBanner}
-              >
-                Later
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Renter verification gate handled at composer level */}
 
       {/* Messages */}
       <div
@@ -520,93 +497,140 @@ export const ChatThread = ({
         )}
       </div>
 
-      {/* Composer */}
-      <div className="shrink-0 border-t border-border bg-card px-3 py-2 sm:px-6 sm:py-3">
-        <div className="mx-auto max-w-3xl">
-        {pending.length > 0 && (
-          <div className="mb-2 flex flex-wrap gap-2">
-            {pending.map((p, i) => (
-              <div
-                key={i}
-                className="relative flex items-center gap-2 rounded-md border border-[#E0E0E0] bg-[#FAFAFA] p-1.5 pr-7"
-              >
-                {p.previewUrl ? (
-                  <img
-                    src={p.previewUrl}
-                    alt={p.file.name}
-                    className="h-12 w-12 rounded object-cover"
-                  />
-                ) : (
-                  <div className="flex h-12 w-12 items-center justify-center rounded bg-white">
-                    <FileText className="h-5 w-5 text-muted-foreground" />
-                  </div>
-                )}
-                <div className="max-w-[140px]">
-                  <p className="truncate text-xs font-medium text-foreground">{p.file.name}</p>
-                  <p className="text-[10px] text-muted-foreground">{formatBytes(p.file.size)}</p>
+      {/* Composer or verification gate */}
+      {isRenterBlocked ? (
+        <div className="shrink-0 border-t border-border bg-card px-4 py-4 sm:px-6 sm:py-5">
+          <div className="mx-auto max-w-3xl">
+            {verifStatus === "pending_review" ? (
+              <div className="flex items-start gap-3 rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 p-4">
+                <Loader2 className="h-5 w-5 mt-0.5 shrink-0 animate-spin text-amber-600" />
+                <div className="text-sm text-amber-900 dark:text-amber-100">
+                  <p className="font-semibold">Your account is under review</p>
+                  <p className="text-xs opacity-90 mt-0.5">
+                    An admin will verify it within 5 minutes – 24 hours. You'll be able to chat with the agency right after.
+                  </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => removePending(i)}
-                  className="absolute right-1 top-1 rounded-full bg-white p-0.5 shadow-sm hover:bg-muted"
-                  aria-label="Remove attachment"
-                >
-                  <X className="h-3 w-3" />
-                </button>
               </div>
-            ))}
-          </div>
-        )}
-        <div className="flex items-end gap-2">
-          <input
-            ref={fileInputRef}
-            type="file"
-            multiple
-            accept={[...ACCEPTED_IMAGE, ...ACCEPTED_FILE].join(",")}
-            onChange={handleFilePick}
-            className="hidden"
-          />
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="h-10 w-10 shrink-0 rounded-full text-muted-foreground hover:bg-muted"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={uploading || sending}
-            aria-label="Attach"
-          >
-            <Paperclip className="h-5 w-5" />
-          </Button>
-          <Textarea
-            ref={textareaRef}
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            placeholder="Type a message…"
-            rows={1}
-            className="min-h-[40px] flex-1 resize-none rounded-2xl border-[#E0E0E0] bg-[#FAFAFA] px-4 py-2 text-sm focus-visible:border-[#9FE870] focus-visible:ring-0"
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                handleSend();
-              }
-            }}
-          />
-          <Button
-            type="button"
-            onClick={handleSend}
-            disabled={sending || uploading || (!draft.trim() && pending.length === 0)}
-            className="h-10 w-10 shrink-0 rounded-full bg-[#9FE870] p-0 text-[#163300] hover:bg-[#8FD862] disabled:opacity-50"
-            aria-label="Send"
-          >
-            {sending || uploading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
-              <Send className="h-4 w-4" />
+              <div className="flex flex-col gap-3 rounded-xl border border-primary/30 bg-primary/5 p-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-start gap-3">
+                  <ShieldAlert className="h-5 w-5 mt-0.5 shrink-0 text-primary" />
+                  <div className="text-sm">
+                    <p className="font-semibold text-foreground">
+                      You're one step away from chatting with the agency
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {verifStatus === "rejected"
+                        ? "Your previous submission was rejected. Please re-submit your documents to unlock messaging."
+                        : "Verify your account to unlock messaging."}
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  onClick={() => setVerifyDialogOpen(true)}
+                  variant="hero"
+                  className="h-11 rounded-full font-semibold sm:shrink-0"
+                >
+                  Verify my account
+                </Button>
+              </div>
             )}
-          </Button>
+          </div>
         </div>
+      ) : (
+        <div className="shrink-0 border-t border-border bg-card px-3 py-2 sm:px-6 sm:py-3">
+          <div className="mx-auto max-w-3xl">
+          {pending.length > 0 && (
+            <div className="mb-2 flex flex-wrap gap-2">
+              {pending.map((p, i) => (
+                <div
+                  key={i}
+                  className="relative flex items-center gap-2 rounded-md border border-[#E0E0E0] bg-[#FAFAFA] p-1.5 pr-7"
+                >
+                  {p.previewUrl ? (
+                    <img
+                      src={p.previewUrl}
+                      alt={p.file.name}
+                      className="h-12 w-12 rounded object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-12 w-12 items-center justify-center rounded bg-white">
+                      <FileText className="h-5 w-5 text-muted-foreground" />
+                    </div>
+                  )}
+                  <div className="max-w-[140px]">
+                    <p className="truncate text-xs font-medium text-foreground">{p.file.name}</p>
+                    <p className="text-[10px] text-muted-foreground">{formatBytes(p.file.size)}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => removePending(i)}
+                    className="absolute right-1 top-1 rounded-full bg-white p-0.5 shadow-sm hover:bg-muted"
+                    aria-label="Remove attachment"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          <div className="flex items-end gap-2">
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              accept={[...ACCEPTED_IMAGE, ...ACCEPTED_FILE].join(",")}
+              onChange={handleFilePick}
+              className="hidden"
+            />
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-10 w-10 shrink-0 rounded-full text-muted-foreground hover:bg-muted"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading || sending}
+              aria-label="Attach"
+            >
+              <Paperclip className="h-5 w-5" />
+            </Button>
+            <Textarea
+              ref={textareaRef}
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              placeholder="Type a message…"
+              rows={1}
+              className="min-h-[40px] flex-1 resize-none rounded-2xl border-[#E0E0E0] bg-[#FAFAFA] px-4 py-2 text-sm focus-visible:border-[#9FE870] focus-visible:ring-0"
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSend();
+                }
+              }}
+            />
+            <Button
+              type="button"
+              onClick={handleSend}
+              disabled={sending || uploading || (!draft.trim() && pending.length === 0)}
+              className="h-10 w-10 shrink-0 rounded-full bg-[#9FE870] p-0 text-[#163300] hover:bg-[#8FD862] disabled:opacity-50"
+              aria-label="Send"
+            >
+              {sending || uploading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Send className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
+          </div>
         </div>
-      </div>
+      )}
+
+      <VerificationDialog
+        open={verifyDialogOpen}
+        onOpenChange={setVerifyDialogOpen}
+        returnPath={typeof window !== "undefined" ? window.location.pathname + window.location.search : "/inbox"}
+      />
 
       {/* Lightbox */}
       {lightbox && (
