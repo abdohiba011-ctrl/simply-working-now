@@ -21,6 +21,8 @@ interface Conv {
   agency_name: string;
   agency_avatar_url: string | null;
   bike_name: string;
+  bike_image_url: string | null;
+  created_at: string;
   unread: number;
   last_at: string | null;
   last_preview: string | null;
