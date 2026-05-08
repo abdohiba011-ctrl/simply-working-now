@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { AgencyLayout } from "@/components/agency/AgencyLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -8,7 +9,7 @@ import { ChatThread } from "@/components/chat/ChatThread";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { format, isToday, isYesterday } from "date-fns";
 import { cn } from "@/lib/utils";
-import { Loader2, MessageCircle, Search } from "lucide-react";
+import { Loader2, MessageCircle, Search, ChevronLeft } from "lucide-react";
 
 interface Conv {
   id: string;
