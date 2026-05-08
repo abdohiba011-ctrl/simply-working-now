@@ -1,6 +1,6 @@
 import { ComponentType, SVGProps, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Search, HelpCircle, Wallet, Menu } from "lucide-react";
+import { Search, HelpCircle, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAgencyWallet, useAgencyIdentity } from "@/hooks/useAgencyData";
 import { useAuthStore } from "@/stores/useAuthStore";
