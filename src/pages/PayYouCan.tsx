@@ -68,6 +68,7 @@ export default function PayYouCan() {
   const successPath = params.get("success") || "/";
   const errorPath = params.get("error") || "/";
   const title = params.get("title") || "Complete payment";
+  const method = (params.get("method") || "card") as "card" | "cashplus";
 
   const [status, setStatus] = useState<"loading" | "ready" | "paying" | "error">(
     "loading",
@@ -93,12 +94,26 @@ export default function PayYouCan() {
           isSandbox,
           token,
         });
-        // Render both card and CashPlus when available; renderAvailableGateways
-        // falls back gracefully if only one gateway is enabled on the account.
+        // Render ONLY the gateway the user selected on Checkout. Mixing both
+        // here would let a renter who picked "Card" submit a CashPlus voucher
+        // (or vice-versa), and then we'd send them to the wrong wait page.
         try {
+          if (method === "cashplus") {
+            // YouCan exposes the CashPlus form via `renderCashPlusForm`
+            // (some SDK builds also accept a gateway-name on
+            // renderAvailableGateways). We try the dedicated method first.
+            if (typeof yc.renderCashPlusForm === "function") {
+              yc.renderCashPlusForm("default");
+            } else {
+              yc.renderAvailableGateways(["cashplus"], "default");
+            }
+          } else {
+            yc.renderCreditCardForm("default");
+          }
+        } catch (gatewayErr) {
+          // Last-resort fallback so the user is never blocked.
+          console.warn("YouCan gateway render fallback", gatewayErr);
           yc.renderAvailableGateways([], "default");
-        } catch {
-          yc.renderCreditCardForm("default");
         }
         ycRef.current = yc;
         setStatus("ready");
@@ -111,9 +126,12 @@ export default function PayYouCan() {
     return () => {
       cancelled = true;
     };
-  }, [token, pubKey, isSandbox]);
+  }, [token, pubKey, isSandbox, method]);
 
   const buildStatusUrl = (outcome: "success" | "error", transactionId?: string) => {
+    // CashPlus -> dedicated voucher waiting page (open-ended, friendly).
+    // Card     -> generic /payment-status page (30s poll, expects fast confirm).
+    const base = method === "cashplus" ? "/payment-cashplus" : "/payment-status";
     const qs = new URLSearchParams({
       pid,
       next: successPath,
@@ -122,7 +140,7 @@ export default function PayYouCan() {
       title,
     });
     if (transactionId) qs.set("transaction_id", transactionId);
-    return `/payment-status?${qs.toString()}`;
+    return `${base}?${qs.toString()}`;
   };
 
   const handlePay = () => {
@@ -131,9 +149,13 @@ export default function PayYouCan() {
     setStatus("paying");
     yc.pay(token)
       .then((response: any) => {
-        toast.success("Payment submitted");
+        if (method === "cashplus") {
+          toast.success("Voucher generated");
+        } else {
+          toast.success("Payment submitted");
+        }
         const transactionId = getYouCanTransactionId(response);
-        // Don't trust the client outcome — let PaymentStatus poll the webhook.
+        // Don't trust the client outcome — let the wait page poll the webhook.
         navigate(buildStatusUrl("success", transactionId), { replace: true });
       })
       .catch((err: any) => {
