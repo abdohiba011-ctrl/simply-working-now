@@ -19,7 +19,7 @@ import { GbFlag } from "@/components/icons/flags/GbFlag";
 import { MaFlag } from "@/components/icons/flags/MaFlag";
 
 interface HeaderProps {
-  onMobileMenu: () => void;
+  onMobileMenu?: () => void;
 }
 
 const ROUTE_NAMES: Record<string, string> = {
