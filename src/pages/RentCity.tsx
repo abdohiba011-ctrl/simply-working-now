@@ -552,7 +552,7 @@ export default function RentCity() {
             {/* Mobile filter trigger */}
             <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
               <SheetTrigger asChild>
-                <Button variant="outline" size="sm" className="lg:hidden">
+                <Button variant="outline" className="lg:hidden h-10 px-4">
                   <FilterIcon className="w-4 h-4 mr-2" />
                   Filters
                   {activeFilterCount > 0 && (
