@@ -50,6 +50,7 @@ const CheckoutDraft = lazy(() => import("./pages/CheckoutDraft"));
 const BookingConfirmed = lazy(() => import("./pages/BookingConfirmed"));
 const PayYouCan = lazy(() => import("./pages/PayYouCan"));
 const PaymentStatus = lazy(() => import("./pages/PaymentStatus"));
+const PaymentCashPlus = lazy(() => import("./pages/PaymentCashPlus"));
 const Confirmation = lazy(() => import("./pages/Confirmation"));
 const Settings = lazy(() => import("./pages/Settings"));
 const ChangePassword = lazy(() => import("./pages/ChangePassword"));
