@@ -128,6 +128,7 @@ const Checkout = () => {
             related_booking_id: bookingId,
             customer_email: profile.email,
             customer_name: profile.name,
+            method,
           },
         },
       );
@@ -150,7 +151,7 @@ const Checkout = () => {
         pickup: pickup || '',
         end: end || '',
         total: String(rentalSubtotal),
-        payment: 'card',
+        payment: method,
         needsVerification,
       });
       const successPath = `/confirmation?${confirmationParams.toString()}`;
@@ -164,7 +165,8 @@ const Checkout = () => {
         sandbox: tokenResp.is_sandbox ? '1' : '0',
         success: successPath,
         error: errorPath,
-        title: 'Pay booking fee',
+        title: method === 'cashplus' ? 'Pay booking fee with CashPlus' : 'Pay booking fee',
+        method,
       });
       navigate(`/pay/youcanpay?${qs.toString()}`);
     } catch (error: unknown) {
