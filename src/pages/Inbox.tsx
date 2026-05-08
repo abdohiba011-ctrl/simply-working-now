@@ -212,28 +212,17 @@ const Inbox = () => {
                 <h1 className="flex-1 text-base font-semibold tracking-tight text-foreground">
                   Messages
                 </h1>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button
-                      aria-label="Change language"
-                      className="inline-flex h-9 w-9 items-center justify-center rounded-full text-foreground hover:bg-muted/70 transition-colors"
-                    >
-                      <Globe className="h-[18px] w-[18px]" />
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="rounded-xl">
-                    {LANGS.map((l) => (
-                      <DropdownMenuItem
-                        key={l.code}
-                        onClick={() => setLanguage(l.code)}
-                        className={cn("gap-2 rounded-lg", language === l.code && "bg-muted")}
-                      >
-                        <l.Icon />
-                        {l.label}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <a
+                  href="/"
+                  aria-label="Motonita home"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-full hover:bg-muted/70 transition-colors"
+                >
+                  <img
+                    src="/favicon.svg"
+                    alt="Motonita"
+                    className="h-[22px] w-[22px]"
+                  />
+                </a>
               </div>
               <div className="scrollbar-hide flex-1 overflow-y-auto p-2">
                 {loading ? (
