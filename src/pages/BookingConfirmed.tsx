@@ -18,7 +18,11 @@ import {
   Copy,
   ExternalLink,
   Share2,
+  Info,
+  Phone,
+  Mail,
 } from "lucide-react";
+import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -240,6 +244,16 @@ const BookingConfirmed = () => {
 
   // ---------- Dedicated Cash Plus voucher screen ----------
   if (isCashplus && phase === "waiting") {
+    const supportPhoneDisplay = "+212 710 564 476";
+    const supportPhoneRaw = "+212710564476";
+    const supportEmail = "support@motonita.ma";
+    const emailSubject = `Cash Plus payment — ${shortRef}`;
+    const emailBody =
+      `Hi Motonita team,\n\nI've already paid at Cash Plus and would like help confirming my booking.\n\nReference: ${shortRef}\nAmount: ${cashplusAmount} MAD\n\nThanks.`;
+    const supportMailto = `mailto:${supportEmail}?subject=${encodeURIComponent(
+      emailSubject,
+    )}&body=${encodeURIComponent(emailBody)}`;
+
     return (
       <div className="min-h-screen bg-background">
         <Header />
@@ -253,9 +267,10 @@ const BookingConfirmed = () => {
               Almost done — pay at Cash Plus
             </h1>
             <p className="text-muted-foreground mt-2 max-w-md mx-auto">
-              Your booking is held. Walk into any Cash Plus agency in Morocco,
-              hand over the reference and {cashplusAmount} MAD in cash, and
-              we'll confirm your bike automatically.
+              Your booking is reserved. To confirm it, take the reference below
+              to any <span className="font-semibold text-foreground">Cash Plus</span> agency
+              in Morocco and pay <span className="font-semibold text-foreground">{cashplusAmount} MAD in cash</span>.
+              We'll confirm your bike automatically — you don't need to come back to this page.
             </p>
           </div>
 
@@ -321,12 +336,64 @@ const BookingConfirmed = () => {
           <Card>
             <CardContent className="p-5 space-y-3">
               <h3 className="font-semibold text-foreground">How to pay</h3>
-              <ol className="list-decimal list-inside text-sm text-muted-foreground space-y-1.5">
-                <li>Go to any Cash Plus agency in Morocco.</li>
-                <li>Show the reference <span className="font-mono font-semibold text-foreground">{shortRef}</span> to the agent.</li>
-                <li>Pay <span className="font-semibold text-foreground">{cashplusAmount} MAD</span> in cash.</li>
-                <li>Your booking confirms automatically — you don't need to come back here.</li>
+              <ol className="list-decimal list-inside text-sm text-muted-foreground space-y-1.5 marker:font-semibold marker:text-foreground">
+                <li>Walk into any Cash Plus agency (over 2,500 across Morocco).</li>
+                <li>
+                  Show the reference{" "}
+                  <span className="font-mono font-semibold text-foreground">{shortRef}</span>{" "}
+                  to the agent and say it's for "Motonita / YouCan Pay".
+                </li>
+                <li>
+                  Pay <span className="font-semibold text-foreground">{cashplusAmount} MAD in cash</span>.
+                  Keep your receipt.
+                </li>
+                <li>
+                  Wait for our confirmation — usually{" "}
+                  <span className="font-semibold text-foreground">1 to 60 minutes</span>{" "}
+                  after the agent processes your payment.
+                </li>
               </ol>
+            </CardContent>
+          </Card>
+
+          {/* Important to know */}
+          <Card className="border-amber-500/30 bg-amber-500/5">
+            <CardContent className="p-5 space-y-3">
+              <div className="flex items-center gap-2">
+                <Info className="h-4 w-4 text-amber-600" />
+                <h3 className="font-semibold text-foreground">Important to know</h3>
+              </div>
+              <ul className="text-sm text-muted-foreground space-y-2">
+                <li className="flex gap-2">
+                  <span className="text-amber-600 mt-0.5">•</span>
+                  <span>
+                    Cash Plus agencies are usually <span className="font-medium text-foreground">closed on Sundays</span>{" "}
+                    and may have reduced hours on public holidays. Plan accordingly.
+                  </span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-amber-600 mt-0.5">•</span>
+                  <span>
+                    Your reference is valid for <span className="font-medium text-foreground">72 hours</span>.
+                    After that, the booking is automatically cancelled and you'll need to start over.
+                  </span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-amber-600 mt-0.5">•</span>
+                  <span>
+                    We confirm bookings <span className="font-medium text-foreground">automatically</span>.
+                    The delay between paying and seeing confirmation depends on Cash Plus's system —
+                    usually a few minutes, sometimes up to an hour.
+                  </span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-amber-600 mt-0.5">•</span>
+                  <span>
+                    Once paid, you can safely close this page. We'll email you the moment
+                    it's confirmed, and you'll be able to message the agency from your bookings.
+                  </span>
+                </li>
+              </ul>
             </CardContent>
           </Card>
 
@@ -335,6 +402,59 @@ const BookingConfirmed = () => {
             <Loader2 className="h-3.5 w-3.5 animate-spin" />
             Waiting for payment at Cash Plus
           </div>
+
+          {/* Support — only relevant after paying */}
+          <Card>
+            <CardContent className="p-5 space-y-4">
+              <div>
+                <h3 className="font-semibold text-foreground flex items-center gap-2">
+                  <LifeBuoy className="h-4 w-4 text-foreground" />
+                  Already paid? Need help?
+                </h3>
+                <p className="text-sm text-muted-foreground mt-1.5">
+                  If you've paid at Cash Plus and nothing happened after 1 hour, contact us.
+                  Please <span className="font-medium text-foreground">don't call before paying</span> —
+                  it slows us down for users who actually need help.
+                </p>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <Button variant="outline" asChild className="w-full">
+                  <a
+                    href={`https://wa.me/212710564476?text=${encodeURIComponent(
+                      `Hi, I paid at Cash Plus for booking ${shortRef}.`,
+                    )}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <WhatsAppIcon className="h-4 w-4 mr-2 text-emerald-600" />
+                    WhatsApp
+                  </a>
+                </Button>
+                <Button variant="outline" asChild className="w-full">
+                  <a href={`tel:${supportPhoneRaw}`}>
+                    <Phone className="h-4 w-4 mr-2" />
+                    {supportPhoneDisplay}
+                  </a>
+                </Button>
+                <Button variant="outline" asChild className="w-full">
+                  <a href={supportMailto}>
+                    <Mail className="h-4 w-4 mr-2" />
+                    Email
+                  </a>
+                </Button>
+              </div>
+              <div className="text-center pt-1">
+                <button
+                  type="button"
+                  onClick={handleVerifyNow}
+                  disabled={verifying}
+                  className="text-xs text-muted-foreground hover:text-foreground underline disabled:opacity-50"
+                >
+                  {verifying ? "Checking…" : "Already paid? Check status now"}
+                </button>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Booking summary (compact) */}
           <Card>
@@ -370,31 +490,12 @@ const BookingConfirmed = () => {
                 </div>
               </div>
 
-              <Button asChild variant="hero" size="lg" className="w-full h-12 text-base font-semibold">
-                <Link to="/inbox">
-                  <MessageCircle className="h-5 w-5 mr-2" />
-                  Message agency
-                </Link>
-              </Button>
-
               <p className="text-[11px] text-muted-foreground text-center">
-                You can safely close this page. We'll email you once Cash Plus
-                confirms your payment.
+                The "Message agency" button will appear here automatically once
+                Cash Plus confirms your payment.
               </p>
             </CardContent>
           </Card>
-
-          {/* Subtle escape hatch */}
-          <div className="text-center">
-            <button
-              type="button"
-              onClick={handleVerifyNow}
-              disabled={verifying}
-              className="text-xs text-muted-foreground hover:text-foreground underline disabled:opacity-50"
-            >
-              {verifying ? "Checking…" : "Already paid? Check now"}
-            </button>
-          </div>
         </div>
       </div>
     );
