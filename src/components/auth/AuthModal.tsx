@@ -130,7 +130,8 @@ export function AuthModal() {
     setError(null);
     if (name.trim().length < 2) return setError("Please enter your full name");
     if (!EMAIL_REGEX.test(email.trim())) return setError("Enter a valid email");
-    if (phone && !PHONE_REGEX.test(phone.replace(/\s+/g, "")))
+    if (!phone.trim()) return setError("Phone is required");
+    if (!PHONE_REGEX.test(phone.replace(/\s+/g, "")))
       return setError("Enter a valid Moroccan phone number");
     if (signupPwd.length < 8) return setError("Password must be at least 8 characters");
     if (signupPwd !== confirmPwd) return setError("Passwords don't match");
